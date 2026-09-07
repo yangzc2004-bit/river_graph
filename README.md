@@ -26,16 +26,28 @@ From the NWIS water-quality series catalog (2026-09 snapshot):
 Sampling is not synchronized across stations, so the MVP target is
 **seasonal-mean DOC per station** rather than instantaneous values.
 
+## Milestone 1: station graph (done)
+
+`python scripts/build_graph.py` builds the directed station graph:
+
+- 571 candidate stations (≥20 DOC samples, ≥2 yr span), 571/571 linked to
+  NHDPlus reaches (NLDI site index, with coordinate-snap fallback)
+- 562 directed edges: A→B iff B is the first other station on the downstream
+  mainstem walk from A (NLDI DM navigation by COMID)
+- Largest weakly-connected component: 407 nodes (71%)
+- Artifacts: `data/processed/mississippi_graph.pkl`, `graph_nodes.csv`,
+  `graph_edges.csv`, `mississippi_graph.png`
+
 ## Layout
 
 ```
 configs/            experiment configs (mvp.yaml)
 data/               raw + processed data (gitignored, reproducible via scripts)
-scripts/            data download / analysis entry points
+scripts/            data download / analysis / graph-building entry points
 src/river_graph/
   config.py         config loading
   data/             NWIS/WQP data access
-  graph/            station -> river network graph construction
+  topology/         NLDI station matching, edge construction, visualization
   models/           GNN / MLP models
   baselines/        kriging / random forest baselines
   experiments/      mask reconstruction + topology ablation
