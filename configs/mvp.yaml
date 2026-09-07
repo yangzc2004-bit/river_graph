@@ -1,0 +1,26 @@
+# MVP configuration
+project: river_graph
+
+region:
+  name: Mississippi River Basin
+  # HUC2 regions covering the MRB: Ohio, Tennessee, Upper Mississippi,
+  # Lower Mississippi, Missouri, Arkansas-White-Red
+  huc2: ["05", "06", "07", "08", "10", "11"]
+
+target:
+  variable: DOC            # dissolved organic carbon, mg/L
+  pcode: "00681"           # USGS parameter code
+  aggregation: seasonal_mean  # decided after data profiling: no basin-wide
+                              # synchronous sampling exists (median gap ~48 d)
+
+station_filter:
+  min_samples: 20          # >=20 DOC samples -> ~660 candidate stations
+  min_span_years: 2
+
+# node features (USGS pcodes); availability among the 660 stations:
+# temperature 93%, discharge 74%, pH 94%, spec. conductance 96%
+covariates:
+  temperature: "00010"
+  discharge: "00061"
+  ph: "00400"
+  spec_conductance: "00095"
