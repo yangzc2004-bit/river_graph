@@ -172,6 +172,7 @@ class GCNDocModel:
                 loss = F.mse_loss(pred[sel], y[sel, j])
                 opt.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 opt.step()
                 # hidden-from-input cells: honest proxy for imputation skill
                 tgt_loss += loss.item() * len(sel)
@@ -194,4 +195,10 @@ class GCNDocModel:
         with torch.no_grad():
             for j in range(t):
                 preds[:, j] = model(xt[j], ei)
+        # clamp to the observed train range: tree baselines (RF) cannot
+        # extrapolate beyond training targets by construction, so the GNN
+        # gets the same physical bound (also guards expm1 blow-ups)
+        ti, tj = train_cells // t, train_cells % t
+        lo, hi = y[ti, tj].min(), y[ti, tj].max()
+        preds = preds.clamp(min=lo, max=hi)
         return np.expm1(preds.numpy())

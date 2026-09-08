@@ -20,6 +20,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default=None, help="mask-name prefix filter")
     ap.add_argument("--variants", nargs="+", default=["river", "random", "none"])
+    ap.add_argument("--lr", type=float, default=1e-3)
     args = ap.parse_args()
 
     dataset = load_dataset()
@@ -30,16 +31,23 @@ def main() -> None:
     print(f"masks: {names}; variants: {args.variants}")
 
     RESULTS.mkdir(parents=True, exist_ok=True)
-    rows = []
     for variant in args.variants:
         mname = f"G0_gcn_{variant}"
-        model = GCNDocModel(variant=variant)
+        model = GCNDocModel(variant=variant, lr=args.lr)
         res = evaluate(model, dataset, names, mask_dir)
-        (RESULTS / f"{mname}.json").write_text(json.dumps(res, indent=2))
+        # merge into any existing per-model results (partial reruns)
+        jpath = RESULTS / f"{mname}.json"
+        merged = json.loads(jpath.read_text()) if jpath.exists() else {}
+        merged.update(res)
+        jpath.write_text(json.dumps(merged, indent=2))
         for mask_name, m in res.items():
-            rows.append({"model": mname, "mask": mask_name, **m})
             print(f"{mname} @ {mask_name}: RMSE={m['rmse']:.3f} "
                   f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})", flush=True)
+    # rebuild the flat CSV from all per-model JSONs (never overwrite blindly)
+    rows = []
+    for jpath in sorted(RESULTS.glob("G0_*.json")):
+        for mask_name, m in json.loads(jpath.read_text()).items():
+            rows.append({"model": jpath.stem, "mask": mask_name, **m})
     out = RESULTS / "gnn.csv"
     pd.DataFrame(rows).to_csv(out, index=False)
     print(f"saved {out}")
