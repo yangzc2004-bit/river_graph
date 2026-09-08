@@ -13,6 +13,7 @@ so availability profiling goes through here; actual values come from WQP.
 
 from __future__ import annotations
 
+import io
 import time
 import urllib.request
 from pathlib import Path
@@ -118,14 +119,19 @@ def fetch_daily_discharge(
 ) -> None:
     """Download daily mean discharge (pcode 00060, statCd 00003) in batches.
 
-    One RDB per batch under ``cache_dir``; existing files are reused, so
-    reruns resume. Full period of record is requested.
+    One RDB per batch under ``cache_dir``; the filename carries a hash of the
+    batch's site list so different site orderings never collide. Failed
+    batches are skipped (logged) rather than fatal — reruns resume.
     """
+    import hashlib
+
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     batches = [site_numbers[i:i + batch_size] for i in range(0, len(site_numbers), batch_size)]
+    failed = 0
     for i, batch in enumerate(batches):
-        out = cache_dir / f"dv_{i:04d}.rdb"
+        digest = hashlib.md5(",".join(batch).encode()).hexdigest()[:8]
+        out = cache_dir / f"dv_{i:04d}_{digest}.rdb"
         if out.exists() and out.stat().st_size > 500:
             continue
         url = (
@@ -144,8 +150,46 @@ def fetch_daily_discharge(
                 print(f"dv batch {i} attempt {attempt + 1} failed: {e}")
                 time.sleep(10 * (attempt + 1))
         else:
-            raise RuntimeError(f"dv batch {i} failed after 4 attempts")
+            print(f"dv batch {i} SKIPPED after 4 attempts (rerun to retry)")
+            failed += 1
         time.sleep(1)
+    if failed:
+        print(f"warning: {failed} dv batches skipped")
+
+
+def _read_rdb_blocks(path: str | Path, value_suffix: str | None = None) -> pd.DataFrame:
+    """Parse a multi-site RDB where each site block has its own header.
+
+    Blocks can differ in column count, and per-site value columns are named
+    ``<ts_id>_<pcode>_<stat>`` (site-specific), so blocks must NOT be
+    column-aligned. If ``value_suffix`` is given, the column ending with it
+    is renamed to "value" per block and only
+    (agency_cd, site_no, datetime, value) are returned.
+    """
+    lines = [
+        ln for ln in Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+        if not ln.startswith("#")
+    ]
+    header_idx = [i for i, ln in enumerate(lines) if ln.startswith("agency_cd")]
+    frames = []
+    for k, start in enumerate(header_idx):
+        end = header_idx[k + 1] if k + 1 < len(header_idx) else len(lines)
+        block = lines[start:end]
+        if len(block) < 3:  # header + format row + >=1 data row
+            continue
+        df = pd.read_csv(io.StringIO("\n".join(block)), sep="\t", dtype=str)
+        df = df[~df.iloc[:, 0].str.fullmatch(r"\d+s")]
+        if value_suffix is not None:
+            value_cols = [c for c in df.columns if c.endswith(value_suffix)]
+            if not value_cols:
+                continue
+            df = df[["agency_cd", "site_no", "datetime", value_cols[0]]].rename(
+                columns={value_cols[0]: "value"}
+            )
+        frames.append(df)
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
 
 
 def load_daily_discharge(cache_dir: str | Path) -> pd.DataFrame:
@@ -155,15 +199,13 @@ def load_daily_discharge(cache_dir: str | Path) -> pd.DataFrame:
         raise FileNotFoundError(f"no dv_*.rdb under {cache_dir}")
     frames = []
     for f in files:
-        df = read_rdb(f)
-        value_col = [c for c in df.columns if c.endswith("_00060_00003")]
-        if not value_col:
-            continue
-        frames.append(
-            df[["site_no", "datetime", value_col[0]]].rename(
-                columns={"datetime": "date", value_col[0]: "discharge_cfs"}
+        df = _read_rdb_blocks(f, value_suffix="_00060_00003")
+        if not df.empty:
+            frames.append(
+                df[["site_no", "datetime", "value"]].rename(
+                    columns={"datetime": "date", "value": "discharge_cfs"}
+                )
             )
-        )
     if not frames:
         return pd.DataFrame(columns=["site_no", "date", "discharge_cfs"])
     out = pd.concat(frames, ignore_index=True)

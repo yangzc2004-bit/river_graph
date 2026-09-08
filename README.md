@@ -38,6 +38,17 @@ Sampling is not synchronized across stations, so the MVP target is
 - Artifacts: `data/processed/mississippi_graph.pkl`, `graph_nodes.csv`,
   `graph_edges.csv`, `mississippi_graph.png`
 
+## Milestone 2: training dataset (done)
+
+`python scripts/build_dataset.py [--smoke N]` builds `mississippi_graph_v02.pt`:
+
+- N=571 nodes, E=562 edges, T=652 months (1972-04 .. 2026-07 span of DOC obs)
+- `y` (N×T): monthly-mean DOC labels, `y_mask`: observed cells — **8.9%
+  coverage**, i.e. the reconstruction problem is genuinely sparse
+- `x` (N×T×2): monthly-mean water temperature and discharge
+- Funnel: 571 stations → 570 with ≥1 DOC obs → 558 with ≥12 monthly labels;
+  temperature 539/571, discharge 345/571 (main missingness source)
+
 ## Layout
 
 ```
