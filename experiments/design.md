@@ -34,11 +34,20 @@ mask rate r ∈ {0.2, 0.4, 0.6}; of the remaining cells, 10% are validation
 (early stopping), the rest train. Seeds 42, 43, 44 → mask files
 `experiments/masks/e1_r{r}_seed{s}.npz` (arrays of cell indices).
 
-### E2 — Temporal extrapolation (RQ3)
+### E2 — Temporal generalization (RQ3), two variants
 
-Train: cells in 1972-04 .. 2020-12. Test: cells in 2021-01 .. 2026-07.
-Validation: last 10% of train months. Answers "can the model predict
-future months", and guards against the trivial seasonal shortcut.
+- **E2-a strict future forecasting** (`e2a_strict`): train on cells in
+  1972-04 .. 2020-12, test on ALL observed cells in 2021-01 .. 2026-07
+  (validation: last 10% of train months). No DOC observation exists in
+  test months, so this isolates feature-driven extrapolation; kriging and
+  the GNN DOC channel have nothing to consume here (kriging: n/a).
+- **E2-b future reconstruction** (`e2b_partial`): same train/val, but in
+  post-cutoff months 20% of observed cells stay visible as **context**
+  (never fitted, never scored), 80% are test. This is the realistic
+  monitoring scenario — the network keeps running, some stations report,
+  and the task is to fill the gaps. Kriging uses same-month context
+  stations; the GNN propagates context along river edges. This is the
+  main temporal experiment.
 
 ### E3 — Spatial extrapolation (RQ3)
 
@@ -73,8 +82,11 @@ Notes:
 
 - Static station-level DOC statistics (if ever used as features) are
   computed on train cells only.
-- In E1, the DOC input channel at month t contains train/val cells only;
-  test cells are zeroed and masked out.
+- In E1/E3, the DOC input channel at month t contains train/val cells only;
+  test cells are zeroed and masked out. In E2-b it additionally contains
+  the context cells (visible observations of the running network).
+- More generally: models may *fit* on train cells only; they may *see* as
+  observations train + val + context cells. Test cells are never visible.
 - Feature channels (temperature, discharge) are treated as observed
   inputs everywhere; they never contain DOC-derived quantities.
 - All splits are generated once and stored under `experiments/masks/`;

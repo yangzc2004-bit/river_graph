@@ -3,7 +3,13 @@
 import numpy as np
 import pandas as pd
 
-from river_graph.experiments.masks import make_e1, make_e2, make_e3, observed_cells
+from river_graph.experiments.masks import (
+    make_e1,
+    make_e2_partial,
+    make_e2_strict,
+    make_e3,
+    observed_cells,
+)
 
 
 def _mask(n=10, t=24, frac=0.3, seed=0):
@@ -34,16 +40,34 @@ def test_e1_deterministic_per_seed():
     assert np.array_equal(np.sort(a), np.sort(b))
 
 
-def test_e2_temporal_order():
+def test_e2_strict_temporal_order():
     n, t = 5, 48
     m = _mask(n, t, frac=0.8)
     months = pd.date_range("2018-01", periods=t, freq="MS")  # 2018..2021
-    split = make_e2(m, months)
+    split = make_e2_strict(m, months)
     cutoff = pd.Timestamp("2020-12")
     for flat in split["test"]:
         assert months[flat % t] > cutoff
     for flat in np.concatenate([split["train"], split["val"]]):
         assert months[flat % t] <= cutoff
+
+
+def test_e2_partial_context_split():
+    n, t = 5, 48
+    m = _mask(n, t, frac=0.8)
+    months = pd.date_range("2018-01", periods=t, freq="MS")
+    split = make_e2_partial(m, months)
+    cutoff = pd.Timestamp("2020-12")
+    # context and test are both strictly post-cutoff and disjoint
+    post = np.concatenate([split["test"], split["context"]])
+    assert all(months[f % t] > cutoff for f in post)
+    assert len(np.intersect1d(split["test"], split["context"])) == 0
+    # context is ~20% of post-cutoff observed cells
+    frac = len(split["context"]) / len(post)
+    assert abs(frac - 0.2) < 0.05
+    # all post-cutoff observed cells are either context or test
+    obs_post = [f for f in observed_cells(m) if months[f % t] > cutoff]
+    assert len(post) == len(obs_post)
 
 
 def test_e3_held_out_stations_have_no_train_cells():

@@ -9,7 +9,12 @@ import numpy as np
 import pandas as pd
 import torch
 
-from river_graph.experiments.masks import make_e1, make_e2, make_e3
+from river_graph.experiments.masks import (
+    make_e1,
+    make_e2_partial,
+    make_e2_strict,
+    make_e3,
+)
 
 OUT = Path("experiments/masks")
 
@@ -23,7 +28,8 @@ def main() -> None:
 
     OUT.mkdir(parents=True, exist_ok=True)
     masks = {**make_e1(y_mask)}
-    masks["e2_temporal"] = make_e2(y_mask, months)
+    masks["e2a_strict"] = make_e2_strict(y_mask, months)
+    masks["e2b_partial"] = make_e2_partial(y_mask, months)
     masks["e3_spatial"] = make_e3(y_mask, edges, sites)
 
     for name, split in masks.items():

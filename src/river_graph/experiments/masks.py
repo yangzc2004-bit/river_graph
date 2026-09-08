@@ -45,9 +45,13 @@ def make_e1(y_mask: np.ndarray) -> dict[str, dict[str, np.ndarray]]:
     }
 
 
-def make_e2(y_mask: np.ndarray, months: pd.DatetimeIndex) -> dict[str, np.ndarray]:
-    """E2 temporal split: train <= cutoff, test after cutoff, val = last 10%
-    of train months."""
+E2B_CONTEXT_FRAC = 0.2  # share of post-cutoff observed cells kept as context
+
+
+def _pre_cutoff_train_val(
+    y_mask: np.ndarray, months: pd.DatetimeIndex
+) -> tuple[list[int], list[int], np.ndarray]:
+    """Shared E2 helper: (train, val) cells up to E2_CUTOFF + test-month flags."""
     _n, t = y_mask.shape
     assert len(months) == t
     cutoff = pd.Timestamp(E2_CUTOFF)
@@ -57,19 +61,42 @@ def make_e2(y_mask: np.ndarray, months: pd.DatetimeIndex) -> dict[str, np.ndarra
     val_months = set(train_months[-n_val_months:].tolist())
     train_month_set = set(train_months[:-n_val_months].tolist())
 
-    train, val, test = [], [], []
+    train, val = [], []
     for flat in observed_cells(y_mask):
         j = flat % t
-        if is_test_month[j]:
-            test.append(flat)
-        elif j in val_months:
+        if j in val_months:
             val.append(flat)
         elif j in train_month_set:
             train.append(flat)
+    return train, val, np.asarray(is_test_month)
+
+
+def make_e2_strict(y_mask: np.ndarray, months: pd.DatetimeIndex) -> dict[str, np.ndarray]:
+    """E2-a strict future forecasting: ALL observed cells after the cutoff are
+    test; no DOC context exists in test months (feature-only prediction)."""
+    train, val, is_test_month = _pre_cutoff_train_val(y_mask, months)
+    t = y_mask.shape[1]
+    test = [f for f in observed_cells(y_mask) if is_test_month[f % t]]
+    return {"train": np.array(train), "val": np.array(val), "test": np.array(test)}
+
+
+def make_e2_partial(
+    y_mask: np.ndarray, months: pd.DatetimeIndex, seed: int = 42
+) -> dict[str, np.ndarray]:
+    """E2-b future reconstruction under a running network: in post-cutoff
+    months, E2B_CONTEXT_FRAC of observed cells stay visible as context
+    (never fitted, never scored); the rest are test."""
+    train, val, is_test_month = _pre_cutoff_train_val(y_mask, months)
+    t = y_mask.shape[1]
+    post = np.array([f for f in observed_cells(y_mask) if is_test_month[f % t]])
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(post)
+    n_context = round(len(post) * E2B_CONTEXT_FRAC)
     return {
         "train": np.array(train),
         "val": np.array(val),
-        "test": np.array(test),
+        "test": perm[n_context:],
+        "context": perm[:n_context],
     }
 
 

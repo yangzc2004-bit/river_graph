@@ -22,6 +22,10 @@ def _ctx(dataset: dict, split: dict[str, np.ndarray]):
 
     The dataset stores y in raw mg/L; models work in log1p space per
     design.md, and their fit_predict must return mg/L (expm1 applied).
+
+    train_mask marks cells usable for *fitting*; obs_mask additionally
+    includes val and (E2-b) context cells — everything a model may *see*
+    as observations at inference time.
     """
     y = np.log1p(dataset["y"].numpy())  # log1p mg/L
     x = dataset["x"].numpy()  # (N, T, F)
@@ -31,14 +35,18 @@ def _ctx(dataset: dict, split: dict[str, np.ndarray]):
     train_mask = np.zeros(n * t, dtype=bool)
     train_mask[split["train"]] = True
     train_mask = train_mask.reshape(n, t)
-    return y, x, months, latlon, n, t, train_mask
+    obs_mask = train_mask.copy()
+    for key in ("val", "context"):
+        if key in split and len(split[key]):
+            obs_mask.ravel()[split[key]] = True
+    return y, x, months, latlon, n, t, train_mask, obs_mask
 
 
 class StationMean:
     """B0: per-station mean of train cells; global train mean as fallback."""
 
     def fit_predict(self, dataset, split) -> np.ndarray:
-        y, _x, _m, _ll, n, t, train_mask = _ctx(dataset, split)
+        y, _x, _m, _ll, n, t, train_mask, _obs = _ctx(dataset, split)
         pred = np.full((n, t), np.nan)
         ytr = np.where(train_mask, y, np.nan)
         with warnings.catch_warnings():
@@ -59,7 +67,7 @@ class Kriging:
     def fit_predict(self, dataset, split) -> np.ndarray:
         from pykrige.ok import OrdinaryKriging
 
-        y, _x, _m, latlon, n, t, train_mask = _ctx(dataset, split)
+        y, _x, _m, latlon, n, t, train_mask, obs_mask = _ctx(dataset, split)
         pred = np.full((n, t), np.nan)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -71,7 +79,7 @@ class Kriging:
         jitter = rng.normal(0, 1e-4, latlon.shape)
         ll = latlon + jitter
         for j in range(t):
-            obs = train_mask[:, j]
+            obs = obs_mask[:, j]
             if obs.sum() < self.min_obs:
                 continue
             try:
@@ -114,7 +122,7 @@ class RandomForest:
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.impute import SimpleImputer
 
-        y, x, months, latlon, n, t, _tm = _ctx(dataset, split)
+        y, x, months, latlon, n, t, _tm, _obs = _ctx(dataset, split)
         feats = _tabular_features(x, months, latlon, n, t)
         tr = split["train"]
         imp = SimpleImputer(strategy="median").fit(feats[tr])
@@ -142,7 +150,7 @@ class MLP:
         from sklearn.pipeline import make_pipeline
         from sklearn.preprocessing import StandardScaler
 
-        y, x, months, latlon, n, t, _tm = _ctx(dataset, split)
+        y, x, months, latlon, n, t, _tm, _obs = _ctx(dataset, split)
         feats = _tabular_features(x, months, latlon, n, t)
         tr = split["train"]
         pipe = make_pipeline(
