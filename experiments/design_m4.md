@@ -59,6 +59,33 @@ should matter most where the benchmark already has partial observation).
       COMID — small fetch, resumable
 - [ ] (later, post-MVP) HydroATLAS land cover / soil carbon / precipitation
 
+## H2: Physics-informed asymmetric transport (revised after E3 diagnosis)
+
+The E3 seed42 diagnosis localized the H1 failure: not a model-size problem
+(H1.5 regularization did nothing), not out-of-distribution labels, but
+**headwater stations** (upstream_degree=0, high-DOC mountain streams in
+HUC2 10/11) — nodes where the upstream transport signal does not exist.
+Directed message passing assumes every node has an informative upstream;
+river networks have heterogeneous regimes.
+
+H2 therefore has two coupled parts:
+
+1. **Edge transport gate**: message from j to i is
+   `m_ji = gate(e_ji) * W h_j` with `gate(e) = MLP(edge features)`, so
+   propagation strength is set by the physical reach, not uniform.
+   Edge features (v1, ≤5, no more): river hop distance, flowline length,
+   stream order, drainage area, slope.
+2. **Node hydrologic regime encoding**: node features additionally include
+   is_headwater / stream order / drainage area of the node's own reach, so
+   the model can represent "this is a headwater mountain stream" instead
+   of memorizing one.
+
+Evaluation focus: E3 three seeds (esp. seed42) and the headwater subgroup
+(upstream_degree=0), plus the E1/E2b retention check.
+
+Naming: working name HydroGRN → H2 stage. (GRN collides with gene
+regulatory networks; final name deferred.)
+
 ## H1 results and the H1.5 stabilization step (added after the H1 run)
 
 H1 (directed) beat G0 on all 9 E1 masks and became the best model on both
