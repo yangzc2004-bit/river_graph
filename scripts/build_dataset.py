@@ -12,6 +12,7 @@ import pickle
 from pathlib import Path
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 
 from river_graph.data.aggregate import to_monthly
@@ -112,13 +113,36 @@ def main() -> None:
     months = pd.date_range(
         monthly_doc["month"].min(), monthly_doc["month"].max(), freq="MS"
     )
+
+    # H2 additions: node regime + edge transport attributes (v03)
+    reach = pd.read_csv(PROCESSED / "reach_attributes.csv", dtype={"site_no": str})
+    reach = reach.set_index("site_no")
+    in_deg = edges.groupby("target").size()
+    regime = []
+    for s in nodes["site_no"]:
+        r = reach.loc[s]
+        regime.append([
+            r["streamorde"], np.log1p(r["totdasqkm"]), r["slope"],
+            float(in_deg.get(s, 0) == 0),  # is_headwater
+        ])
+    ef = pd.read_csv(PROCESSED / "edge_features.csv", dtype={"source": str, "target": str})
+    ef = edges.merge(ef, on=["source", "target"], how="left")
+    edge_attr = np.nan_to_num(ef[[
+        "hop_dist", "geo_dist_deg", "target_lengthkm",
+        "target_totdasqkm", "target_slope", "target_streamorde",
+    ]].values.astype(float))
+    edge_attr[:, 2] = np.log1p(edge_attr[:, 2])  # lengthkm
+    edge_attr[:, 3] = np.log1p(edge_attr[:, 3])  # drainage area
+
     dataset = build_dataset(
         nodes, edges, monthly_doc,
         {"temperature": monthly_temp, "discharge": monthly_flow},
         months,
+        edge_attr=edge_attr,
+        regime=np.asarray(regime, dtype=np.float32),
     )
     tag = f"_smoke{args.smoke}" if args.smoke else ""
-    out = PROCESSED / f"mississippi_graph_v02{tag}.pt"
+    out = PROCESSED / f"mississippi_graph_v03{tag}.pt"
     save_dataset(dataset, out)
     print(f"\nsaved {out}: N={len(dataset['site_no'])}, T={len(dataset['months'])}, "
           f"E={dataset['edge_index'].shape[1]}, "

@@ -21,8 +21,11 @@ def main() -> None:
     ap.add_argument("--only", default=None, help="mask-name prefix filter")
     ap.add_argument("--variants", nargs="+", default=["river", "random", "none"])
     ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument("--arch", default="gcn", choices=["gcn", "directed"],
-                    help="encoder: plain GCN (G0) or directed relational (H1)")
+    ap.add_argument("--arch", default="gcn", choices=["gcn", "directed", "transport"],
+                    help="encoder: plain GCN (G0), directed relational (H1), "
+                         "or transport-gated (H2)")
+    ap.add_argument("--dataset", default="data/processed/mississippi_graph_v02.pt",
+                    help="dataset .pt (v03 adds edge_attr/regime for H2)")
     ap.add_argument("--share-weights", action="store_true",
                     help="H1.5: share relation weights + direction embedding")
     ap.add_argument("--edge-dropout", type=float, default=0.0,
@@ -30,7 +33,7 @@ def main() -> None:
     ap.add_argument("--wd", type=float, default=0.0, help="Adam weight decay")
     args = ap.parse_args()
 
-    dataset = load_dataset()
+    dataset = load_dataset(args.dataset)
     mask_dir = Path("experiments/masks")
     names = sorted(p.stem for p in mask_dir.glob("*.npz"))
     if args.only:
@@ -41,6 +44,8 @@ def main() -> None:
     for variant in args.variants:
         if args.arch == "gcn":
             prefix = "G0_gcn"
+        elif args.arch == "transport":
+            prefix = "H2_transport"
         elif args.share_weights or args.edge_dropout or args.wd:
             prefix = "H15_directed"
         else:

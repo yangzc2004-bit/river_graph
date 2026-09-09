@@ -8,7 +8,6 @@ Usage: python scripts/fetch_reach_attributes.py
 """
 
 import pickle
-from pathlib import Path
 
 import pandas as pd
 from pynhd import nhdplus_vaa

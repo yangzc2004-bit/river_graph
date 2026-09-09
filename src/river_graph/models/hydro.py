@@ -94,6 +94,77 @@ class DirectedConv(nn.Module):
         return self.self_lin(x) + up + down
 
 
+class GatedDirectedConv(nn.Module):
+    """H2: directed conv with physics-informed transport gates.
+
+    Message from j to i is  gate(e_ji) * W h_j , where the gate is a
+    sigmoid over the edge's physical attributes (hop distance, reach
+    length, drainage area, slope, stream order). Propagation strength is
+    set by the river, not uniform averaging. Upstream and downstream
+    relations keep separate weights and separate gates.
+    """
+
+    def __init__(self, in_channels: int, out_channels: int, edge_dim: int):
+        super().__init__()
+        self.self_lin = nn.Linear(in_channels, out_channels)
+        self.up_lin = nn.Linear(in_channels, out_channels)
+        self.down_lin = nn.Linear(in_channels, out_channels)
+        self.gate_up = nn.Sequential(nn.Linear(edge_dim, 16), nn.ReLU(),
+                                     nn.Linear(16, 1))
+        self.gate_down = nn.Sequential(nn.Linear(edge_dim, 16), nn.ReLU(),
+                                       nn.Linear(16, 1))
+
+    @staticmethod
+    def _agg(msg: torch.Tensor, ei: torch.Tensor, gate: torch.Tensor,
+             n: int) -> torch.Tensor:
+        """Gated mean aggregation: sum(gate * msg_src) / degree at dst."""
+        if ei.numel() == 0:
+            return torch.zeros(n, msg.shape[1], device=msg.device)
+        src, dst = ei
+        weighted = msg[src] * gate  # (E, out)
+        out = torch.zeros(n, msg.shape[1], device=msg.device).index_add_(0, dst, weighted)
+        deg = torch.zeros(n, 1, device=msg.device).index_add_(
+            0, dst, gate.new_ones(len(src), 1))
+        return out / deg.clamp(min=1.0)
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_attr: torch.Tensor) -> torch.Tensor:
+        n = x.shape[0]
+        ei_up = edge_index              # src upstream -> dst i
+        ei_down = edge_index.flip(0)    # src downstream -> dst i
+        g_up = torch.sigmoid(self.gate_up(edge_attr))
+        g_down = torch.sigmoid(self.gate_down(edge_attr))
+        return (
+            self.self_lin(x)
+            + self._agg(self.up_lin(x), ei_up, g_up, n)
+            + self._agg(self.down_lin(x), ei_down, g_down, n)
+        )
+
+
+class TransportGCNImputer(nn.Module):
+    """Directed GCN with transport gates; forward(x, edge_index, edge_attr)."""
+
+    def __init__(self, in_channels: int, edge_dim: int, hidden: int = 64,
+                 layers: int = 2, dropout: float = 0.1):
+        super().__init__()
+        import itertools
+
+        self.convs = nn.ModuleList()
+        dims = [in_channels, *([hidden] * layers)]
+        for a, b in itertools.pairwise(dims):
+            self.convs.append(GatedDirectedConv(a, b, edge_dim))
+        self.head = nn.Linear(hidden, 1)
+        self.dropout = dropout
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_attr: torch.Tensor) -> torch.Tensor:
+        h = x
+        for conv in self.convs:
+            h = F.relu(conv(h, edge_index, edge_attr))
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        return self.head(h).squeeze(-1)
+
+
 class DirectedGCNImputer(nn.Module):
     """Same interface as GCNImputer; forward takes the raw directed edges."""
 

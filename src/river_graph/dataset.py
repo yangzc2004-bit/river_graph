@@ -24,17 +24,22 @@ def build_dataset(
     monthly_doc: pd.DataFrame,
     monthly_features: dict[str, pd.DataFrame],
     months: pd.DatetimeIndex,
+    edge_attr: np.ndarray | None = None,
+    regime: np.ndarray | None = None,
 ) -> dict:
-    """Build the dataset dict. torch is only needed to save as .pt."""
+    """Build the dataset dict. torch is only needed to save as .pt.
+
+    edge_attr: (E, F_e) physical transport attributes per edge (H2).
+    regime: (N, F_r) hydrologic regime features per node (H2).
+    """
     import torch  # deferred: only needed here, not by the data pipeline
 
     from river_graph.data.aggregate import to_matrix
 
     sites = list(nodes["site_no"])
     site_idx = {s: i for i, s in enumerate(sites)}
-    e = edges[
-        edges["source"].isin(site_idx) & edges["target"].isin(site_idx)
-    ]
+    edge_ok = edges["source"].isin(site_idx) & edges["target"].isin(site_idx)
+    e = edges[edge_ok]
     edge_index = torch.tensor(
         [[site_idx[s] for s in e["source"]], [site_idx[t] for t in e["target"]]],
         dtype=torch.long,
@@ -47,7 +52,7 @@ def build_dataset(
     ]
     x = np.stack(channels, axis=-1)  # (N, T, F)
 
-    return {
+    out = {
         "site_no": sites,
         "months": [str(m.date()) for m in months],
         "edge_index": edge_index,
@@ -61,6 +66,12 @@ def build_dataset(
             dtype=torch.float32,
         ),
     }
+    if edge_attr is not None:
+        edge_attr = np.asarray(edge_attr, dtype=np.float32)[edge_ok.values]
+        out["edge_attr"] = torch.tensor(edge_attr, dtype=torch.float32)
+    if regime is not None:
+        out["regime"] = torch.tensor(regime, dtype=torch.float32)
+    return out
 
 
 def save_dataset(dataset: dict, out_path: str | Path) -> None:

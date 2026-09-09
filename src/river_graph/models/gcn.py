@@ -126,6 +126,11 @@ class GCNDocModel:
             standardized(latlon[:, 1:2]).expand(n, t),
             torch.zeros(n, t), torch.zeros(n, t),  # doc_obs channel slots
         ]
+        if "regime" in dataset:  # H2: hydrologic regime channels (static)
+            reg = dataset["regime"].float()
+            reg = (reg - reg.mean(0)) / (reg.std(0) + 1e-8)
+            for c in range(reg.shape[1]):
+                feats.append(reg[:, c:c + 1].expand(n, t))
         xt_static = torch.stack(feats, dim=-1).permute(1, 0, 2).contiguous()
         # fixed log-space standardization stats for the DOC channel
         doc_mu, doc_sd = y[ti, tj].mean(), y[ti, tj].std() + 1e-8
@@ -154,12 +159,26 @@ class GCNDocModel:
             model = DirectedGCNImputer(xt.shape[-1], self.hidden, self.layers,
                                        self.dropout, share_weights=self.share_weights,
                                        edge_dropout=self.edge_dropout)
+        elif self.architecture == "transport":
+            from river_graph.models.hydro import TransportGCNImputer
+
+            ei = dataset["edge_index"]  # raw directed; gates need real edges
+            edge_attr = dataset["edge_attr"]
+            edge_attr = (edge_attr - edge_attr.mean(0)) / (edge_attr.std(0) + 1e-8)
+            model = TransportGCNImputer(xt.shape[-1], edge_attr.shape[1],
+                                        self.hidden, self.layers, self.dropout)
         else:
             ei = make_edge_index(self.variant, dataset["edge_index"], n)
             model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
 
         opt = torch.optim.Adam(model.parameters(), lr=self.lr,
                                weight_decay=self.weight_decay)
+        if self.architecture == "transport":
+            def fwd(xb):
+                return model(xb, ei, edge_attr)
+        else:
+            def fwd(xb):
+                return model(xb, ei)
         months_idx = np.arange(t)
 
         # Train with per-epoch re-masking of train cells: half stay visible
@@ -183,7 +202,7 @@ class GCNDocModel:
                 sel = ti[tj == j]
                 if len(sel) == 0:
                     continue
-                pred = model(xt[j], ei)
+                pred = fwd(xt[j])
                 loss = F.mse_loss(pred[sel], y[sel, j])
                 opt.zero_grad()
                 loss.backward()
@@ -209,7 +228,7 @@ class GCNDocModel:
         preds = torch.empty(n, t)
         with torch.no_grad():
             for j in range(t):
-                preds[:, j] = model(xt[j], ei)
+                preds[:, j] = fwd(xt[j])
         # clamp to the observed train range: tree baselines (RF) cannot
         # extrapolate beyond training targets by construction, so the GNN
         # gets the same physical bound (also guards expm1 blow-ups)
