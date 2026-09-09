@@ -23,6 +23,11 @@ def main() -> None:
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--arch", default="gcn", choices=["gcn", "directed"],
                     help="encoder: plain GCN (G0) or directed relational (H1)")
+    ap.add_argument("--share-weights", action="store_true",
+                    help="H1.5: share relation weights + direction embedding")
+    ap.add_argument("--edge-dropout", type=float, default=0.0,
+                    help="H1.5: per-edge dropout prob during training")
+    ap.add_argument("--wd", type=float, default=0.0, help="Adam weight decay")
     args = ap.parse_args()
 
     dataset = load_dataset()
@@ -34,9 +39,16 @@ def main() -> None:
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     for variant in args.variants:
-        prefix = "G0_gcn" if args.arch == "gcn" else "H1_directed"
+        if args.arch == "gcn":
+            prefix = "G0_gcn"
+        elif args.share_weights or args.edge_dropout or args.wd:
+            prefix = "H15_directed"
+        else:
+            prefix = "H1_directed"
         mname = f"{prefix}_{variant}"
-        model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch)
+        model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch,
+                            share_weights=args.share_weights,
+                            edge_dropout=args.edge_dropout, weight_decay=args.wd)
         # one mask at a time, merging after each: crash-safe long runs
         for mask_name in names:
             jpath = RESULTS / f"{mname}.json"

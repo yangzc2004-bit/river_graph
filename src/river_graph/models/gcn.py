@@ -66,7 +66,9 @@ class GCNDocModel:
 
     def __init__(self, variant: str = "river", hidden: int = 64, layers: int = 2,
                  dropout: float = 0.1, lr: float = 1e-3, max_epochs: int = 200,
-                 patience: int = 20, seed: int = 0, architecture: str = "gcn"):
+                 patience: int = 20, seed: int = 0, architecture: str = "gcn",
+                 share_weights: bool = False, edge_dropout: float = 0.0,
+                 weight_decay: float = 0.0):
         self.variant = variant
         self.hidden = hidden
         self.layers = layers
@@ -76,6 +78,9 @@ class GCNDocModel:
         self.patience = patience
         self.seed = seed
         self.architecture = architecture
+        self.share_weights = share_weights
+        self.edge_dropout = edge_dropout
+        self.weight_decay = weight_decay
 
     def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
         """Fixed features + pieces for the dynamic DOC-obs channel.
@@ -147,12 +152,14 @@ class GCNDocModel:
 
             ei = make_directed_edges(self.variant, dataset["edge_index"], n)
             model = DirectedGCNImputer(xt.shape[-1], self.hidden, self.layers,
-                                       self.dropout)
+                                       self.dropout, share_weights=self.share_weights,
+                                       edge_dropout=self.edge_dropout)
         else:
             ei = make_edge_index(self.variant, dataset["edge_index"], n)
             model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
 
-        opt = torch.optim.Adam(model.parameters(), lr=self.lr)
+        opt = torch.optim.Adam(model.parameters(), lr=self.lr,
+                               weight_decay=self.weight_decay)
         months_idx = np.arange(t)
 
         # Train with per-epoch re-masking of train cells: half stay visible

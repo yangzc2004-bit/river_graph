@@ -41,39 +41,79 @@ def make_directed_edges(variant: str, edge_index: torch.Tensor, n_nodes: int,
 
 
 class DirectedConv(nn.Module):
-    """One layer: self transform + upstream relation + downstream relation."""
+    """One layer: self transform + upstream relation + downstream relation.
 
-    def __init__(self, in_channels: int, out_channels: int):
+    share_weights=True (H1.5): a single relation conv is shared across
+    directions and a learnable direction embedding is added to each
+    relation's aggregated message. Keeps the direction distinction while
+    roughly halving relation parameters — less room to memorize regional
+    neighborhood patterns, which is what hurt spatial transfer (E3).
+
+    edge_dropout: during training, each edge is dropped independently with
+    this probability per relation per forward pass, forcing the model not
+    to rely on memorized reaches.
+    """
+
+    def __init__(self, in_channels: int, out_channels: int,
+                 share_weights: bool = False):
         super().__init__()
         self.self_lin = nn.Linear(in_channels, out_channels)
-        self.up_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
-        self.down_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
+        self.share_weights = share_weights
+        if share_weights:
+            self.rel_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
+            # per-relation multiplicative gates: shared conv keeps the
+            # parameter count near a single relation, while the gates keep
+            # upstream/downstream distinguishable (an additive bias would
+            # cancel out — summing both relations is swap-invariant)
+            self.dir_gate = nn.Parameter(
+                torch.stack([torch.ones(out_channels),
+                             torch.full((out_channels,), 0.5)])
+            )
+        else:
+            self.up_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
+            self.down_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def _edge_dropout(ei: torch.Tensor, p: float, training: bool) -> torch.Tensor:
+        if not training or p <= 0 or ei.numel() == 0:
+            return ei
+        keep = torch.rand(ei.shape[1], device=ei.device) >= p
+        return ei[:, keep]
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_drop_p: float = 0.0) -> torch.Tensor:
         # river edges point upstream -> downstream
-        ei_up = edge_index  # messages arrive from upstream neighbors
-        ei_down = edge_index.flip(0)  # messages arrive from downstream neighbors
-        return self.self_lin(x) + self.up_conv(x, ei_up) + self.down_conv(x, ei_down)
+        ei_up = self._edge_dropout(edge_index, edge_drop_p, self.training)
+        ei_down = self._edge_dropout(edge_index.flip(0), edge_drop_p, self.training)
+        if self.share_weights:
+            up = self.rel_conv(x, ei_up) * self.dir_gate[0]
+            down = self.rel_conv(x, ei_down) * self.dir_gate[1]
+        else:
+            up = self.up_conv(x, ei_up)
+            down = self.down_conv(x, ei_down)
+        return self.self_lin(x) + up + down
 
 
 class DirectedGCNImputer(nn.Module):
     """Same interface as GCNImputer; forward takes the raw directed edges."""
 
     def __init__(self, in_channels: int, hidden: int = 64, layers: int = 2,
-                 dropout: float = 0.1):
+                 dropout: float = 0.1, share_weights: bool = False,
+                 edge_dropout: float = 0.0):
         super().__init__()
         self.convs = nn.ModuleList()
         dims = [in_channels, *([hidden] * layers)]
         import itertools
 
         for a, b in itertools.pairwise(dims):
-            self.convs.append(DirectedConv(a, b))
+            self.convs.append(DirectedConv(a, b, share_weights=share_weights))
         self.head = nn.Linear(hidden, 1)
         self.dropout = dropout
+        self.edge_dropout = edge_dropout
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         h = x
         for conv in self.convs:
-            h = F.relu(conv(h, edge_index))
+            h = F.relu(conv(h, edge_index, edge_drop_p=self.edge_dropout))
             h = F.dropout(h, p=self.dropout, training=self.training)
         return self.head(h).squeeze(-1)

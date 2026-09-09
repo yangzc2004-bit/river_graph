@@ -35,14 +35,24 @@ def main() -> None:
         "B3_mlp": MLP(),
     }
     RESULTS.mkdir(parents=True, exist_ok=True)
-    rows = []
     for mname, model in models.items():
-        res = evaluate(model, dataset, names, mask_dir)
-        (RESULTS / f"{mname}.json").write_text(json.dumps(res, indent=2))
-        for mask_name, m in res.items():
-            rows.append({"model": mname, "mask": mask_name, **m})
+        # one mask at a time, merging after each: crash-safe, resumable
+        for mask_name in names:
+            jpath = RESULTS / f"{mname}.json"
+            merged = json.loads(jpath.read_text()) if jpath.exists() else {}
+            if mask_name in merged:
+                continue
+            res = evaluate(model, dataset, [mask_name], mask_dir)
+            merged.update(res)
+            jpath.write_text(json.dumps(merged, indent=2))
+            m = res[mask_name]
             print(f"{mname} @ {mask_name}: RMSE={m['rmse']:.3f} "
-                  f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})")
+                  f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})", flush=True)
+    # rebuild the flat CSV from all per-model JSONs
+    rows = []
+    for jpath in sorted(RESULTS.glob("B[0-9]_*.json")):
+        for mask_name, m in json.loads(jpath.read_text()).items():
+            rows.append({"model": jpath.stem, "mask": mask_name, **m})
     pd.DataFrame(rows).to_csv(RESULTS / "baselines.csv", index=False)
     print(f"saved {RESULTS / 'baselines.csv'}")
 

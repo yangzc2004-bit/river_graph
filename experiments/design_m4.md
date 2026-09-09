@@ -58,3 +58,31 @@ should matter most where the benchmark already has partial observation).
 - [ ] NHDPlus reach attributes (TotDASqKM, slope, mean annual flow) per
       COMID — small fetch, resumable
 - [ ] (later, post-MVP) HydroATLAS land cover / soil carbon / precipitation
+
+## H1 results and the H1.5 stabilization step (added after the H1 run)
+
+H1 (directed) beat G0 on all 9 E1 masks and became the best model on both
+E2 variants (E2a MAE 1.094 vs RF 1.115; E2b 1.067 vs RF 1.114), but
+collapsed on E3 spatial transfer (R2 -2.31 vs G0 river 0.32).
+
+Interpretation (a finding, not just a failure): directional message
+passing substantially improves temporal reconstruction but reduces spatial
+transferability — explicit flow direction captures local transport
+dynamics while increasing sensitivity to regional topology. The directed
+encoder has ~3x the parameters of G0 on only 571 nodes, so it memorizes
+regional neighborhood patterns that do not exist at unseen stations.
+
+H1.5 keeps direction but cuts overfitting:
+
+1. **Shared relation weights + multiplicative direction gates** — one
+   conv for both relations, per-relation gates keep up/down
+   distinguishable. (An additive direction embedding does NOT work:
+   summing both relations makes the layer invariant to edge direction.
+   Multiplicative interaction is what preserves direction.)
+2. **Edge dropout (p=0.2)** — training with randomly deleted river edges
+   forces the model not to memorize specific reaches.
+3. **Weight decay 1e-4**.
+4. **E3 promoted to 3 seeds (42/43/44)** to separate signal from luck.
+
+H2/H3 are postponed until H1.5 either fixes E3 or tells us direction
+inherently trades off against spatial transfer.

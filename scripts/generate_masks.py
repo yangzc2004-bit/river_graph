@@ -30,7 +30,8 @@ def main() -> None:
     masks = {**make_e1(y_mask)}
     masks["e2a_strict"] = make_e2_strict(y_mask, months)
     masks["e2b_partial"] = make_e2_partial(y_mask, months)
-    masks["e3_spatial"] = make_e3(y_mask, edges, sites)
+    for s in (42, 43, 44):
+        masks[f"e3_spatial_seed{s}"] = make_e3(y_mask, edges, sites, seed=s)
 
     for name, split in masks.items():
         np.savez(OUT / f"{name}.npz", **split)

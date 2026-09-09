@@ -104,6 +104,7 @@ def make_e3(
     y_mask: np.ndarray,
     edges: pd.DataFrame,
     sites: list[str],
+    seed: int = E3_SEED,
 ) -> dict[str, np.ndarray]:
     """E3 spatial split: hold out all observed cells of 20% of stations in
     the largest weakly connected component."""
@@ -112,7 +113,7 @@ def make_e3(
     g = nx.from_pandas_edgelist(edges, "source", "target", create_using=nx.DiGraph)
     largest = max(nx.weakly_connected_components(g), key=len)
     cand = sorted(set(sites) & largest)
-    rng = np.random.default_rng(E3_SEED)
+    rng = np.random.default_rng(seed)
     held_out = set(rng.permutation(cand)[: round(len(cand) * E3_HOLDOUT_FRAC)])
 
     _n, t = y_mask.shape
@@ -120,7 +121,7 @@ def make_e3(
     train_val, test = [], []
     for flat in observed_cells(y_mask):
         (test if flat // t in held_rows else train_val).append(flat)
-    rng2 = np.random.default_rng(E3_SEED + 1)
+    rng2 = np.random.default_rng(seed + 1)
     tv = rng2.permutation(np.array(train_val))
     n_val = round(len(tv) * VAL_FRAC)
     return {
