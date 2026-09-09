@@ -11,8 +11,9 @@ MAE in mg/L (lower is better); E1 entries are mean±std over seeds 42/43/44.
 | G0_gcn_none        | 1.81±0.09 | 1.88±0.04 | 1.87±0.06 |         1.4  |          1.38 | 1.68         |
 | G0_gcn_random      | 2.10±0.10 | 2.15±0.06 | 2.14±0.02 |         1.27 |          1.24 | 2.39         |
 | G0_gcn_river       | 1.74±0.01 | 1.77±0.01 | 1.87±0.09 |         1.45 |          1.38 | 1.97±0.31    |
-| H15_directed_river | 1.69±0.08 | nan       | nan       |       nan    |          1.15 | 1.98±0.21    |
-| H1_directed_river  | 1.50±0.05 | 1.55±0.05 | 1.62±0.04 |         1.09 |          1.07 | 2.02±0.28    |
+| H15_directed_river | 1.69±0.08 | nan       | nan       |       nan    |          1.15 | nan          |
+| H1_directed_river  | 1.50±0.05 | 1.55±0.05 | 1.62±0.04 |         1.09 |          1.07 | 2.03±0.23    |
+| H2_transport_river | 1.47      | nan       | nan       |       nan    |        nan    | 2.01±0.26    |
 
 RMSE (mg/L), same layout:
 
@@ -25,8 +26,9 @@ RMSE (mg/L), same layout:
 | G0_gcn_none        |     5.18 |     5.87 |     5.74 |         1.9  |          1.86 |         7.11 |
 | G0_gcn_random      |     5.64 |     6.25 |     6.12 |         1.85 |          1.79 |         7.46 |
 | G0_gcn_river       |     4.99 |     5.71 |     5.73 |         1.94 |          1.86 |         6.21 |
-| H15_directed_river |     4.96 |   nan    |   nan    |       nan    |          1.71 |         7.49 |
-| H1_directed_river  |     4.73 |     5.44 |     5.58 |         1.64 |          1.58 |         7.46 |
+| H15_directed_river |     4.96 |   nan    |   nan    |       nan    |          1.71 |       nan    |
+| H1_directed_river  |     4.73 |     5.44 |     5.58 |         1.64 |          1.58 |         6.22 |
+| H2_transport_river |     6.54 |   nan    |   nan    |       nan    |        nan    |         6.22 |
 
 R2, same layout:
 
@@ -39,5 +41,6 @@ R2, same layout:
 | G0_gcn_none        |     0.31 |     0.22 |     0.23 |         0.09 |          0.08 |        -2.34 |
 | G0_gcn_random      |     0.17 |     0.11 |     0.12 |         0.14 |          0.15 |        -2.68 |
 | G0_gcn_river       |     0.36 |     0.27 |     0.23 |         0.06 |          0.08 |         0.25 |
-| H15_directed_river |     0.37 |   nan    |   nan    |       nan    |          0.22 |        -0.62 |
-| H1_directed_river  |     0.43 |     0.33 |     0.27 |         0.32 |          0.34 |        -0.6  |
+| H15_directed_river |     0.37 |   nan    |   nan    |       nan    |          0.22 |       nan    |
+| H1_directed_river  |     0.43 |     0.33 |     0.27 |         0.32 |          0.34 |         0.25 |
+| H2_transport_river |     0.28 |   nan    |   nan    |       nan    |        nan    |         0.23 |

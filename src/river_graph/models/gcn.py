@@ -212,7 +212,12 @@ class GCNDocModel:
                 tgt_loss += loss.item() * len(sel)
             tgt_loss /= max(len(tgt_cells), 1)
             if tgt_loss < best_loss - 1e-6:
-                best_loss, best_state, bad = tgt_loss, model.state_dict(), 0
+                best_loss = tgt_loss
+                # state_dict() returns live references; clone or continued
+                # training mutates the "best" state
+                best_state = {k: v.detach().clone()
+                              for k, v in model.state_dict().items()}
+                bad = 0
             else:
                 bad += 1
                 if bad >= self.patience:
@@ -231,8 +236,11 @@ class GCNDocModel:
                 preds[:, j] = fwd(xt[j])
         # clamp to the observed train range: tree baselines (RF) cannot
         # extrapolate beyond training targets by construction, so the GNN
-        # gets the same physical bound (also guards expm1 blow-ups)
+        # gets a similar physical bound. Use the 99.5th percentile, not the
+        # max — the max is a single flood-event spike (445 mg/L) and letting
+        # pathological extrapolations clamp there still destroys mg/L R2.
         ti, tj = train_cells // t, train_cells % t
-        lo, hi = y[ti, tj].min(), y[ti, tj].max()
+        lo = y[ti, tj].min()
+        hi = torch.quantile(y[ti, tj], 0.995)
         preds = preds.clamp(min=lo, max=hi)
         return np.expm1(preds.numpy())

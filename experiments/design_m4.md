@@ -92,12 +92,20 @@ H1 (directed) beat G0 on all 9 E1 masks and became the best model on both
 E2 variants (E2a MAE 1.094 vs RF 1.115; E2b 1.067 vs RF 1.114), but
 collapsed on E3 spatial transfer (R2 -2.31 vs G0 river 0.32).
 
-Interpretation (a finding, not just a failure): directional message
-passing substantially improves temporal reconstruction but reduces spatial
-transferability — explicit flow direction captures local transport
-dynamics while increasing sensitivity to regional topology. The directed
-encoder has ~3x the parameters of G0 on only 571 nodes, so it memorizes
-regional neighborhood patterns that do not exist at unseen stations.
+Resolution (after H1.5 + diagnosis): the collapse was NOT structural.
+Regularization (H1.5) and physics features (H2) did not help, and the
+training curve was stable for 250 epochs. Root cause: a handful of
+held-out high-DOC headwater stations got unbounded extrapolations, and
+the inference clamp ceiling was the train-set MAX (445 mg/L, a flood
+spike), so a few cells produced squared errors large enough to destroy
+the mg/L-space R2. Fix: clamp to the train 99.5th percentile. After the
+fix, H1 on E3 seed42 is R2 0.27 (was -2.28).
+
+E3 three-seed summary (R2): kriging 0.27, G0 0.25, H1 0.25, H2 0.23 —
+no directed advantage on spatial transfer, but no pathology either. The
+direction advantage lives in E1/E2 (known stations, temporal context).
+Headwater regime awareness (H2's node regime encoding) remains motivated
+by the diagnosis: errors still concentrate in HUC2 10/11 headwaters.
 
 H1.5 keeps direction but cuts overfitting:
 
