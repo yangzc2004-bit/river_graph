@@ -37,13 +37,17 @@ def main() -> None:
         prefix = "G0_gcn" if args.arch == "gcn" else "H1_directed"
         mname = f"{prefix}_{variant}"
         model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch)
-        res = evaluate(model, dataset, names, mask_dir)
-        # merge into any existing per-model results (partial reruns)
-        jpath = RESULTS / f"{mname}.json"
-        merged = json.loads(jpath.read_text()) if jpath.exists() else {}
-        merged.update(res)
-        jpath.write_text(json.dumps(merged, indent=2))
-        for mask_name, m in res.items():
+        # one mask at a time, merging after each: crash-safe long runs
+        for mask_name in names:
+            jpath = RESULTS / f"{mname}.json"
+            merged = json.loads(jpath.read_text()) if jpath.exists() else {}
+            if mask_name in merged:
+                print(f"{mname} @ {mask_name}: cached, skip")
+                continue
+            res = evaluate(model, dataset, [mask_name], mask_dir)
+            merged.update(res)
+            jpath.write_text(json.dumps(merged, indent=2))
+            m = res[mask_name]
             print(f"{mname} @ {mask_name}: RMSE={m['rmse']:.3f} "
                   f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})", flush=True)
     # rebuild the flat CSV from all per-model JSONs (never overwrite blindly)
