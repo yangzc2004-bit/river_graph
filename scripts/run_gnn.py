@@ -21,6 +21,8 @@ def main() -> None:
     ap.add_argument("--only", default=None, help="mask-name prefix filter")
     ap.add_argument("--variants", nargs="+", default=["river", "random", "none"])
     ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--arch", default="gcn", choices=["gcn", "directed"],
+                    help="encoder: plain GCN (G0) or directed relational (H1)")
     args = ap.parse_args()
 
     dataset = load_dataset()
@@ -32,8 +34,9 @@ def main() -> None:
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     for variant in args.variants:
-        mname = f"G0_gcn_{variant}"
-        model = GCNDocModel(variant=variant, lr=args.lr)
+        prefix = "G0_gcn" if args.arch == "gcn" else "H1_directed"
+        mname = f"{prefix}_{variant}"
+        model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch)
         res = evaluate(model, dataset, names, mask_dir)
         # merge into any existing per-model results (partial reruns)
         jpath = RESULTS / f"{mname}.json"
@@ -45,7 +48,7 @@ def main() -> None:
                   f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})", flush=True)
     # rebuild the flat CSV from all per-model JSONs (never overwrite blindly)
     rows = []
-    for jpath in sorted(RESULTS.glob("G0_*.json")):
+    for jpath in sorted(RESULTS.glob("G*_*.json")) + sorted(RESULTS.glob("H*_*.json")):
         for mask_name, m in json.loads(jpath.read_text()).items():
             rows.append({"model": jpath.stem, "mask": mask_name, **m})
     out = RESULTS / "gnn.csv"

@@ -66,7 +66,7 @@ class GCNDocModel:
 
     def __init__(self, variant: str = "river", hidden: int = 64, layers: int = 2,
                  dropout: float = 0.1, lr: float = 1e-3, max_epochs: int = 200,
-                 patience: int = 20, seed: int = 0):
+                 patience: int = 20, seed: int = 0, architecture: str = "gcn"):
         self.variant = variant
         self.hidden = hidden
         self.layers = layers
@@ -75,6 +75,7 @@ class GCNDocModel:
         self.max_epochs = max_epochs
         self.patience = patience
         self.seed = seed
+        self.architecture = architecture
 
     def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
         """Fixed features + pieces for the dynamic DOC-obs channel.
@@ -140,10 +141,17 @@ class GCNDocModel:
         rng = np.random.default_rng(self.seed)
 
         n, t = dataset["y"].shape
-        ei = make_edge_index(self.variant, dataset["edge_index"], n)
         xt, y, base_visible, train_cells, stats = self._build_inputs(dataset, split)
+        if self.architecture == "directed":
+            from river_graph.models.hydro import DirectedGCNImputer, make_directed_edges
 
-        model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
+            ei = make_directed_edges(self.variant, dataset["edge_index"], n)
+            model = DirectedGCNImputer(xt.shape[-1], self.hidden, self.layers,
+                                       self.dropout)
+        else:
+            ei = make_edge_index(self.variant, dataset["edge_index"], n)
+            model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
+
         opt = torch.optim.Adam(model.parameters(), lr=self.lr)
         months_idx = np.arange(t)
 
