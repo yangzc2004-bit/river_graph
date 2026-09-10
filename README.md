@@ -1,84 +1,90 @@
 # river_graph
 
-**Topology-aware Graph Neural Networks for Reconstructing Sparse Dissolved Organic Carbon Observations in the Mississippi River Basin** (working title)
+**Topology-aware Graph Neural Networks for Reconstructing Sparse Dissolved
+Organic Carbon Observations in the Mississippi River Basin**
 
-## Idea
+## Scientific question
 
-DOC observations from USGS monitoring stations are sparse and irregular in time.
-We model stations as nodes in a graph whose edges follow the river network
-(upstream → downstream), and test whether a topology-aware GNN can reconstruct
-withheld DOC observations better than topology-agnostic baselines.
+USGS DOC monitoring is sparse and irregular: in the Mississippi River Basin,
+11,948 stations have at least one DOC sample, but only ~570 have a usable
+record, and only 8.9% of (station, month) cells are observed. Can the river
+network itself — connectivity, flow direction, transport physics, and the
+ecological identity of each reach — help reconstruct what was never measured?
 
-MVP questions:
+## Key idea
 
-1. Can USGS DOC stations form a meaningful graph? → yes, via NHDPlus/NLDI linkage
-2. Can a GNN predict masked DOC observations?
-3. Does real river topology contribute? → ablation: MLP (no graph) vs random graph vs river graph
+```
+sparse DOC observations
+      +  river topology (NLDI / NHDPlus)
+      +  ecological context (StreamCat catchment attributes)
+      ↓
+directed, transport-gated GNN with an ecological context encoder
+```
 
-## Data profile (Mississippi River Basin, HUC2: 05 06 07 08 10 11)
+## Method evolution (each step ablated on the same benchmark)
 
-From the NWIS water-quality series catalog (2026-09 snapshot):
+| stage | model | adds | finding |
+|---|---|---|---|
+| G0 | plain GCN | river graph as undirected edges | topology > random graph > no graph (E1) |
+| H1 | directed relational GCN | separate upstream/downstream channels | direction helps temporal reconstruction; first model to beat RF on E2 |
+| H2 | transport-gated GCN | edge physics gates (hop distance, reach length, drainage area, slope, stream order) | best on E2a/E2b; matches RF on E1 |
+| H2E | + ecological context | StreamCat: land cover, climate normals, soil organic matter, elevation, baseflow | fixes spatial transfer (E3 R² 0.23 → 0.32) |
+| **H2X** | **+ ecological context encoder** | MLP embedding of the context block | **best overall**: E2b MAE 0.96 / R² 0.47; E3 seed44 R² 0.53 |
 
-- 11,948 stations with ≥1 DOC sample (USGS pcode 00681), 75,202 samples total (1958–2024)
-- 660 stations with ≥20 samples — median record span 6.2 yr, median sampling gap ~48 days
-- Covariate availability among those 660: water temperature 93%, pH 94%, specific conductance 96%, discharge 74%
+## Benchmark
 
-Sampling is not synchronized across stations, so the MVP target is
-**seasonal-mean DOC per station** rather than instantaneous values.
+- **Graph**: 571 stations, 562 directed edges (upstream → downstream) built
+  via NLDI over NHDPlus; largest connected component 407 nodes.
+- **Labels**: monthly-mean DOC (USGS pcode 00681), 1972–2026, 33,048
+  observed (station, month) cells.
+- **Experiments**: E1 random masks (20/40/60% × 3 seeds), E2a strict future
+  forecasting, E2b future reconstruction with a running network (80/20),
+  E3 spatial extrapolation (20% stations held out × 3 seeds).
+- **Baselines**: station mean, Euclidean kriging, random forest, MLP.
+- All masks, predictions, and results are frozen under `experiments/`.
 
-## Milestone 1: station graph (done)
+Headline results (MAE mg/L, lower is better):
 
-`python scripts/build_graph.py` builds the directed station graph:
+| model | E1 r20 | E1 r40 | E1 r60 | E2a | E2b | E3 |
+|---|---|---|---|---|---|---|
+| station mean | 1.46 | 1.48 | 1.48 | 1.14 | 1.12 | 2.59 |
+| kriging | 2.15 | 2.18 | 2.22 | n/a | 1.51 | 2.05 |
+| random forest | 1.42 | 1.44 | 1.46 | 1.12 | 1.11 | 2.07 |
+| **H2X (ours)** | **1.40** | † | † | † | **0.96** | **1.79** |
 
-- 571 candidate stations (≥20 DOC samples, ≥2 yr span), 571/571 linked to
-  NHDPlus reaches (NLDI site index, with coordinate-snap fallback)
-- 562 directed edges: A→B iff B is the first other station on the downstream
-  mainstem walk from A (NLDI DM navigation by COMID)
-- Largest weakly-connected component: 407 nodes (71%)
-- Artifacts: `data/processed/mississippi_graph.pkl`, `graph_nodes.csv`,
-  `graph_edges.csv`, `mississippi_graph.png`
+\* RF keeps the 60% heavy-masking regime; E3 values are 3-seed MAE means.
+† H2X cells pending the running freeze; see
+`experiments/frozen_results/benchmark.csv` for the authoritative table
+incl. log-space metrics.
 
-## Milestone 2: training dataset (done)
+## Notable analyses
 
-`python scripts/build_dataset.py [--smoke N]` builds `mississippi_graph_v02.pt`:
+- `experiments/analysis/` — E3 error attribution (headwater stations in the
+  Missouri headwaters drive failures; ecological context recovers them,
+  MAE 2.79 → 2.21) and the 06438000 high-DOC label audit (a 1970s-era
+  localized regime episode, invisible to every available proxy).
 
-- N=571 nodes, E=562 edges, T=652 months (1972-04 .. 2026-07 span of DOC obs)
-- `y` (N×T): monthly-mean DOC labels, `y_mask`: observed cells — **8.9%
-  coverage**, i.e. the reconstruction problem is genuinely sparse
-- `x` (N×T×2): monthly-mean water temperature and discharge
-- Funnel: 571 stations → 570 with ≥1 DOC obs → 558 with ≥12 monthly labels;
-  temperature 539/571, discharge 345/571 (main missingness source)
+## Reproducibility
+
+```bash
+uv sync --extra gnn --extra dev
+python scripts/fetch_doc_inventory.py     # station inventory + catalog (NWIS)
+python scripts/build_graph.py             # station graph via NLDI
+python scripts/build_dataset.py           # dataset .pt (needs WQP pulls)
+python scripts/fetch_streamcat.py         # ecological context (EPA)
+python scripts/generate_masks.py          # benchmark masks
+python scripts/run_freeze.py              # frozen predictions + benchmark.csv
+```
+
+Data sources: USGS NWIS, Water Quality Portal, NLDI/NHDPlus, EPA StreamCat.
+`data/` is gitignored; everything is re-derivable via the scripts above.
 
 ## Layout
 
 ```
-configs/            experiment configs (mvp.yaml)
-data/               raw + processed data (gitignored, reproducible via scripts)
-scripts/            data download / analysis / graph-building entry points
-src/river_graph/
-  config.py         config loading
-  data/             NWIS/WQP data access
-  topology/         NLDI station matching, edge construction, visualization
-  models/           GNN / MLP models
-  baselines/        kriging / random forest baselines
-  experiments/      mask reconstruction + topology ablation
-tests/
+configs/             experiment configs
+experiments/         design docs, masks, frozen results, analysis
+scripts/             pipeline entry points
+src/river_graph/     data / topology / models / baselines / experiments
+tests/               unit tests (43)
 ```
-
-## Setup
-
-```bash
-uv sync                 # core deps
-uv sync --extra gnn     # + torch / torch-geometric
-```
-
-## Data pipeline
-
-```bash
-python scripts/fetch_doc_inventory.py    # station list + per-parameter sample counts (NWIS)
-python scripts/analyze_doc_inventory.py  # availability report -> data/processed/
-bash    scripts/download_wqp_by_huc.sh data/raw/mrb_huc4.txt   # DOC values (WQP, resumable)
-```
-
-Data sources: USGS NWIS (waterservices.usgs.gov), Water Quality Portal
-(waterqualitydata.us), NHDPlus HR / NLDI (river network, upcoming).
