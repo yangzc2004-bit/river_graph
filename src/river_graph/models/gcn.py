@@ -265,8 +265,10 @@ class GCNDocModel:
         # clamp to the observed train range: tree baselines (RF) cannot
         # extrapolate beyond training targets by construction, so the GNN
         # gets a similar physical bound. Use the 99.5th percentile, not the
-        # max — the max is a single flood-event spike (445 mg/L) and letting
-        # pathological extrapolations clamp there still destroys mg/L R2.
+        # max — the max (445 mg/L) is from a 1970s-era localized high-DOC
+        # regime episode at one station (see experiments/analysis/extreme/),
+        # and letting pathological extrapolations clamp there still
+        # destroys mg/L R2.
         ti, tj = train_cells // t, train_cells % t
         lo = y[ti, tj].min()
         hi = torch.quantile(y[ti, tj], 0.995)

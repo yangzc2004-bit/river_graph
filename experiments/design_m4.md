@@ -96,8 +96,9 @@ Resolution (after H1.5 + diagnosis): the collapse was NOT structural.
 Regularization (H1.5) and physics features (H2) did not help, and the
 training curve was stable for 250 epochs. Root cause: a handful of
 held-out high-DOC headwater stations got unbounded extrapolations, and
-the inference clamp ceiling was the train-set MAX (445 mg/L, a flood
-spike), so a few cells produced squared errors large enough to destroy
+the inference clamp ceiling was the train-set MAX (445 mg/L, a 1970s-era
+high-DOC regime value, NOT a flood pulse — see
+experiments/analysis/extreme/P0_label_audit_06438000.md), so a few cells produced squared errors large enough to destroy
 the mg/L-space R2. Fix: clamp to the train 99.5th percentile. After the
 fix, H1 on E3 seed42 is R2 0.27 (was -2.28).
 
