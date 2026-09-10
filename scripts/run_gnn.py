@@ -34,6 +34,9 @@ def main() -> None:
     ap.add_argument("--edge-dropout", type=float, default=0.0,
                     help="H1.5: per-edge dropout prob during training")
     ap.add_argument("--wd", type=float, default=0.0, help="Adam weight decay")
+    ap.add_argument("--env-groups", nargs="*", default=None,
+                    choices=["hydro", "landcover", "climate", "soil", "topo"],
+                    help="subset of v04 regime groups (default: all)")
     args = ap.parse_args()
 
     dataset = load_dataset(args.dataset)
@@ -57,6 +60,7 @@ def main() -> None:
             prefix = "H1_directed"
         mname = f"{prefix}_{variant}"
         model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch,
+                            env_groups=args.env_groups,
                             share_weights=args.share_weights,
                             edge_dropout=args.edge_dropout, weight_decay=args.wd)
         # one mask at a time, merging after each: crash-safe long runs

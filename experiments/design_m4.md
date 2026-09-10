@@ -141,3 +141,16 @@ COMID — direct join, no spatial overlay) + NHDPlus VAA (already fetched).
 Design rule: environment defines the node state, the river graph defines
 propagation. Validation experiment is E3-focused: G0 vs H2 vs H2+Env,
 success = E3 R2 improvement while keeping E1/E2b.
+
+## M5 terminology and ablation rules (added after review)
+
+- Call it **ecological context** (catchment ecological identity), never
+  "environment parameters" — it encodes what a reach *is*, not model knobs.
+- Leakage note: StreamCat attributes are static catchment properties
+  (NLCD 2019 land cover, 1991-2020 climate normals, STATSGO soils). They
+  contain no information from the evaluation period, so E2/E3 remain clean.
+- Environmental ablation (answer "what actually helps"): H2+Env groups —
+  hydro / landcover / climate / soil+topo / all — on E3 seeds first.
+- If the hypothesis holds, the next upgrade is a real **ecological context
+  encoder** (MLP embedding of the context block) rather than raw feature
+  concatenation.

@@ -68,7 +68,7 @@ class GCNDocModel:
                  dropout: float = 0.1, lr: float = 1e-3, max_epochs: int = 200,
                  patience: int = 20, seed: int = 0, architecture: str = "gcn",
                  share_weights: bool = False, edge_dropout: float = 0.0,
-                 weight_decay: float = 0.0):
+                 weight_decay: float = 0.0, env_groups: list[str] | None = None):
         self.variant = variant
         self.hidden = hidden
         self.layers = layers
@@ -81,6 +81,7 @@ class GCNDocModel:
         self.share_weights = share_weights
         self.edge_dropout = edge_dropout
         self.weight_decay = weight_decay
+        self.env_groups = env_groups
 
     def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
         """Fixed features + pieces for the dynamic DOC-obs channel.
@@ -126,8 +127,15 @@ class GCNDocModel:
             standardized(latlon[:, 1:2]).expand(n, t),
             torch.zeros(n, t), torch.zeros(n, t),  # doc_obs channel slots
         ]
-        if "regime" in dataset:  # H2: hydrologic regime channels (static)
+        if "regime" in dataset:  # H2/M5: static regime + ecological context
             reg = dataset["regime"].float()
+            if self.env_groups is not None:
+                # v04 regime layout: 0:4 hydro, 4:8 landcover, 8:10 climate,
+                # 10:11 soil, 11:13 topo (elev, bfi)
+                group_idx = {"hydro": [0, 1, 2, 3], "landcover": [4, 5, 6, 7],
+                             "climate": [8, 9], "soil": [10], "topo": [11, 12]}
+                keep = [i for g in self.env_groups for i in group_idx[g]]
+                reg = reg[:, keep]
             reg = (reg - reg.mean(0)) / (reg.std(0) + 1e-8)
             for c in range(reg.shape[1]):
                 feats.append(reg[:, c:c + 1].expand(n, t))
