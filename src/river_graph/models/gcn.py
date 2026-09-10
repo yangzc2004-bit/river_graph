@@ -132,21 +132,26 @@ class GCNDocModel:
         env_raw = None
         if "regime" in dataset:  # H2/M5: static regime + ecological context
             reg = dataset["regime"].float()
+            # v04 regime layout: 0:4 hydro, 4:8 landcover, 8:10 climate,
+            # 10:11 soil, 11:13 topo (elev, bfi)
             if self.env_groups is not None:
-                # v04 regime layout: 0:4 hydro, 4:8 landcover, 8:10 climate,
-                # 10:11 soil, 11:13 topo (elev, bfi)
                 group_idx = {"hydro": [0, 1, 2, 3], "landcover": [4, 5, 6, 7],
                              "climate": [8, 9], "soil": [10], "topo": [11, 12]}
-                keep = [i for g in self.env_groups for i in group_idx[g]]
-                reg = reg[:, keep]
+                keep = sorted(i for g in self.env_groups for i in group_idx[g])
+            else:
+                keep = list(range(reg.shape[1]))
             reg = (reg - reg.mean(0)) / (reg.std(0) + 1e-8)
+            # split by ORIGINAL column index: hydro (<4) stays in x,
+            # ecological context (>=4) goes to the encoder (M6)
+            pos = {orig: k for k, orig in enumerate(keep)}
+            hydro_cols = [pos[i] for i in keep if i < 4]
+            env_cols = [pos[i] for i in keep if i >= 4]
             if self.env_encoder:
-                # M6: hydro channels stay raw in x; the ecological context
-                # block (channels 4+) goes to the encoder instead
-                env_raw = reg[:, 4:]
-                reg = reg[:, :4]
-            for c in range(reg.shape[1]):
-                feats.append(reg[:, c:c + 1].expand(n, t))
+                env_raw = reg[:, env_cols] if env_cols else None
+                reg = reg[:, hydro_cols] if hydro_cols else None
+            if reg is not None:
+                for c in range(reg.shape[1]):
+                    feats.append(reg[:, c:c + 1].expand(n, t))
         xt_static = torch.stack(feats, dim=-1).permute(1, 0, 2).contiguous()
         # fixed log-space standardization stats for the DOC channel
         doc_mu, doc_sd = y[ti, tj].mean(), y[ti, tj].std() + 1e-8
@@ -181,7 +186,9 @@ class GCNDocModel:
             ei = dataset["edge_index"]  # raw directed; gates need real edges
             edge_attr = dataset["edge_attr"]
             edge_attr = (edge_attr - edge_attr.mean(0)) / (edge_attr.std(0) + 1e-8)
-            env_dim = env_raw.shape[1] if self.architecture == "transport_enc" else 0
+            env_dim = (env_raw.shape[1]
+                       if self.architecture == "transport_enc" and env_raw is not None
+                       else 0)
             model = TransportGCNImputer(xt.shape[-1], edge_attr.shape[1],
                                         self.hidden, self.layers, self.dropout,
                                         env_dim=env_dim)
