@@ -14,6 +14,10 @@ MAE in mg/L (lower is better); E1 entries are mean±std over seeds 42/43/44.
 | H15_directed_river      | 1.69±0.08 | nan       | nan       |       nan    |          1.15 | nan          |
 | H1_directed_river       | 1.50±0.05 | 1.55±0.05 | 1.62±0.04 |         1.09 |          1.07 | 2.03±0.23    |
 | H2E_transport_river     | 1.41±0.07 | 1.42±0.02 | 1.50±0.01 |         1.18 |          1.13 | 1.81±0.21    |
+| H2X_climate_river       | nan       | nan       | nan       |       nan    |          1.06 | 2.05±0.33    |
+| H2X_hydro_river         | nan       | nan       | nan       |       nan    |          1.01 | 1.98±0.30    |
+| H2X_landcover_river     | nan       | nan       | nan       |       nan    |          1.05 | 2.09±0.21    |
+| H2X_soil_topo_river     | nan       | nan       | nan       |       nan    |          0.99 | 1.97±0.24    |
 | H2X_transport_enc_river | 1.40±0.09 | nan       | nan       |       nan    |          0.96 | 1.79±0.28    |
 | H2_transport_river      | 1.41±0.08 | 1.43±0.04 | 1.52±0.03 |         1.1  |          1.05 | 2.01±0.26    |
 
@@ -31,6 +35,10 @@ RMSE (mg/L), same layout:
 | H15_directed_river      |     4.96 |   nan    |   nan    |       nan    |          1.71 |       nan    |
 | H1_directed_river       |     4.73 |     5.44 |     5.58 |         1.64 |          1.58 |         6.22 |
 | H2E_transport_river     |     4.76 |     5.29 |     5.42 |         1.64 |          1.56 |         6.03 |
+| H2X_climate_river       |   nan    |   nan    |   nan    |       nan    |          1.52 |         6.24 |
+| H2X_hydro_river         |   nan    |   nan    |   nan    |       nan    |          1.49 |         6.12 |
+| H2X_landcover_river     |   nan    |   nan    |   nan    |       nan    |          1.53 |         6.23 |
+| H2X_soil_topo_river     |   nan    |   nan    |   nan    |       nan    |          1.44 |         6.15 |
 | H2X_transport_enc_river |     4.73 |   nan    |   nan    |       nan    |          1.41 |         6.03 |
 | H2_transport_river      |     4.73 |     5.27 |     5.43 |         1.6  |          1.54 |         6.22 |
 
@@ -48,5 +56,9 @@ R2, same layout:
 | H15_directed_river      |     0.37 |   nan    |   nan    |       nan    |          0.22 |       nan    |
 | H1_directed_river       |     0.43 |     0.33 |     0.27 |         0.32 |          0.34 |         0.25 |
 | H2E_transport_river     |     0.42 |     0.37 |     0.31 |         0.32 |          0.35 |         0.32 |
+| H2X_climate_river       |   nan    |   nan    |   nan    |       nan    |          0.39 |         0.25 |
+| H2X_hydro_river         |   nan    |   nan    |   nan    |       nan    |          0.41 |         0.28 |
+| H2X_landcover_river     |   nan    |   nan    |   nan    |       nan    |          0.38 |         0.24 |
+| H2X_soil_topo_river     |   nan    |   nan    |   nan    |       nan    |          0.45 |         0.27 |
 | H2X_transport_enc_river |     0.43 |   nan    |   nan    |       nan    |          0.47 |         0.31 |
 | H2_transport_river      |     0.43 |     0.38 |     0.31 |         0.35 |          0.37 |         0.23 |
