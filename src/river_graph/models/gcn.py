@@ -68,7 +68,8 @@ class GCNDocModel:
                  dropout: float = 0.1, lr: float = 1e-3, max_epochs: int = 200,
                  patience: int = 20, seed: int = 0, architecture: str = "gcn",
                  share_weights: bool = False, edge_dropout: float = 0.0,
-                 weight_decay: float = 0.0, env_groups: list[str] | None = None):
+                 weight_decay: float = 0.0, env_groups: list[str] | None = None,
+                 env_encoder: bool = False):
         self.variant = variant
         self.hidden = hidden
         self.layers = layers
@@ -82,6 +83,7 @@ class GCNDocModel:
         self.edge_dropout = edge_dropout
         self.weight_decay = weight_decay
         self.env_groups = env_groups
+        self.env_encoder = env_encoder
 
     def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
         """Fixed features + pieces for the dynamic DOC-obs channel.
@@ -127,6 +129,7 @@ class GCNDocModel:
             standardized(latlon[:, 1:2]).expand(n, t),
             torch.zeros(n, t), torch.zeros(n, t),  # doc_obs channel slots
         ]
+        env_raw = None
         if "regime" in dataset:  # H2/M5: static regime + ecological context
             reg = dataset["regime"].float()
             if self.env_groups is not None:
@@ -137,12 +140,17 @@ class GCNDocModel:
                 keep = [i for g in self.env_groups for i in group_idx[g]]
                 reg = reg[:, keep]
             reg = (reg - reg.mean(0)) / (reg.std(0) + 1e-8)
+            if self.env_encoder:
+                # M6: hydro channels stay raw in x; the ecological context
+                # block (channels 4+) goes to the encoder instead
+                env_raw = reg[:, 4:]
+                reg = reg[:, :4]
             for c in range(reg.shape[1]):
                 feats.append(reg[:, c:c + 1].expand(n, t))
         xt_static = torch.stack(feats, dim=-1).permute(1, 0, 2).contiguous()
         # fixed log-space standardization stats for the DOC channel
         doc_mu, doc_sd = y[ti, tj].mean(), y[ti, tj].std() + 1e-8
-        return xt_static, y, base_visible, train_cells, (doc_mu, doc_sd)
+        return xt_static, y, base_visible, train_cells, (doc_mu, doc_sd), env_raw
 
     @staticmethod
     def _fill_doc_channel(xt, y, visible, stats):
@@ -159,7 +167,7 @@ class GCNDocModel:
         rng = np.random.default_rng(self.seed)
 
         n, t = dataset["y"].shape
-        xt, y, base_visible, train_cells, stats = self._build_inputs(dataset, split)
+        xt, y, base_visible, train_cells, stats, env_raw = self._build_inputs(dataset, split)
         if self.architecture == "directed":
             from river_graph.models.hydro import DirectedGCNImputer, make_directed_edges
 
@@ -167,14 +175,16 @@ class GCNDocModel:
             model = DirectedGCNImputer(xt.shape[-1], self.hidden, self.layers,
                                        self.dropout, share_weights=self.share_weights,
                                        edge_dropout=self.edge_dropout)
-        elif self.architecture == "transport":
+        elif self.architecture in ("transport", "transport_enc"):
             from river_graph.models.hydro import TransportGCNImputer
 
             ei = dataset["edge_index"]  # raw directed; gates need real edges
             edge_attr = dataset["edge_attr"]
             edge_attr = (edge_attr - edge_attr.mean(0)) / (edge_attr.std(0) + 1e-8)
+            env_dim = env_raw.shape[1] if self.architecture == "transport_enc" else 0
             model = TransportGCNImputer(xt.shape[-1], edge_attr.shape[1],
-                                        self.hidden, self.layers, self.dropout)
+                                        self.hidden, self.layers, self.dropout,
+                                        env_dim=env_dim)
         else:
             ei = make_edge_index(self.variant, dataset["edge_index"], n)
             model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
@@ -184,6 +194,9 @@ class GCNDocModel:
         if self.architecture == "transport":
             def fwd(xb):
                 return model(xb, ei, edge_attr)
+        elif self.architecture == "transport_enc":
+            def fwd(xb):
+                return model(xb, ei, edge_attr, env_raw)
         else:
             def fwd(xb):
                 return model(xb, ei)

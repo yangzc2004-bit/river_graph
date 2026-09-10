@@ -142,22 +142,38 @@ class GatedDirectedConv(nn.Module):
 
 
 class TransportGCNImputer(nn.Module):
-    """Directed GCN with transport gates; forward(x, edge_index, edge_attr)."""
+    """Directed GCN with transport gates; forward(x, edge_index, edge_attr).
+
+    env_dim > 0 (M6): the ecological context block is first encoded by an
+    MLP into an ecological embedding, concatenated to node features before
+    the first conv — instead of concatenating raw context channels.
+    """
 
     def __init__(self, in_channels: int, edge_dim: int, hidden: int = 64,
-                 layers: int = 2, dropout: float = 0.1):
+                 layers: int = 2, dropout: float = 0.1,
+                 env_dim: int = 0, env_emb: int = 32):
         super().__init__()
         import itertools
 
+        self.env_encoder = (
+            nn.Sequential(nn.Linear(env_dim, env_emb), nn.ReLU(),
+                          nn.Linear(env_emb, env_emb), nn.ReLU())
+            if env_dim else None
+        )
+        in_eff = in_channels + (env_emb if env_dim else 0)
         self.convs = nn.ModuleList()
-        dims = [in_channels, *([hidden] * layers)]
+        dims = [in_eff, *([hidden] * layers)]
         for a, b in itertools.pairwise(dims):
             self.convs.append(GatedDirectedConv(a, b, edge_dim))
         self.head = nn.Linear(hidden, 1)
         self.dropout = dropout
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
-                edge_attr: torch.Tensor) -> torch.Tensor:
+                edge_attr: torch.Tensor,
+                env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        if self.env_encoder is not None:
+            emb = self.env_encoder(env_raw)          # (N, env_emb), static
+            x = torch.cat([x, emb], dim=-1)
         h = x
         for conv in self.convs:
             h = F.relu(conv(h, edge_index, edge_attr))

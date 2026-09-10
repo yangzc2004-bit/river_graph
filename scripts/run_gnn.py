@@ -21,9 +21,11 @@ def main() -> None:
     ap.add_argument("--only", default=None, help="mask-name prefix filter")
     ap.add_argument("--variants", nargs="+", default=["river", "random", "none"])
     ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument("--arch", default="gcn", choices=["gcn", "directed", "transport"],
-                    help="encoder: plain GCN (G0), directed relational (H1), "
-                         "or transport-gated (H2)")
+    ap.add_argument("--arch", default="gcn",
+                    choices=["gcn", "directed", "transport", "transport_enc"],
+                    help="encoder: plain GCN (G0), directed (H1), "
+                         "transport-gated (H2), transport + ecological "
+                         "context encoder (M6)")
     ap.add_argument("--dataset", default="data/processed/mississippi_graph_v02.pt",
                     help="dataset .pt (v03 adds edge_attr/regime, v04 adds "
                          "StreamCat ecological context)")
@@ -52,6 +54,8 @@ def main() -> None:
             prefix = args.tag
         elif args.arch == "gcn":
             prefix = "G0_gcn"
+        elif args.arch == "transport_enc":
+            prefix = "H2X_transport_enc"
         elif args.arch == "transport":
             prefix = "H2_transport"
         elif args.share_weights or args.edge_dropout or args.wd:
@@ -61,6 +65,7 @@ def main() -> None:
         mname = f"{prefix}_{variant}"
         model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch,
                             env_groups=args.env_groups,
+                            env_encoder=args.arch == "transport_enc",
                             share_weights=args.share_weights,
                             edge_dropout=args.edge_dropout, weight_decay=args.wd)
         # one mask at a time, merging after each: crash-safe long runs
