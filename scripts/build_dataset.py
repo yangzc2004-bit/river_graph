@@ -125,6 +125,29 @@ def main() -> None:
             r["streamorde"], np.log1p(r["totdasqkm"]), r["slope"],
             float(in_deg.get(s, 0) == 0),  # is_headwater
         ])
+
+    # M5 additions (v04): StreamCat ecological context, keyed by comid
+    sc_path = PROCESSED / "streamcat_attributes.csv"
+    if sc_path.exists():
+        sc = pd.read_csv(sc_path, dtype={"comid": str}).set_index("comid")
+        comid_of = reach["comid"].astype("Int64").astype(str)
+        for s_i, s in enumerate(nodes["site_no"]):
+            c = comid_of.get(s)
+            if c in sc.index:
+                row = sc.loc[c]
+                regime[s_i] += [
+                    row["pctconif2019ws"] + row["pctdecid2019ws"] + row["pctmxfst2019ws"],
+                    row["pctcrop2019ws"] + row["pcthay2019ws"],
+                    row["pcturbhi2019ws"] + row["pcturbmd2019ws"]
+                    + row["pcturblo2019ws"] + row["pcturbop2019ws"],
+                    row["pctwdwet2019ws"] + row["pcthbwet2019ws"],
+                    row["precip9120ws"], np.log1p(row["tmean9120ws"] + 20),
+                    row["omws"], row["elevws"], row["bfiws"],
+                ]
+            else:
+                regime[s_i] += [np.nan] * 9
+        regime = np.nan_to_num(np.asarray(regime, dtype=float), nan=-1.0)
+    regime = np.asarray(regime, dtype=np.float32)
     ef = pd.read_csv(PROCESSED / "edge_features.csv", dtype={"source": str, "target": str})
     ef = edges.merge(ef, on=["source", "target"], how="left")
     edge_attr = np.nan_to_num(ef[[
@@ -142,7 +165,7 @@ def main() -> None:
         regime=np.asarray(regime, dtype=np.float32),
     )
     tag = f"_smoke{args.smoke}" if args.smoke else ""
-    out = PROCESSED / f"mississippi_graph_v03{tag}.pt"
+    out = PROCESSED / f"mississippi_graph_v04{tag}.pt"
     save_dataset(dataset, out)
     print(f"\nsaved {out}: N={len(dataset['site_no'])}, T={len(dataset['months'])}, "
           f"E={dataset['edge_index'].shape[1]}, "

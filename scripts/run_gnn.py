@@ -25,7 +25,10 @@ def main() -> None:
                     help="encoder: plain GCN (G0), directed relational (H1), "
                          "or transport-gated (H2)")
     ap.add_argument("--dataset", default="data/processed/mississippi_graph_v02.pt",
-                    help="dataset .pt (v03 adds edge_attr/regime for H2)")
+                    help="dataset .pt (v03 adds edge_attr/regime, v04 adds "
+                         "StreamCat ecological context)")
+    ap.add_argument("--tag", default=None,
+                    help="result-name prefix override, e.g. H2E for v04 runs")
     ap.add_argument("--share-weights", action="store_true",
                     help="H1.5: share relation weights + direction embedding")
     ap.add_argument("--edge-dropout", type=float, default=0.0,
@@ -42,7 +45,9 @@ def main() -> None:
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     for variant in args.variants:
-        if args.arch == "gcn":
+        if args.tag:
+            prefix = args.tag
+        elif args.arch == "gcn":
             prefix = "G0_gcn"
         elif args.arch == "transport":
             prefix = "H2_transport"

@@ -121,3 +121,23 @@ H1.5 keeps direction but cuts overfitting:
 
 H2/H3 are postponed until H1.5 either fixes E3 or tells us direction
 inherently trades off against spatial transfer.
+
+## M5: Ecological context for spatial transfer (added after H2)
+
+H2 proved the *propagation* mechanism; E3 remains flat (all models
+R2 0.2-0.27) because an unseen station's identity is unknown — topology
+says who it connects to, not *what* it is. Two headwater stations with
+identical graph roles (alpine forest vs agricultural hillslope) have
+different DOC regimes.
+
+M5 adds a static **ecological context** block per node (kept separate from
+dynamic channels): drainage area / elevation / slope / stream order
+(hydrology), precipitation + temperature climatology (climate),
+forest/agriculture/urban/wetland % (land cover), soil carbon (soil).
+
+Data source: EPA StreamCat (catchment attributes keyed by NHDPlusV2
+COMID — direct join, no spatial overlay) + NHDPlus VAA (already fetched).
+
+Design rule: environment defines the node state, the river graph defines
+propagation. Validation experiment is E3-focused: G0 vs H2 vs H2+Env,
+success = E3 R2 improvement while keeping E1/E2b.
