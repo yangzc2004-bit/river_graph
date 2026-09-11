@@ -1,0 +1,138 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill><fillColor color="rgb(245, 241, 232)"/></fill>
+  </style>
+  <data>
+    <shape type="rect" topLeftX="48" topLeftY="30" width="4" height="24">
+      <fill><fillColor color="rgb(94, 42, 42)"/></fill>
+      <border color="rgb(94, 42, 42)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="62" topLeftY="26" width="700" height="32">
+      <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgb(38, 34, 29)" bold="true" wrap="false">
+        <p>核心思路：三类信息汇合为有向传输 GNN</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="724" topLeftY="34" width="188" height="18">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="right" letterSpacing="1" wrap="false">
+        <p>02 · 思路与数据基础</p>
+      </content>
+    </shape>
+    <line startX="48" startY="64" endX="912" endY="64"><border color="rgb(201, 192, 172)" width="1"/></line>
+
+    <line startX="72" startY="178" endX="888" endY="178"><border color="rgb(176, 122, 46)" width="2"/></line>
+    <line startX="880" startY="173" endX="892" endY="178"><border color="rgb(176, 122, 46)" width="2"/></line>
+    <line startX="880" startY="183" endX="892" endY="178"><border color="rgb(176, 122, 46)" width="2"/></line>
+
+    <shape type="ellipse" topLeftX="90" topLeftY="170" width="16" height="16">
+      <fill><fillColor color="rgb(94, 42, 42)"/></fill>
+      <border color="rgb(94, 42, 42)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="28" topLeftY="118" width="140" height="26">
+      <content textType="body" fontSize="14.5" fontFamily="思源宋体" color="rgb(38, 34, 29)" bold="true" textAlign="center" wrap="false"><p>稀疏 DOC 观测</p></content>
+    </shape>
+    <shape type="text" topLeftX="20" topLeftY="200" width="156" height="48">
+      <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="center" lineSpacing="multiple:1.4"><p>USGS / WQP 月均标签</p><p>仅 8.9% 格子有观测</p></content>
+    </shape>
+
+    <shape type="ellipse" topLeftX="282" topLeftY="170" width="16" height="16">
+      <fill><fillColor color="rgb(94, 42, 42)"/></fill>
+      <border color="rgb(94, 42, 42)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="220" topLeftY="118" width="140" height="26">
+      <content textType="body" fontSize="14.5" fontFamily="思源宋体" color="rgb(38, 34, 29)" bold="true" textAlign="center" wrap="false"><p>河网拓扑</p></content>
+    </shape>
+    <shape type="text" topLeftX="212" topLeftY="200" width="156" height="48">
+      <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="center" lineSpacing="multiple:1.4"><p>NLDI / NHDPlus 有向边</p><p>571 站 · 562 条边</p></content>
+    </shape>
+
+    <shape type="ellipse" topLeftX="474" topLeftY="170" width="16" height="16">
+      <fill><fillColor color="rgb(94, 42, 42)"/></fill>
+      <border color="rgb(94, 42, 42)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="412" topLeftY="118" width="140" height="26">
+      <content textType="body" fontSize="14.5" fontFamily="思源宋体" color="rgb(38, 34, 29)" bold="true" textAlign="center" wrap="false"><p>生态身份</p></content>
+    </shape>
+    <shape type="text" topLeftX="404" topLeftY="200" width="156" height="48">
+      <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="center" lineSpacing="multiple:1.4"><p>EPA StreamCat 静态属性</p><p>土地 / 气候 / 土壤</p></content>
+    </shape>
+
+    <shape type="ellipse" topLeftX="666" topLeftY="170" width="16" height="16">
+      <fill><fillColor color="rgb(94, 42, 42)"/></fill>
+      <border color="rgb(94, 42, 42)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="604" topLeftY="118" width="140" height="26">
+      <content textType="body" fontSize="14.5" fontFamily="思源宋体" color="rgb(38, 34, 29)" bold="true" textAlign="center" wrap="false"><p>有向传输 GNN</p></content>
+    </shape>
+    <shape type="text" topLeftX="596" topLeftY="200" width="156" height="48">
+      <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="center" lineSpacing="multiple:1.4"><p>direction + edge gate</p><p>+ context encoder</p></content>
+    </shape>
+
+    <shape type="ellipse" topLeftX="858" topLeftY="168" width="20" height="20">
+      <fill><fillColor color="rgb(176, 122, 46)"/></fill>
+      <border color="rgb(176, 122, 46)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="800" topLeftY="118" width="112" height="26">
+      <content textType="body" fontSize="14.5" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" textAlign="center" wrap="false"><p>补全未测 DOC</p></content>
+    </shape>
+    <shape type="text" topLeftX="792" topLeftY="200" width="128" height="48">
+      <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="center" lineSpacing="multiple:1.4"><p>缺失（站点，月份）</p><p>格子的 DOC 估计</p></content>
+    </shape>
+
+    <line startX="48" startY="286" endX="912" endY="286"><border color="rgb(216, 209, 192)" width="1"/></line>
+    <shape type="text" topLeftX="48" topLeftY="298" width="864" height="24">
+      <content textType="body" fontSize="14.5" fontFamily="思源宋体" color="rgb(94, 42, 42)" bold="true" wrap="false"><p>消融设计原则：每一级只加入一个物理 / 生态假设，在同一 benchmark 上对比</p></content>
+    </shape>
+
+    <shape type="text" topLeftX="48" topLeftY="338" width="34" height="30">
+      <content textType="body" fontSize="18" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>1</p></content>
+    </shape>
+    <shape type="text" topLeftX="86" topLeftY="336" width="386" height="50">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">拓扑消融</span>　无图 / 度保持随机图 / 真实河网，证明「河网连通」本身有效</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="48" topLeftY="408" width="34" height="30">
+      <content textType="body" fontSize="18" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>2</p></content>
+    </shape>
+    <shape type="text" topLeftX="86" topLeftY="406" width="386" height="50">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">方向消融</span>　无向 GCN → 上 / 下游分离权重，证明「水流方向」有效</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="498" topLeftY="338" width="34" height="30">
+      <content textType="body" fontSize="18" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>3</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="336" width="376" height="50">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">传输消融</span>　均匀邻域平均 → 边物理门控，证明「河段属性」有效</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="498" topLeftY="408" width="34" height="30">
+      <content textType="body" fontSize="18" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>4</p></content>
+    </shape>
+    <shape type="text" topLeftX="536" topLeftY="406" width="376" height="50">
+      <content textType="body" fontSize="13" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">身份消融</span>　仅拓扑 → 追加生态 context，证明空间外推需要「这是什么河」</p>
+      </content>
+    </shape>
+
+    <shape type="text" topLeftX="48" topLeftY="470" width="864" height="24">
+      <content textType="body" fontSize="13.5" fontFamily="思源宋体" color="rgb(94, 42, 42)" bold="true" wrap="false"><p>一句话：环境定义节点「是什么」，河网定义信息「怎么传」。</p></content>
+    </shape>
+
+    <line startX="48" startY="508" endX="912" endY="508"><border color="rgb(201, 192, 172)" width="1"/></line>
+    <shape type="text" topLeftX="48" topLeftY="514" width="520" height="16">
+      <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgb(150, 143, 130)" wrap="false"><p>河网感知 GNN 重构稀疏 DOC 观测 · 阶段成果汇报</p></content>
+    </shape>
+    <shape type="text" topLeftX="800" topLeftY="514" width="112" height="16">
+      <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgb(150, 143, 130)" textAlign="right" wrap="false"><p>05 / 18</p></content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>核心思路是三类信息汇合：稀疏的 DOC 标签、河网拓扑、汇水区生态身份，送进有向传输图神经网络，输出未测格子的 DOC。</p>
+      <p>为了让每一步都可辩护，我们采用消融阶梯：每一级只加一个假设，拓扑、方向、传输、身份各自对应一组对照，全部跑同一套冻结 mask。</p>
+      <p>这页是全篇主线，后面的方法演化和结果表都按这条阶梯展开。</p>
+    </content>
+  </note>
+</slide>

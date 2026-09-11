@@ -1,0 +1,3046 @@
+<presentation id="EiRmsud2NlHZW9dUhrJcNLYqnhh" xmlns="https://www.larkoffice.com/sml/2.0" width="960" height="540">
+  <title>阶段成果汇报：河网感知 GNN 重构稀疏 DOC 观测（学术重构版）</title>
+  <theme>
+    <textStyles>
+      <headline fontColor="rgba(31, 35, 41, 1)"/>
+      <sub-headline fontColor="rgba(31, 35, 41, 1)"/>
+      <body fontColor="rgba(31, 35, 41, 1)"/>
+      <caption fontColor="rgba(155, 158, 162, 1)" fontSize="14"/>
+    </textStyles>
+  </theme>
+  <slide id="pcc">
+    <style>
+      <fill id="fcc">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="460" height="22" topLeftX="56" topLeftY="116" type="text" id="bXg">
+        <content textType="caption" fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" letterSpacing="2" wrap="false">
+          <p>阶段成果汇报</p>
+        </content>
+      </shape>
+      <line id="bXn" startX="56" startY="150" endX="124.00735254367721" endY="150">
+        <border color="rgba(176, 122, 46, 1)" width="3"/>
+      </line>
+      <shape width="492" height="132" topLeftX="56" topLeftY="168" type="text" id="bXJ">
+        <content textType="title" fontSize="35" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" lineSpacing="multiple:1.34">
+          <p>河网感知图神经网络</p>
+          <p>重构密西西比河流域稀疏的水质观测</p>
+        </content>
+      </shape>
+      <shape width="470" height="66" topLeftX="56" topLeftY="312" type="text" id="bXk">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" italic="true" lineSpacing="multiple:1.45">
+          <p>让河网的连通结构与汇水区生态信息，</p>
+          <p>补全流域里那些没有被监测到的水质数据</p>
+        </content>
+      </shape>
+      <line id="bXj" startX="56" startY="400" endX="502.0011210748242" endY="400">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="470" height="24" topLeftX="56" topLeftY="412" type="text" id="bXs">
+        <content fontSize="13.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p>方法逐级对照已走完 · 全部结果固定可复核，四张主图整理中</p>
+        </content>
+      </shape>
+      <shape width="240" height="20" topLeftX="56" topLeftY="442" type="text" id="bXX">
+        <content textType="caption" fontSize="12" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)">
+          <p>2026 年 9 月 · 组会阶段汇报</p>
+        </content>
+      </shape>
+      <img id="bXy" src="CUuqbPFvYoFzrmxcqgfcZSksnKf" width="348" height="261" topLeftX="564" topLeftY="118">
+        <crop leftOffset="0" rightOffset="0" topOffset="0" bottomOffset="0"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <shape width="348" height="52" topLeftX="564" topLeftY="386" type="text" id="bXm">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4">
+          <p>图｜密西西比河流域 571 个溶解有机碳监测站点，</p>
+          <p>其中 407 个站通过河道互相连通；数据来自美国地质调查局与全国河网数据库。</p>
+        </content>
+      </shape>
+      <shape width="470" height="18" topLeftX="56" topLeftY="500" type="text" id="bXo">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)">
+          <p>全部使用公开数据，分析过程可重复，每个数字都可以回头复核</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bXQ">
+      <content>
+        <p>各位老师同学好，这次阶段汇报介绍用河网感知图神经网络补全稀疏水质观测的工作。</p>
+        <p>核心问题是流域里溶解有机碳监测只有不到一成的时空格子有观测，我们尝试让河网结构本身成为补全信号。</p>
+        <p>目前方法的逐级对照已经走完，全部结果固定、可复核，四张主图正在收尾。汇报分五个部分：背景、思路与数据、评测设计与方法、结果与诊断、局限与计划。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcT">
+    <style>
+      <fill id="fcT">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bXb">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="500" height="32" topLeftX="62" topLeftY="26" type="text" id="bgn">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>汇报路线</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bgk">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1.5" textAlign="right" wrap="false">
+          <p>本次路线</p>
+        </content>
+      </shape>
+      <line id="bXp" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="80" height="40" topLeftX="64" topLeftY="104" type="text" id="bXH">
+        <content textType="headline" fontSize="30" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>01</p>
+        </content>
+      </shape>
+      <shape width="330" height="30" topLeftX="156" topLeftY="108" type="text" id="bXz">
+        <content fontSize="19" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>研究背景与科学问题</p>
+        </content>
+      </shape>
+      <shape width="398" height="22" topLeftX="506" topLeftY="114" type="text" id="bXV">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>水质监测为何稀疏，河网先验对应哪三个研究问题</p>
+        </content>
+      </shape>
+      <line id="bgy" startX="64" startY="166" endX="896.0006009613214" endY="166">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="80" height="40" topLeftX="64" topLeftY="180" type="text" id="bgo">
+        <content textType="headline" fontSize="30" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>02</p>
+        </content>
+      </shape>
+      <shape width="330" height="30" topLeftX="156" topLeftY="184" type="text" id="bgs">
+        <content fontSize="19" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>核心思路与数据基础</p>
+        </content>
+      </shape>
+      <shape width="398" height="22" topLeftX="506" topLeftY="190" type="text" id="bXu">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>三类信息如何汇合，流域站点网络与公开数据怎样拼起来</p>
+        </content>
+      </shape>
+      <line id="bXr" startX="64" startY="242" endX="896.0006009613214" endY="242">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="80" height="40" topLeftX="64" topLeftY="256" type="text" id="bXY">
+        <content textType="headline" fontSize="30" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>03</p>
+        </content>
+      </shape>
+      <shape width="330" height="30" topLeftX="156" topLeftY="260" type="text" id="bXa">
+        <content fontSize="19" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>评测协议与方法阶梯</p>
+        </content>
+      </shape>
+      <shape width="398" height="22" topLeftX="506" topLeftY="266" type="text" id="bgg">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>四类考题，以及从基础图网络到最终模型的逐级对照</p>
+        </content>
+      </shape>
+      <line id="bgJ" startX="64" startY="318" endX="896.0006009613214" endY="318">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="80" height="40" topLeftX="64" topLeftY="332" type="text" id="bgQ">
+        <content textType="headline" fontSize="30" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>04</p>
+        </content>
+      </shape>
+      <shape width="330" height="30" topLeftX="156" topLeftY="336" type="text" id="bXA">
+        <content fontSize="19" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>阶段结果与诊断</p>
+        </content>
+      </shape>
+      <shape width="398" height="22" topLeftX="506" topLeftY="342" type="text" id="bXF">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>总体结果、关键结果图，以及源头站与极端站点两个深入诊断</p>
+        </content>
+      </shape>
+      <line id="bXw" startX="64" startY="394" endX="896.0006009613214" endY="394">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="80" height="40" topLeftX="64" topLeftY="408" type="text" id="bXR">
+        <content textType="headline" fontSize="30" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>05</p>
+        </content>
+      </shape>
+      <shape width="330" height="30" topLeftX="156" topLeftY="412" type="text" id="bgX">
+        <content fontSize="19" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>局限、计划与小结</p>
+        </content>
+      </shape>
+      <shape width="398" height="22" topLeftX="506" topLeftY="418" type="text" id="bgm">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>阶段性诚实清单、后续路线图与三句阶段结论</p>
+        </content>
+      </shape>
+      <line id="bgj" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bXO">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>利用河网结构补全稀疏水质观测 · 阶段成果汇报</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bXl">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>02 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bXI">
+      <content>
+        <p>汇报分五个部分。前两部分建立问题和数据：为什么水质观测稀疏、我们如何把河网变成图。</p>
+        <p>第三部分是评测设计和方法的逐级对照，第四部分是当前结果和两个深入诊断，最后给出局限、后续安排和小结。</p>
+        <p>全程数字都来自已经固定的实验，每一格结果都可以回头复核。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcB">
+    <style>
+      <fill id="fcB">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bXP">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="600" height="32" topLeftX="62" topLeftY="26" type="text" id="bXD">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>研究背景：溶解有机碳（DOC）监测极稀疏</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bXe">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>01 · 背景与科学问题</p>
+        </content>
+      </shape>
+      <line id="bXc" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="864" height="20" topLeftX="48" topLeftY="74" type="text" id="bXU">
+        <content textType="caption" fontSize="12" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>溶解有机碳（DOC）是水质与河陆碳循环的关键指标，但现有观测网络远不足以支撑全流域理解</p>
+        </content>
+      </shape>
+      <shape width="280" height="52" topLeftX="48" topLeftY="112" type="text" id="bXE">
+        <content textType="headline" fontSize="42" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>11,948</p>
+        </content>
+      </shape>
+      <shape width="286" height="40" topLeftX="48" topLeftY="168" type="text" id="bXf">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.35">
+          <p>全流域至少有过 1 次</p>
+          <p>溶解有机碳的站点总数</p>
+        </content>
+      </shape>
+      <line id="bXN" startX="48" startY="224" endX="330.0017730440715" endY="224">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="280" height="52" topLeftX="48" topLeftY="238" type="text" id="bXK">
+        <content textType="headline" fontSize="42" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>≈ 570</p>
+        </content>
+      </shape>
+      <shape width="286" height="40" topLeftX="48" topLeftY="294" type="text" id="bXC">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.35">
+          <p>其中有连续观测记录、</p>
+          <p>真正能用于建模的站点</p>
+        </content>
+      </shape>
+      <line id="bXd" startX="48" startY="350" endX="330.0017730440715" endY="350">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="280" height="52" topLeftX="48" topLeftY="364" type="text" id="bXt">
+        <content textType="headline" fontSize="42" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>8.9%</p>
+        </content>
+      </shape>
+      <shape width="286" height="40" topLeftX="48" topLeftY="420" type="text" id="bXB">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.35">
+          <p>把每个站的每个月算作一格，</p>
+          <p>真正有观测的格子比例</p>
+        </content>
+      </shape>
+      <line id="bXZ" startX="368" startY="108" endX="368.00000000000006" endY="472.0013736237817">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="400" height="26" topLeftX="400" topLeftY="108" type="text" id="bXL">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>传统路径的三条局限</p>
+        </content>
+      </shape>
+      <shape width="512" height="66" topLeftX="400" topLeftY="146" type="text" id="bXT">
+        <content fontSize="13.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p><strong><span color="rgba(94, 42, 42, 1)">站点均值 / 地理距离插值（克里金）</span></strong>　只看空间上离得近不近，忽略河网连通与水流方向，推不到没监测的地方</p>
+        </content>
+      </shape>
+      <shape width="512" height="66" topLeftX="400" topLeftY="214" type="text" id="bXh">
+        <content fontSize="13.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p><strong><span color="rgba(94, 42, 42, 1)">只看单站特征的模型（随机森林等）</span></strong>　把每个站点当成互不相干的点，用不上上下游之间的因果关系</p>
+        </content>
+      </shape>
+      <shape width="512" height="66" topLeftX="400" topLeftY="282" type="text" id="bXM">
+        <content fontSize="13.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p><strong><span color="rgba(94, 42, 42, 1)">普通图神经网络</span></strong>　把上下游一视同仁地平均，与河水只往下游流的物理过程不符</p>
+        </content>
+      </shape>
+      <line id="bXi" startX="400" startY="366" endX="912.0009765615687" endY="366">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="512" height="24" topLeftX="400" topLeftY="380" type="text" id="bXq">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>核心矛盾</p>
+        </content>
+      </shape>
+      <shape width="512" height="58" topLeftX="400" topLeftY="408" type="text" id="bXG">
+        <content fontSize="15.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>观测高度稀疏，而河网本身携带被忽略的强结构先验——</p>
+          <p>问题是如何把这一先验变成可学习、可检验的模型。</p>
+        </content>
+      </shape>
+      <line id="bXS" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bXW">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>数据来源：美国地质调查局公开监测目录（1972–2026 年）</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bXv">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>03 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bXx">
+      <content>
+        <p>先看问题的量级：流域内近一万两千个站点测过溶解有机碳，但真正有可用序列的只有约 570 个，时空格子的观测覆盖率只有 8.9%。</p>
+        <p>三类传统方法各有盲区：地理插值忽略河网，单站模型忽略站点间的因果，普通图网络又把河流当成不分方向的、丢掉了流向。</p>
+        <p>所以核心矛盾是：数据虽然稀疏，但河网结构本身是一份免费的强先验，本研究要回答它到底能帮我们补回多少信息。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcM">
+    <style>
+      <fill id="fcM">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bgD">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="bge">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>图 1 · 科学问题：河网结构能否补全稀疏观测</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bgc">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>01 · 背景与科学问题</p>
+        </content>
+      </shape>
+      <line id="bgx" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <img id="bgf" src="WDWebRNHmoGc5xxdbNkcEAZhn7L" width="556" height="394" topLeftX="48" topLeftY="84">
+        <crop type="rect" leftOffset="0.41421800947870224" rightOffset="0.4142180094787591" topOffset="0" bottomOffset="0"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <shape width="556" height="16" topLeftX="48" topLeftY="482" type="text" id="bgN">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>图 1｜稀疏观测、地理距离插值与河网感知模型三种思路对比，目标是把河流向陆地输送的碳量估得更可靠。</p>
+        </content>
+      </shape>
+      <shape width="276" height="26" topLeftX="636" topLeftY="92" type="text" id="bgK">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>对应的三个研究问题</p>
+        </content>
+      </shape>
+      <line id="bgC" startX="636" startY="126" endX="912.0018115882575" endY="126">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="56" height="24" topLeftX="636" topLeftY="140" type="text" id="bgh">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>问题一</p>
+        </content>
+      </shape>
+      <shape width="220" height="48" topLeftX="692" topLeftY="138" type="text" id="bgE">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.4">
+          <p>用真实河网，是否比打乱的假河网、或干脆不用河网更好？</p>
+        </content>
+      </shape>
+      <line id="bgB" startX="636" startY="200" endX="912.0018115882575" endY="200">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="56" height="24" topLeftX="636" topLeftY="214" type="text" id="bgZ">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>问题二</p>
+        </content>
+      </shape>
+      <shape width="220" height="48" topLeftX="692" topLeftY="212" type="text" id="bgL">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.4">
+          <p>如果挖掉两成、四成、六成观测，分别能补回多少？</p>
+        </content>
+      </shape>
+      <line id="bgT" startX="636" startY="274" endX="912.0018115882575" endY="274">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="56" height="24" topLeftX="636" topLeftY="288" type="text" id="bgM">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>问题三</p>
+        </content>
+      </shape>
+      <shape width="220" height="48" topLeftX="692" topLeftY="286" type="text" id="bgt">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.4">
+          <p>学到的规律能否用到未来月份和没监测过的站点？</p>
+        </content>
+      </shape>
+      <line id="bgq" startX="636" startY="360" endX="912.0018115882575" endY="360">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="276" height="20" topLeftX="636" topLeftY="376" type="text" id="bgG">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>统一任务形态</p>
+        </content>
+      </shape>
+      <shape width="276" height="76" topLeftX="636" topLeftY="402" type="text" id="bgS">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+          <p>统一成一道题：挖掉某个站点某个月的浓度，用其余全部信息把它补回来；浓度单位为 mg/L，建模前先对右偏的浓度做对数变换。</p>
+        </content>
+      </shape>
+      <line id="bgW" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bgv">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>利用河网结构补全稀疏水质观测 · 阶段成果汇报</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bgi">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>04 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bgP">
+      <content>
+        <p>图 1 把科学问题画成三种思路：面板 a 是稀疏观测本身，面板 b 是地理距离插值，只看离得近不近、忽略河道连通；面板 c 是我们的路线，沿着河道把信息一站站传下去。</p>
+        <p>关键追问是：河网结构是否提供了距离插值给不出的信息。它分解为右侧三个问题，分别是真假河网对照、不同挖空比例、向未来和新站点推广。</p>
+        <p>所有实验都统一成同一道题：在站点网络上挖掉一部分月份再补回来，预测目标是月均溶解有机碳浓度。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcN">
+    <style>
+      <fill id="fcN">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="byx">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="byD">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>核心思路：三类信息汇合，沿河道有方向地传递</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bgV">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>02 · 思路与数据基础</p>
+        </content>
+      </shape>
+      <line id="byJ" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="byE" startX="72" startY="178" endX="888.0006127448678" endY="178">
+        <border color="rgba(176, 122, 46, 1)"/>
+      </line>
+      <line id="byN" startX="880" startY="173" endX="892.0354505942203" endY="178.0147710809251">
+        <border color="rgba(176, 122, 46, 1)"/>
+      </line>
+      <line id="bga" startX="880" startY="183.00000000000003" endX="892.0354505942203" endY="177.98522891907493">
+        <border color="rgba(176, 122, 46, 1)"/>
+      </line>
+      <shape width="16" height="16" topLeftX="90" topLeftY="170" type="ellipse" id="bym">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="140" height="26" topLeftX="28" topLeftY="118" type="text" id="byt">
+        <content fontSize="14.5" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" textAlign="center" wrap="false">
+          <p>稀疏水质观测</p>
+        </content>
+      </shape>
+      <shape width="156" height="48" topLeftX="20" topLeftY="200" type="text" id="byZ">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4" textAlign="center">
+          <p>公开监测库月均浓度</p>
+          <p>仅 8.9% 格子有观测</p>
+        </content>
+      </shape>
+      <shape width="16" height="16" topLeftX="282" topLeftY="170" type="ellipse" id="byT">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="140" height="26" topLeftX="220" topLeftY="118" type="text" id="bgR">
+        <content fontSize="14.5" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" textAlign="center" wrap="false">
+          <p>河网结构</p>
+        </content>
+      </shape>
+      <shape width="156" height="48" topLeftX="212" topLeftY="200" type="text" id="byn">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4" textAlign="center">
+          <p>全国河网勾绘的河道</p>
+          <p>571 站 · 562 条边</p>
+        </content>
+      </shape>
+      <shape width="16" height="16" topLeftX="474" topLeftY="170" type="ellipse" id="byi">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="140" height="26" topLeftX="412" topLeftY="118" type="text" id="byG">
+        <content fontSize="14.5" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" textAlign="center" wrap="false">
+          <p>生态身份</p>
+        </content>
+      </shape>
+      <shape width="156" height="48" topLeftX="404" topLeftY="200" type="text" id="byW">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4" textAlign="center">
+          <p>汇水区静态生态属性</p>
+          <p>土地 / 气候 / 土壤</p>
+        </content>
+      </shape>
+      <shape width="16" height="16" topLeftX="666" topLeftY="170" type="ellipse" id="bgI">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="140" height="26" topLeftX="604" topLeftY="118" type="text" id="byy">
+        <content fontSize="14.5" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" textAlign="center" wrap="false">
+          <p>沿河有向传递模型</p>
+        </content>
+      </shape>
+      <shape width="156" height="48" topLeftX="596" topLeftY="200" type="text" id="bys">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4" textAlign="center">
+          <p>顺水流方向传递</p>
+          <p>逐边调节、识别河型</p>
+        </content>
+      </shape>
+      <shape width="20" height="20" topLeftX="858" topLeftY="168" type="ellipse" id="byP">
+        <fill>
+          <fillColor color="rgba(176, 122, 46, 1)"/>
+        </fill>
+        <border color="rgba(176, 122, 46, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="112" height="26" topLeftX="800" topLeftY="118" type="text" id="bye">
+        <content fontSize="14.5" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" textAlign="center" wrap="false">
+          <p>补全未测浓度</p>
+        </content>
+      </shape>
+      <shape width="128" height="48" topLeftX="792" topLeftY="200" type="text" id="bgz">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4" textAlign="center">
+          <p>缺失的（站点，月份）</p>
+          <p>浓度估计值</p>
+        </content>
+      </shape>
+      <line id="byg" startX="48" startY="286" endX="912.0005787035097" endY="286">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="24" topLeftX="48" topLeftY="298" type="text" id="byQ">
+        <content fontSize="14.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>对照设计原则：每一级只多加一个物理或生态假设，用同一套考题比较</p>
+        </content>
+      </shape>
+      <shape width="34" height="30" topLeftX="48" topLeftY="338" type="text" id="byf">
+        <content fontSize="18" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>1</p>
+        </content>
+      </shape>
+      <shape width="386" height="50" topLeftX="86" topLeftY="336" type="text" id="byK">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>河网对照</strong>　不用河网 / 打乱的假河网 / 真实河网，证明「河网连通」本身有用</p>
+        </content>
+      </shape>
+      <shape width="34" height="30" topLeftX="48" topLeftY="408" type="text" id="bgY">
+        <content fontSize="18" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>2</p>
+        </content>
+      </shape>
+      <shape width="386" height="50" topLeftX="86" topLeftY="406" type="text" id="byX">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>方向对照</strong>　不分方向 → 上下游分开处理，证明「水流方向」有用</p>
+        </content>
+      </shape>
+      <shape width="34" height="30" topLeftX="498" topLeftY="338" type="text" id="byj">
+        <content fontSize="18" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>3</p>
+        </content>
+      </shape>
+      <shape width="376" height="50" topLeftX="536" topLeftY="336" type="text" id="byB">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>强弱对照</strong>　邻域一视同仁 → 按河段物理量逐边调节，证明「河段属性」有用</p>
+        </content>
+      </shape>
+      <shape width="34" height="30" topLeftX="498" topLeftY="408" type="text" id="byL">
+        <content fontSize="18" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>4</p>
+        </content>
+      </shape>
+      <shape width="376" height="50" topLeftX="536" topLeftY="406" type="text" id="bgw">
+        <content fontSize="13" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>身份对照</strong>　只有河网 → 再加入汇水区生态信息，证明推广到没监测过的地方要先知道「这是什么河」</p>
+        </content>
+      </shape>
+      <shape width="864" height="24" topLeftX="48" topLeftY="470" type="text" id="byk">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>一句话：环境定义节点「是什么」，河网定义信息「怎么传」。</p>
+        </content>
+      </shape>
+      <line id="byq" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="byS">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>利用河网结构补全稀疏水质观测 · 阶段成果汇报</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bgb">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>05 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="byo">
+      <content>
+        <p>核心思路是三类信息汇合：稀疏的浓度观测、河网结构、每个汇水区的生态身份，送进沿河道有方向传递的模型，输出那些没测过的格子的浓度。</p>
+        <p>为了让每一步都站得住脚，我们逐级对照：每一级只多加一个假设，河网、方向、传递强弱、生态身份各有一组对照，全部用同一套固定考题。</p>
+        <p>这页是全篇主线，后面的方法演化和结果表都按这条阶梯展开。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcq">
+    <style>
+      <fill id="fcq">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="byp">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="byI">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>数据与河网构建：全部来自公开数据，过程可重复</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bnn">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>02 · 思路与数据基础</p>
+        </content>
+      </shape>
+      <line id="bni" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <table id="byc" width="516" height="252" topLeftX="48" topLeftY="92">
+        <colgroup>
+          <col span="1" width="104"/>
+          <col span="1" width="172"/>
+          <col span="1" width="240"/>
+        </colgroup>
+        <tr height="33">
+          <td id="bnX">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true" textAlign="left">
+              <p>　组件</p>
+            </content>
+          </td>
+          <td id="bnj">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true" textAlign="left">
+              <p>来源</p>
+            </content>
+          </td>
+          <td id="byU">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true" textAlign="left">
+              <p>规模 / 内容</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="37">
+          <td id="byH">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　浓度观测</p>
+            </content>
+          </td>
+          <td id="byb">
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>美国地质调查局公开监测库</p>
+            </content>
+          </td>
+          <td id="bnx">
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>1972–2026 月均，共 33,048 个观测格</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="37">
+          <td id="byd">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　站点图</p>
+            </content>
+          </td>
+          <td id="byr">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>全国河网数据库沿河追踪</p>
+            </content>
+          </td>
+          <td id="byV">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>571 站、562 条有方向的连接（上游→下游）</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="37">
+          <td id="bno">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　动态特征</p>
+            </content>
+          </td>
+          <td id="bnk">
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>水温 / 月均流量</p>
+            </content>
+          </td>
+          <td id="byh">
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>与浓度对齐的月度序列，加月份周期特征</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="37">
+          <td id="byF">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　边物理</p>
+            </content>
+          </td>
+          <td id="bya">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>全国河网河段属性</p>
+            </content>
+          </td>
+          <td id="bnJ">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>河段长度、汇水面积、坡度、河流分级</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="37">
+          <td id="bnE">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　生态身份</p>
+            </content>
+          </td>
+          <td id="byM">
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>汇水区生态属性数据集</p>
+            </content>
+          </td>
+          <td id="byl">
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>土地利用、气候态、土壤有机碳、基流</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="34">
+          <td id="byR">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　连通网络</p>
+            </content>
+          </td>
+          <td id="bnm">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>图算法</p>
+            </content>
+          </td>
+          <td id="bnt">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" textAlign="left">
+              <p>互相连通的主网络 407 站（E3 考题范围）</p>
+            </content>
+          </td>
+        </tr>
+      </table>
+      <line id="byu" startX="48" startY="92" endX="564.0009689913383" endY="92">
+        <border color="rgba(94, 42, 42, 1)"/>
+      </line>
+      <line id="byz" startX="48" startY="344" endX="564.0009689913383" endY="344">
+        <border color="rgba(94, 42, 42, 1)"/>
+      </line>
+      <img id="bny" src="Pfv6bEFZEoNF6fxh9xjcOBwKnwh" width="316" height="237" topLeftX="596" topLeftY="92">
+        <crop leftOffset="0" rightOffset="0" topOffset="0" bottomOffset="0"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <shape width="316" height="34" topLeftX="596" topLeftY="334" type="text" id="bns">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.35">
+          <p>图｜站点连接示意图（非真实河道走向）：571 个站、562 条</p>
+          <p>有方向的连接，箭头从上游指向下游，灰色为不与主网络相连的站。</p>
+        </content>
+      </shape>
+      <shape width="500" height="22" topLeftX="48" topLeftY="366" type="text" id="byC">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>全过程可重复：每一步都能从公开数据重新跑一遍</p>
+        </content>
+      </shape>
+      <shape width="864" height="22" topLeftX="48" topLeftY="394" type="text" id="byA">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" wrap="false">
+          <p>站点清点 → 河网连边 → 特征对齐 → 生态属性匹配 → 考题生成 → 统一训练</p>
+        </content>
+      </shape>
+      <line id="byY" startX="48" startY="428" endX="912.0005787035097" endY="428">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="52" topLeftX="48" topLeftY="440" type="text" id="bng">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p><strong><span color="rgba(94, 42, 42, 1)">防作弊规则　</span></strong>模型只在「已知」的格子上学习，要考的格子浓度一律先藏起来、绝不作为输入；汇水区生态属性都是固定不变的静态量（土地利用、多年平均气候、土壤），不含考试期间的信息，时间题和空间题都不会提前泄题。</p>
+        </content>
+      </shape>
+      <line id="bnQ" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="byO">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>数据来源：美国地质调查局公开监测库、全国河网数据库、汇水区生态属性数据集</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="byw">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>06 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="byv">
+      <content>
+        <p>数据全部来自公开来源：浓度观测取自美国地质调查局公开监测库，1972 到 2026 年的月均值，共 33048 个观测格。</p>
+        <p>站点网络沿全国河网逐段追踪构建：571 个站、562 条从上游通向下游的有方向连接，其中 407 个站连成主网络，也是 E3 整站留出考题的范围。</p>
+        <p>整条流程都可以从公开数据重新跑一遍；这里特别强调防作弊规则：要考的格子浓度永远先藏起来，生态属性都是不含考试期信息的静态量，保证时间题和空间题都不会提前泄题。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcL">
+    <style>
+      <fill id="fcL">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bgU">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="bgA">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>图 2 · 整套研究框架一览</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bgp">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>02 · 思路与数据基础</p>
+        </content>
+      </shape>
+      <line id="bgF" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <img id="bgr" src="QCinbIyG8oGXsLxpnskc1FjonPg" width="582" height="412" topLeftX="189" topLeftY="78">
+        <crop type="rect" leftOffset="0.13364928909953733" rightOffset="0.13364928909948048" topOffset="0" bottomOffset="0"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <shape width="864" height="14" topLeftX="48" topLeftY="494" type="text" id="bgd">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" textAlign="center" wrap="false">
+          <p>图 2｜多源数据 → 站点网络构建 → 传统方法与河网模型逐级对照 → 四类考题 → 补全结果、方法对比与碳通量估计的不确定性收窄。</p>
+        </content>
+      </shape>
+      <line id="bgO" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bgu">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>利用河网结构补全稀疏水质观测 · 阶段成果汇报</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bgl">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>07 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bgH">
+      <content>
+        <p>图 2 是整套研究流程的框架，从左到右五个部分就是从数据到结论的全过程。</p>
+        <p>先是多源数据：月度浓度观测、站点信息、环境变量和河网结构；再把河流系统表示成一张有方向的网，每个站点带着观测和环境信息，连接顺着水流方向；然后是传统方法与河网模型的逐级对照。</p>
+        <p>接着是四类考题 E1、E2a、E2b、E3；最后是产出：补全的浓度、各方法对比，以及碳通量估计区间的收窄。下一页展开考题设计。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcP">
+    <style>
+      <fill id="fcP">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bnW">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="600" height="32" topLeftX="62" topLeftY="26" type="text" id="bnU">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>评测设计：同一套挖空方案，所有模型公平对比</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bnO">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>03 · 评测协议与方法</p>
+        </content>
+      </shape>
+      <line id="bnw" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <table id="bnP" width="864" height="222" topLeftX="48" topLeftY="92">
+        <colgroup>
+          <col span="1" width="92"/>
+          <col span="2" width="386"/>
+        </colgroup>
+        <tr height="33">
+          <td id="bnq">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>实验</p>
+            </content>
+          </td>
+          <td id="bnS">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true" textAlign="left">
+              <p>　设定</p>
+            </content>
+          </td>
+          <td id="bnv">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true" textAlign="left">
+              <p>　回答的问题</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="47">
+          <td id="bnl">
+            <content fontSize="13" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>E1</p>
+            </content>
+          </td>
+          <td id="bnD">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　随机挖掉 20% / 40% / 60% 的格子，每种各重复三次</p>
+            </content>
+          </td>
+          <td id="bnc">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　河网有没有用？缺得越多还能补回多少（问题一、问题二）</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="47">
+          <td id="bnp">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="13" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>E2a</p>
+            </content>
+          </td>
+          <td id="bnN">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　训练截至 2020-12，测试 2021-01 起全部观测格</p>
+            </content>
+          </td>
+          <td id="bnC">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　严格的未来预测：未来月份的浓度一个都看不到</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="47">
+          <td id="bnu">
+            <content fontSize="13" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>E2b</p>
+            </content>
+          </td>
+          <td id="bnz">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　同 E2a，但未来保留两成观测作为已知条件（不参与学习和打分）</p>
+            </content>
+          </td>
+          <td id="bnZ">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　监测网照常运行时填补缺口，是主要的时间考题（问题三）</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="48">
+          <td id="bnT">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="13" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>E3</p>
+            </content>
+          </td>
+          <td id="bnA">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　在主网络内藏起两成站点的全部月份，重复三次</p>
+            </content>
+          </td>
+          <td id="bnY">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.35" textAlign="left">
+              <p>　信息能否顺着河道传到没监测的站点（问题三）</p>
+            </content>
+          </td>
+        </tr>
+      </table>
+      <line id="bne" startX="48" startY="92" endX="912.0005787035097" endY="92">
+        <border color="rgba(94, 42, 42, 1)"/>
+      </line>
+      <line id="bnd" startX="48" startY="314" endX="912.0005787035097" endY="314">
+        <border color="rgba(94, 42, 42, 1)"/>
+      </line>
+      <shape width="420" height="22" topLeftX="48" topLeftY="338" type="text" id="bnH">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>基线（均不使用河网结构）</p>
+        </content>
+      </shape>
+      <shape width="420" height="60" topLeftX="48" topLeftY="368" type="text" id="bnf">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p>B0 站点均值　·　B1 地理距离插值（克里金）</p>
+          <p>B2 随机森林　·　B3 全连接网络</p>
+        </content>
+      </shape>
+      <shape width="420" height="22" topLeftX="492" topLeftY="338" type="text" id="bnK">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>指标与建模口径</p>
+        </content>
+      </shape>
+      <shape width="420" height="60" topLeftX="492" topLeftY="368" type="text" id="bnh">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p>误差指标：均方根误差（主）、平均绝对误差、决定系数 R²，统一按 mg/L 报告</p>
+          <p>浓度先做对数变换再建模、结果换算回原浓度，并同时报告对数口径作对照</p>
+        </content>
+      </shape>
+      <line id="bnr" startX="48" startY="440" endX="912.0005787035097" endY="440">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="46" topLeftX="48" topLeftY="452" type="text" id="bnB">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p><strong><span color="rgba(176, 122, 46, 1)">开工前先固定全部考题　</span></strong>每个模型在每种挖空方案下只训练一次，每一格的预测都原样留存，后续分析不再重新训练，任何一个数字都能追溯到当时的考题和预测。</p>
+        </content>
+      </shape>
+      <line id="bnL" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bnM">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>所有模型使用完全相同的挖空方案与评分口径，结果可逐格复核</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bnF">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>08 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bnG">
+      <content>
+        <p>评测分四类考题。E1 随机挖空，回答河网有没有用、缺得越多还能不能补；E2a 是严格的未来预测，未来的浓度一个都看不到；E2b 更贴近现实，监测网照常运行、保留两成同月观测作为已知条件。</p>
+        <p>E3 是空间推广：把整座站点的全部月份藏起来，检验信息能否顺着河道传到没监测的地方。</p>
+        <p>四个不用河网的对照方法、统一的误差指标，加上开工前就固定全部考题的做法，保证后面每一张表都是同一把尺子下的公平对比。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcQ">
+    <style>
+      <fill id="fcQ">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bJH">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="bmz">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>方法演化阶梯：每一级只加入一个假设</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bJi">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>03 · 评测协议与方法</p>
+        </content>
+      </shape>
+      <line id="bJt" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="864" height="20" topLeftX="48" topLeftY="74" type="text" id="bJT">
+        <content textType="caption" fontSize="12" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>同一套考题、同一套挖空方案下逐级对照；H2X 为当前总体最佳模型</p>
+        </content>
+      </shape>
+      <line id="bJw" startX="212" startY="116" endX="222.0498756211209" endY="116">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bmI" startX="388" startY="116" endX="398.0498756211209" endY="116">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bmR" startX="564" startY="116" endX="574.0498756211209" endY="116">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJC" startX="740" startY="116" endX="750.0498756211209" endY="116">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJY" startX="212" startY="112" endX="222.04301095117978" endY="116.01720438047192">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bma" startX="212" startY="120" endX="222.04301095117978" endY="115.98279561952808">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJE" startX="388" startY="112" endX="398.0430109511798" endY="116.01720438047192">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJc" startX="388" startY="120" endX="398.0430109511798" endY="115.98279561952808">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJz" startX="564" startY="112" endX="574.0430109511798" endY="116.01720438047192">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bmV" startX="564" startY="120" endX="574.0430109511798" endY="115.98279561952808">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJx" startX="740" startY="112" endX="750.0430109511798" endY="116.01720438047192">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJv" startX="740" startY="120" endX="750.0430109511798" endY="115.98279561952808">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <line id="bJI" startX="212" startY="100" endX="212" endY="424.00154320620146">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <line id="bmb" startX="388" startY="100" endX="388" endY="424.00154320620146">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <line id="bJq" startX="564" startY="100" endX="564" endY="424.00154320620146">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <line id="bJM" startX="740" startY="100" endX="740" endY="424.00154320620146">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="160" height="30" topLeftX="48" topLeftY="100" type="text" id="bJR">
+        <content textType="headline" fontSize="21" fontFamily="思源宋体" color="rgba(120, 72, 72, 1)" bold="true" wrap="false">
+          <p>G0</p>
+        </content>
+      </shape>
+      <shape width="160" height="44" topLeftX="48" topLeftY="140" type="text" id="bJX">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" lineSpacing="multiple:1.3">
+          <p>基础图网络</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="48" topLeftY="192" type="text" id="bJB">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>加入</p>
+        </content>
+      </shape>
+      <shape width="160" height="60" topLeftX="48" topLeftY="210" type="text" id="bJh">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.4">
+          <p>先把河网当成不分方向的连接</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="48" topLeftY="286" type="text" id="bJa">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>发现</p>
+        </content>
+      </shape>
+      <shape width="160" height="100" topLeftX="48" topLeftY="304" type="text" id="bJg">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(120, 72, 72, 1)" lineSpacing="multiple:1.4">
+          <p>真实河网 &gt; 打乱的假河网 &gt; 不用河网（E1 河网对照）</p>
+        </content>
+      </shape>
+      <shape width="160" height="30" topLeftX="224" topLeftY="100" type="text" id="bJf">
+        <content textType="headline" fontSize="21" fontFamily="思源宋体" color="rgba(120, 72, 72, 1)" bold="true" wrap="false">
+          <p>H1</p>
+        </content>
+      </shape>
+      <shape width="160" height="44" topLeftX="224" topLeftY="140" type="text" id="bJd">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" lineSpacing="multiple:1.3">
+          <p>区分上下游的图网络</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="224" topLeftY="192" type="text" id="bJV">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>加入</p>
+        </content>
+      </shape>
+      <shape width="160" height="60" topLeftX="224" topLeftY="210" type="text" id="bJy">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.4">
+          <p>上游、下游各用一套传递权重</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="224" topLeftY="286" type="text" id="bJP">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>发现</p>
+        </content>
+      </shape>
+      <shape width="160" height="100" topLeftX="224" topLeftY="304" type="text" id="bJU">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(120, 72, 72, 1)" lineSpacing="multiple:1.4">
+          <p>方向让时间补全更准，E2 上首次超过随机森林</p>
+        </content>
+      </shape>
+      <shape width="160" height="30" topLeftX="400" topLeftY="100" type="text" id="bJb">
+        <content textType="headline" fontSize="21" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>H2</p>
+        </content>
+      </shape>
+      <shape width="160" height="44" topLeftX="400" topLeftY="140" type="text" id="bJn">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" lineSpacing="multiple:1.3">
+          <p>逐边调节的图网络</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="400" topLeftY="192" type="text" id="bJG">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>加入</p>
+        </content>
+      </shape>
+      <shape width="160" height="72" topLeftX="400" topLeftY="210" type="text" id="boX">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.4">
+          <p>每条边按河段物理量调节：跳数、河长、汇水面积、坡度、河级</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="400" topLeftY="286" type="text" id="bJm">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>发现</p>
+        </content>
+      </shape>
+      <shape width="160" height="100" topLeftX="400" topLeftY="304" type="text" id="bJO">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" lineSpacing="multiple:1.4">
+          <p>E2a / E2b 阶段最佳，E1 追平随机森林</p>
+        </content>
+      </shape>
+      <shape width="160" height="30" topLeftX="576" topLeftY="100" type="text" id="bJA">
+        <content textType="headline" fontSize="21" fontFamily="思源宋体" color="rgba(140, 100, 50, 1)" bold="true" wrap="false">
+          <p>H2E</p>
+        </content>
+      </shape>
+      <shape width="160" height="44" topLeftX="576" topLeftY="140" type="text" id="bJJ">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" lineSpacing="multiple:1.3">
+          <p>加入生态信息</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="576" topLeftY="192" type="text" id="bJZ">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>加入</p>
+        </content>
+      </shape>
+      <shape width="160" height="72" topLeftX="576" topLeftY="210" type="text" id="bJD">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.4">
+          <p>土地、气候、土壤等静态生态属性直接并入节点</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="576" topLeftY="286" type="text" id="bJu">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>发现</p>
+        </content>
+      </shape>
+      <shape width="160" height="100" topLeftX="576" topLeftY="304" type="text" id="bJo">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(140, 100, 50, 1)" lineSpacing="multiple:1.4">
+          <p>修复向新站点推广：E3 平均 R² 0.23 → 0.32</p>
+        </content>
+      </shape>
+      <shape width="160" height="30" topLeftX="752" topLeftY="100" type="text" id="bJN">
+        <content textType="headline" fontSize="21" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>H2X</p>
+        </content>
+      </shape>
+      <shape width="160" height="44" topLeftX="752" topLeftY="140" type="text" id="bJp">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" lineSpacing="multiple:1.3">
+          <p>河流身份</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="752" topLeftY="192" type="text" id="bJk">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>加入</p>
+        </content>
+      </shape>
+      <shape width="160" height="72" topLeftX="752" topLeftY="210" type="text" id="bJS">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.4">
+          <p>生态属性先整合成一段「河流身份」再进入节点</p>
+        </content>
+      </shape>
+      <shape width="160" height="18" topLeftX="752" topLeftY="286" type="text" id="bJL">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>发现</p>
+        </content>
+      </shape>
+      <shape width="160" height="100" topLeftX="752" topLeftY="304" type="text" id="bJl">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(176, 122, 46, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>总体最佳：E2b MAE 0.96、R² 0.47；E3 MAE 1.79</p>
+        </content>
+      </shape>
+      <shape width="160" height="5" topLeftX="48" topLeftY="436" presetHandlers="0" type="rect" id="bmH">
+        <fill>
+          <fillColor color="rgba(150, 110, 110, 1)"/>
+        </fill>
+        <border color="rgba(150, 110, 110, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="160" height="5" topLeftX="224" topLeftY="436" presetHandlers="0" type="rect" id="bJj">
+        <fill>
+          <fillColor color="rgba(128, 74, 74, 1)"/>
+        </fill>
+        <border color="rgba(128, 74, 74, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="160" height="5" topLeftX="400" topLeftY="436" presetHandlers="0" type="rect" id="bJK">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="160" height="5" topLeftX="576" topLeftY="436" presetHandlers="0" type="rect" id="bJF">
+        <fill>
+          <fillColor color="rgba(140, 100, 50, 1)"/>
+        </fill>
+        <border color="rgba(140, 100, 50, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="160" height="5" topLeftX="752" topLeftY="436" presetHandlers="0" type="rect" id="bmw">
+        <fill>
+          <fillColor color="rgba(176, 122, 46, 1)"/>
+        </fill>
+        <border color="rgba(176, 122, 46, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="300" height="18" topLeftX="48" topLeftY="448" type="text" id="bJQ">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>过程感知与信息源逐步增强 →</p>
+        </content>
+      </shape>
+      <shape width="864" height="24" topLeftX="48" topLeftY="474" type="text" id="bJe">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>主线结论：方向的优势在 E1 / E2（已知站点的时间补全），生态身份的优势在 E3（新站点的空间推广）。</p>
+        </content>
+      </shape>
+      <line id="bJr" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bmY">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>数字来源：统一实验结果汇总（平均绝对误差 MAE，mg/L；E3 为三次重复均值）</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bJs">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>09 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bJW">
+      <content>
+        <p>这是全文的方法主线。G0 是最基础的、不分方向的图网络，只证明真实河网比打乱的假河网和不用河网都强。</p>
+        <p>H1 把上游和下游的传递权重分开，第一次在时间考题 E2 上超过随机森林；H2 用河段物理量逐边调节，信息传递不再一视同仁；H2E 直接把生态属性并进节点，把 E3 的决定系数从 0.23 拉到 0.32。</p>
+        <p>H2X 先把生态属性整合成一段「河流身份」再进入模型，是当前总体最佳的模型。注意每一级都只改一个因素，所以每一步带来的提升都能说清来源。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcj">
+    <style>
+      <fill id="fcj">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bmg">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="bmJ">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>图 4 · 模型迭代路径与每一步的动机</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bmQ">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>03 · 评测协议与方法</p>
+        </content>
+      </shape>
+      <line id="bmE" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="300" height="26" topLeftX="48" topLeftY="92" type="text" id="bnV">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>读图要点：每一步改了什么</p>
+        </content>
+      </shape>
+      <line id="bmy" startX="48" startY="126" endX="348.001666662037" endY="126">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="26" height="24" topLeftX="48" topLeftY="142" type="text" id="bmo">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>1</p>
+        </content>
+      </shape>
+      <shape width="270" height="58" topLeftX="78" topLeftY="140" type="text" id="bms">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>G0 → H1</strong>　不分方向的平均改为上下游分开传递，时间补全变准</p>
+        </content>
+      </shape>
+      <shape width="26" height="24" topLeftX="48" topLeftY="208" type="text" id="bmx">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>2</p>
+        </content>
+      </shape>
+      <shape width="270" height="58" topLeftX="78" topLeftY="206" type="text" id="bnI">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>H1 → H2</strong>　每条边按河段物理量决定传递强弱，压住无关信息</p>
+        </content>
+      </shape>
+      <shape width="26" height="24" topLeftX="48" topLeftY="274" type="text" id="bnb">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>3</p>
+        </content>
+      </shape>
+      <shape width="270" height="58" topLeftX="78" topLeftY="272" type="text" id="bmn">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>H2 → H2E</strong>　静态生态属性进入站点，向新站点推广的能力被修复</p>
+        </content>
+      </shape>
+      <shape width="26" height="24" topLeftX="48" topLeftY="340" type="text" id="bmk">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>4</p>
+        </content>
+      </shape>
+      <shape width="270" height="58" topLeftX="78" topLeftY="338" type="text" id="bmi">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>H2E → H2X</strong>　用「河流身份」整合替代直接拼接，全部考题最佳</p>
+        </content>
+      </shape>
+      <shape width="300" height="48" topLeftX="48" topLeftY="406" type="text" id="bmq">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.4">
+          <p>图 4｜模型迭代路径与每一步的设计动机。</p>
+        </content>
+      </shape>
+      <img id="bnR" src="Sg0Eb5jUlojtn0x19vNcLYRJnyh" width="526" height="372" topLeftX="386" topLeftY="84">
+        <crop type="rect" leftOffset="0" rightOffset="0" topOffset="0.09322602280349201" bottomOffset="0.09322602280349201"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <line id="bmX" startX="48" startY="468" endX="912.0005787035097" endY="468">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="32" topLeftX="48" topLeftY="474" type="text" id="bmm">
+        <content fontSize="11.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.35">
+          <p><strong><span color="rgba(94, 42, 42, 1)">稳定化修复 H1.5　</span></strong>共享权重、顺流方向聚合，配合随机搁置两成边、约束权重幅度、预测上下限做 99.5% 分位截断，消除了 H1 在 E3 上结果为负的崩溃。</p>
+        </content>
+      </shape>
+      <line id="bmj" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bmt">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>每一步改动都有明确的物理或生态动机，而非调参所得</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bmB">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>10 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bna">
+      <content>
+        <p>图 4 把迭代路径画出来，左侧是读图顺序：每一级都有明确的物理或生态动机，而不是堆参数。</p>
+        <p>中间还有一个没画在主阶梯上的稳定化版本 H1.5：H1 曾在 E3 出现决定系数为负的崩溃，根因是参数过多叠加极端值，我们通过共享权重、顺流方向聚合、随机搁置两成边、约束权重幅度，并对预测上下限做分位截断，修复了它。</p>
+        <p>这个细节说明模型增益来自设计而非调参运气。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcH">
+    <style>
+      <fill id="fcH">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bmA">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="600" height="32" topLeftX="62" topLeftY="26" type="text" id="bmF">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>关键机制：逐边调节与生态身份</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bmf">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>03 · 评测协议与方法</p>
+        </content>
+      </shape>
+      <line id="bmN" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="bmK" startX="480.00000000000006" startY="92" endX="480.0000000000001" endY="424.00150602068055">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="400" height="18" topLeftX="48" topLeftY="92" type="text" id="bmC">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(176, 122, 46, 1)" bold="true" letterSpacing="1.5" wrap="false">
+          <p>机制一 · H2</p>
+        </content>
+      </shape>
+      <shape width="408" height="28" topLeftX="48" topLeftY="114" type="text" id="bmd">
+        <content fontSize="16.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>逐边调节：传递强弱不再一刀切</p>
+        </content>
+      </shape>
+      <shape width="408" height="22" topLeftX="48" topLeftY="150" type="text" id="bmu">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" wrap="false">
+          <p>每条有方向的连接（j → i）的调节强度由河段物理量决定：</p>
+        </content>
+      </shape>
+      <shape width="426" height="40" topLeftX="42" topLeftY="178" type="text" id="bmr">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(31, 35, 41, 1)" lineSpacing="multiple:1.3" textAlign="center">
+          <p><formula><latex>g_{ij}=\mathrm{MLP}_{e}([\mathrm{hops}_{ij},\ell_{ij},\mathrm{ord}_{j},A_{j},s_{j}])</latex></formula></p>
+        </content>
+      </shape>
+      <shape width="426" height="28" topLeftX="42" topLeftY="226" type="text" id="bmP">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(31, 35, 41, 1)" textAlign="center">
+          <p><formula><latex>m_i=\sum_{j}g_{ij}W_{j\to i}h_j</latex></formula></p>
+        </content>
+      </shape>
+      <shape width="426" height="16" topLeftX="42" topLeftY="254" type="text" id="bsG">
+        <content fontSize="9.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" textAlign="center" wrap="false">
+          <p>j 取遍 i 的上游邻域 N(i)，W 按边方向 j→i 选取</p>
+        </content>
+      </shape>
+      <line id="bmD" startX="48" startY="278" endX="456.0012254883556" endY="278">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="408" height="130" topLeftX="48" topLeftY="290" type="text" id="bme">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.6">
+          <p>· 调节依据：跳数、河段长度、河流分级、汇水面积、坡度</p>
+          <p>· 逐边调节，距离远或不相关邻站的信息被压低</p>
+          <p>· 上下游权重分开，保留「水往低处流」的方向含义</p>
+        </content>
+      </shape>
+      <shape width="400" height="18" topLeftX="504" topLeftY="92" type="text" id="bmc">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(176, 122, 46, 1)" bold="true" letterSpacing="1.5" wrap="false">
+          <p>机制二 · H2X</p>
+        </content>
+      </shape>
+      <shape width="408" height="28" topLeftX="504" topLeftY="114" type="text" id="bmU">
+        <content fontSize="16.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>生态身份：回答「这是一条什么河」</p>
+        </content>
+      </shape>
+      <shape width="408" height="22" topLeftX="504" topLeftY="150" type="text" id="bmp">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" wrap="false">
+          <p>把静态的汇水区属性整合成一段「河流身份」：</p>
+        </content>
+      </shape>
+      <shape width="418" height="40" topLeftX="494" topLeftY="178" type="text" id="bmG">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(31, 35, 41, 1)" lineSpacing="multiple:1.3" textAlign="center">
+          <p><formula><latex>e_i=\mathrm{MLP}_{c}([\mathrm{land}_i,\mathrm{clim}_i,\mathrm{soil}_i,\mathrm{hydro}_i])</latex></formula></p>
+        </content>
+      </shape>
+      <shape width="418" height="40" topLeftX="494" topLeftY="226" type="text" id="bmS">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(31, 35, 41, 1)" lineSpacing="multiple:1.3" textAlign="center">
+          <p><formula><latex>h_i^{0}=[x_i\Vert e_i]</latex></formula></p>
+        </content>
+      </shape>
+      <line id="bmW" startX="504" startY="278" endX="912.0012254883557" endY="278">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="408" height="130" topLeftX="504" topLeftY="290" type="text" id="bmv">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.6">
+          <p>· 四组生态属性：气候、水文、土地覆盖、土壤地形</p>
+          <p>· 河流身份与逐月变化的特征结合，本身不随月份改变</p>
+          <p>· 没监测过的站点，也能凭自身生态属性得到合理的初始判断</p>
+        </content>
+      </shape>
+      <line id="bmO" startX="48" startY="436" endX="912.0005787035097" endY="436">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="20" topLeftX="48" topLeftY="448" type="text" id="bml">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" wrap="false">
+          <p><strong><span color="rgba(94, 42, 42, 1)">逐项对照（E2b 平均绝对误差）　</span></strong>只留一组：气候 1.06 · 土地 1.05 · 水文 1.01 · 土壤地形 0.99；四组全用 0.96，各管一块、互不重复。</p>
+        </content>
+      </shape>
+      <shape width="864" height="20" topLeftX="48" topLeftY="474" type="text" id="bmZ">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" wrap="false">
+          <p><strong><span color="rgba(94, 42, 42, 1)">分工　</span></strong>逐边调节回答信息「怎么传」，生态身份回答站点「是什么」；前者强在时间补全，后者强在向新站点推广。</p>
+        </content>
+      </shape>
+      <line id="bmL" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bmT">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>逐项去掉单个机制即可量化其贡献（消融对照）</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bmM">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>11 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bmh">
+      <content>
+        <p>这页讲两个关键机制。左边是 H2 的逐边调节：每条边传递信息的强弱由跳数、河段长度、河流分级、汇水面积和坡度算出，不再是不分远近的平均；消息只汇总上游邻站，上下游权重仍然分开。</p>
+        <p>右边是 H2X 的生态身份：静态的汇水区属性先整合成一段「河流身份」，再和逐月变化的特征结合，这样完全没监测过的站点也有合理的初始判断。</p>
+        <p>底部逐项对照显示四组生态属性各管一块、合起来最好；两个机制分工明确，一个管信息怎么传，一个管这是条什么河。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcR">
+    <style>
+      <fill id="fcR">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="boC">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="boY">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>主结果：平均绝对误差总表（mg/L，越低越好）</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bkQ">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>04 · 阶段结果与诊断</p>
+        </content>
+      </shape>
+      <line id="bkc" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <table id="bot" width="864" height="318" topLeftX="48" topLeftY="88">
+        <colgroup>
+          <col span="1" width="168"/>
+          <col span="6" width="116"/>
+        </colgroup>
+        <tr height="30">
+          <td id="bki">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true" textAlign="left">
+              <p>　模型</p>
+            </content>
+          </td>
+          <td id="bkL">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>E1 挖空20%</p>
+            </content>
+          </td>
+          <td id="box">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>E1 挖空40%</p>
+            </content>
+          </td>
+          <td id="boc">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>E1 挖空60%</p>
+            </content>
+          </td>
+          <td id="boz">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>E2a 严格未来</p>
+            </content>
+          </td>
+          <td id="bks">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>E2b 带两成已知</p>
+            </content>
+          </td>
+          <td id="bkW">
+            <fill>
+              <fillColor color="rgba(94, 42, 42, 1)"/>
+            </fill>
+            <content fontSize="11.5" fontFamily="思源黑体" color="rgba(245, 241, 232, 1)" bold="true">
+              <p>E3 整站留出</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="boQ">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　B0　站点均值</p>
+            </content>
+          </td>
+          <td id="boK">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.46</p>
+            </content>
+          </td>
+          <td id="boF">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.48</p>
+            </content>
+          </td>
+          <td id="bkJ">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.48</p>
+            </content>
+          </td>
+          <td id="bke">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.14</p>
+            </content>
+          </td>
+          <td id="boj">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.12</p>
+            </content>
+          </td>
+          <td id="boL">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.59</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="bol">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　B1　地理插值（克里金）</p>
+            </content>
+          </td>
+          <td id="bkm">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.15</p>
+            </content>
+          </td>
+          <td id="bkN">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.17</p>
+            </content>
+          </td>
+          <td id="boi">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.22</p>
+            </content>
+          </td>
+          <td id="boW">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>n / a</p>
+            </content>
+          </td>
+          <td id="boH">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.51</p>
+            </content>
+          </td>
+          <td id="bkk">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.05</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="bkZ">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　B2　随机森林</p>
+            </content>
+          </td>
+          <td id="boJ">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.42</p>
+            </content>
+          </td>
+          <td id="bos">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.44</p>
+            </content>
+          </td>
+          <td id="boe">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.46</p>
+            </content>
+          </td>
+          <td id="bor">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.11</p>
+            </content>
+          </td>
+          <td id="bko">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.11</p>
+            </content>
+          </td>
+          <td id="bkS">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.07</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="bom">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　B3　全连接网络</p>
+            </content>
+          </td>
+          <td id="boN">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.87</p>
+            </content>
+          </td>
+          <td id="boA">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.86</p>
+            </content>
+          </td>
+          <td id="bkg">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.88</p>
+            </content>
+          </td>
+          <td id="bkf">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.31</p>
+            </content>
+          </td>
+          <td id="bkD">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.29</p>
+            </content>
+          </td>
+          <td id="bok">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.02</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="boZ">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　G0　基础图网络（不分方向）</p>
+            </content>
+          </td>
+          <td id="boO">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.74</p>
+            </content>
+          </td>
+          <td id="bkX">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.77</p>
+            </content>
+          </td>
+          <td id="bkB">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.87</p>
+            </content>
+          </td>
+          <td id="boo">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.45</p>
+            </content>
+          </td>
+          <td id="boS">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.38</p>
+            </content>
+          </td>
+          <td id="bop">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.97</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="bkn">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　H1　区分上下游</p>
+            </content>
+          </td>
+          <td id="bkG">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.50</p>
+            </content>
+          </td>
+          <td id="bog">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.55</p>
+            </content>
+          </td>
+          <td id="boD">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.62</p>
+            </content>
+          </td>
+          <td id="bou">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>1.09</p>
+            </content>
+          </td>
+          <td id="bky">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.07</p>
+            </content>
+          </td>
+          <td id="bkP">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.03</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="bof">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　H2　逐边调节</p>
+            </content>
+          </td>
+          <td id="boh">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.41</p>
+            </content>
+          </td>
+          <td id="boa">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.43</p>
+            </content>
+          </td>
+          <td id="bkE">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.52</p>
+            </content>
+          </td>
+          <td id="bon">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.10</p>
+            </content>
+          </td>
+          <td id="boB">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.05</p>
+            </content>
+          </td>
+          <td id="boM">
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>2.01</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="boR">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" textAlign="left">
+              <p>　H2E　加入生态信息</p>
+            </content>
+          </td>
+          <td id="bkt">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.41</p>
+            </content>
+          </td>
+          <td id="bkC">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.42</p>
+            </content>
+          </td>
+          <td id="boy">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>1.50</p>
+            </content>
+          </td>
+          <td id="boG">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.18</p>
+            </content>
+          </td>
+          <td id="boU">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.13</p>
+            </content>
+          </td>
+          <td id="bob">
+            <fill>
+              <fillColor color="rgba(238, 233, 222, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>1.81</p>
+            </content>
+          </td>
+        </tr>
+        <tr height="32">
+          <td id="bkq">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="left">
+              <p>　H2X　河流身份（本研究）</p>
+            </content>
+          </td>
+          <td id="bkT">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>1.40</p>
+            </content>
+          </td>
+          <td id="boP">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true">
+              <p>1.42</p>
+            </content>
+          </td>
+          <td id="bod">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>†</p>
+            </content>
+          </td>
+          <td id="boV">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)">
+              <p>†</p>
+            </content>
+          </td>
+          <td id="bkx">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(176, 122, 46, 1)" bold="true">
+              <p>0.96</p>
+            </content>
+          </td>
+          <td id="bkv">
+            <fill>
+              <fillColor color="rgba(237, 228, 210, 1)"/>
+            </fill>
+            <content fontSize="12.5" fontFamily="思源黑体" color="rgba(176, 122, 46, 1)" bold="true">
+              <p>1.79</p>
+            </content>
+          </td>
+        </tr>
+      </table>
+      <line id="boT" startX="48" startY="88" endX="912.0005787035097" endY="88">
+        <border color="rgba(94, 42, 42, 1)"/>
+      </line>
+      <line id="bow" startX="48" startY="406" endX="912.0005787035097" endY="406">
+        <border color="rgba(94, 42, 42, 1)"/>
+      </line>
+      <shape width="864" height="20" topLeftX="48" topLeftY="418" type="text" id="bkj">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>注：E1 为三次重复的均值；† 表示该格实验尚在补齐；地理插值无法使用同月已知信息，E2a 记为 n / a；另报告均方根误差、决定系数与对数口径指标。</p>
+        </content>
+      </shape>
+      <shape width="864" height="40" topLeftX="48" topLeftY="456" type="text" id="bkK">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>怎么读：E1 / E2 上，河网模型追平并小幅超过随机森林；向新站点推广的 E3 上，只有加入生态身份的 H2E / H2X 明显变好，H2X 总体最佳。</p>
+        </content>
+      </shape>
+      <line id="boq" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bov">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>全部数字来自统一固定的实验结果，可逐格复核</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="boI">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>12 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="boE">
+      <content>
+        <p>这是全部模型在六类考题下的平均绝对误差总表，单位 mg/L，越低越好。深色行是对照方法，金色高亮的 H2X 是我们的最终模型。</p>
+        <p>三个要点：第一，不分方向的基础图网络还不如随机森林，说明光把站点连起来不够；第二，H1 靠区分上下游在 E2a 首次超过随机森林；第三，也是最关键的，向新站点推广的 E3 上，只有加了生态身份的 H2E 和 H2X 误差明显下降，H2X 降到 1.79。</p>
+        <p>H2X 的部分 E1 实验还在补齐，用剑号标出，不夸大已经完成的范围。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcG">
+    <style>
+      <fill id="fcG">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bkV">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="bkd">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>图 3 · 生态信息改善浓度补全</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bku">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>04 · 阶段结果与诊断</p>
+        </content>
+      </shape>
+      <line id="bkr" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <img id="bkI" src="Rxwhb4FeyogyjcxQ8UJc1E9Dnog" width="586" height="330" topLeftX="48" topLeftY="90">
+        <crop type="rect" leftOffset="0.1774707757704732" rightOffset="0.17747077577053005" topOffset="0" bottomOffset="0"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <shape width="586" height="14" topLeftX="48" topLeftY="424" type="text" id="bkb">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>图 3｜E2b 与 E3 的平均绝对误差横向对比，以及 E3 在三种藏站方案下决定系数的波动。</p>
+        </content>
+      </shape>
+      <shape width="252" height="26" topLeftX="660" topLeftY="92" type="text" id="bkU">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>读图要点</p>
+        </content>
+      </shape>
+      <line id="bkp" startX="660" startY="126" endX="912.0019841191731" endY="126">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="20" height="22" topLeftX="660" topLeftY="140" type="text" id="bkH">
+        <content fontSize="12" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>·</p>
+        </content>
+      </shape>
+      <shape width="234" height="62" topLeftX="678" topLeftY="138" type="text" id="bkw">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>E2b　</strong>H2X 平均绝对误差 0.96、决定系数 0.47，全部模型最优</p>
+        </content>
+      </shape>
+      <shape width="20" height="22" topLeftX="660" topLeftY="208" type="text" id="bkR">
+        <content fontSize="12" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>·</p>
+        </content>
+      </shape>
+      <shape width="234" height="62" topLeftX="678" topLeftY="206" type="text" id="bkM">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>E3　</strong>H2X 平均绝对误差 1.79，为三次重复均值（波动 ±0.28）</p>
+        </content>
+      </shape>
+      <shape width="20" height="22" topLeftX="660" topLeftY="276" type="text" id="bkO">
+        <content fontSize="12" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>·</p>
+        </content>
+      </shape>
+      <shape width="234" height="96" topLeftX="678" topLeftY="274" type="text" id="bkl">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.45">
+          <p><strong>结果的波动　</strong>E3 决定系数在三种藏站方案下分别为 0.33 / 0.08 / 0.53，藏起哪些站对结果影响较大</p>
+        </content>
+      </shape>
+      <line id="bkY" startX="48" startY="452" endX="912.0005787035097" endY="452">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="40" topLeftX="48" topLeftY="462" type="text" id="bka">
+        <content fontSize="13" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>生态信息不是锦上添花：它的提升主要在最难的「推广到没监测过的站点」（E3）上体现，和逐级对照前的预判一致；同时 E3 必须报告三次结果的区间，而不是只报一次。</p>
+        </content>
+      </shape>
+      <line id="bkh" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bkA">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>数字来源：统一实验结果汇总（E3 为三次重复）</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bkF">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>13 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bkz">
+      <content>
+        <p>这张图 3 同时看 E2b 和 E3。在 E2b 缺口填补场景下，H2X 的平均绝对误差是 0.96、决定系数 0.47，是所有模型里最好的。</p>
+        <p>E3 藏起整站的场景下，H2X 三次平均的误差是 1.79，但三次的决定系数从 0.08 到 0.53 波动很大，说明藏起哪些站比随机性本身更影响结论，所以我们坚持报告区间而不是单次值。</p>
+        <p>结论是生态信息的提升主要在向新站点推广时兑现，这和逐级对照前的设计预期一致。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcv">
+    <style>
+      <fill id="fcv">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bjx">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="700" height="32" topLeftX="62" topLeftY="26" type="text" id="bjG">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>诊断一：E3 误差集中在「源头站」</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bjS">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>04 · 阶段结果与诊断</p>
+        </content>
+      </shape>
+      <line id="bjy" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="512" height="26" topLeftX="48" topLeftY="92" type="text" id="bjn">
+        <content fontSize="15.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>源头站（没有任何上游来水）上的修复</p>
+        </content>
+      </shape>
+      <shape width="168" height="36" topLeftX="48" topLeftY="128" type="text" id="bjo">
+        <content textType="headline" fontSize="26" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>n = 45</p>
+        </content>
+      </shape>
+      <shape width="168" height="40" topLeftX="48" topLeftY="166" type="text" id="bjB">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.35">
+          <p>被藏起的源头站</p>
+          <p>（没有任何上游邻站）</p>
+        </content>
+      </shape>
+      <shape width="170" height="36" topLeftX="220" topLeftY="128" type="text" id="bjZ">
+        <content textType="headline" fontSize="26" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>2.79 → 2.21</p>
+        </content>
+      </shape>
+      <shape width="170" height="40" topLeftX="220" topLeftY="166" type="text" id="bjk">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.35">
+          <p>平均绝对误差（mg/L）</p>
+          <p>H2 → H2E，32/45 站变好</p>
+        </content>
+      </shape>
+      <shape width="156" height="36" topLeftX="404" topLeftY="128" type="text" id="bji">
+        <content textType="headline" fontSize="26" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>3.24 → 2.52</p>
+        </content>
+      </shape>
+      <shape width="156" height="40" topLeftX="404" topLeftY="166" type="text" id="bjq">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.35">
+          <p>高山源头子集</p>
+          <p>（29 个站，最难的一组）</p>
+        </content>
+      </shape>
+      <line id="bjt" startX="48" startY="218" endX="560.0009765615687" endY="218">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="512" height="20" topLeftX="48" topLeftY="228" type="text" id="bjf">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>H1 在 E3 的第一种藏站方案下曾出现决定系数为负，根因在于：</p>
+        </content>
+      </shape>
+      <shape width="512" height="84" topLeftX="48" topLeftY="252" type="text" id="bjN">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p>· 高山源头站浓度本底偏高，却没有上游可以传来信息</p>
+          <p>· 旧做法把预测上限卡在训练集最大值 445，高值被人为削平</p>
+          <p>· 既不是模型能力不够，也不只是没见过的数值，而是「没有上游 + 数值偏高」的双重困难</p>
+        </content>
+      </shape>
+      <shape width="512" height="20" topLeftX="48" topLeftY="346" type="text" id="bjX">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>修复与验证</p>
+        </content>
+      </shape>
+      <shape width="512" height="66" topLeftX="48" topLeftY="370" type="text" id="bjm">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p>改用 99.5% 训练分位截断修复削顶；生态身份让没有上游的站也有合理的初始判断。</p>
+          <p>全部 81 个被藏起的站，平均绝对误差 2.30 → 2.04，修复后 E3 决定系数约 0.27、由负转正。</p>
+        </content>
+      </shape>
+      <img id="bjj" src="TOkabpBLyoo5ZqxkazKcVAt5nQd" width="318" height="258" topLeftX="594" topLeftY="92">
+        <crop type="rect" leftOffset="0" rightOffset="0" topOffset="0.20171673819740477" bottomOffset="0.20171673819737634"/>
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </img>
+      <shape width="318" height="44" topLeftX="594" topLeftY="354" type="text" id="bjE">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" lineSpacing="multiple:1.35">
+          <p>图｜E3 第一种藏站方案的误差地图：高误差（暖色）集中</p>
+          <p>在流域北部、西部的高山源头，干流沿线误差较低。</p>
+        </content>
+      </shape>
+      <line id="bjP" startX="48" startY="450" endX="912.0005787035097" endY="450">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="40" topLeftX="48" topLeftY="462" type="text" id="bjD">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>科学含义：向没监测过的地方推广，必须同时回答两件事——「信息能从谁那里传来」（河网结构）与「自己是一条什么河」（生态身份），缺一不可。</p>
+        </content>
+      </shape>
+      <line id="bjg" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bjJ">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>统计结果已逐站复核</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bjQ">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>14 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bjs">
+      <content>
+        <p>把 E3 的误差画到地图上，发现高误差集中在源头站，也就是没有任何上游来水的站。45 个源头站从 H2 到 H2E，平均绝对误差从 2.79 降到 2.21，32 个站变好；最难的高山源头子集（29 个站）从 3.24 降到 2.52。</p>
+        <p>回溯发现 H1 当年在 E3 崩溃不是模型能力问题，而是高山源头站既没有上游传来的信息、浓度本底又高，预测还被训练集最大值人为削平。</p>
+        <p>修复后结论很清楚：向没监测过的地方推广，要同时知道信息能从谁那里传来、自己是条什么河。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcC">
+    <style>
+      <fill id="fcC">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bjv">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="720" height="32" topLeftX="62" topLeftY="26" type="text" id="bjh">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>诊断二：极端案例 06438000 的系统性欠预测</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bjA">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>04 · 阶段结果与诊断</p>
+        </content>
+      </shape>
+      <line id="bjF" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="bjY" startX="340" startY="92" endX="340.00000000000006" endY="436.00145348530145">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="bjL" startX="648" startY="92" endX="648" endY="436.00145348530145">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="272" height="24" topLeftX="48" topLeftY="92" type="text" id="bjT">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>案例档案</p>
+        </content>
+      </shape>
+      <shape width="272" height="40" topLeftX="48" topLeftY="126" type="text" id="bjd">
+        <content textType="headline" fontSize="34" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>460 mg/L</p>
+        </content>
+      </shape>
+      <shape width="272" height="20" topLeftX="48" topLeftY="170" type="text" id="bju">
+        <content textType="caption" fontSize="11" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>历史最大值，出现在 1980-07</p>
+        </content>
+      </shape>
+      <shape width="272" height="220" topLeftX="48" topLeftY="206" type="text" id="bjr">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.65">
+          <p>· 仅 28 个月有观测，序列极稀疏</p>
+          <p>· 均值 58.2 / 中位数 6.8，均值被少数高值拉起</p>
+          <p>· 另有 450（1980-10）、212、160 等尖峰</p>
+          <p>· 浓度超过 50 的共 6 个月，全部落在 1978–1980</p>
+          <p>· 1978–1980（11 个月）：均值 137.5、中位数 53</p>
+          <p>· 其余年份（17 个月）：均值仅 6.9</p>
+        </content>
+      </shape>
+      <shape width="276" height="24" topLeftX="356" topLeftY="92" type="text" id="bjK">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>排查：常见解释全部无信号</p>
+        </content>
+      </shape>
+      <shape width="276" height="290" topLeftX="356" topLeftY="130" type="text" id="bjC">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p><strong>流量　</strong>与流量的秩相关系数几乎为零（p = 0.99），统计上无关</p>
+          <p><strong>上游　</strong>上游站 06437000 同期一直是低浓度，没有可传导的来源</p>
+          <p><strong>其他指标　</strong>pH、电导率、水温均无解释力</p>
+          <p><strong>时间　</strong>高值只出现在 1970 年代末一小段时间，之后再没出现</p>
+          <p><strong>推断　</strong>以月为单位的输入里，本来就没有这段历史高值时段的信息</p>
+        </content>
+      </shape>
+      <shape width="248" height="24" topLeftX="664" topLeftY="92" type="text" id="bjU">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>结论与处理方式</p>
+        </content>
+      </shape>
+      <shape width="248" height="180" topLeftX="664" topLeftY="130" type="text" id="bjp">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p>· 欠预测源于输入信息缺失，而非模型容量不足</p>
+          <p>· 论文表述为「可解释的系统性欠预测」</p>
+          <p>· 不追求逐点拟合这类极端值</p>
+        </content>
+      </shape>
+      <line id="bjH" startX="664" startY="318" endX="912.0020161208372" endY="318">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="248" height="100" topLeftX="664" topLeftY="330" type="text" id="bje">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p><strong><span color="rgba(176, 122, 46, 1)">改为　</span></strong>给出预测区间等不确定性刻画，并对那段历史高值时段单独标记，避免平均指标掩盖这种结构性偏差。</p>
+        </content>
+      </shape>
+      <line id="bjc" startX="48" startY="450" endX="912.0005787035097" endY="450">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="40" topLeftX="48" topLeftY="462" type="text" id="bjM">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>方法论含义：先审计误差结构、再决定是否改模型——把「模型学不会」与「输入信息里本来就没有」严格区分开。</p>
+        </content>
+      </shape>
+      <line id="bjO" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="560" height="16" topLeftX="48" topLeftY="514" type="text" id="bjl">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>结论基于对该站逐月观测与环境变量的逐项排查</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bjw">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>15 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bjW">
+      <content>
+        <p>第二个诊断是单个极端站 06438000。它只有 28 个月有观测，最大值 460，但中位数只有 6.8，六个浓度超过 50 的月份全部集中在 1978 到 1980 年。</p>
+        <p>我们逐一排查了常见解释：和流量的相关系数几乎为零，上游站一直是低值，pH、电导率、水温都没信号。结论是以月为单位的输入里本来就没有这段历史高值时段的信息。</p>
+        <p>所以这不是把模型做大能解决的，论文里把它表述为可解释的系统性低估，改用不确定性刻画来处理，而不是硬追每个点的精度。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcJ">
+    <style>
+      <fill id="fcJ">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bQo">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="600" height="32" topLeftX="62" topLeftY="26" type="text" id="bQs">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>阶段性局限：一份诚实清单</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bQq">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>05 · 局限、计划与小结</p>
+        </content>
+      </shape>
+      <line id="bjz" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="210" height="26" topLeftX="48" topLeftY="92" type="text" id="bjV">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>1　全部实验尚未跑完</p>
+        </content>
+      </shape>
+      <shape width="644" height="40" topLeftX="268" topLeftY="92" type="text" id="bQn">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.45">
+          <p>H2X 的部分 E1 实验（挖空 40% / 60%）与 E2a 仍在跑，表中以 † 标注；当前结论只基于已完成的结果，不提前推广。</p>
+        </content>
+      </shape>
+      <line id="bQk" startX="48" startY="146" endX="912.0005787035097" endY="146">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="210" height="26" topLeftX="48" topLeftY="160" type="text" id="bQi">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>2　跨月记忆模块尚未纳入</p>
+        </content>
+      </shape>
+      <shape width="644" height="40" topLeftX="268" topLeftY="160" type="text" id="bQt">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.45">
+          <p>带月度记忆的时序模块尚未进入结果表，它对时间补全（E2）的帮助仍待验证，目前结论限于沿河网的空间传递。</p>
+        </content>
+      </shape>
+      <line id="bjI" startX="48" startY="214" endX="912.0005787035097" endY="214">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="210" height="26" topLeftX="48" topLeftY="228" type="text" id="bjb">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>3　1970 年代末异常高值</p>
+        </content>
+      </shape>
+      <shape width="644" height="40" topLeftX="268" topLeftY="228" type="text" id="bQm">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.45">
+          <p>比如 06438000 那一小段历史高值，以月为单位的输入无法承载，模型表现为可解释的系统性低估，需要用不确定性刻画来处理。</p>
+        </content>
+      </shape>
+      <line id="bQj" startX="48" startY="282" endX="912.0005787035097" endY="282">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="210" height="26" topLeftX="48" topLeftY="296" type="text" id="bQE">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>4　仅单一流域</p>
+        </content>
+      </shape>
+      <shape width="644" height="40" topLeftX="268" topLeftY="296" type="text" id="bQB">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.45">
+          <p>目前只覆盖密西西比流域；换到不同气候带、不同地貌的流域还灵不灵尚未检验，河流身份能否迁移仍是开放问题。</p>
+        </content>
+      </shape>
+      <line id="bjR" startX="48" startY="350" endX="912.0005787035097" endY="350">
+        <border color="rgba(228, 222, 209, 1)" width="1"/>
+      </line>
+      <shape width="210" height="26" topLeftX="48" topLeftY="364" type="text" id="bQX">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>5　采样非均匀</p>
+        </content>
+      </shape>
+      <shape width="644" height="56" topLeftX="268" topLeftY="364" type="text" id="bQJ">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.45">
+          <p>站点空间分布不均，E3 的结论受藏起哪些站影响较大（三次决定系数在 0.08–0.53 之间）；生态属性逐项对照的完整结果尚未全部并入总表。</p>
+        </content>
+      </shape>
+      <line id="bQQ" startX="48" startY="440" endX="912.0005787035097" endY="440">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="44" topLeftX="48" topLeftY="454" type="text" id="bQx">
+        <content fontSize="13.5" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" lineSpacing="multiple:1.4">
+          <p>原则：局限不遮掩——未完成项在结果表与论文中显式标注，不以部分结果充当全量结论；下一页给出对应解决计划。</p>
+        </content>
+      </shape>
+      <line id="bQf" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bja">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>利用河网结构补全稀疏水质观测 · 阶段成果汇报</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bQg">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>16 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bQy">
+      <content>
+        <p>这一页只讲局限，共五条。全部实验还没跑完，H2X 部分结果用剑号标出；跨月记忆模块还没上结果；1970 年代末那一小段异常高值，以月为单位的输入承载不了。</p>
+        <p>目前只有密西西比一个流域，站点采样也不均匀，E3 的结果受藏起哪些站影响较大，生态属性的逐项对照还没全部并入总表。</p>
+        <p>我们的原则是显式标注这些缺口，下一页逐条对应到计划。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcy">
+    <style>
+      <fill id="fcy">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bQK">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="600" height="32" topLeftX="62" topLeftY="26" type="text" id="bQh">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>后续计划：四个阶段，局限逐条销项</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bQl">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>05 · 局限、计划与小结</p>
+        </content>
+      </shape>
+      <line id="bQL" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="bQM" startX="80" startY="150" endX="876.0006281404557" endY="150">
+        <border color="rgba(176, 122, 46, 1)"/>
+      </line>
+      <shape width="16" height="16" topLeftX="140" topLeftY="142" type="ellipse" id="bQH">
+        <fill>
+          <fillColor color="rgba(176, 122, 46, 1)"/>
+        </fill>
+        <border color="rgba(176, 122, 46, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="16" height="16" topLeftX="360" topLeftY="142" type="ellipse" id="bQr">
+        <fill>
+          <fillColor color="rgba(140, 100, 50, 1)"/>
+        </fill>
+        <border color="rgba(140, 100, 50, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="16" height="16" topLeftX="580" topLeftY="142" type="ellipse" id="bQG">
+        <fill>
+          <fillColor color="rgba(128, 74, 74, 1)"/>
+        </fill>
+        <border color="rgba(128, 74, 74, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="16" height="16" topLeftX="800" topLeftY="142" type="ellipse" id="bQW">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="200" height="28" topLeftX="48" topLeftY="90" type="text" id="bQU">
+        <content textType="headline" fontSize="19" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>P0　本周</p>
+        </content>
+      </shape>
+      <shape width="200" height="18" topLeftX="48" topLeftY="122" type="text" id="bQP">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>结果收口</p>
+        </content>
+      </shape>
+      <shape width="200" height="150" topLeftX="48" topLeftY="176" type="text" id="bQe">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p>· 补齐 H2X 剩余实验</p>
+          <p>· 更新主结果对照表</p>
+          <p>· 定稿图 1–4 四张主图</p>
+        </content>
+      </shape>
+      <shape width="200" height="28" topLeftX="268" topLeftY="90" type="text" id="bQd">
+        <content textType="headline" fontSize="19" fontFamily="思源宋体" color="rgba(140, 100, 50, 1)" bold="true" wrap="false">
+          <p>P1　近期</p>
+        </content>
+      </shape>
+      <shape width="200" height="18" topLeftX="268" topLeftY="122" type="text" id="bQN">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>论文图与证据链</p>
+        </content>
+      </shape>
+      <shape width="200" height="150" topLeftX="268" topLeftY="176" type="text" id="bQC">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p>· 方法阶梯示意图</p>
+          <p>· E3 源头站对比地图</p>
+          <p>· 生态属性贡献与极端案例附图</p>
+        </content>
+      </shape>
+      <shape width="200" height="28" topLeftX="488" topLeftY="90" type="text" id="bQA">
+        <content textType="headline" fontSize="19" fontFamily="思源宋体" color="rgba(128, 74, 74, 1)" bold="true" wrap="false">
+          <p>P2　方法</p>
+        </content>
+      </shape>
+      <shape width="200" height="18" topLeftX="488" topLeftY="122" type="text" id="bQp">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>模型与不确定性</p>
+        </content>
+      </shape>
+      <shape width="200" height="150" topLeftX="488" topLeftY="176" type="text" id="bQY">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p>· H3：带月度记忆的时序模块</p>
+          <p>· 完成生态属性逐项对照</p>
+          <p>· 预测区间 / 不确定度量化</p>
+        </content>
+      </shape>
+      <shape width="204" height="28" topLeftX="708" topLeftY="90" type="text" id="bQZ">
+        <content textType="headline" fontSize="19" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>P3　扩展</p>
+        </content>
+      </shape>
+      <shape width="204" height="18" topLeftX="708" topLeftY="122" type="text" id="bQT">
+        <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" wrap="false">
+          <p>外流域与新尺度</p>
+        </content>
+      </shape>
+      <shape width="204" height="150" topLeftX="708" topLeftY="176" type="text" id="bQO">
+        <content fontSize="12" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)" lineSpacing="multiple:1.7">
+          <p>· 第二流域复现</p>
+          <p>· 跨流域迁移实验</p>
+          <p>· 加入洪水事件等短时尺度变量</p>
+        </content>
+      </shape>
+      <line id="bQw" startX="48" startY="356" endX="912.0005787035097" endY="356">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="864" height="24" topLeftX="48" topLeftY="370" type="text" id="bQS">
+        <content fontSize="14" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>写作主线</p>
+        </content>
+      </shape>
+      <shape width="864" height="46" topLeftX="48" topLeftY="398" type="text" id="bQv">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p>论文以「问题驱动的逐级对照」为主线：河网 → 方向 → 逐边调节 → 生态身份，每一步的提升都说得清来源；源头站与极端案例作为机制诊断的正文章节，而不是附录里的边角料。</p>
+        </content>
+      </shape>
+      <shape width="864" height="44" topLeftX="48" topLeftY="452" type="text" id="bQu">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(38, 34, 29, 1)">
+          <p><strong><span color="rgba(176, 122, 46, 1)">近期里程碑　</span></strong>本周组会：主结果表与四张主图齐套；投稿前：时序模块结果、第二流域探索性实验与不确定性区间。</p>
+        </content>
+      </shape>
+      <line id="bQD" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bQc">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>组会本周对齐收口进度；投稿前完成时序模块、第二流域与不确定性分析</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bQF">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>17 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bQz">
+      <content>
+        <p>计划分四档。P0 本周收口：把 H2X 剩余实验补齐、更新主结果对照表、定稿四张主图。</p>
+        <p>P1 做论文图和证据链，P2 上带月度记忆的时序模块、完成生态属性逐项对照和预测区间，P3 扩展到第二流域和跨流域迁移。</p>
+        <p>写作上以问题驱动的逐级对照为主线，每一步的提升都说得清来源，两个诊断案例进入正文的机制章节。</p>
+      </content>
+    </note>
+  </slide>
+  <slide id="pcU">
+    <style>
+      <fill id="fcU">
+        <fillColor color="rgba(245, 241, 232, 1)"/>
+      </fill>
+    </style>
+    <data>
+      <shape width="4" height="24" topLeftX="48" topLeftY="30" presetHandlers="0" type="rect" id="bsB">
+        <fill>
+          <fillColor color="rgba(94, 42, 42, 1)"/>
+        </fill>
+        <border color="rgba(94, 42, 42, 1)" width="0"/>
+        <content fontSize="16" fontFamily="思源黑体" color="rgba(31, 35, 41, 1)"/>
+      </shape>
+      <shape width="600" height="32" topLeftX="62" topLeftY="26" type="text" id="bQR">
+        <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>阶段小结</p>
+        </content>
+      </shape>
+      <shape width="188" height="18" topLeftX="724" topLeftY="34" type="text" id="bsX">
+        <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgba(122, 116, 106, 1)" letterSpacing="1" textAlign="right" wrap="false">
+          <p>05 · 局限、计划与小结</p>
+        </content>
+      </shape>
+      <line id="bsm" startX="48" startY="64" endX="912.0005787035097" endY="64">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="bsj" startX="480" startY="96" endX="480.00000000000006" endY="436.0014705850549">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <line id="bsi" startX="48" startY="266" endX="912.0005787035097" endY="266">
+        <border color="rgba(216, 209, 192, 1)" width="1"/>
+      </line>
+      <shape width="80" height="52" topLeftX="48" topLeftY="104" type="text" id="bsq">
+        <content textType="headline" fontSize="40" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>1</p>
+        </content>
+      </shape>
+      <shape width="330" height="26" topLeftX="128" topLeftY="108" type="text" id="bQI">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>问题：稀疏不等于无解</p>
+        </content>
+      </shape>
+      <shape width="330" height="110" topLeftX="128" topLeftY="140" type="text" id="bQb">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.6">
+          <p>8.9% 的（站点 × 月份）格子有观测；河网结构和汇水区生态信息，是两类此前被忽略、却可以明确利用的先验。</p>
+        </content>
+      </shape>
+      <shape width="80" height="52" topLeftX="498" topLeftY="104" type="text" id="bsn">
+        <content textType="headline" fontSize="40" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" wrap="false">
+          <p>2</p>
+        </content>
+      </shape>
+      <shape width="334" height="26" topLeftX="578" topLeftY="108" type="text" id="bsk">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>方法：四级对照阶梯</p>
+        </content>
+      </shape>
+      <shape width="334" height="110" topLeftX="578" topLeftY="140" type="text" id="bsx">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.6">
+          <p>G0 → H2X：河网、方向、逐边调节、生态身份逐级加入，同一套考题下每一步的提升都说得清来源。</p>
+        </content>
+      </shape>
+      <shape width="80" height="52" topLeftX="48" topLeftY="284" type="text" id="bsP">
+        <content textType="headline" fontSize="40" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>3</p>
+        </content>
+      </shape>
+      <shape width="330" height="26" topLeftX="128" topLeftY="288" type="text" id="bQV">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>结果：两条优势线清晰</p>
+        </content>
+      </shape>
+      <shape width="330" height="110" topLeftX="128" topLeftY="320" type="text" id="bsy">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.6">
+          <p>E2b 平均绝对误差 0.96、决定系数 0.47，E3 平均绝对误差 1.79；源头站 2.79 → 2.21。方向强在时间补全，生态身份强在向新站点推广。</p>
+        </content>
+      </shape>
+      <shape width="80" height="52" topLeftX="498" topLeftY="284" type="text" id="bso">
+        <content textType="headline" fontSize="40" fontFamily="思源宋体" color="rgba(176, 122, 46, 1)" bold="true" wrap="false">
+          <p>4</p>
+        </content>
+      </shape>
+      <shape width="334" height="26" topLeftX="578" topLeftY="288" type="text" id="bss">
+        <content fontSize="15" fontFamily="思源宋体" color="rgba(38, 34, 29, 1)" bold="true" wrap="false">
+          <p>状态与下一步</p>
+        </content>
+      </shape>
+      <shape width="334" height="110" topLeftX="578" topLeftY="320" type="text" id="bsE">
+        <content fontSize="12.5" fontFamily="思源黑体" color="rgba(70, 64, 56, 1)" lineSpacing="multiple:1.6">
+          <p>主结论已经可以汇报；剩余实验与图 1–4 正在收尾；带月度记忆的时序模块、第二流域与不确定性刻画是下一步，全部分析过程可重复。</p>
+        </content>
+      </shape>
+      <line id="bsf" startX="330" startY="452" endX="630.001666662037" endY="452">
+        <border color="rgba(176, 122, 46, 1)" width="1"/>
+      </line>
+      <shape width="400" height="32" topLeftX="280" topLeftY="462" type="text" id="bQa">
+        <content textType="headline" fontSize="20" fontFamily="思源宋体" color="rgba(94, 42, 42, 1)" bold="true" textAlign="center" wrap="false">
+          <p>谢谢，欢迎批评指正</p>
+        </content>
+      </shape>
+      <line id="bsg" startX="48" startY="508" endX="912.0005787035097" endY="508">
+        <border color="rgba(201, 192, 172, 1)" width="1"/>
+      </line>
+      <shape width="520" height="16" topLeftX="48" topLeftY="514" type="text" id="bsJ">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" wrap="false">
+          <p>全部结果基于统一固定的实验，每个数字都可逐格复核</p>
+        </content>
+      </shape>
+      <shape width="112" height="16" topLeftX="800" topLeftY="514" type="text" id="bsQ">
+        <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgba(150, 143, 130, 1)" textAlign="right" wrap="false">
+          <p>18 / 18</p>
+        </content>
+      </shape>
+    </data>
+    <note id="bst">
+      <content>
+        <p>用四句话收束。第一，问题层面，只有 8.9% 的格子有观测，但河网结构和生态信息是两类可以利用的先验。</p>
+        <p>第二，方法层面，G0 到 H2X 的四级对照让每一步提升都说得清来源。第三，结果层面，方向强在时间补全、生态身份强在向新站点推广，E2b 0.96、E3 1.79、源头站明显修复。</p>
+        <p>第四，状态诚实：主结论已经可以汇报，剩余实验和四张主图在收尾，时序模块和第二流域是下一步，每个数字都可以回头复核。谢谢大家。</p>
+      </content>
+    </note>
+  </slide>
+</presentation>

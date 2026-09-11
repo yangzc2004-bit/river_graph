@@ -1,0 +1,364 @@
+﻿{
+  "schema_version": "1.0",
+  "source_file": "current.xml",
+  "mode": "summary",
+  "selection": {
+    "slide_numbers": [],
+    "slide_ids": [],
+    "block_ids": [],
+    "raw_xml": false,
+    "output_slide_count": 18
+  },
+  "presentation": {
+    "root": "presentation",
+    "namespace": "https://www.larkoffice.com/sml/2.0",
+    "presentation_id": "EiRmsud2NlHZW9dUhrJcNLYqnhh",
+    "revision_id": null,
+    "title": "阶段成果汇报：河网感知 GNN 重构稀疏 DOC 观测（学术重构版）",
+    "width": "960",
+    "height": "540",
+    "slide_count": 18,
+    "slide_ids": [
+      "pcc",
+      "pcT",
+      "pcB",
+      "pcM",
+      "pcN",
+      "pcq",
+      "pcL",
+      "pcP",
+      "pcQ",
+      "pcj",
+      "pcH",
+      "pcR",
+      "pcG",
+      "pcv",
+      "pcC",
+      "pcJ",
+      "pcy",
+      "pcU"
+    ]
+  },
+  "summary": {
+    "blocks": 416,
+    "text_blocks": 278,
+    "images": 7,
+    "shapes": 306,
+    "tables": 3,
+    "charts": 0,
+    "icons": 0,
+    "lines": 100,
+    "undefined": 0,
+    "media_usage": null,
+    "warnings": []
+  },
+  "slides": [
+    {
+      "index": 1,
+      "slide_id": "pcc",
+      "counts": {
+        "blocks": 10,
+        "text_blocks": 7,
+        "images": 1,
+        "shapes": 7,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 2,
+        "undefined": 0
+      },
+      "text_preview": "阶段成果汇报 · STAGE PROGRESS REPORT | 河网感知图神经网络 重构密西西比河流域稀疏 DOC 观测 | Topology-aware Graph Neural Networks for Reconstructing Sparse Dissolved Organic Carbon Observations in the Mississippi River Basin | 方法阶梯已闭合 · 全量冻结与论文四图进行中 | 2026 年 9 月 · 组会阶…",
+      "note_preview": "各位老师同学好，这次阶段汇报介绍河网感知图神经网络重构稀疏 DOC 观测的工作。 核心问题是流域里溶解有机碳监测只有不到一成的时空格子有观测，我们尝试让河网拓扑本身成为补全信号。 目前方法消融阶梯已经闭合，全量结果冻结和论文四图正在收尾。汇报分五个部分：背景、思路与数据、协议与方法、结果与诊断、局限与计划。"
+    },
+    {
+      "index": 2,
+      "slide_id": "pcT",
+      "counts": {
+        "blocks": 26,
+        "text_blocks": 19,
+        "images": 0,
+        "shapes": 20,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 6,
+        "undefined": 0
+      },
+      "text_preview": "汇报路线 | OUTLINE | 01 | 研究背景与科学问题 | DOC 监测为何稀疏，河网先验对应哪三个研究问题 | 02 | 核心思路与数据基础 | 三类信息如何汇合，流域站点图与公开数据流水线 | 03 | 评测协议与方法阶梯 | E1 / E2a / E2b / E3 协议，与 G0→H2X 的逐级消融 | 04 | 阶段结果与诊断 | 主结果表、关键结果图、E3 源头站诊断与极端案例 | 05 | 局限、计划与小结 | 阶段性诚实清单、后续路线图与三句阶段结论…",
+      "note_preview": "汇报分五个部分。前两部分建立问题和数据：为什么 DOC 观测稀疏、我们如何把河网变成图。 第三部分是评测协议和方法消融阶梯，第四部分是当前结果和两个深入诊断，最后给出局限、后续安排和小结。 全程数字都来自仓库里冻结的实验结果，可以逐格追溯到 mask 和预测文件。"
+    },
+    {
+      "index": 3,
+      "slide_id": "pcB",
+      "counts": {
+        "blocks": 24,
+        "text_blocks": 17,
+        "images": 0,
+        "shapes": 18,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 6,
+        "undefined": 0
+      },
+      "text_preview": "研究背景：DOC 监测极稀疏 | 01 · 背景与科学问题 | 溶解有机碳（DOC）是水质与河陆碳循环的关键指标，但现有观测网络远不足以支撑全流域理解 | 11,948 | 全流域至少有过 1 次 DOC 采样的站点总数 | ≈ 570 | 其中具有可用时间序列、 进入本次建模的站点 | 8.9% | （站点 × 月份）格子中 实际有观测的比例 | 传统路径的三条局限 | 站均值 / 欧氏插值（Kriging） 只看空间邻近，忽略河网连通与水流方向，空间外推弱 | 表格特征…",
+      "note_preview": "先看问题的量级：流域内近一万两千个站点测过 DOC，但真正有可用序列的只有约 570 个，时空格子的观测覆盖率只有 8.9%。 三类传统方法各有盲区：插值忽略河网，表格模型忽略站点间因果，普通 GCN 又丢掉了流向。 所以核心矛盾是：数据稀疏，但河网拓扑是一个免费的强先验，本研究要回答它到底能补回多少信息。"
+    },
+    {
+      "index": 4,
+      "slide_id": "pcM",
+      "counts": {
+        "blocks": 22,
+        "text_blocks": 14,
+        "images": 1,
+        "shapes": 15,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 6,
+        "undefined": 0
+      },
+      "text_preview": "Figure 1 · 科学问题：拓扑能否补全稀疏观测 | 01 · 背景与科学问题 | 图 1｜稀疏观测（a）、欧氏距离插值（b）与拓扑感知 GNN（c）三种范式对比，目标是更可靠的河陆碳通量估算。 | 对应的三个研究问题 | RQ1 | 真实河网拓扑是否优于随机图与无图模型？ | RQ2 | 在 20% / 40% / 60% 重遮罩下，能恢复多少缺失观测？ | RQ3 | 学到的结构能否向未来时段与未见站点外推？ | 统一任务形态 | 站点图上的时空遮罩重构：给定一个（…",
+      "note_preview": "Figure 1 把科学问题画成三种范式：面板 a 是稀疏观测本身，面板 b 是欧氏插值，只看地理距离、忽略连通；面板 c 是我们的路线，沿河网边传递消息。 关键追问是：河网拓扑是否提供了超出距离插值的信息。这分解为右侧三个研究问题，分别对应拓扑消融、遮罩率、时空外推。 所有实验都统一为同一个任务形态：站点图上的时空遮罩重构，预测单位是月均 DOC。"
+    },
+    {
+      "index": 5,
+      "slide_id": "pcN",
+      "counts": {
+        "blocks": 36,
+        "text_blocks": 24,
+        "images": 0,
+        "shapes": 30,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 6,
+        "undefined": 0
+      },
+      "text_preview": "核心思路：三类信息汇合为有向传输 GNN | 02 · 思路与数据基础 | 稀疏 DOC 观测 | USGS / WQP 月均标签 仅 8.9% 格子有观测 | 河网拓扑 | NLDI / NHDPlus 有向边 571 站 · 562 条边 | 生态身份 | EPA StreamCat 静态属性 土地 / 气候 / 土壤 | 有向传输 GNN | direction + edge gate + context encoder | 补全未测 DOC | 缺失（站点，月份）…",
+      "note_preview": "核心思路是三类信息汇合：稀疏的 DOC 标签、河网拓扑、汇水区生态身份，送进有向传输图神经网络，输出未测格子的 DOC。 为了让每一步都可辩护，我们采用消融阶梯：每一级只加一个假设，拓扑、方向、传输、身份各自对应一组对照，全部跑同一套冻结 mask。 这页是全篇主线，后面的方法演化和结果表都按这条阶梯展开。"
+    },
+    {
+      "index": 6,
+      "slide_id": "pcq",
+      "counts": {
+        "blocks": 16,
+        "text_blocks": 9,
+        "images": 1,
+        "shapes": 9,
+        "tables": 1,
+        "charts": 0,
+        "icons": 0,
+        "lines": 5,
+        "undefined": 0
+      },
+      "text_preview": "数据与图构建：公开数据 · 脚本可复现 | 02 · 思路与数据基础 | 组件 来源 规模 / 内容 DOC 标签 USGS NWIS，pcode 00681 1972–2026 月均，33,048 个观测格 站点图 NLDI / NHDPlus 沿河导航 571 站、562 条有向边（上游→下游） 动态特征 水温 / 月均流量 与 DOC 对齐的月序列 + 月份正余弦 边物理 NHDPlus VAA 河段属性 河段长、汇水面积、坡度、Strahler 级 生态身份 EPA…",
+      "note_preview": "数据全部来自公开源：DOC 标签是 USGS 的 00681 参数，1972 到 2026 年月均，共 33048 个观测格。 站点图通过 NLDI 在 NHDPlus 上沿河导航构建，571 个站、562 条上游到下游的有向边，最大连通分量 407 站，也是 E3 空间留出实验的采样域。 整条流水线脚本化可复现；特别强调泄漏规则：测试格的 DOC 通道永远置零，生态属性是不含评测期信息的静态量，保证时序和空间实验都没有信息泄漏。"
+    },
+    {
+      "index": 7,
+      "slide_id": "pcL",
+      "counts": {
+        "blocks": 9,
+        "text_blocks": 5,
+        "images": 1,
+        "shapes": 6,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 2,
+        "undefined": 0
+      },
+      "text_preview": "Figure 2 · 实验框架总览 | 02 · 思路与数据基础 | 图 2｜多源数据（a）→ 站点图构建（b）→ 基线与 GNN 家族对照（c）→ 四类评测场景（d）→ 重构值、基准对比与碳通量不确定性收窄（e）。 | 河网感知 GNN 重构稀疏 DOC 观测 · 阶段成果汇报 | 07 / 18",
+      "note_preview": "Figure 2 是整个 MVP 的框架，五个面板从左到右就是数据流水线。 a 是多源数据：DOC 月观测、站点、环境协变量与河网拓扑；b 把河流系统表示成有向图，节点携带观测与协变量，边沿流向；c 是非图基线与 GNN 家族的对照。 d 是四类评测场景 E1、E2a、E2b、E3；e 是输出：重构 DOC 值、基准对比以及碳通量估计的不确定性收窄。下一页展开评测协议。"
+    },
+    {
+      "index": 8,
+      "slide_id": "pcP",
+      "counts": {
+        "blocks": 16,
+        "text_blocks": 10,
+        "images": 0,
+        "shapes": 10,
+        "tables": 1,
+        "charts": 0,
+        "icons": 0,
+        "lines": 5,
+        "undefined": 0
+      },
+      "text_preview": "评测协议：同一套冻结 mask，所有模型公平对比 | 03 · 评测协议与方法 | 实验 设定 回答的问题 E1 随机遮罩 r = 20% / 40% / 60%，各跑 seed 42 / 43 / 44 拓扑是否有用？重缺失下能恢复多少（RQ1、RQ2） E2a 训练截至 2020-12，测试 2021-01 起全部观测格 纯特征驱动的严格未来预测（无同月 DOC 可依） E2b 同 E2a，但未来保留 20% 观测格作为 context（不拟合、不评分） 监测网运行中的…",
+      "note_preview": "评测分四类场景。E1 是随机遮罩，回答拓扑有没有用、能扛多大缺失率；E2a 是严格未来预测，未来一个 DOC 都看不到；E2b 更贴近现实，监测网继续运行、保留两成同月观测作上下文。 E3 是空间外推，整站留出，检验信息能否沿河传到没监测的地方。 四个不使用河网的基线、统一的 RMSE、MAE、R² 指标，以及 Phase 0 冻结机制，保证后面每一张表都是同一标尺下的公平对比。"
+    },
+    {
+      "index": 9,
+      "slide_id": "pcQ",
+      "counts": {
+        "blocks": 61,
+        "text_blocks": 37,
+        "images": 0,
+        "shapes": 43,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 18,
+        "undefined": 0
+      },
+      "text_preview": "方法演化阶梯：每一级只加入一个假设 | 03 · 评测协议与方法 | 同一 benchmark、同一冻结 mask 下逐级消融；H2X 为当前总体最佳模型 | G0 | 普通 GCN | 加入 | 河网作为无向边的消息传递 | 发现 | 真实拓扑 > 随机图 > 无图（E1 拓扑消融） | H1 | 有向关系 GCN | 加入 | 上游 / 下游两套分离权重（R-GCN） | 发现 | 方向利于时序重构，E2 上首次超过 Random Forest | H2 | 传输门控…",
+      "note_preview": "这是全文的方法主线。G0 是最普通的无向 GCN，只证明真实河网比随机图和无图强。 H1 把上游和下游权重分开，第一次在时间实验 E2 上超过随机森林；H2 用河段物理量做边门控，传播强度不再均匀；H2E 直接拼接 StreamCat 生态属性，把 E3 的 R² 从 0.23 拉到 0.32。 H2X 把生态属性用 MLP 编码成身份嵌入，是当前总体最佳模型。注意每一级都只改一个因素，所以每一步的增益都可归因。"
+    },
+    {
+      "index": 10,
+      "slide_id": "pcj",
+      "counts": {
+        "blocks": 21,
+        "text_blocks": 15,
+        "images": 1,
+        "shapes": 16,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 4,
+        "undefined": 0
+      },
+      "text_preview": "Figure 4 · 模型迭代路径与设计动机 | 03 · 评测协议与方法 | 读图要点：每一步改了什么 | 1 | G0 → H1 无向平均改为上 / 下游分离权重，时序重构改善 | 2 | H1 → H2 边门控按河段物理量加权，抑制无关传播 | 3 | H2 → H2E 静态生态属性进入节点，空间外推被修复 | 4 | H2E → H2X 身份嵌入替代直接拼接，全部场景最佳 | 图 4｜模型迭代路径与每一步的设计动机，对应论文 Figure 4。 | 稳定化修复 H1…",
+      "note_preview": "Figure 4 把迭代路径画出来，左侧是读图顺序：每一级都有明确的物理或生态动机，而不是堆参数。 中间还有一个没画在主阶梯上的稳定化版本 H1.5：H1 曾在 E3 出现 R² 为负的崩溃，根因是参数过多叠加极端值，我们用共享权重、乘法方向门、edge dropout、权重衰减和训练分位 clamp 修复了它。 这个细节说明模型增益来自设计而非调参运气。"
+    },
+    {
+      "index": 11,
+      "slide_id": "pcH",
+      "counts": {
+        "blocks": 26,
+        "text_blocks": 19,
+        "images": 0,
+        "shapes": 20,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 6,
+        "undefined": 0
+      },
+      "text_preview": "关键机制：边门控与生态身份 | 03 · 评测协议与方法 | MECHANISM 1 · H2 | 边物理门控：传播强度不再均匀 | 每条有向边（j → i）的门控值由河段物理量决定： | g_{ij}=\\mathrm{MLP}_{e}([\\mathrm{hops}_{ij},\\ell_{ij},\\mathrm{ord}_{j},A_{j},s_{j}]) | m_i=\\sum_{j}g_{ij}W_{j\\to i}h_j | j 取遍 i 的上游邻域 N(i)，W 按边方…",
+      "note_preview": "这页讲两个关键机制。左边是 H2 的边物理门控：每条边的传播强度由跳数、河段长、河级、汇水面积和坡度算出，不再是 GCN 式的均匀平均；消息只对上游邻域 j 求和，方向权重 W_up 与 W_down 仍然分离。 右边是 H2X 的生态身份编码器：静态汇水区属性经过 MLP 变成身份嵌入，和动态特征拼接，这样完全没见过的站点也有合理的初始表征。 底部消融显示四组生态属性互补，全量最好；两个机制分工明确，一个管怎么传，一个管是什么。"
+    },
+    {
+      "index": 12,
+      "slide_id": "pcR",
+      "counts": {
+        "blocks": 12,
+        "text_blocks": 7,
+        "images": 0,
+        "shapes": 7,
+        "tables": 1,
+        "charts": 0,
+        "icons": 0,
+        "lines": 4,
+        "undefined": 0
+      },
+      "text_preview": "主结果：MAE 总表（mg/L，越低越好） | 04 · 阶段结果与诊断 | 模型 E1 r20 E1 r40 E1 r60 E2a strict E2b partial E3 空间留出 B0 站均值 1.46 1.48 1.48 1.14 1.12 2.59 B1 欧氏 Kriging 2.15 2.17 2.22 n / a 1.51 2.05 B2 Random Forest 1.42 1.44 1.46 1.11 1.11 2.07 B3 MLP 1.87 1.86…",
+      "note_preview": "这是全部模型在六个场景下的 MAE 总表，单位 mg/L，越低越好。栗色行是基线，金色高亮的 H2X 是我们的最终模型。 三个要点：第一，无向 GCN 不如随机森林，说明光有图不够；第二，H1 靠方向在 E2a 首次超过 RF；第三，也是最关键的，E3 空间留出上只有加了生态身份的 H2E 和 H2X 明显下降，H2X 到 1.79。 H2X 的部分 E1 格还在全量冻结中，用剑号标出，不夸大已完成范围。"
+    },
+    {
+      "index": 13,
+      "slide_id": "pcG",
+      "counts": {
+        "blocks": 19,
+        "text_blocks": 13,
+        "images": 1,
+        "shapes": 14,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 4,
+        "undefined": 0
+      },
+      "text_preview": "Figure 3 · 生态 context 改善 DOC 重构 | 04 · 阶段结果与诊断 | 图 3｜E2b 与 E3 的 MAE 横向对比，以及 E3 在三个留出 seed 下的 R² 敏感性。 | 读图要点 | · | E2b H2X MAE 0.96、R² 0.47，全部模型最优 | · | E3 H2X MAE 1.79，为 3 seed 均值（±0.28） | · | seed 敏感性 E3 R² 在 seed 42 / 43 / 44 分别为 0.33 /…",
+      "note_preview": "这张 Figure 3 同时看 E2b 和 E3。E2b 缺口填补场景下 H2X 的 MAE 是 0.96、R² 0.47，是所有模型里最好的。 E3 空间留出下 H2X 平均 MAE 1.79，但三个 seed 的 R² 从 0.08 到 0.53 波动很大，说明留出哪些站比随机种子本身更影响结论，所以我们坚持报告区间。 结论是生态身份的增益主要在空间外推兑现，这和方法阶梯的设计预期一致。"
+    },
+    {
+      "index": 14,
+      "slide_id": "pcv",
+      "counts": {
+        "blocks": 23,
+        "text_blocks": 17,
+        "images": 1,
+        "shapes": 18,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 4,
+        "undefined": 0
+      },
+      "text_preview": "诊断一：E3 误差集中在「源头站」 | 04 · 阶段结果与诊断 | 源头站（upstream degree = 0）上的修复 | n = 45 | 留出集中的源头站 （无任何上游邻居） | 2.79 → 2.21 | MAE（mg/L），H2 → H2E 45 站中 32 站改善 | 3.24 → 2.52 | HUC 10 / 11 高山子集 （n = 29，最难子集） | H1 在 E3 seed42 曾出现 R² 为负，根因有两条： | · HUC 10 / 11…",
+      "note_preview": "把 E3 的误差画到地图上，发现高误差集中在源头站，也就是上游度为零的站。45 个源头站从 H2 到 H2E，MAE 从 2.79 降到 2.21，32 个站改善；最难的 HUC10、11 高山子集从 3.24 降到 2.52。 回溯发现 H1 当年在 E3 崩溃不是模型容量问题，而是高山源头站既没有上游消息、DOC 本底又高，还被训练集最大值 clamp 削顶。 修复后结论很清楚：空间外推要同时知道连到谁、自己是什么河。"
+    },
+    {
+      "index": 15,
+      "slide_id": "pcC",
+      "counts": {
+        "blocks": 21,
+        "text_blocks": 14,
+        "images": 0,
+        "shapes": 15,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 6,
+        "undefined": 0
+      },
+      "text_preview": "诊断二：极端案例 06438000 的系统性欠预测 | 04 · 阶段结果与诊断 | 案例档案 | 460 mg/L | 历史最大值，出现在 1980-07 | · 仅 28 个月有观测，序列极稀疏 · mean 58.2 / median 6.8，均值被少数高值拉起 · 另有 450（1980-10）、212、160 等尖峰 · DOC > 50 共 6 个月，全部落在 1978–1980 · 1978–1980（n=11）：均值 137.5、中位 53 · 其余年份（n…",
+      "note_preview": "第二个诊断是单个极端站 06438000。它只有 28 个月有观测，最大值 460，但中位数只有 6.8，六个超过 50 的月份全部集中在 1978 到 1980 年。 我们逐一排查了常见解释：和流量相关系数几乎为零，上游站一直是低值，pH、电导率、水温都没信号。结论是月均输入里根本没有编码这段历史高值 regime 的信息。 所以这不是加大模型能解决的，论文里把它表述为可解释的系统性欠预测，用不确定性量化处理，而不是硬追点精度。"
+    },
+    {
+      "index": 16,
+      "slide_id": "pcJ",
+      "counts": {
+        "blocks": 23,
+        "text_blocks": 15,
+        "images": 0,
+        "shapes": 16,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 7,
+        "undefined": 0
+      },
+      "text_preview": "阶段性局限：一份诚实清单 | 05 · 局限、计划与小结 | 1 全量冻结未完成 | H2X 的部分 E1 格（r40 / r60）与 E2a 仍在跑，表中以 † 标注；当前结论只基于已冻结格，不提前外推。 | 2 时序模块 H3 未上 | GRU / 月度隐状态尚未进入结果表，跨月记忆对时序重构（E2）的增益仍待验证，目前结论限于空间消息传递。 | 3 1970s 极端 regime | 如 06438000 的局部历史高值，月均尺度特征无法编码，模型呈可解释的系统性欠预…",
+      "note_preview": "这一页只讲局限，共五条。全量冻结还没跑完，H2X 部分格子用剑号标出；H3 时序模块还没上结果；1970 年代的极端 regime 月均特征编码不了。 目前只有密西西比一个流域，站点采样也不均匀，E3 对 seed 敏感，生态消融还没全部并入主表。 我们的原则是显式标注这些缺口，下一页逐条对应到计划。"
+    },
+    {
+      "index": 17,
+      "slide_id": "pcy",
+      "counts": {
+        "blocks": 28,
+        "text_blocks": 19,
+        "images": 0,
+        "shapes": 24,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 4,
+        "undefined": 0
+      },
+      "text_preview": "后续计划：四个阶段，局限逐条销项 | 05 · 局限、计划与小结 | P0 本周 | 冻结收口 | · 跑完 H2X 剩余冻结格 · 更新 benchmark 主表 · 定稿 Fig 1–4 主图 | P1 近期 | 论文图与证据链 | · 方法阶梯示意图 · E3 源头站对比地图 · 生态组贡献与极端案例附图 | P2 方法 | 模型与不确定性 | · H3：GRU 月度隐状态 · 完整生态组 ablation · 预测区间 / 不确定度量化 | P3 扩展 | 外流域与…",
+      "note_preview": "计划分四档。P0 本周收口：把 H2X 剩余冻结格跑完、更新主表、定稿四张主图。 P1 做论文图和证据链，P2 上 H3 时序模块、完整生态消融和预测区间，P3 扩展到第二流域和跨流域迁移。 写作上以诊断驱动的消融阶梯为主线，每一步增益可归因，两个诊断案例进入正文机制章节。"
+    },
+    {
+      "index": 18,
+      "slide_id": "pcU",
+      "counts": {
+        "blocks": 23,
+        "text_blocks": 17,
+        "images": 0,
+        "shapes": 18,
+        "tables": 0,
+        "charts": 0,
+        "icons": 0,
+        "lines": 5,
+        "undefined": 0
+      },
+      "text_preview": "阶段小结 | 05 · 局限、计划与小结 | 1 | 问题：稀疏不等于无解 | 8.9% 的（站点 × 月份）格子有观测；河网拓扑与汇水区生态身份是两类此前被忽略、且可显式利用的先验。 | 2 | 方法：四级消融阶梯 | G0 → H2X：拓扑、方向、边物理门控、生态身份逐级加入，同一冻结 benchmark 下每一步增益都可归因。 | 3 | 结果：两条优势线清晰 | E2b MAE 0.96 / R² 0.47，E3 MAE 1.79；源头站 2.79 → 2.21。方…",
+      "note_preview": "用四句话收束。第一，问题层面，8.9% 的覆盖率下，河网拓扑和生态身份是两类可利用先验。 第二，方法层面，G0 到 H2X 的四级消融让每个增益都可归因。第三，结果层面，方向赢时间、身份赢空间，E2b 0.96、E3 1.79、源头站明显修复。 第四，状态诚实：主结论可汇报，冻结和主图在收尾，H3 和外流域是下一步，全部数字在仓库里可复现。谢谢大家。"
+    }
+  ],
+  "selected_blocks": []
+}

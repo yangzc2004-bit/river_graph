@@ -1,0 +1,91 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill><fillColor color="rgb(245, 241, 232)"/></fill>
+  </style>
+  <data>
+    <shape type="rect" topLeftX="48" topLeftY="30" width="4" height="24">
+      <fill><fillColor color="rgb(94, 42, 42)"/></fill>
+      <border color="rgb(94, 42, 42)" width="0"/>
+    </shape>
+    <shape type="text" topLeftX="62" topLeftY="26" width="700" height="32">
+      <content textType="title" fontSize="24" fontFamily="思源宋体" color="rgb(38, 34, 29)" bold="true" wrap="false">
+        <p>Figure 4 · 模型迭代路径与设计动机</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="724" topLeftY="34" width="188" height="18">
+      <content textType="caption" fontSize="10" fontFamily="思源黑体" color="rgb(122, 116, 106)" textAlign="right" letterSpacing="1" wrap="false">
+        <p>03 · 评测协议与方法</p>
+      </content>
+    </shape>
+    <line startX="48" startY="64" endX="912" endY="64"><border color="rgb(201, 192, 172)" width="1"/></line>
+
+    <shape type="text" topLeftX="48" topLeftY="92" width="300" height="26">
+      <content textType="body" fontSize="15" fontFamily="思源宋体" color="rgb(94, 42, 42)" bold="true" wrap="false"><p>读图要点：每一步改了什么</p></content>
+    </shape>
+    <line startX="48" startY="126" endX="348" endY="126"><border color="rgb(216, 209, 192)" width="1"/></line>
+
+    <shape type="text" topLeftX="48" topLeftY="142" width="26" height="24">
+      <content textType="body" fontSize="13" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>1</p></content>
+    </shape>
+    <shape type="text" topLeftX="78" topLeftY="140" width="270" height="58">
+      <content textType="body" fontSize="12.5" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">G0 → H1</span>　无向平均改为上 / 下游分离权重，时序重构改善</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="48" topLeftY="208" width="26" height="24">
+      <content textType="body" fontSize="13" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>2</p></content>
+    </shape>
+    <shape type="text" topLeftX="78" topLeftY="206" width="270" height="58">
+      <content textType="body" fontSize="12.5" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">H1 → H2</span>　边门控按河段物理量加权，抑制无关传播</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="48" topLeftY="274" width="26" height="24">
+      <content textType="body" fontSize="13" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>3</p></content>
+    </shape>
+    <shape type="text" topLeftX="78" topLeftY="272" width="270" height="58">
+      <content textType="body" fontSize="12.5" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">H2 → H2E</span>　静态生态属性进入节点，空间外推被修复</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="48" topLeftY="340" width="26" height="24">
+      <content textType="body" fontSize="13" fontFamily="思源宋体" color="rgb(176, 122, 46)" bold="true" wrap="false"><p>4</p></content>
+    </shape>
+    <shape type="text" topLeftX="78" topLeftY="338" width="270" height="58">
+      <content textType="body" fontSize="12.5" fontFamily="思源黑体" color="rgb(38, 34, 29)" lineSpacing="multiple:1.45">
+        <p><span bold="true">H2E → H2X</span>　身份嵌入替代直接拼接，全部场景最佳</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="48" topLeftY="406" width="300" height="48">
+      <content textType="caption" fontSize="10.5" fontFamily="思源黑体" color="rgb(122, 116, 106)" lineSpacing="multiple:1.4">
+        <p>图 4｜模型迭代路径与每一步的设计动机，对应论文 Figure 4。</p>
+      </content>
+    </shape>
+
+    <img src="Sg0Eb5jUlojtn0x19vNcLYRJnyh" topLeftX="386" topLeftY="84" width="526" height="372">
+      <border color="rgb(201, 192, 172)" width="1"/>
+    </img>
+
+    <line startX="48" startY="468" endX="912" endY="468"><border color="rgb(216, 209, 192)" width="1"/></line>
+    <shape type="text" topLeftX="48" topLeftY="474" width="864" height="32">
+      <content textType="body" fontSize="11.5" fontFamily="思源黑体" color="rgb(70, 64, 56)" lineSpacing="multiple:1.35">
+        <p><span bold="true" color="rgb(94, 42, 42)">稳定化修复 H1.5　</span>共享权重 + 乘法方向门 + edge dropout 0.2 + weight decay 1e-4 + 99.5 分位 clamp，修复 H1 在 E3 的 R² 负值崩溃。</p>
+      </content>
+    </shape>
+
+    <line startX="48" startY="508" endX="912" endY="508"><border color="rgb(201, 192, 172)" width="1"/></line>
+    <shape type="text" topLeftX="48" topLeftY="514" width="520" height="16">
+      <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgb(150, 143, 130)" wrap="false"><p>设计文档：experiments/design_m4.md；实现：src/models/</p></content>
+    </shape>
+    <shape type="text" topLeftX="800" topLeftY="514" width="112" height="16">
+      <content textType="caption" fontSize="9" fontFamily="思源黑体" color="rgb(150, 143, 130)" textAlign="right" wrap="false"><p>10 / 18</p></content>
+    </shape>
+  </data>
+  <note>
+    <content textType="body">
+      <p>Figure 4 把迭代路径画出来，左侧是读图顺序：每一级都有明确的物理或生态动机，而不是堆参数。</p>
+      <p>中间还有一个没画在主阶梯上的稳定化版本 H1.5：H1 曾在 E3 出现 R² 为负的崩溃，根因是参数过多叠加极端值，我们用共享权重、乘法方向门、edge dropout、权重衰减和训练分位 clamp 修复了它。</p>
+      <p>这个细节说明模型增益来自设计而非调参运气。</p>
+    </content>
+  </note>
+</slide>
