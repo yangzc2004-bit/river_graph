@@ -36,6 +36,7 @@ def main() -> None:
     ap.add_argument("--edge-dropout", type=float, default=0.0,
                     help="H1.5: per-edge dropout prob during training")
     ap.add_argument("--wd", type=float, default=0.0, help="Adam weight decay")
+    ap.add_argument("--seed", type=int, default=0, help="model training seed")
     ap.add_argument("--env-groups", nargs="*", default=None,
                     choices=["hydro", "landcover", "climate", "soil", "topo"],
                     help="subset of v04 regime groups (default: all)")
@@ -62,8 +63,9 @@ def main() -> None:
             prefix = "H15_directed"
         else:
             prefix = "H1_directed"
-        mname = f"{prefix}_{variant}"
+        mname = f"{prefix}_{variant}" + (f"_s{args.seed}" if args.seed else "")
         model = GCNDocModel(variant=variant, lr=args.lr, architecture=args.arch,
+                            seed=args.seed,
                             env_groups=args.env_groups,
                             env_encoder=args.arch == "transport_enc",
                             share_weights=args.share_weights,
