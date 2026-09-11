@@ -209,23 +209,31 @@ class GCNDocModel:
                 return model(xb, ei)
         months_idx = np.arange(t)
 
+        # base_visible includes val+context (inference-time convention).
+        # During TRAINING selection, val must be hidden (fixed held-out
+        # problem set for early stopping; the model never sees the answers).
+        val_cells = torch.as_tensor(split.get("val", np.array([], dtype=int)))
+        base_train = base_visible.clone()
+        if len(val_cells):
+            base_train.reshape(-1)[val_cells] = False
+
         # Train with per-epoch re-masking of train cells: half stay visible
         # as context, half are hidden and used for the loss. Without this the
         # model learns to copy the input channel and never learns imputation.
+        # Early stopping uses the FIXED val set, hidden from the input.
         best_loss, best_state, bad = float("inf"), None, 0
         for _epoch in range(self.max_epochs):
             perm = rng.permutation(train_cells.numpy())
             half = len(perm) // 2
             ctx_cells = torch.as_tensor(perm[:half])
             tgt_cells = torch.as_tensor(perm[half:])
-            visible = base_visible.clone()
+            visible = base_train.clone()
             visible.reshape(-1)[ctx_cells] = True
             self._fill_doc_channel(xt, y, visible, stats)
             ti, tj = tgt_cells // t, tgt_cells % t
 
             model.train()
             np.random.shuffle(months_idx)
-            tgt_loss = 0.0
             for j in months_idx:
                 sel = ti[tj == j]
                 if len(sel) == 0:
@@ -236,20 +244,34 @@ class GCNDocModel:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 opt.step()
-                # hidden-from-input cells: honest proxy for imputation skill
-                tgt_loss += loss.item() * len(sel)
-            tgt_loss /= max(len(tgt_cells), 1)
-            if tgt_loss < best_loss - 1e-6:
-                best_loss = tgt_loss
-                # state_dict() returns live references; clone or continued
-                # training mutates the "best" state
-                best_state = {k: v.detach().clone()
-                              for k, v in model.state_dict().items()}
-                bad = 0
-            else:
-                bad += 1
-                if bad >= self.patience:
-                    break
+
+            # selection: fixed val cells, hidden from input
+            model.eval()
+            with torch.no_grad():
+                eval_visible = base_train.clone()
+                eval_visible.reshape(-1)[train_cells] = True
+                self._fill_doc_channel(xt, y, eval_visible, stats)
+                if len(val_cells):
+                    vi, vj = val_cells // t, val_cells % t
+                    vloss, vcount = 0.0, 0
+                    for j in np.unique(vj.numpy()):
+                        sel = vi[vj == j]
+                        vloss += F.mse_loss(fwd(xt[j])[sel], y[sel, j]).item() * len(sel)
+                        vcount += len(sel)
+                    crit = vloss / max(vcount, 1)
+            if len(val_cells):
+                if crit < best_loss - 1e-6:
+                    best_loss = crit
+                    # state_dict() returns live references; clone or continued
+                    # training mutates the "best" state
+                    best_state = {k: v.detach().clone()
+                                  for k, v in model.state_dict().items()}
+                    bad = 0
+                else:
+                    bad += 1
+                    if bad >= self.patience:
+                        break
+            # no val set -> train for max_epochs without early stopping
         if best_state is not None:
             model.load_state_dict(best_state)
 
