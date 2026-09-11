@@ -23,6 +23,8 @@ directed, transport-gated GNN with an ecological context encoder
 
 ## Method evolution (each step ablated on the same benchmark)
 
+![Method evolution](docs/figures/imagegen_frozen_20260911/figure1_method_evolution.png)
+
 | stage | model | adds | finding |
 |---|---|---|---|
 | G0 | plain GCN | river graph as undirected edges | topology > random graph > no graph (E1) |
@@ -43,19 +45,26 @@ directed, transport-gated GNN with an ecological context encoder
 - **Baselines**: station mean, Euclidean kriging, random forest, MLP.
 - All masks, predictions, and results are frozen under `experiments/`.
 
-Headline results (MAE mg/L, lower is better):
+Headline results (MAE mg/L, lower is better; frozen benchmark):
 
 | model | E1 r20 | E1 r40 | E1 r60 | E2a | E2b | E3 |
 |---|---|---|---|---|---|---|
 | station mean | 1.46 | 1.48 | 1.48 | 1.14 | 1.12 | 2.59 |
-| kriging | 2.15 | 2.18 | 2.22 | n/a | 1.51 | 2.05 |
-| random forest | 1.42 | 1.44 | 1.46 | 1.12 | 1.11 | 2.07 |
-| **H2X (ours)** | **1.40** | † | † | † | **0.96** | **1.79** |
+| kriging | 2.15 | 2.17 | 2.22 | n/a | 1.51 | 2.05 |
+| random forest | 1.42 | 1.44 | 1.46 | 1.11 | 1.11 | 2.07 |
+| MLP | 1.87 | 1.86 | 1.88 | 1.31 | 1.29 | 2.02 |
+| G0 river GCN | 1.67 | 1.72 | 1.76 | 1.17 | 1.13 | 1.92 |
+| H1 directed | 1.51 | 1.55 | 1.63 | 1.24 | 1.18 | 2.03 |
+| H2 transport | 1.41 | 1.46 | 1.52 | 1.08 | 1.02 | 2.01 |
+| **H2X (ours)** | **1.41** | **1.41** | 1.52 | **0.96** | 1.06 | **1.77** |
 
-\* RF keeps the 60% heavy-masking regime; E3 values are 3-seed MAE means.
-† H2X cells pending the running freeze; see
-`experiments/frozen_results/benchmark.csv` for the authoritative table
-incl. log-space metrics.
+E3 values are 3-seed means. A multi-seed (×5) refresh with the stabilized
+early-stopping rule is running; `experiments/frozen_results/benchmark.csv`
+carries the authoritative per-mask table incl. log-space metrics.
+
+![E3 headwater recovery](docs/figures/imagegen_frozen_20260911/figure2_e3_headwater_recovery.png)
+
+![Ecological context group ablation](docs/figures/imagegen_frozen_20260911/figure3_context_group_ablation.png)
 
 ## Notable analyses
 
@@ -63,6 +72,8 @@ incl. log-space metrics.
   Missouri headwaters drive failures; ecological context recovers them,
   MAE 2.79 → 2.21) and the 06438000 high-DOC label audit (a 1970s-era
   localized regime episode, invisible to every available proxy).
+
+![Extreme case: station 06438000](docs/figures/imagegen_frozen_20260911/figure4_extreme_case_06438000.png)
 
 ## Reproducibility
 
