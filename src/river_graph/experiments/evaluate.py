@@ -47,9 +47,11 @@ def metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
     lss_res = float(np.sum((lt - lp) ** 2))
     lss_tot = float(np.sum((lt - lt.mean()) ** 2))
     log_r2 = 1.0 - lss_res / lss_tot if lss_tot > 0 else float("nan")
+    # PBIAS (%), hydrology convention (Gupta): positive = underestimation
+    pbias = float(100.0 * np.sum(yt - yp) / np.sum(yt)) if np.sum(yt) > 0 else float("nan")
     return {"rmse": rmse, "mae": mae, "r2": r2,
             "log_rmse": log_rmse, "log_mae": log_mae, "log_r2": log_r2,
-            "n": int(ok.sum())}
+            "pbias": pbias, "n": int(ok.sum())}
 
 
 def evaluate(
