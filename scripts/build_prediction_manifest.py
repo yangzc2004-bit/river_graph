@@ -15,15 +15,20 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
+from river_graph.experiments.prediction_sources import sha256_file
+
 FROZEN = Path("experiments/frozen_results")
 CURRENT = Path("experiments/predictions")
 HISTORICAL = Path("experiments/predictions_historical")
 ANALYSIS = Path("experiments/analysis")
+
+MANIFEST_VERSION = 2
 
 
 def git(*args: str) -> str:
@@ -51,17 +56,20 @@ def main() -> None:
     if vdf is not None:
         status = {r["file"]: r["status"] for _, r in vdf.iterrows()}
 
+    # Batch keys are directory names, and every entry carries the content hash,
+    # so a name that exists in both batches cannot be confused or double-counted.
     entries = []
     for p in sorted(CURRENT.glob("*.parquet")):
-        key = (str(pd.read_parquet(p, columns=["model"])["model"].iloc[0]),
-               p.stem.split("__", 1)[1])
+        model = str(pd.read_parquet(p, columns=["model"])["model"].iloc[0])
+        mask = p.stem.split("__", 1)[1]
         st = status.get(p.name, "unverified")
-        in_frozen = bool(((frozen["model"] == key[0]) &
-                          (frozen["mask"] == key[1])).any())
-        in_multi = bool(((multiseed["model"] == key[0]) &
-                         (multiseed["mask"] == key[1])).any())
+        in_frozen = bool(((frozen["model"] == model) &
+                          (frozen["mask"] == mask)).any())
+        in_multi = bool(((multiseed["model"] == model) &
+                         (multiseed["mask"] == mask)).any())
         entries.append({
-            "file": p.name, "batch": "frozen_phase0", "status": st,
+            "file": p.name, "batch": "predictions", "status": st,
+            "sha256": sha256_file(p),
             "in_frozen_table": in_frozen, "in_multiseed_table": in_multi,
             "used_for_phase_a": st.startswith("verified"),
         })
@@ -69,26 +77,56 @@ def main() -> None:
     historical = []
     for p in sorted(HISTORICAL.glob("*.parquet")):
         historical.append({
-            "file": p.name, "batch": "recovered_256d08e",
+            "file": p.name, "batch": "predictions_historical",
+            "sha256": sha256_file(p),
             "used_for_phase_a": True,
             "reason": "overwritten or deleted after the frozen batch; "
                       "recomputed metrics match the frozen table",
         })
 
-    conflicts = [
-        {
-            "file": e["file"],
-            "problem": ("recomputed test metrics disagree with the frozen "
-                        "table; the file was overwritten after the freeze by a "
-                        "different model run"),
-            "used_for_phase_a": False,
-            "authoritative_value": "experiments/frozen_results/benchmark.csv",
-        }
-        for e in entries if e["status"] == "conflict"
-    ]
+    # Exactly one source per (model, mask): where a name exists in both batches
+    # and both are otherwise acceptable, the recovered copy wins and the
+    # overwritten one is recorded as a conflict. A name that is merely
+    # unverified is admitted from the batch that owns it (current preferred).
+    claimed: dict[str, str] = {}
+    conflicts: list[dict] = []
+    for entry in historical:
+        model, mask = entry["file"].split("__", 1)
+        entry["mask"] = mask[: -len(".parquet")]
+        entry["model"] = model
+        claimed.setdefault(f"{model}__{entry['mask']}", "predictions_historical")
+    for entry in entries:
+        model, mask = entry["file"].split("__", 1)
+        key = f"{model}__{mask[: -len('.parquet')]}"
+        if key in claimed:
+            entry["used_for_phase_a"] = False
+            entry["superseded_by"] = f"predictions_historical/{entry['file']}"
+            conflicts.append({
+                "file": entry["file"], "batch": "predictions",
+                "sha256": entry["sha256"],
+                "problem": ("a same-named recovered copy is the frozen-table "
+                            "source; this overwritten copy is excluded so the "
+                            "(model, mask) is counted once"),
+                "used_for_phase_a": False,
+                "authoritative_value": f"predictions_historical/{entry['file']}",
+            })
+        else:
+            claimed[key] = "predictions"
+        if entry["status"] == "conflict" and not any(
+                c["file"] == entry["file"] for c in conflicts):
+            conflicts.append({
+                "file": entry["file"], "batch": "predictions",
+                "sha256": entry["sha256"],
+                "problem": ("recomputed test metrics disagree with the frozen "
+                            "table; the file was overwritten after the freeze by "
+                            "a different model run"),
+                "used_for_phase_a": False,
+                "authoritative_value": "experiments/frozen_results/benchmark.csv",
+            })
+
     gaps = [
         {
-            "file": e["file"],
+            "file": e["file"], "batch": e["batch"], "sha256": e["sha256"],
             "problem": "no finite test-set prediction; metrics are NaN by design",
             "used_for_phase_a": True,
             "note": "report n and coverage; do not compare error magnitudes "
@@ -97,7 +135,16 @@ def main() -> None:
         for e in entries if e["status"] == "zero_coverage"
     ]
 
+    dupes = {name: count for name, count in
+             Counter(e["file"] for e in entries + historical).items()
+             if count > 1}
+    if dupes and len({(e["batch"], e["file"]) for e in entries + historical}) \
+            != len(entries) + len(historical):
+        raise RuntimeError(f"duplicate (batch, file) entries: {dupes}")
+
     manifest = {
+        "manifest_version": MANIFEST_VERSION,
+        "duplicate_names_across_batches": dupes,
         "manifest_date": args.date,
         "commit": git("rev-parse", "HEAD"),
         "commit_subject": git("log", "-1", "--format=%s", "HEAD"),
@@ -147,6 +194,14 @@ def main() -> None:
     print(f"manifest -> {out}")
     for key, value in manifest["counts"].items():
         print(f"  {key:26} {value}")
+    if dupes:
+        print(f"  duplicate names across batches: {dupes}")
+    selected = manifest["counts"]["used_for_phase_a"] + \
+        manifest["counts"]["historical_recovered"]
+    print(f"  SELECTED (unique sources)   : {selected}")
+    print()
+    for name in conflicts:
+        print(f"  excluded: {name['batch']}/{name['file']}")
 
 
 if __name__ == "__main__":

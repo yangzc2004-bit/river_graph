@@ -27,7 +27,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -35,6 +34,11 @@ import numpy as np
 import pandas as pd
 
 from river_graph.experiments.evaluate import load_dataset, load_mask, metrics
+from river_graph.experiments.prediction_sources import (
+    PredictionSource,
+    describe_report,
+    load_sources,
+)
 
 CURRENT = Path("experiments/predictions")
 HISTORICAL = Path("experiments/predictions_historical")
@@ -42,7 +46,7 @@ ANALYSIS = Path("experiments/analysis")
 MASKS_DIR = Path("experiments/masks")
 MANIFEST = Path("experiments/frozen_results/prediction_manifest_20260912.json")
 STATION_TYPES = Path("experiments/analysis/training_station_types_20260911.csv")
-HEADWATER = Path("experiments/analysis/headwater_recovery.csv")
+GRAPH_NODES = Path("data/processed/graph_nodes.csv")
 
 MODEL_DATASETS = {
     "B0": "data/processed/mississippi_graph_v02.pt",
@@ -86,27 +90,14 @@ def dataset_for(model: str) -> str:
 
 
 def normalize_site(value: object) -> str:
-    """USGS station ids: the metadata CSVs store them as int64 (leading zeros
-    stripped), the dataset stores zero-padded strings."""
+    """USGS station ids: metadata CSVs may store them as numbers (leading zeros
+    stripped), the dataset stores zero-padded strings. Always return a string so
+    ids survive a CSV round trip."""
     text = str(value).strip()
+    text = text.removesuffix(".0")
     if len(text) < 8 and text.isdigit():
         return text.zfill(8)
     return text
-
-
-def load_manifest() -> tuple[set[str], dict[str, str]]:
-    """Return allowed filenames and their batch label, from the A0 manifest."""
-    payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    allowed: set[str] = set()
-    batch: dict[str, str] = {}
-    for entry in payload["predictions"]:
-        if entry.get("used_for_phase_a"):
-            allowed.add(entry["file"])
-            batch[entry["file"]] = "frozen_phase0"
-    for entry in payload["historical_recovered"]:
-        allowed.add(entry["file"])
-        batch[entry["file"]] = "recovered_256d08e"
-    return allowed, batch
 
 
 def graph_roles(dataset: dict) -> pd.DataFrame:
@@ -134,45 +125,116 @@ def graph_roles(dataset: dict) -> pd.DataFrame:
     })
 
 
+def huc2_from_code(code: object) -> int | None:
+    """HUC2 region from one ``huc_cd`` value, or None if it cannot be read.
+
+    ``huc_cd`` is an INTEGER in ``graph_nodes.csv``, so a leading zero is gone
+    and the field length is inconsistent: ``05010001`` -> ``5010001`` (7),
+    ``08070100`` -> ``8070100`` (7), an HUC12 keeps all 12 digits, and a
+    zero-stripped HUC12 arrives with 11. The level therefore has to be inferred
+    from the length and the value re-padded before the first two digits (the
+    HUC2 region) can be read:
+
+    * 7-8 digits   -> HUC8,  pad to 8  (``5010001`` -> ``05010001`` -> 05)
+    * 9-10 digits  -> HUC10, pad to 10 (``60300020403`` -> ``0603000204`` -> 06)
+    * 11-12 digits -> HUC12, pad to 12 (``101202021305`` -> 10)
+
+    Station-number prefixes must NOT be used instead: a USGS station id is not a
+    HUC code. Station 06438000 (Belle Fourche River, SD) belongs to HUC2 10 even
+    though its id begins with "06".
+    """
+    text = str(code).strip()
+    if text.lower() in ("", "nan", "none"):
+        return None
+    digits = "".join(ch for ch in text if ch.isdigit())
+    if len(digits) < 7:
+        return None
+    if len(digits) <= 8:
+        padded = digits.zfill(8)
+    elif len(digits) <= 10:
+        padded = digits.zfill(10)
+    else:
+        padded = digits.zfill(12)
+    return int(padded[:2])
+
+
 def huc2_lookup(dataset: dict) -> pd.DataFrame:
-    """HUC2 region per station: from the audit file where available, else from
-    the 2-digit HUC prefix of the station id (USGS ids start with the HUC)."""
+    """HUC2 region per station, from the authoritative ``huc_cd`` column.
+
+    Stations without a readable code are marked unknown rather than guessed.
+    """
     sites = list(dataset["site_no"])
     known: dict[str, int] = {}
-    if HEADWATER.exists():
-        hw = pd.read_csv(HEADWATER)
-        for sid, huc in zip(hw["station_id"], hw["huc2"]):
-            known[normalize_site(sid)] = int(huc)
+    if GRAPH_NODES.exists():
+        nodes = pd.read_csv(GRAPH_NODES, dtype={"site_no": str})
+        for sid, code in zip(nodes["site_no"], nodes["huc_cd"]):
+            value = huc2_from_code(code)
+            if value is not None:
+                known[str(sid).strip()] = value
     rows = []
     for site in sites:
-        huc = known.get(site)
-        source = "audit_file"
-        if huc is None:
-            source = "station_id_prefix"
-            prefix = site[:2]
-            huc = int(prefix) if prefix.isdigit() else -1
-        rows.append({"station": site, "huc2": huc, "huc2_source": source})
+        key = str(site).strip()
+        huc = known.get(key)
+        rows.append({
+            "station": key,
+            "huc2": huc if huc is not None else -1,
+            "huc2_source": "graph_nodes.huc_cd" if huc is not None else "unknown",
+        })
     return pd.DataFrame(rows)
 
 
-def collect_files(allowed: set[str]) -> list[tuple[Path, str]]:
-    out = []
-    for directory in (CURRENT, HISTORICAL):
-        for path in sorted(directory.glob("*.parquet")):
-            if path.name in allowed:
-                out.append((path, directory.name))
-    return out
+def station_observations(dataset: dict) -> pd.DataFrame:
+    """True per-station label statistics, straight from the dataset.
+
+    Aggregating the per-(model, mask) ``mean_true`` column would describe the
+    test splits rather than the observations, so means and maxima for a station
+    are computed here from its actual observed monthly values.
+    """
+    y = dataset["y"].numpy()
+    y_mask = dataset["y_mask"].numpy()
+    months = list(dataset["months"])
+    rows = []
+    for i, site in enumerate(dataset["site_no"]):
+        observed = y_mask[i]
+        values = y[i][observed]
+        if len(values) == 0:
+            rows.append({"station": normalize_site(site), "n_observed_months": 0,
+                         "obs_mean": np.nan, "obs_max": np.nan,
+                         "obs_min": np.nan, "obs_median": np.nan,
+                         "n_obs_ge_100": 0, "n_obs_ge_400": 0,
+                         "first_month": None, "last_month": None})
+            continue
+        idx = np.flatnonzero(observed)
+        rows.append({
+            "station": normalize_site(site),
+            "n_observed_months": len(values),
+            "obs_mean": float(np.mean(values)),
+            "obs_max": float(np.max(values)),
+            "obs_min": float(np.min(values)),
+            "obs_median": float(np.median(values)),
+            "n_obs_ge_100": int((values >= 100).sum()),
+            "n_obs_ge_400": int((values >= 400).sum()),
+            "first_month": months[int(idx[0])],
+            "last_month": months[int(idx[-1])],
+        })
+    return pd.DataFrame(rows)
 
 
 def station_rows(
-    files: list[tuple[Path, str]],
+    files: list[PredictionSource],
     station_meta: pd.DataFrame,
     datasets: dict[str, dict],
     masks: dict[str, dict],
 ) -> pd.DataFrame:
-    """Per (model, mask, station) errors plus the station's attributes."""
+    """Per (model, mask, station) errors plus the station's attributes.
+
+    Station ids are emitted as zero-padded strings: USGS ids carry leading
+    zeros, and writing them as integers would silently turn 06438000 into
+    6438000 in every output file.
+    """
     rows = []
-    for path, _batch in files:
+    for source in files:
+        path, _batch = source.path, source.batch
         df = pd.read_parquet(path)
         model = str(df["model"].iloc[0])
         mask_name = str(df["mask"].iloc[0])
@@ -213,6 +275,7 @@ def station_rows(
                 "mean_pred": float(np.nanmean(b)) if ok.sum() else np.nan,
             })
     out = pd.DataFrame(rows)
+    out["station"] = out["station"].map(normalize_site)
     return out.merge(station_meta, on="station", how="left")
 
 
@@ -248,14 +311,15 @@ def aggregate_by(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
 
 
 def extreme_cells(
-    files: list[tuple[Path, str]],
+    files: list[PredictionSource],
     datasets: dict[str, dict],
     masks: dict[str, dict],
     quantile: float = 0.99,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """How much of the test error comes from the highest-DOC cells?"""
     conc, top_rows = [], []
-    for path, _batch in files:
+    for source in files:
+        path = source.path
         df = pd.read_parquet(path)
         model = str(df["model"].iloc[0])
         mask_name = str(df["mask"].iloc[0])
@@ -309,46 +373,84 @@ def extreme_cells(
     return pd.DataFrame(conc), pd.DataFrame(top_rows)
 
 
+def _pooled_cell_weighted(n_cells: np.ndarray, sae: np.ndarray,
+                          sse: np.ndarray,
+                          idx: np.ndarray) -> tuple[float, float, float]:
+    """Cell-weighted MAE / RMSE over the selected station clusters."""
+    total = n_cells[idx].sum()
+    if total == 0:
+        return float("nan"), float("nan"), 0.0
+    return (float(sae[idx].sum() / total),
+            float(np.sqrt(sse[idx].sum() / total)), float(total))
+
+
 def station_bootstrap(
     df: pd.DataFrame, metrics_to_use: tuple[str, ...] = ("mae", "rmse"),
     n_boot: int = 2000, seed: int = 0,
 ) -> pd.DataFrame:
-    """Station-level bootstrap of the cell-weighted aggregate.
+    """STATION-clustered bootstrap of the cell-weighted aggregate.
 
-    Resamples STATIONS, so the interval reflects which stations happened to be
-    held out. It is a sample-layer interval for one fixed historical model and
-    cannot stand in for the missing training-seed analysis.
+    A scenario spans several masks, so one station contributes several rows
+    (H2X/E3 has 243 rows but only 201 distinct stations). Resampling rows
+    independently would resample station-and-split combinations and understate
+    the interval, so a station is drawn once per replicate and ALL of its rows
+    come with it. The statistic is recomputed from the pooled cells, which also
+    keeps the point estimate internally consistent.
+
+    It remains a sample-layer interval for one fixed historical model per mask
+    and cannot stand in for the missing training-seed analysis.
     """
     rng = np.random.default_rng(seed)
     rows = []
     for (model, scenario), sub in df.groupby(["model", "scenario"]):
         sub = sub[sub["n_predicted"] > 0]
-        if len(sub) < 3:
+        if sub.empty:
             continue
+        # one entry per station, so the resampling unit is the station
+        clusters = []
+        for station, group in sub.groupby("station"):
+            w = group["n_predicted"].to_numpy(dtype=float)
+            mae = group["mae"].to_numpy(dtype=float)
+            rmse = group["rmse"].to_numpy(dtype=float)
+            clusters.append({
+                "station": station,
+                "rows": len(group),
+                "n_cells": float(w.sum()),
+                "sse": float(np.nansum(rmse ** 2 * w)),
+                "sae": float(np.nansum(mae * w)),
+            })
+        if len(clusters) < 3:
+            continue
+        cluster_df = pd.DataFrame(clusters)
+        n_cells = cluster_df["n_cells"].to_numpy()
+        sae = cluster_df["sae"].to_numpy()
+        sse = cluster_df["sse"].to_numpy()
+        n_stations = len(cluster_df)
+
+        point_mae, point_rmse, _ = _pooled_cell_weighted(
+            n_cells, sae, sse, np.arange(n_stations))
         stats = {m: [] for m in metrics_to_use}
-        mae = sub["mae"].to_numpy()
-        rmse = sub["rmse"].to_numpy()
-        w = sub["n_predicted"].to_numpy().astype(float)
         for _ in range(n_boot):
-            idx = rng.integers(0, len(sub), len(sub))
-            ww = w[idx]
-            if ww.sum() == 0:
+            idx = rng.integers(0, n_stations, n_stations)
+            mae_v, rmse_v, c = _pooled_cell_weighted(n_cells, sae, sse, idx)
+            if np.isnan(mae_v) or c == 0:
                 continue
-            stats["mae"].append(float((mae[idx] * ww).sum() / ww.sum()))
-            stats["rmse"].append(float(np.sqrt((rmse[idx] ** 2 * ww).sum()
-                                               / ww.sum())))
+            if "mae" in stats:
+                stats["mae"].append(mae_v)
+            if "rmse" in stats:
+                stats["rmse"].append(rmse_v)
+
         row = {"model": model, "scenario": scenario,
-               "n_stations_resampled": len(sub),
-               "bootstrap_unit": "station",
+               "n_stations_resampled": n_stations,
+               "n_rows_used": len(sub),
+               "rows_per_station_max": int(cluster_df["rows"].max()),
+               "bootstrap_unit": "station (all rows of a drawn station)",
                "n_resamples": n_boot}
         for metric, values in stats.items():
             if not values:
                 continue
             arr = np.array(values)
-            row[f"{metric}_point"] = float(np.nansum(
-                (mae if metric == "mae" else rmse ** 2) * w) / w.sum()
-                if metric == "mae" else np.sqrt(
-                    np.nansum(rmse ** 2 * w) / w.sum()))
+            row[f"{metric}_point"] = point_mae if metric == "mae" else point_rmse
             row[f"{metric}_lo95"] = float(np.quantile(arr, 0.025))
             row[f"{metric}_hi95"] = float(np.quantile(arr, 0.975))
         rows.append(row)
@@ -401,10 +503,13 @@ def main() -> None:
     ANALYSIS.mkdir(parents=True, exist_ok=True)
     date = args.date
 
-    allowed, _batch = load_manifest()
-    files = collect_files(allowed)
-    print(f"prediction files allowed by the manifest: {len(allowed)}")
-    print(f"files found on disk                     : {len(files)}")
+    files, source_report = load_sources()
+    print(describe_report(source_report))
+    if source_report["missing"] or source_report["hash_changed"]:
+        raise SystemExit(
+            "the on-disk predictions no longer match the frozen manifest; "
+            "rerun scripts/build_prediction_manifest.py after checking why")
+    print()
 
     v02 = load_dataset("data/processed/mississippi_graph_v02.pt")
     roles = graph_roles(v02)
@@ -422,6 +527,13 @@ def main() -> None:
           f"{int(station_meta['site_tp_cd'].notna().sum())} / {len(station_meta)}")
     print("site type groups:", station_meta["site_type_group"]
           .value_counts(dropna=False).to_dict())
+    unknown_huc = int((station_meta["huc2"] == -1).sum())
+    print(f"stations with unknown HUC2            : {unknown_huc}")
+    print("HUC2 values (authoritative):",
+          sorted(h for h in station_meta["huc2"].unique() if h != -1))
+
+    observations = station_observations(v02)
+    station_meta = station_meta.merge(observations, on="station", how="left")
 
     datasets: dict[str, dict] = {}
     masks: dict[str, dict] = {}
@@ -444,6 +556,14 @@ def main() -> None:
     if target.empty:
         target = station_df[station_df["station"].str.zfill(8) == "06438000"]
 
+    station_obs = station_meta[["station", "huc2", "huc2_source", "site_tp_cd",
+                                "site_type_group", "n_observed_months",
+                                "obs_mean", "obs_median", "obs_max", "obs_min",
+                                "n_obs_ge_100", "n_obs_ge_400",
+                                "first_month", "last_month"]]
+    station_obs = station_obs.copy()
+    station_obs["station"] = station_obs["station"].map(normalize_site)
+
     outputs = {
         "predictions_per_station": per_station,
         "predictions_by_huc2": by_huc,
@@ -456,6 +576,7 @@ def main() -> None:
         "predictions_station_type_split": type_split,
         "predictions_five_seed_gap": gap,
         "predictions_station_06438000": target,
+        "predictions_station_observations": station_obs,
     }
     for name, frame in outputs.items():
         path = ANALYSIS / f"{name}_{date}.csv"

@@ -41,14 +41,23 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
+from matplotlib.ticker import MaxNLocator
 
 FROZEN = Path("experiments/frozen_results/benchmark.csv")
 MULTISEED = Path("experiments/frozen_results/benchmark_multiseed.csv")
 OUT = Path("experiments/figures")
 
 MODELS = ["G0", "H1", "H2", "H2X"]
-LABELS = ["G0\nriver graph", "H1\n+ direction", "H2\n+ transport gates",
-          "H2X\n+ ecological encoder"]
+# Short tick labels plus a legend: the full two-line descriptions are wider than
+# a narrow panel, and a wide first tick label collides with the y-tick ladder.
+TICK_LABELS = ["G0\nriver", "H1\ndirected", "H2\ntransport", "H2X\n+ encoder"]
+MODEL_LEGEND = [
+    "G0  plain GCN on the river graph",
+    "H1  + upstream/downstream direction",
+    "H2  + transport gates",
+    "H2X + ecological context encoder",
+]
 
 # G0 is only present in the frozen single-run table.
 G0_MODEL_NAME = "G0_gcn_river"
@@ -129,32 +138,38 @@ def draw(grouped: pd.DataFrame, out_base: Path) -> tuple[object, list[Path]]:
     # would either clip E1 (its values sit above the E3 band) or flatten the
     # differences that the figure exists to show.
     fig, axes = plt.subplots(1, len(SERIES), figsize=(16.0, 5.4))
-    fig.subplots_adjust(left=0.055, right=0.995, top=0.86, bottom=0.22,
+    fig.subplots_adjust(left=0.055, right=0.975, top=0.86, bottom=0.22,
                         wspace=0.16)
     xs = np.arange(len(MODELS))
     series_values = {}
-    # Pass 1: fix every axis range BEFORE placing labels, because changing the
-    # y-limits afterwards re-scales the panel and invalidates the pixel boxes
-    # the placement used.
     for ax, series in zip(axes, SERIES):
         sub = grouped[grouped["series"] == series].set_index("model")
         ys = [float(sub.loc[m, "value"]) for m in MODELS]
         series_values[series] = ys
         ax.plot(xs, ys, "o-", color=COLORS[series], lw=2, ms=8)
-        ax.set_xticks(xs, LABELS, fontsize=9)
+        ax.set_xticks(xs, TICK_LABELS, fontsize=9)
         ax.set_title(series, fontsize=12, color=COLORS[series])
         ax.grid(axis="y", alpha=0.3)
         lo, hi = min(ys), max(ys)
-        pad = max(0.02, (hi - lo) * 0.45)
+        pad = max(0.03, (hi - lo) * 0.45)
         ax.set_ylim(lo - pad, hi + pad)
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=6, prune=None))
         seeds = int(sub["training_seeds"].max())
         n_masks = int(sub["n_masks"].max())
         ax.set_xlabel(f"{n_masks} mask(s), {seeds} training seed(s)"
                       if seeds > 1 else f"{n_masks} mask(s), single run")
 
-    # Pass 2: place the value labels against the final axis geometry.
-    for ax, series in zip(axes, SERIES):
-        place_labels(ax, xs, series_values[series], COLORS[series])
+        # Values go in the legend rather than as per-point annotations: in the
+        # E2b panel G0/H1/H2 sit within 0.018 of each other, so floating labels
+        # there cannot be placed without overlapping each other or the markers.
+        handles = [
+            Line2D([0], [0], marker="o", ls="-", color=COLORS[series],
+                   label=f"{model}  {value:.2f}", ms=7)
+            for model, value in zip(MODELS, ys)
+        ]
+        ax.legend(handles=handles, loc="lower right", fontsize=9.5,
+                  framealpha=0.92, title="R²", title_fontsize=9.5,
+                  borderpad=0.6)
     axes[0].set_ylabel(Y_LABEL)
 
     fig.suptitle(
@@ -173,6 +188,9 @@ def draw(grouped: pd.DataFrame, out_base: Path) -> tuple[object, list[Path]]:
         "is not attributable to the encoder alone. This is not a strict "
         "single-factor ablation.",
         ha="center", va="center", fontsize=9.5, color="#333333", wrap=True)
+    # Model legend carries the stage descriptions that no longer fit as ticks.
+    fig.text(0.5, 0.905, "     ".join(MODEL_LEGEND), ha="center", va="center",
+             fontsize=9.5, color="#222222")
 
     paths = []
     for suffix, kwargs in (("png", {"dpi": 200}), ("svg", {}), ("pdf", {})):
@@ -180,39 +198,6 @@ def draw(grouped: pd.DataFrame, out_base: Path) -> tuple[object, list[Path]]:
         fig.savefig(path, **kwargs)
         paths.append(path)
     return fig, paths
-
-
-def place_labels(ax, xs, ys, color: str) -> list:
-    """Annotate every point, nudging labels until none of them overlap.
-
-    A fixed offset for all points is what broke the previous revision (the G0
-    E3 label landed on the E2b marker). Here each label starts above its point
-    and moves up in small steps until its pixel box is clear of the labels
-    already placed in this panel.
-    """
-    ax.figure.canvas.draw()
-    renderer = ax.figure.canvas.get_renderer()
-    placed: list = []
-    annotations = []
-    for x, y in zip(xs, ys):
-        step = 0
-        while True:
-            ann = ax.annotate(
-                f"{y:.2f}", (x, y), textcoords="offset points",
-                xytext=(0, 10 + step * 6), ha="center", va="bottom",
-                fontsize=10, color=color, fontweight="bold")
-            box = ann.get_window_extent(renderer=renderer)
-            if not any(box.overlaps(other) for other in placed):
-                placed.append(box)
-                annotations.append(ann)
-                break
-            ann.remove()
-            step += 1
-            if step > 24:
-                raise Figure1Error(
-                    f"cannot place the label for value {y:.3f} without a "
-                    "collision; widen the panel or reduce the label size")
-    return annotations
 
 
 def check_layout(fig, out_base: Path) -> None:
@@ -231,9 +216,12 @@ def check_layout(fig, out_base: Path) -> None:
         texts = ([ax.title] if ax.title.get_text() else []) + \
                 ([ax.xaxis.label] if ax.xaxis.label.get_text() else []) + \
                 ([ax.yaxis.label] if ax.yaxis.label.get_text() else []) + \
+                list(ax.get_xticklabels()) + list(ax.get_yticklabels()) + \
                 list(ax.texts)
         boxes = []
         for text in texts:
+            if not text.get_text().strip():
+                continue
             box = text.get_window_extent(renderer=renderer)
             if box.width == 0 or box.height == 0:
                 continue

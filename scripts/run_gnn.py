@@ -28,9 +28,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -43,13 +45,24 @@ from river_graph.experiments.predictions import (
     prediction_path,
     read_meta,
     save_predictions,
+    write_meta,
 )
-from river_graph.experiments.provenance import build_meta, config_hash, describe
+from river_graph.experiments.provenance import (
+    build_meta,
+    config_payload,
+    describe,
+    file_identity,
+    identity_problems,
+)
 from river_graph.models.gcn import GCNDocModel
 
 RESULTS = Path("experiments/results")
 MASKS_DIR = Path("experiments/masks")
 PRED_DIR = Path("experiments/predictions")
+
+# How far a stored metric may drift from the value recomputed from the stored
+# predictions before the pair is treated as inconsistent.
+METRIC_DRIFT_TOL = 1e-6
 
 
 def model_name_for(args: argparse.Namespace, variant: str) -> str:
@@ -89,6 +102,39 @@ def run_params(args: argparse.Namespace, model_name: str) -> dict:
     }
 
 
+def expected_identity(args: argparse.Namespace, model_name: str,
+                      mask_name: str,
+                      masks_dir: Path = MASKS_DIR) -> dict:
+    """Full identity including content hashes of the dataset and the mask."""
+    params = config_payload(
+        run_params(args, model_name),
+        file_identity(args.dataset),
+        file_identity(Path(masks_dir) / f"{mask_name}.npz"),
+    )
+    return params
+
+
+def metrics_consistent(stored: dict, from_predictions: dict) -> list[str]:
+    """Compare a stored metric record with one recomputed from the parquet."""
+    problems = []
+    for key in ("mae", "r2", "rmse"):
+        if key not in stored or key not in from_predictions:
+            continue
+        a, b = stored[key], from_predictions[key]
+        if a is None or b is None:
+            continue
+        try:
+            fa, fb = float(a), float(b)
+        except (TypeError, ValueError):
+            continue
+        if math.isnan(fa) and math.isnan(fb):  # both NaN
+            continue
+        if abs(fa - fb) > METRIC_DRIFT_TOL:
+            problems.append(f"{key}: metrics_json={fa:.6f} "
+                            f"recomputed_from_parquet={fb:.6f}")
+    return problems
+
+
 def _atomic_write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -115,6 +161,7 @@ class RunReport:
     rebuilt_from_predictions: int = 0
     missing_predictions: list[str] = field(default_factory=list)
     identity_mismatch: list[str] = field(default_factory=list)
+    identity_reasons: dict[str, list[str]] = field(default_factory=dict)
     metric_drift: list[str] = field(default_factory=list)
     legacy_predictions: list[str] = field(default_factory=list)
 
@@ -125,6 +172,11 @@ class RunReport:
                 f"identity_mismatch={len(self.identity_mismatch)} "
                 f"metric_drift={len(self.metric_drift)} "
                 f"legacy_predictions={len(self.legacy_predictions)}")
+
+    @property
+    def failed(self) -> bool:
+        """True when the run did not do what it was asked to do."""
+        return bool(self.missing_predictions or self.identity_mismatch)
 
 
 def run(
@@ -139,6 +191,15 @@ def run(
     report = RunReport()
     store = Path(pred_dir) if pred_dir is not None else PRED_DIR
     pred_kwargs = {"out_dir": store}
+
+    # Both of these flags cause a TRAINING run. Training without storing the
+    # predictions is exactly the defect this runner exists to prevent, so they
+    # imply the save flag rather than silently producing numbers nobody can
+    # audit afterwards.
+    if (args.rebuild_predictions or args.force) and not args.save_predictions:
+        args.save_predictions = True
+        print("note: --rebuild-predictions/--force imply --save-predictions "
+              "(training without storing predictions is treated as a bug)")
 
     dataset = load_dataset(args.dataset)
     names = sorted(p.stem for p in masks_dir.glob("*.npz"))
@@ -163,20 +224,51 @@ def run(
             state = cache_state(mname, mask_name, results_dir, store,
                                 metrics=merged)
             parquet = prediction_path(mname, mask_name, store)
+            want_identity = expected_identity(args, mname, mask_name, masks_dir)
 
-            # identity check: a different config must not pass as this result
+            # identity check: a different configuration OR different inputs must
+            # not pass as this result. Without the dataset/mask hashes a modified
+            # dataset or a regenerated mask would silently reuse stale numbers.
             meta = read_meta(mname, mask_name, **pred_kwargs) if parquet.exists() else None
             if parquet.exists() and meta is not None:
-                if meta.get("config_hash") != config_hash(params) and not args.force:
+                problems = identity_problems(meta, want_identity)
+                if problems and not args.force:
                     report.identity_mismatch.append(f"{mname}__{mask_name}")
-                    print(f"{tag}: IDENTITY MISMATCH -- stored prediction has a "
-                          f"different configuration; refusing to reuse it. "
-                          f"{describe(meta)}. Use --force to replace it.")
+                    report.identity_reasons[f"{mname}__{mask_name}"] = problems
+                    print(f"{tag}: IDENTITY MISMATCH -- stored prediction does "
+                          f"not match this run; refusing to reuse it.")
+                    for problem in problems:
+                        print(f"    {problem}")
+                    print(f"    {describe(meta)}; use --force to replace it")
                     continue
             elif parquet.exists():
                 report.legacy_predictions.append(f"{mname}__{mask_name}")
 
             if state is CacheState.COMPLETE and not args.force:
+                # A single atomic replace protects each file, not the PAIR: if a
+                # run stored new predictions and then died before updating the
+                # metrics JSON (or vice versa), both files exist while
+                # disagreeing. Verify before calling the cache complete.
+                from_preds = _metrics_from_predictions(parquet)
+                drift = metrics_consistent(merged[mask_name], from_preds)
+                if meta is not None and meta.get("metrics"):
+                    drift += metrics_consistent(meta["metrics"], from_preds)
+                if drift:
+                    report.metric_drift.append(f"{mname}__{mask_name}")
+                    merged[mask_name] = from_preds
+                    _atomic_write_json(jpath, merged)
+                    if meta is not None:
+                        meta["metrics"] = from_preds
+                        meta["metrics_repaired_at"] = datetime.now(
+                            timezone.utc).isoformat()
+                        write_meta(mname, mask_name, meta, store)
+                    report.skipped += 1
+                    print(f"{tag}: INCONSISTENT CACHE -- metrics JSON and "
+                          f"stored predictions disagree; repaired the metrics "
+                          f"from the predictions.")
+                    for item in drift:
+                        print(f"    {item}")
+                    continue
                 report.skipped += 1
                 print(f"{tag}: cached, skip")
                 continue
@@ -222,6 +314,12 @@ def run(
                     dataset_path=args.dataset, split=split, params=params,
                     results_path=jpath, masks_dir=masks_dir,
                 )
+                # Store the metric record alongside the predictions so a later
+                # run can tell whether the two files still describe the same
+                # model, even if the metrics JSON was lost or half-written.
+                meta_payload["metrics"] = m
+                meta_payload["prediction_file"] = \
+                    prediction_path(mname, mask_name, store).name
                 try:
                     out, _mpath = save_predictions(
                         pred, dataset, split, mname, mask_name,
@@ -346,13 +444,31 @@ def main() -> None:
     report = run(args)
     print()
     print(f"run summary: {report.summary()}")
+    exit_code = 0
     if report.missing_predictions:
         print("predictions missing for:")
         for name in report.missing_predictions:
             print(f"  - {name}")
         print("these are NOT saved; rerun with --rebuild-predictions "
               "(no training happens without that flag)")
-        raise SystemExit(2)
+        exit_code = 2
+    if report.identity_mismatch:
+        print("refused because the stored prediction belongs to a different "
+              "configuration or different inputs:")
+        for name in report.identity_mismatch:
+            print(f"  - {name}")
+            for problem in report.identity_reasons.get(name, []):
+                print(f"      {problem}")
+        print("these results were NOT produced; give the run its own "
+              "--model-name or pass --force to replace them")
+        exit_code = exit_code or 3
+    if report.metric_drift:
+        print("repaired inconsistent cache entries (metrics JSON disagreed "
+              "with the stored predictions):")
+        for name in report.metric_drift:
+            print(f"  - {name}")
+    if exit_code:
+        raise SystemExit(exit_code)
 
 
 if __name__ == "__main__":

@@ -129,7 +129,15 @@ From `experiments/analysis/predictions_report_20260912.md` (historical batch,
   squared error**; on E3 seed43, 41 cells (1.0%) carry **95.6%** of it. RMSE-only
   comparisons are therefore dominated by a handful of cells, which is why
   log-space metrics are reported alongside.
-- **HUC2 = 6** has the highest E3 cell-weighted MAE (3.55 vs 1.07–2.04 elsewhere).
+- **HUC2 = 10 (Missouri)** has the highest E3 cell-weighted MAE (2.66 vs 1.08–1.58
+  elsewhere), on 106 stations and 4,379 cells. HUC2 is read from the authoritative
+  `huc_cd` in `data/processed/graph_nodes.csv`, never inferred from station-id
+  prefixes (a USGS id is not a HUC code: station 06438000 is HUC2 10, not 06).
+- **HUC2 = 8 (Lower Mississippi) reverses the ranking**: on its 4 test stations
+  the station-mean baseline is best (0.61) and H2X worst (2.18). The sample is
+  small (654 cells, 4 stations), so this supports no conclusion — but it shows the
+  H2X advantage is **not uniform across regions**, and the overall mean should not
+  be read as holding everywhere.
 - **Stations with no upstream monitoring neighbour in the graph** are worse in
   every scenario (H2X E1: 1.68 vs 1.18). The same ordering appears for the
   station-mean baseline, so this is a property of those stations, not a
@@ -139,12 +147,15 @@ From `experiments/analysis/predictions_report_20260912.md` (historical batch,
   including the baseline** (H2X E1: 1.52 vs 0.85; station mean E1: 1.59 vs
   0.82). This is descriptive sensitivity inside a mixed-training model, **not**
   an ST-only validation.
-- **Station 06438000** (HUC2 = 6) has valid high values (mean 63.1, max
-  134.7 mg/L) that every model underestimates by an order of magnitude. The
-  cause is **not** established; correlation with land use or sampling method is
-  not evidence.
-- **Station-level bootstrap intervals** are fixed-model sample-layer intervals
-  and cannot substitute for the missing training-seed analysis.
+- **Station 06438000** (HUC2 10, Belle Fourche River, SD) has valid extreme
+  values: 28 observed months from 1978-03 to 1988-09, median 6.75 mg/L, mean
+  58.2 mg/L and a maximum of **460 mg/L** (2 months above 400). Every model
+  underestimates those months by an order of magnitude. The cause is **not**
+  established; correlation with land use or sampling method is not evidence.
+- **Station-clustered bootstrap intervals** (a station is drawn with all of its
+  rows, so the unit is the station rather than a station-and-split combination)
+  are fixed-model sample-layer intervals and cannot substitute for the missing
+  training-seed analysis.
 
 ## Reproducibility
 

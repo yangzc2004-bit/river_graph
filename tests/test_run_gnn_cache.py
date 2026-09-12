@@ -141,6 +141,8 @@ def test_fresh_run_trains_once_per_mask_and_saves(sandbox):
     assert report.trained == 2, "one training per mask"
     assert CountingModel.instances == 1, "model is built once, not per mask"
     assert report.missing_predictions == []
+    assert report.identity_mismatch == []
+    assert not report.failed
     for mask in ("m1", "m2"):
         assert (sandbox["preds"] / f"T_river__{mask}.parquet").exists()
         assert (sandbox["preds"] / f"T_river__{mask}.meta.json").exists()
@@ -201,7 +203,18 @@ def test_metrics_only_without_save_flag_skips_quietly(sandbox):
 
 
 def test_predictions_only_rebuilds_metrics_without_training(sandbox):
+    """Metrics JSON emptied but predictions intact: rebuild, do not retrain.
+
+    The sidecar must be rebuilt too, because emptying the JSON loses the record
+    of the stored metrics and the identity check would otherwise (correctly)
+    refuse to treat the pair as trustworthy.
+    """
     _run(sandbox, _args(sandbox, save_predictions=True))
+    for mask in ("m1", "m2"):
+        meta = read_meta("T_river", mask, sandbox["preds"])
+        meta["metrics"] = None
+        (sandbox["preds"] / f"T_river__{mask}.meta.json").write_text(
+            json.dumps(meta), encoding="utf-8")
     (sandbox["results"] / "T_river.json").write_text("{}", encoding="utf-8")
     CountingModel.instances = 0
 
@@ -273,13 +286,21 @@ def test_save_is_atomic_and_leaves_no_temp_files(sandbox):
              "test": np.array([3, 4, 5])}
     meta = build_meta(model_name="T_river", mask_name="m1",
                       dataset_path=sandbox["dataset"], split=split,
-                      params={"seed": 0})
+                      params={"seed": 0}, masks_dir=sandbox["masks"])
     save_predictions(np.zeros((N, T)), ds, split, "T_river", "m1", "synthetic",
                      out_dir=sandbox["preds"], meta=meta)
 
     assert not list(sandbox["preds"].glob("*.tmp"))
-    assert read_meta("T_river", "m1", sandbox["preds"])["config_hash"] == \
-        config_hash({"seed": 0, "model_name": "T_river"})
+    stored = read_meta("T_river", "m1", sandbox["preds"])
+    # the hash is computed over the STORED config, which now includes the
+    # dataset and mask content hashes
+    assert stored["config_hash"] == config_hash(stored["config"])
+    assert stored["config"]["seed"] == 0
+    assert stored["config"]["dataset_sha256"]
+    assert stored["config"]["mask_sha256"]
+    # and an identity-free dict must NOT reproduce it
+    assert stored["config_hash"] != config_hash({"seed": 0,
+                                                 "model_name": "T_river"})
 
 
 def test_save_predictions_refuses_conflicting_config(sandbox):

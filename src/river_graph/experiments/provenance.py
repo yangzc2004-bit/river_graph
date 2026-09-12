@@ -23,6 +23,11 @@ from typing import Any
 # Fields that determine the numbers produced by a training run. Missing
 # entries are recorded as null rather than omitted, so the hash is stable
 # across runs that share a configuration.
+#
+# ``dataset_sha256`` and ``mask_sha256`` are CONTENT hashes of the exact inputs.
+# Including them is what makes a modified dataset or a regenerated mask a
+# different configuration: comparing only paths and names would let a run reuse
+# results that were computed on other data.
 CONFIG_FIELDS = (
     "script",
     "model_name",
@@ -36,6 +41,10 @@ CONFIG_FIELDS = (
     "share_weights",
     "env_groups",
     "env_encoder",
+    "dataset_path",
+    "dataset_sha256",
+    "mask_path",
+    "mask_sha256",
 )
 
 
@@ -90,15 +99,21 @@ def build_meta(
     here so callers cannot forget it.
     """
     mask_file = Path(masks_dir) / f"{mask_name}.npz"
+    dataset_identity = file_identity(dataset_path)
+    mask_identity = file_identity(mask_file)
+    # The persisted config must carry the SAME identity fields that the hash is
+    # computed over, otherwise a later run cannot tell that its inputs changed.
+    full_config = config_payload({**params, "model_name": model_name},
+                                 dataset_identity, mask_identity)
     payload: dict[str, Any] = {
         "model_name": model_name,
         "mask_name": mask_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "caller": caller or params.get("script"),
         "python": platform.python_version(),
-        "config": {key: params.get(key) for key in CONFIG_FIELDS},
-        "dataset": file_identity(dataset_path),
-        "mask": file_identity(mask_file),
+        "config": {key: full_config.get(key) for key in CONFIG_FIELDS},
+        "dataset": dataset_identity,
+        "mask": mask_identity,
         "results_path": str(results_path) if results_path else None,
         "split_sizes": {k: len(v) for k, v in split.items()
                         if hasattr(v, "__len__")},
@@ -107,8 +122,44 @@ def build_meta(
             "a full-grid missing-value imputation product"
         ),
     }
-    payload["config_hash"] = config_hash({**params, "model_name": model_name})
+    payload["config_hash"] = config_hash(full_config)
     return payload
+
+
+def config_payload(params: dict[str, Any], dataset_identity: dict[str, Any],
+                   mask_identity: dict[str, Any]) -> dict[str, Any]:
+    """Add the input content hashes to a parameter dict before hashing."""
+    return {
+        **params,
+        "dataset_path": str(dataset_identity.get("path")),
+        "dataset_sha256": dataset_identity.get("sha256"),
+        "mask_path": str(mask_identity.get("path")),
+        "mask_sha256": mask_identity.get("sha256"),
+    }
+
+
+def identity_problems(meta: dict[str, Any] | None,
+                      expected: dict[str, Any]) -> list[str]:
+    """List the identity fields where a stored sidecar disagrees with now.
+
+    An empty list means they match. Used to refuse reusing a stored prediction
+    that was produced from different inputs or settings.
+    """
+    if not meta:
+        return ["no provenance sidecar"]
+    stored = meta.get("config", {}) or {}
+    problems = []
+    for key in CONFIG_FIELDS:
+        want = expected.get(key)
+        got = stored.get(key)
+        if key in ("dataset_path", "mask_path"):
+            continue  # covered by the content hashes below
+        if want != got:
+            if key.endswith("_sha256"):
+                want = str(want)[:12] if want else want
+                got = str(got)[:12] if got else got
+            problems.append(f"{key}: stored={got!r} current={want!r}")
+    return problems
 
 
 def describe(meta: dict[str, Any] | None) -> str:

@@ -106,6 +106,20 @@ def _atomic_write_parquet(path: Path, df: pd.DataFrame) -> None:
     os.replace(tmp, path)
 
 
+def write_meta(model: str, mask_name: str, meta: dict,
+               out_dir: Path = PRED_DIR) -> Path:
+    """Atomically (re)write the provenance sidecar for one prediction.
+
+    Used when a cache entry is repaired: the metrics recorded next to the
+    predictions have to follow the predictions they describe.
+    """
+    import json
+
+    mpath = meta_path(model, mask_name, out_dir)
+    _atomic_write_text(mpath, json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
+    return mpath
+
+
 def save_predictions(
     pred: np.ndarray,
     dataset: dict,
