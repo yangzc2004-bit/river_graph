@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from river_graph.experiments.evaluate import evaluate, load_dataset
+from river_graph.experiments.evaluate import load_dataset, load_mask, metrics
+from river_graph.experiments.predictions import save_predictions
 from river_graph.models.gcn import GCNDocModel
 
 RESULTS = Path("experiments/results")
@@ -37,6 +38,9 @@ def main() -> None:
                     help="H1.5: per-edge dropout prob during training")
     ap.add_argument("--wd", type=float, default=0.0, help="Adam weight decay")
     ap.add_argument("--seed", type=int, default=0, help="model training seed")
+    ap.add_argument("--save-predictions", action="store_true",
+                    help="also store per-cell predictions to "
+                         "experiments/predictions/ (parquet, resumable)")
     ap.add_argument("--env-groups", nargs="*", default=None,
                     choices=["hydro", "landcover", "climate", "soil", "topo"],
                     help="subset of v04 regime groups (default: all)")
@@ -77,10 +81,15 @@ def main() -> None:
             if mask_name in merged:
                 print(f"{mname} @ {mask_name}: cached, skip")
                 continue
-            res = evaluate(model, dataset, [mask_name], mask_dir)
-            merged.update(res)
+            split = load_mask(mask_name, mask_dir)
+            pred = model.fit_predict(dataset, split)
+            y = dataset["y"].numpy()
+            m = metrics(y.ravel()[split["test"]], pred.ravel()[split["test"]])
+            if args.save_predictions:
+                save_predictions(pred, dataset, split, mname, mask_name,
+                                 Path(args.dataset).stem)
+            merged.update({mask_name: m})
             jpath.write_text(json.dumps(merged, indent=2))
-            m = res[mask_name]
             print(f"{mname} @ {mask_name}: RMSE={m['rmse']:.3f} "
                   f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})", flush=True)
     # rebuild the flat CSV from all per-model JSONs (never overwrite blindly)
