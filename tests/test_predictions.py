@@ -35,7 +35,25 @@ def test_save_load_roundtrip(tmp_path):
 def test_only_observed_cells_stored(tmp_path):
     ds = _ds()
     n, t = ds["y"].shape
-    out = save_predictions(np.zeros((n, t)), ds, {"train": np.array([0])},
-                           "M", "m2", "v02", out_dir=tmp_path)
+    out, _meta = save_predictions(np.zeros((n, t)), ds, {"train": np.array([0])},
+                                  "M", "m2", "v02", out_dir=tmp_path)
     df = pd.read_parquet(out)
     assert len(df) == int(ds["y_mask"].sum())
+
+
+def test_no_meta_sidecar_without_provenance(tmp_path):
+    """Legacy call shape still works and writes no sidecar."""
+    ds = _ds()
+    n, t = ds["y"].shape
+    out, meta = save_predictions(np.zeros((n, t)), ds, {"train": np.array([0])},
+                                 "M", "m3", "v02", out_dir=tmp_path)
+    assert out.exists() and meta is None
+    assert not list(tmp_path.glob("*.meta.json"))
+
+
+def test_atomic_write_leaves_no_temp_file(tmp_path):
+    ds = _ds()
+    n, t = ds["y"].shape
+    save_predictions(np.zeros((n, t)), ds, {"train": np.array([0])},
+                     "M", "m4", "v02", out_dir=tmp_path)
+    assert not list(tmp_path.glob("*.tmp"))
