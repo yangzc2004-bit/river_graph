@@ -323,6 +323,7 @@ def _args(sandbox, **over):
     a.save_predictions = False
     a.rebuild_predictions = False
     a.force = False
+    a.repair_metrics = False
     a.env_groups = None
     a.verify_predictions = False
     for k, v in over.items():
@@ -341,12 +342,16 @@ def _run(sandbox, args, factory=CountingModel):
 # --------------------------------------------------------------------------
 
 
-def test_interrupted_pair_is_repaired_not_trusted(sandbox):
+def test_interrupted_pair_is_not_silently_repaired(sandbox):
+    """Superseded by tests/test_review_round2.py, which pins the stricter rule.
+
+    This kept the name of the old assertion so the intent stays visible: an
+    inconsistent pair must NOT be auto-repaired, because the surviving file may
+    belong to an interrupted run of an unknown configuration.
+    """
     _run(sandbox, _args(sandbox, save_predictions=True))
     stored = json.loads((sandbox["results"] / "T_river.json").read_text())
-    assert abs(stored["m1"]["mae"] - 0.25) < 1e-9
 
-    # a newer run wrote predictions but died before updating the metrics JSON
     _run(sandbox, _args(sandbox, save_predictions=True, force=True),
          factory=ShiftedModel)
     (sandbox["results"] / "T_river.json").write_text(json.dumps(stored),
@@ -355,22 +360,13 @@ def test_interrupted_pair_is_repaired_not_trusted(sandbox):
 
     report = _run(sandbox, _args(sandbox, save_predictions=True))
 
-    assert report.metric_drift == ["T_river__m1"], "drift must be detected"
-    assert report.trained == 0, "repair must not retrain"
-    assert CountingModel.instances == 0
-    repaired = json.loads((sandbox["results"] / "T_river.json").read_text())
-    assert abs(repaired["m1"]["mae"] - 5.0) < 1e-9, \
-        "metrics must be repaired from the stored predictions"
-
-
-def test_consistent_pair_still_skips(sandbox):
-    _run(sandbox, _args(sandbox, save_predictions=True))
-    CountingModel.instances = 0
-    report = _run(sandbox, _args(sandbox, save_predictions=True))
-    assert report.skipped == 1
-    assert report.metric_drift == []
+    assert report.inconsistent_cache == ["T_river__m1"]
+    assert report.failed
     assert report.trained == 0
     assert CountingModel.instances == 0
+    after = json.loads((sandbox["results"] / "T_river.json").read_text())
+    assert abs(after["m1"]["mae"] - 0.25) < 1e-9, \
+        "the metrics JSON must not be rewritten to the other run's value"
 
 
 # --------------------------------------------------------------------------
@@ -450,7 +446,7 @@ def test_cli_exit_code_for_identity_conflict(sandbox, monkeypatch):
                                identity_reasons={"T_river__m1": ["x"]})
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args",
                         lambda self: fake_parse())
-    monkeypatch.setattr(run_gnn, "run", lambda args: report)
+    monkeypatch.setattr(run_gnn, "run", lambda *a, **k: report)
 
     with pytest.raises(SystemExit) as excinfo:
         run_gnn.main()
@@ -463,7 +459,7 @@ def test_cli_exit_code_zero_when_clean(sandbox, monkeypatch):
 
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args",
                         lambda self: _args(sandbox, save_predictions=True))
-    monkeypatch.setattr(run_gnn, "run", lambda args: run_gnn.RunReport())
+    monkeypatch.setattr(run_gnn, "run", lambda *a, **k: run_gnn.RunReport())
     monkeypatch.setattr(run_gnn, "rebuild_flat_csv", lambda *a, **k: None)
     run_gnn.main()  # must not raise
 

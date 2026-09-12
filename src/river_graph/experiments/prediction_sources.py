@@ -107,6 +107,7 @@ def load_sources(
         "excluded_entries": len(excluded),
         "missing": [],
         "hash_changed": [],
+        "pin_mismatch": [],
         "duplicate_keys": [],
         "unmanifested_on_disk": [],
     }
@@ -118,7 +119,14 @@ def load_sources(
             report["missing"].append(f"{batch}/{name}")
             continue
         digest = sha256_file(path)
-        expected = entry.get("sha256")
+        # The pin is authoritative: it is carried forward across manifest
+        # rebuilds, so editing `sha256` by hand cannot re-admit replaced bytes.
+        expected = entry.get("pinned_sha256") or entry.get("sha256")
+        pinned = entry.get("pinned_sha256")
+        if verify_hashes and pinned and digest != pinned:
+            report["pin_mismatch"].append(
+                f"{batch}/{name}: pinned {pinned[:12]} != disk {digest[:12]}")
+            continue
         if verify_hashes and expected and digest != expected:
             report["hash_changed"].append(
                 f"{batch}/{name}: manifest {expected[:12]} != disk {digest[:12]}")
@@ -154,7 +162,7 @@ def describe_report(report: dict) -> str:
         f"selected files    : {report['selected']}",
         f"excluded entries  : {report['excluded_entries']}",
     ]
-    for key in ("missing", "hash_changed", "duplicate_keys",
+    for key in ("missing", "hash_changed", "pin_mismatch", "duplicate_keys",
                 "unmanifested_on_disk"):
         values = report[key]
         lines.append(f"{key:18}: {len(values)}")

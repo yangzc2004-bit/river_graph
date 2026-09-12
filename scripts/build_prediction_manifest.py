@@ -5,9 +5,19 @@ was allowed to read. This script writes that allow-list, together with the
 conflicts and gaps it deliberately excludes, so a later reader can tell which
 numbers came from which batch.
 
+Content pinning (ratchet)
+-------------------------
+A manifest is only trustworthy if a file cannot be swapped out from under it.
+Rebuilding by re-hashing whatever is on disk would do exactly that: overwrite a
+prediction and the next build re-admits the new, unverified content as trusted.
+So each admitted file keeps a ``pinned_sha256`` that is carried forward from the
+previous manifest. A file whose bytes no longer match its pin is never admitted;
+it is recorded as ``content_changed_since_pin`` and has to be reviewed and
+re-pinned explicitly with ``--repin`` (which prints why).
+
 Usage:
     python scripts/build_prediction_manifest.py
-    python scripts/build_prediction_manifest.py --date 20260912
+    python scripts/build_prediction_manifest.py --repin   # accept changed bytes
 """
 
 from __future__ import annotations
@@ -41,10 +51,68 @@ def today() -> str:
     return datetime.now(timezone.utc).date().strftime("%Y%m%d")
 
 
+def load_previous_pins(manifest_path: Path) -> dict[str, str]:
+    """``{"batch/file": pinned_sha256}`` carried forward from the last manifest.
+
+    Both manifest generations are supported: v2 entries carry ``sha256`` and no
+    explicit pin, v3 entries carry ``pinned_sha256``.
+    """
+    if not manifest_path.exists():
+        return {}
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    pins: dict[str, str] = {}
+    for group in ("predictions", "historical_recovered"):
+        for entry in payload.get(group, []):
+            key = f"{entry.get('batch', 'predictions')}/{entry['file']}"
+            pin = entry.get("pinned_sha256") or entry.get("sha256")
+            if pin:
+                pins[key] = pin
+    return pins
+
+
+def apply_pin(entry: dict, pins: dict[str, str], seen: set[str],
+              repin: bool) -> bool:
+    """Attach a content pin to ``entry``; return True when its bytes match.
+
+    A changed file is never admitted: the previous pin wins, the mismatch is
+    recorded on the entry so a reviewer can see it, and ``--repin`` is required
+    to accept the new bytes deliberately.
+    """
+    key = f"{entry['batch']}/{entry['file']}"
+    seen.add(key)
+    current = entry["sha256"]
+    pin = pins.get(key)
+    entry["sha256_at_build"] = current
+    if pin is None or repin or pin == current:
+        entry["pinned_sha256"] = current
+        entry["pin_status"] = "pinned" if pin is None else "repinned"
+        return True
+    entry["pinned_sha256"] = pin
+    entry["pin_status"] = "content_changed_since_pin"
+    entry["used_for_phase_a"] = False
+    entry["repin_required"] = True
+    return False
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", default=today())
+    ap.add_argument("--manifest", default=None,
+                    help="manifest to rebuild (default: the dated file)")
+    ap.add_argument("--repin", action="store_true",
+                    help="accept content that changed since the previous pin "
+                         "(prints every change; refuse to use this to silence a "
+                         "mismatch you have not reviewed)")
     args = ap.parse_args()
+
+    manifest_path = Path(args.manifest) if args.manifest else \
+        FROZEN / f"prediction_manifest_{args.date}.json"
+    pins = load_previous_pins(manifest_path)
+    seen_pins: set[str] = set()
+
     ANALYSIS.mkdir(parents=True, exist_ok=True)
 
     frozen = pd.read_csv(FROZEN / "benchmark.csv")
@@ -67,22 +135,26 @@ def main() -> None:
                           (frozen["mask"] == mask)).any())
         in_multi = bool(((multiseed["model"] == model) &
                          (multiseed["mask"] == mask)).any())
-        entries.append({
+        entry = {
             "file": p.name, "batch": "predictions", "status": st,
             "sha256": sha256_file(p),
             "in_frozen_table": in_frozen, "in_multiseed_table": in_multi,
             "used_for_phase_a": st.startswith("verified"),
-        })
+        }
+        apply_pin(entry, pins, seen_pins, args.repin)
+        entries.append(entry)
 
     historical = []
     for p in sorted(HISTORICAL.glob("*.parquet")):
-        historical.append({
+        entry = {
             "file": p.name, "batch": "predictions_historical",
             "sha256": sha256_file(p),
             "used_for_phase_a": True,
             "reason": "overwritten or deleted after the frozen batch; "
                       "recomputed metrics match the frozen table",
-        })
+        }
+        apply_pin(entry, pins, seen_pins, args.repin)
+        historical.append(entry)
 
     # Exactly one source per (model, mask): where a name exists in both batches
     # and both are otherwise acceptable, the recovered copy wins and the
@@ -142,9 +214,22 @@ def main() -> None:
             != len(entries) + len(historical):
         raise RuntimeError(f"duplicate (batch, file) entries: {dupes}")
 
+    changed = [e for e in entries + historical
+               if e.get("pin_status") == "content_changed_since_pin"]
+    drop = sorted({key.split("/", 1)[0] + "/" + key.split("/", 1)[1]
+                   for key in pins if key not in seen_pins})
+
     manifest = {
         "manifest_version": MANIFEST_VERSION,
         "duplicate_names_across_batches": dupes,
+        "repinned": args.repin,
+        "content_changed_since_pin": [
+            {"file": e["file"], "batch": e["batch"],
+             "pinned_sha256": e["pinned_sha256"],
+             "sha256_at_build": e["sha256_at_build"]}
+            for e in changed
+        ],
+        "pins_removed": drop,
         "manifest_date": args.date,
         "commit": git("rev-parse", "HEAD"),
         "commit_subject": git("log", "-1", "--format=%s", "HEAD"),
@@ -159,9 +244,10 @@ def main() -> None:
         "counts": {
             "current_predictions": len(entries),
             "used_for_phase_a": sum(e["used_for_phase_a"] for e in entries),
-            "historical_recovered": len(historical),
+            "historical_recovered": sum(e["used_for_phase_a"] for e in historical),
             "conflicts": len(conflicts),
             "zero_coverage": len(gaps),
+            "content_changed_since_pin": len(changed),
             "frozen_table_rows": len(frozen),
             "multiseed_table_rows": len(multiseed),
         },
@@ -169,6 +255,8 @@ def main() -> None:
         "historical_recovered": historical,
         "conflicts": conflicts,
         "zero_coverage": gaps,
+        "pins": {f"{e['batch']}/{e['file']}": e["pinned_sha256"]
+                 for e in entries + historical if e.get("pinned_sha256")},
         "new_five_seed_predictions": {
             "available": False,
             "note": ("No per-cell predictions exist for H1/H2/H2X training "
@@ -188,12 +276,12 @@ def main() -> None:
         },
     }
 
-    out = FROZEN / f"prediction_manifest_{args.date}.json"
+    out = manifest_path
     out.write_text(json.dumps(manifest, indent=2, ensure_ascii=False),
                    encoding="utf-8")
     print(f"manifest -> {out}")
     for key, value in manifest["counts"].items():
-        print(f"  {key:26} {value}")
+        print(f"  {key:28} {value}")
     if dupes:
         print(f"  duplicate names across batches: {dupes}")
     selected = manifest["counts"]["used_for_phase_a"] + \
@@ -202,6 +290,21 @@ def main() -> None:
     print()
     for name in conflicts:
         print(f"  excluded: {name['batch']}/{name['file']}")
+    if changed:
+        print()
+        print(f"REFUSED: {len(changed)} file(s) whose bytes changed since they "
+              f"were pinned; they are NOT in the allow-list:")
+        for entry in changed:
+            print(f"  - {entry['batch']}/{entry['file']}")
+            print(f"      pinned   : {entry['pinned_sha256'][:16]}")
+            print(f"      on disk  : {entry['sha256_at_build'][:16]}")
+        print("  review what replaced them, then re-run with --repin to accept "
+              "(or restore the pinned bytes from git).")
+    if drop:
+        print()
+        print(f"pins dropped (files no longer present): {len(drop)}")
+        for name in drop:
+            print(f"  - {name}")
 
 
 if __name__ == "__main__":

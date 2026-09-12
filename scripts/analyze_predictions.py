@@ -280,30 +280,53 @@ def station_rows(
 
 
 def aggregate_by(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
-    """Station-equal-weighted and cell-weighted summaries side by side."""
+    """Station-equal-weighted and cell-weighted summaries side by side.
+
+    A scenario spans several masks, so the same station appears once per mask
+    (H2X/E1 has 1696 rows but 570 distinct stations). The row count is therefore
+    NOT a station count: every "per-station" figure below collapses to one value
+    per station first, while the cell-weighted figures pool the cells across the
+    masks (those cells really are distinct observations).
+    """
     rows = []
     for key, sub in df.groupby(keys, dropna=False):
         if not isinstance(key, tuple):
             key = (key,)
-        cells = sub["n_predicted"].sum()
-        weighted_mae = (np.nansum(sub["mae"] * sub["n_predicted"]) / cells
-                        if cells else np.nan)
-        weighted_rmse = np.sqrt(
-            np.nansum(sub["rmse"] ** 2 * sub["n_predicted"]) / cells
-        ) if cells else np.nan
+        # one row per station: sum its cells, weight its error metrics by cells
+        by_station = sub.groupby("station").apply(
+            lambda g: pd.Series({
+                "n_cells": float(g["n_predicted"].sum()),
+                "mae": float(np.nansum(g["mae"] * g["n_predicted"])
+                             / max(g["n_predicted"].sum(), 1)),
+                "rmse": float(np.sqrt(
+                    np.nansum(g["rmse"] ** 2 * g["n_predicted"])
+                    / max(g["n_predicted"].sum(), 1))),
+                "r2": float(np.nanmean(g["r2"]))
+                if g["r2"].notna().any() else np.nan,
+                "coverage": float(np.nanmean(g["coverage"])),
+            }),
+            include_groups=False,
+        )
+        cells = by_station["n_cells"].sum()
+        weighted_mae = (float(np.nansum(by_station["mae"] * by_station["n_cells"])
+                              / cells) if cells else np.nan)
+        weighted_rmse = (float(np.sqrt(
+            np.nansum(by_station["rmse"] ** 2 * by_station["n_cells"]) / cells))
+            if cells else np.nan)
         row = dict(zip(keys, key))
         row.update({
-            "n_stations": len(sub),
+            "n_stations": len(by_station),
+            "n_rows_station_mask": len(sub),
             "n_cells": int(cells),
-            "mae_station_equal": float(np.nanmean(sub["mae"])),
-            "mae_cell_weighted": float(weighted_mae),
-            "rmse_station_equal": float(np.nanmean(sub["rmse"])),
-            "rmse_cell_weighted": float(weighted_rmse),
-            "r2_station_equal": float(np.nanmean(sub["r2"]))
-            if sub["r2"].notna().any() else float("nan"),
-            "median_station_mae": float(np.nanmedian(sub["mae"])),
-            "stations_with_r2": int(sub["r2"].notna().sum()),
-            "min_coverage": float(np.nanmin(sub["coverage"])),
+            "mae_station_equal": float(np.nanmean(by_station["mae"])),
+            "mae_cell_weighted": weighted_mae,
+            "rmse_station_equal": float(np.nanmean(by_station["rmse"])),
+            "rmse_cell_weighted": weighted_rmse,
+            "r2_station_equal": float(np.nanmean(by_station["r2"]))
+            if by_station["r2"].notna().any() else float("nan"),
+            "median_station_mae": float(np.nanmedian(by_station["mae"])),
+            "stations_with_r2": int(by_station["r2"].notna().sum()),
+            "min_coverage": float(np.nanmin(by_station["coverage"])),
             "mean_coverage": float(np.nanmean(sub["coverage"])),
         })
         rows.append(row)

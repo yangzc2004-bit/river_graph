@@ -117,21 +117,36 @@ def expected_identity(args: argparse.Namespace, model_name: str,
 def metrics_consistent(stored: dict, from_predictions: dict) -> list[str]:
     """Compare a stored metric record with one recomputed from the parquet."""
     problems = []
-    for key in ("mae", "r2", "rmse"):
+    for key in sorted(set(stored) | set(from_predictions)):
         if key not in stored or key not in from_predictions:
+            problems.append(f"{key}: present only in "
+                            f"{'stored' if key in stored else 'recomputed'}")
             continue
         a, b = stored[key], from_predictions[key]
         if a is None or b is None:
+            if a is not b:
+                problems.append(f"{key}: stored={a!r} recomputed={b!r}")
             continue
         try:
             fa, fb = float(a), float(b)
         except (TypeError, ValueError):
+            if a != b:
+                problems.append(f"{key}: stored={a!r} recomputed={b!r}")
             continue
-        if math.isnan(fa) and math.isnan(fb):  # both NaN
+        if key == "n":
+            if int(fa) != int(fb):
+                problems.append(f"n: metrics_json={int(fa)} "
+                                f"recomputed_from_parquet={int(fb)}")
+            continue
+        a_nan, b_nan = math.isnan(fa), math.isnan(fb)
+        if a_nan != b_nan:
+            problems.append(f"{key}: stored={fa} recomputed={fb} "
+                            "(only one side is NaN)")
+            continue
+        if a_nan and b_nan:
             continue
         if abs(fa - fb) > METRIC_DRIFT_TOL:
-            problems.append(f"{key}: metrics_json={fa:.6f} "
-                            f"recomputed_from_parquet={fb:.6f}")
+            problems.append(f"{key}: stored={fa:.6f} recomputed={fb:.6f}")
     return problems
 
 
@@ -162,7 +177,9 @@ class RunReport:
     missing_predictions: list[str] = field(default_factory=list)
     identity_mismatch: list[str] = field(default_factory=list)
     identity_reasons: dict[str, list[str]] = field(default_factory=dict)
-    metric_drift: list[str] = field(default_factory=list)
+    inconsistent_cache: list[str] = field(default_factory=list)
+    inconsistency_reasons: dict[str, list[str]] = field(default_factory=dict)
+    metric_repairs: list[str] = field(default_factory=list)
     legacy_predictions: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -170,13 +187,15 @@ class RunReport:
                 f"metrics_rebuilt={self.rebuilt_from_predictions} "
                 f"missing_predictions={len(self.missing_predictions)} "
                 f"identity_mismatch={len(self.identity_mismatch)} "
-                f"metric_drift={len(self.metric_drift)} "
+                f"inconsistent_cache={len(self.inconsistent_cache)} "
+                f"metric_repairs={len(self.metric_repairs)} "
                 f"legacy_predictions={len(self.legacy_predictions)}")
 
     @property
     def failed(self) -> bool:
         """True when the run did not do what it was asked to do."""
-        return bool(self.missing_predictions or self.identity_mismatch)
+        return bool(self.missing_predictions or self.identity_mismatch
+                    or self.inconsistent_cache)
 
 
 def run(
@@ -200,6 +219,9 @@ def run(
         args.save_predictions = True
         print("note: --rebuild-predictions/--force imply --save-predictions "
               "(training without storing predictions is treated as a bug)")
+    if args.repair_metrics:
+        print("note: --repair-metrics trusts stored predictions over the metrics "
+              "JSON for inconsistent entries")
 
     dataset = load_dataset(args.dataset)
     names = sorted(p.stem for p in masks_dir.glob("*.npz"))
@@ -245,16 +267,27 @@ def run(
                 report.legacy_predictions.append(f"{mname}__{mask_name}")
 
             if state is CacheState.COMPLETE and not args.force:
-                # A single atomic replace protects each file, not the PAIR: if a
+                # A single atomic replace protects each file, not the PAIR. If a
                 # run stored new predictions and then died before updating the
                 # metrics JSON (or vice versa), both files exist while
-                # disagreeing. Verify before calling the cache complete.
+                # disagreeing -- and the file that survived may belong to a run
+                # whose configuration nobody recorded. Repairing "from the
+                # predictions" would then let a crashed run of an unknown config
+                # be reported under this configuration's identity, so the pair is
+                # refused instead and only --force (retrain + rewrite both) or an
+                # explicit --repair-metrics may resolve it.
                 from_preds = _metrics_from_predictions(parquet)
                 drift = metrics_consistent(merged[mask_name], from_preds)
                 if meta is not None and meta.get("metrics"):
                     drift += metrics_consistent(meta["metrics"], from_preds)
-                if drift:
-                    report.metric_drift.append(f"{mname}__{mask_name}")
+                if drift and (meta is None or args.repair_metrics):
+                    # Either a legacy entry (no sidecar, so the original pairing
+                    # was never recorded) or an operator who explicitly asked to
+                    # trust the predictions. Repair, and say which case it was.
+                    reason = ("no provenance sidecar, so the pairing cannot be "
+                              "verified" if meta is None
+                              else "--repair-metrics requested")
+                    report.metric_repairs.append(f"{mname}__{mask_name}")
                     merged[mask_name] = from_preds
                     _atomic_write_json(jpath, merged)
                     if meta is not None:
@@ -263,11 +296,23 @@ def run(
                             timezone.utc).isoformat()
                         write_meta(mname, mask_name, meta, store)
                     report.skipped += 1
-                    print(f"{tag}: INCONSISTENT CACHE -- metrics JSON and "
-                          f"stored predictions disagree; repaired the metrics "
-                          f"from the predictions.")
+                    print(f"{tag}: METRICS REPAIRED from the stored predictions "
+                          f"({reason}).")
                     for item in drift:
                         print(f"    {item}")
+                    continue
+                if drift:
+                    report.inconsistent_cache.append(f"{mname}__{mask_name}")
+                    report.inconsistency_reasons[f"{mname}__{mask_name}"] = drift
+                    print(f"{tag}: INCONSISTENT CACHE -- metrics JSON and stored "
+                          f"predictions disagree. Refusing to guess which one is "
+                          f"current: repairing from the predictions would present "
+                          f"another run's output under this configuration.")
+                    for item in drift:
+                        print(f"    {item}")
+                    print("    resolve with --rebuild-predictions (retrain and "
+                          "rewrite both), or --repair-metrics to trust the "
+                          "predictions deliberately")
                     continue
                 report.skipped += 1
                 print(f"{tag}: cached, skip")
@@ -419,6 +464,11 @@ def main() -> None:
     ap.add_argument("--force", action="store_true",
                     help="retrain and overwrite cached predictions even when a "
                          "stored provenance sidecar records another config")
+    ap.add_argument("--repair-metrics", action="store_true",
+                    help="when a cache entry's metrics JSON and stored "
+                         "predictions disagree, trust the predictions and "
+                         "rewrite the metrics (refused by default, because the "
+                         "surviving file may belong to an interrupted run)")
     ap.add_argument("--env-groups", nargs="*", default=None,
                     choices=["hydro", "landcover", "climate", "soil", "topo"],
                     help="subset of v04 regime groups (default: all)")
@@ -441,7 +491,8 @@ def main() -> None:
                   "Regenerate with --rebuild-predictions (that trains).")
         raise SystemExit(1 if report.missing_predictions else 0)
 
-    report = run(args)
+    report = run(args, results_dir=RESULTS, masks_dir=MASKS_DIR,
+                 pred_dir=PRED_DIR)
     print()
     print(f"run summary: {report.summary()}")
     exit_code = 0
@@ -462,10 +513,18 @@ def main() -> None:
         print("these results were NOT produced; give the run its own "
               "--model-name or pass --force to replace them")
         exit_code = exit_code or 3
-    if report.metric_drift:
-        print("repaired inconsistent cache entries (metrics JSON disagreed "
-              "with the stored predictions):")
-        for name in report.metric_drift:
+    if report.inconsistent_cache:
+        print("cache entries whose metrics and predictions disagree:")
+        for name in report.inconsistent_cache:
+            print(f"  - {name}")
+            for problem in report.inconsistency_reasons.get(name, []):
+                print(f"      {problem}")
+        print("nothing was written for these; they were NOT reported as cached")
+        exit_code = exit_code or 4
+    if report.metric_repairs:
+        print("cache entries whose metrics were rewritten from their "
+              "predictions:")
+        for name in report.metric_repairs:
             print(f"  - {name}")
     if exit_code:
         raise SystemExit(exit_code)

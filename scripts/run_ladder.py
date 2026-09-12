@@ -33,7 +33,7 @@ from river_graph.experiments.predictions import (
     prediction_path,
     read_meta,
 )
-from river_graph.experiments.provenance import config_hash, describe
+from river_graph.experiments.provenance import config_hash, identity_problems
 
 
 def load_runner() -> ModuleType:
@@ -86,18 +86,28 @@ def main() -> None:
 
     if args.dry_run:
         run_gnn = load_runner()
+        masks = sorted(p.stem for p in Path("experiments/masks").glob("*.npz"))
+        if args.only:
+            masks = [m for m in masks if m.startswith(args.only)]
+        datasets_seen: dict[str, dict] = {}
         for variant in args.variants:
             args.variant = variant
             name = run_gnn.model_name_for(args, variant)
-            params = run_gnn.run_params(args, name)
-            want = config_hash(params)
             print(f"\n{variant}: model_name={name}")
-            print(f"  config_hash={want[:12]} "
-                  f"seed={params['seed']} arch={params['architecture']}")
-            masks = sorted(p.stem for p in Path("experiments/masks").glob("*.npz"))
-            if args.only:
-                masks = [m for m in masks if m.startswith(args.only)]
             for mask in masks:
+                # Use the SAME identity function as the real run: it includes the
+                # dataset and mask content hashes, which the bare parameter dict
+                # does not. A dry-run hash that omits them would differ from the
+                # stored pin and report a phantom conflict.
+                want_fields = run_gnn.expected_identity(args, name, mask)
+                want = config_hash(want_fields)
+                dpath = want_fields.get("dataset_path") or ""
+                if dpath not in datasets_seen:
+                    datasets_seen[dpath] = {
+                        "sha": (want_fields.get("dataset_sha256") or "?")[:12],
+                        "exists": want_fields.get("dataset_sha256") is not None,
+                    }
+                info = datasets_seen[dpath]
                 state = cache_state(name, mask)
                 parquet = prediction_path(name, mask)
                 note = state.value
@@ -105,10 +115,19 @@ def main() -> None:
                     meta = read_meta(name, mask)
                     if meta is None:
                         note += " (no provenance sidecar: legacy file)"
-                    elif meta.get("config_hash") != want:
-                        note += (" CONFLICT: stored config differs -> "
-                                 + describe(meta))
+                    else:
+                        problems = identity_problems(meta, want_fields)
+                        if problems:
+                            note += " CONFLICT: stored identity differs"
+                            for problem in problems:
+                                note += f"\n{'':28}- {problem}"
                 print(f"    {mask:22} {note}")
+            print(f"  config_hash={want[:12]} seed={want_fields['seed']} "
+                  f"arch={want_fields['architecture']} "
+                  f"dataset={dpath or '(missing)'} "
+                  f"dataset_sha={info['sha']}"
+                  + ("" if info["exists"] else "  [dataset not found]"))
+            print(f"    masks={len(masks)}")
         return
 
     report = load_runner().run(args)

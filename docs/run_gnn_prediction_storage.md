@@ -74,19 +74,36 @@ python scripts/run_ladder.py --arch transport_enc \
 - 中断的写入留下的是 `.tmp`，不会被识别为完整缓存（`cache_state` 只看最终文件名）。
 - 不存在「写了一半的 parquet 被当成有效结果」的情况。
 
-**但单文件原子不等于整次运行一致。** parquet、sidecar、指标 JSON 是三个独立替换点，没有共同的完成标识，所以一次运行可能在写完预测、更新指标之前中断，留下「新预测 + 旧指标」同时存在的状态。因此**缓存命中时会校验一致性**：从已存预测复算 test 指标，与指标 JSON（以及 sidecar 里记录的 `metrics`）比较；不一致就**从预测修复指标**并打印警告，而不是把这一对当作完整缓存跳过。修复动作写入 `metric_drift` 汇总。
+**但单文件原子不等于整次运行一致。** parquet、sidecar、指标 JSON 是三个独立替换点，没有共同的完成标识，所以一次运行可能在写完预测、更新指标之前中断，留下「新预测 + 旧指标」同时存在的状态。
+
+因此**缓存命中时会校验一致性**：从已存预测复算**全部指标字段**（`mae/r2/rmse/log_mae/log_r2/log_rmse/pbias/n`，不只是前三个），与指标 JSON **以及 sidecar 里记录的 `metrics`** 比较。差异被判定为**不一致**，并且**默认拒绝继续**：
+
+- 不能"从预测修复指标"就了事。中断的那次运行用的是**什么配置没人记录**，把它的输出按当前配置的身份报出去，等于把别人的结果记在自己名下。这正是本项目存在的意义所在。
+- 处理方式：`--rebuild-predictions`（重训并同时重写两者，退出码不变）；`--force`（同上，并可覆盖身份不符）；或 `--repair-metrics`（明确表示**信任预测**，用它重写指标）。三者都要显式给出。
+- 不一致时进程以退出码 **4** 结束，并逐字段打印差异。
+- 只有**遗留条目**（无 sidecar，生成时还没有这套机制）才自动修复，且会明确打印为 `METRICS REPAIRED ... (no provenance sidecar...)`。
 
 **身份校验。** 每次保存同时写 `{model}__{mask}.meta.json`，内容包括：
 
 - `config_hash`：由**训练种子、架构、variant、lr、weight decay、edge dropout、share_weights、env_groups、env_encoder、模型名**，以及**数据集与 mask 的内容 sha256** 共同决定；
 - `dataset` / `mask`：路径 + 字节数 + mtime + sha256；
 - `split_sizes`、`caller`、`created_at`、`python` 版本、`results_path`；
-- `metrics`：本次运行在该 mask 上的指标记录，供以后核对「预测与指标是否同源」；
+- `metrics`：本次运行在该 mask 上的完整指标记录，供以后核对「预测与指标是否同源」；
 - `export_scope`：说明导出范围。
 
 **为什么要包含内容哈希**：只看路径和文件名不足以判断身份。此前 `config_hash` 不含数据集/mask 身份，因此**就地修改数据集或重新生成 mask 后，程序仍然返回 `cached, skip`**，等于用旧数据划分的结果冒充新配置。现在改动数据集或 mask 的内容都会改变身份，复用会被拒绝并逐字段说明差异（例如 `dataset_sha256: stored=... current=...`）。
 
-重新保存时如果 sidecar 记录的配置与当前不一致，`save_predictions` 抛 `PredictionConflictError`，运行器报 `IDENTITY MISMATCH` 并跳过，进程以退出码 3 结束。这样「同名不同配置」不会静默覆盖历史结果；要给新配置独立名字，用 `--model-name`。
+重新保存时如果 sidecar 记录的配置与当前不一致，`save_predictions` 抛 `PredictionConflictError`，运行器报 `IDENTITY MISMATCH` 并跳过，进程以退出码 **3** 结束。这样「同名不同配置」不会静默覆盖历史结果；要给新配置独立名字，用 `--model-name`。
+
+**退出码汇总**
+
+| 码 | 含义 |
+|---:|---|
+| 0 | 正常完成（含"全部命中缓存"） |
+| 1 | `--verify-predictions` 发现「有指标、无预测」 |
+| 2 | 请求保存但预测缺失（未训练） |
+| 3 | 身份不符，拒绝复用 |
+| 4 | 缓存条目的指标与预测不一致，拒绝猜测 |
 
 **文件名约定保持不变。** 仍是 `{model}__{mask}.parquet`，因为 `recompute_metrics.py`、`run_freeze.py` 等既有工具按该约定解析。身份信息由 sidecar 承担，不改名、不重命名现有 85 个文件。
 
@@ -101,3 +118,16 @@ python scripts/run_ladder.py --arch transport_enc \
 - H1/H2/H2X 五个训练种子的逐样本预测**依然不存在**。`--rebuild-predictions` 可以用来补，但那会训练 120 次；这属于 B 阶段，需要先定预算。
 - `recompute_metrics.py` 现在会先报告「重写会丢多少行 / 改多少行」并默认拒绝写入：当前 parquet 集只覆盖 154 行冻结表中的 85 行（69 行无预测、1 行来自另一次运行），直接重算会造成静默数据丢失。
 - **分析侧的预测来源选择**由 `src/river_graph/experiments/prediction_sources.py` 负责：清单按 `(batch 目录, 文件名, sha256)` 登记，**每个 (模型, mask) 只选一个来源**。这是必需的——被排除的冲突文件与恢复副本**同名**，只按文件名放行会让两者都被读取、把测试单元重复计数。
+
+## 7. 清单的内容哈希棘轮
+
+`experiments/frozen_results/prediction_manifest_*.json` 是分析输入的白名单。它有一个**必须**保留的性质：**不能靠重新哈希磁盘内容来重建**。否则把某个预测覆盖掉、再跑一次生成脚本，新内容就会被当成可信输入重新放行——白名单就形同虚设。
+
+因此每个获准条目都带一个 `pinned_sha256`，从上一版清单**继承**：
+
+- 字节与 pin 一致的条目正常放行；
+- 字节已变的条目**永不重新放行**，记为 `content_changed_since_pin`，并把「pin 值」与「磁盘当前值」一起写进清单，旧 pin **保留**，方便对照；
+- 要接受新字节必须显式 `--repin`（会打印每一处变化）。人工编辑清单里的 `sha256` **无法**绕过：`load_sources` 以 `pinned_sha256` 为准，不以 `sha256` 为准。
+- 停止存在的文件，其 pin 记为 `pins_removed`。
+
+`load_sources()` 同时报告 `missing`、`hash_changed`、`pin_mismatch`、`duplicate_keys`、`unmanifested_on_disk`（磁盘上有但清单里没有的文件，**永不使用**）。

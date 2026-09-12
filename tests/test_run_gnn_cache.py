@@ -117,6 +117,7 @@ def _args(sandbox, **over):
     a.save_predictions = False
     a.rebuild_predictions = False
     a.force = False
+    a.repair_metrics = False
     a.env_groups = None
     for k, v in over.items():
         setattr(a, k, v)
