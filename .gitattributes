@@ -1,0 +1,21 @@
+# Keep text files at LF in every checkout.
+#
+# Run records in experiments/h3a_v1r2/ hash the exact bytes of the sources and
+# artifacts they were produced from. Without a pinned eol, core.autocrlf=true
+# checks the same commit out as CRLF on Windows and LF elsewhere, so the hashes
+# differ across machines and a stored run cannot be verified from a fresh
+# checkout. Pinning LF removes only that difference; a real source change still
+# changes the hash.
+* text=auto eol=lf
+
+# Binary assets that must never be line-ending converted.
+*.pt binary
+*.parquet binary
+*.npz binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.pptx binary
+*.ico binary
+*.woff binary
+*.woff2 binary
