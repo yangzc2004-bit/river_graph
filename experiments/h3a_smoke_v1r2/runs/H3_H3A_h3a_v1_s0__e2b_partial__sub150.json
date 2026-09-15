@@ -1,0 +1,224 @@
+{
+  "status": "complete",
+  "schema_version": 1,
+  "stage": "smoke",
+  "config_hash": "6f95e9927d05998155f147186613ef27835c1e5e20f8731c9711fb5d1749e468",
+  "config": {
+    "schema_version": 1,
+    "protocol_version": "h3a_v1",
+    "model": "H3_H3A_h3a_v1",
+    "arm": "h3a",
+    "mask": "e2b_partial",
+    "scenario": "E2b",
+    "seed": 0,
+    "model_params": {
+      "arms": {
+        "env": {
+          "inputs": "env21",
+          "family": "environmental_mlp",
+          "hidden": 64,
+          "layers": 2,
+          "activation": "relu",
+          "dropout": 0.1,
+          "head": "scalar"
+        },
+        "h2x": {
+          "inputs": "h2x",
+          "family": "transport_gcn",
+          "hidden": 64,
+          "layers": 2,
+          "dropout": 0.1,
+          "gate_mode": "static",
+          "env_encoder": true,
+          "env_emb": 32,
+          "env_groups": null,
+          "share_weights": false,
+          "edge_dropout": 0
+        },
+        "h3a": {
+          "inputs": "env21+h2x",
+          "family": "h3_residual",
+          "base": "env",
+          "correction": "h2x",
+          "combination": "base_plus_correction",
+          "scale": "log1p",
+          "pretraining": false,
+          "freeze_base": false,
+          "auxiliary_loss": null,
+          "learnable_fusion": false
+        }
+      },
+      "edge_set": "river"
+    },
+    "resolved_init_seeds": {
+      "base": 0,
+      "correction": 200003,
+      "h2x": 0
+    },
+    "training": {
+      "optimizer": "Adam",
+      "lr": 0.001,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0,
+      "dropout": 0.1,
+      "max_epochs": 3,
+      "patience": 3,
+      "early_stop_min_delta": 1e-06,
+      "early_stop_monitor": "val_target unclipped log1p MSE",
+      "loss": "log1p_mse",
+      "loss_scope": "train cells of the current month only",
+      "update_unit": "one month = one full-graph forward/backward; month order reshuffled every epoch",
+      "gradient_clip_norm": 1,
+      "remask_fraction": 0.5,
+      "remask_rule": "every epoch a fresh random half of the train cells is visible as context and the other half is hidden and carries the loss",
+      "visible_roles": {
+        "train_forward": [
+          "context",
+          "train_context_half"
+        ],
+        "selection_forward": [
+          "context",
+          "train"
+        ],
+        "selection_forward_e2b_adds": [
+          "val_context"
+        ],
+        "validation_forward": [
+          "context",
+          "train"
+        ],
+        "validation_forward_e2b_adds": [
+          "val_context"
+        ]
+      },
+      "hidden_roles_always": [
+        "val",
+        "test"
+      ],
+      "deterministic_seeding": "torch.manual_seed(seed); numpy.random.seed(seed); numpy default_rng(seed) for the cell permutation"
+    },
+    "prediction": {
+      "clip_rule": "clamp the log1p prediction to [min(train log labels), quantile(train log labels, 0.995)]",
+      "clip_quantile": 0.995,
+      "raw_log_saved": true,
+      "mgL_transform": "expm1 applied once to the whole log1p prediction; base and correction are never expm1-ed separately before summing",
+      "export_scope_pilot": "internal validation cells only; no outer-test metric is computed or stored in pilot/expand stages"
+    },
+    "metrics_definition": "river_graph.experiments.evaluate.metrics (identical to the frozen benchmark)",
+    "dataset": {
+      "dataset_path": "data/processed/mississippi_graph_v05.pt",
+      "dataset_sha256": "56878781346771636c1f95d058c80a756161e462634dfe5aab1ff3aea054f23a",
+      "subset_stations": 150,
+      "subset_sha256": "6f5ee5381e9a97896dcf8129354c3fb1d3b23ac3f31071624e7c0eb73f7b3fec",
+      "subset_rule": "first N stations, cells outside the prefix dropped"
+    },
+    "mask_path": "experiments/h3a_v1r2/masks/e2b_partial.npz",
+    "mask_sha256": "f3ac23a72b767a7662df3beded84db9704028315ce81fccd6a36f17da0a10ad8",
+    "source_sha256": {
+      "configs/h3a_v1.json": "274e8e30eace9d0edb5faa1ba0bd6b6549a2418bc730bae661e3abfce99e3534",
+      "src/river_graph/models/h3.py": "2fb320a374c23b8e62357c59f3337c791a900d87ad59eb37849f2a3eef81eed3",
+      "src/river_graph/models/gcn.py": "7954280bf255d6f780550db70763a12efebb933d86a0ee9dc688594d88b3bdc3",
+      "src/river_graph/models/hydro.py": "42ff41a0b7bf0939e75c091e488f20b16e9432ce7c06ab0b6cefe5c6abc9ba8b",
+      "src/river_graph/experiments/h3_masks.py": "de70095753f0c631f55213c29058d99cb2f96fecc88045d74c9949f26953102a",
+      "src/river_graph/experiments/h3_training.py": "2022f588841f00562a7db6b34263c9c4ba4e5c8b56f0cc93b0d9e71a1411720a",
+      "src/river_graph/experiments/h3_runs.py": "00113f1c968bcdfd012fa4a9d849e9abc022472ddac0e838fff4b66987f36742",
+      "src/river_graph/experiments/evaluate.py": "70a0014e2d272500ad5714f6430f11e05e016ace7596b9413b0aa2c141faae31",
+      "scripts/build_h3_masks.py": "4cbf0f0f520da39450388dd7d80ea540546e376fa11e024d87eacd40dedcc6bf",
+      "scripts/run_h3.py": "052c884ddb04a552e97ba9e6a5b3e1a27690c1add77acd0ee857c4fedabdd980"
+    },
+    "dependencies": {
+      "torch": "2.14.0",
+      "torch-geometric": "2.8.0.post1",
+      "numpy": "2.5.3",
+      "pandas": "3.0.5",
+      "pyarrow": "25.0.1"
+    },
+    "python": "3.12.12",
+    "cpu_threads": 1,
+    "outer_test_policy": "hidden in pilot/expand; only the frozen evaluation entry may read it"
+  },
+  "training": {
+    "arm": "h3a",
+    "seed": 0,
+    "best_epoch": 2,
+    "epochs": 3,
+    "best_val_mse_raw": 0.07763335186033703,
+    "final_train_loss": 0.1257156528618627,
+    "parameter_count": 29094,
+    "input_channels": 14,
+    "env_dim": 9,
+    "edge_dim": 6,
+    "env_features": 21,
+    "n_edges": 135,
+    "clip_log_bounds": [
+      0.2623642683029175,
+      2.9911210536956787
+    ],
+    "clip_quantile": 0.995,
+    "init": {
+      "base_seed": 0,
+      "correction_seed": 200003,
+      "base_linear_layers": 3,
+      "correction_linear_layers": 17,
+      "correction_head_zeroed": true,
+      "edge_set": "river"
+    },
+    "elapsed_seconds": 10.229768000004697
+  },
+  "validation_metrics": {
+    "rmse": 2.169363498687744,
+    "mae": 1.004172682762146,
+    "r2": 0.3432879382252323,
+    "log_rmse": 0.2786276340484619,
+    "log_mae": 0.2003931701183319,
+    "log_r2": 0.5583254599702533,
+    "pbias": -3.764997959136963,
+    "n": 605
+  },
+  "raw_log_metrics": {
+    "raw_log_rmse": 0.2786276340484619,
+    "raw_log_mae": 0.2003931701183319,
+    "n": 605
+  },
+  "test_metrics": null,
+  "test_metrics_note": "pilot/expand never compute an outer-test metric",
+  "validation_visibility": {
+    "train_forward": [
+      "context",
+      "train_context_half"
+    ],
+    "selection_forward": [
+      "context",
+      "train"
+    ],
+    "selection_forward_e2b_adds": [
+      "val_context"
+    ],
+    "validation_forward": [
+      "context",
+      "train"
+    ],
+    "validation_forward_e2b_adds": [
+      "val_context"
+    ]
+  },
+  "completed_at": 1789459688.0535626,
+  "artifacts": {
+    "validation": {
+      "path": "validation/H3_H3A_h3a_v1_s0__e2b_partial__sub150.parquet",
+      "sha256": "fa6ef41cfe4eba1709534e62a8f2f3ffafeb19cd1f95e674e41e725723564837"
+    },
+    "checkpoint": {
+      "path": "checkpoints/H3_H3A_h3a_v1_s0__e2b_partial__sub150.pt",
+      "sha256": "46edad6d10adb5a3c1c174329adfabbc81dfce3a88d574249cda2700b4d913b2"
+    },
+    "epochs": {
+      "path": "epochs/H3_H3A_h3a_v1_s0__e2b_partial__sub150.jsonl",
+      "sha256": "a3cb46c7619ffa4ff2bc50d6b49172c7bd98129e5cd45b7be6550e95c9328df7"
+    }
+  }
+}

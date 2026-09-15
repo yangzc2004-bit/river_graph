@@ -33,18 +33,19 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from river_graph.experiments.h3_runs import (
     SOURCE_FILES,
+    require_decision,
     task_grid,
     train_and_store,
 )
 from river_graph.experiments.h3_training import load_protocol
 from river_graph.experiments.provenance import sha256_file
 
-DEFAULT_DATASET = "data/processed/mississippi_graph_v04.pt"
+DEFAULT_DATASET = "data/processed/mississippi_graph_v05.pt"
 DEFAULT_PROTOCOL = "configs/h3a_v1.json"
 STAGE_ROOTS = {
-    "smoke": "experiments/h3a_smoke_v1",
-    "pilot": "experiments/h3a_v1",
-    "expand": "experiments/h3a_v1",
+    "smoke": "experiments/h3a_smoke_v1r2",
+    "pilot": "experiments/h3a_v1r2",
+    "expand": "experiments/h3a_v1r2",
 }
 
 
@@ -53,7 +54,7 @@ def parse_args(argv=None):
     ap.add_argument("--stage", choices=("smoke", "pilot", "expand"), default="pilot")
     ap.add_argument("--root", default=None)
     ap.add_argument("--dataset", default=DEFAULT_DATASET)
-    ap.add_argument("--masks-dir", default="experiments/h3a_v1/masks")
+    ap.add_argument("--masks-dir", default="experiments/h3a_v1r2/masks")
     ap.add_argument("--protocol", default=DEFAULT_PROTOCOL)
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--cpu-threads", type=int, default=1)
@@ -168,6 +169,22 @@ def main(argv=None) -> int:
         return run_verify(args, root)
 
     grid = task_grid(args.stage, protocol, args.arm, args.seed, args.mask)
+    # Stage gates: expansion needs the pilot decision, and the T18 no-message
+    # control needs the expansion decision.  A dry run is a read-only listing,
+    # so it reports the gate instead of being blocked by it.
+    gates = []
+    if args.stage == "expand":
+        gates.append(("pilot", "run the T17 expansion grid"))
+        if any(arm == "h3a_no_message" for arm, _, _ in grid):
+            gates.append(("expand", "run the T18 no-message control"))
+    for kind, action in gates:
+        try:
+            require_decision(root, kind, action)
+        except SystemExit as exc:
+            if args.dry_run:
+                print("GATE: " + str(exc), flush=True)
+                return 1
+            raise
     fingerprint = protocol_fingerprint(protocol)
     print(
         "stage=" + args.stage + " tasks=" + str(len(grid)) + " root="

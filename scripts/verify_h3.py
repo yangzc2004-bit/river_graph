@@ -1,16 +1,24 @@
-"""T11: independently recompute an H3 run from the weights stored on disk.
+"""T11/R3: independently recompute an H3 run from the weights stored on disk.
 
     python scripts/verify_h3.py --stage pilot
-    python scripts/verify_h3.py --stage pilot --arm h3a --seed 0 --mask e2b_partial
+    python scripts/verify_h3.py --stage expand
+    python scripts/verify_h3.py --stage pilot --arm h3a --seed 0
 
 For every run record this reloads the best checkpoint into a freshly built
 model, re-runs the forward pass over the *stored* configuration, and compares
 the result with the saved branch outputs.  It then recomputes the headline
 metrics from the saved predictions and refuses any disagreement.
 
-It also refuses to let a frozen H3A checkpoint stand in for the independently
-trained ENV arm: the base-only output of an H3A checkpoint is computed and
-required to differ from that run's actually trained ENV counterpart.
+Selection is by the arm/seed/mask grid the stage is supposed to cover, never
+by the stage a record happens to have been written under: an expansion run
+reuses pilot records by identity, so filtering on the stored stage would leave
+27 of the 120 configurations unverified.  Missing, duplicate or extra
+configurations are hard failures.
+
+Identity is checked strictly: the record is compared against an identity
+recomputed from the current sources, the frozen protocol, the dataset content
+hash and the mask content hash.  Passing the record's own hash back would only
+prove internal consistency.
 """
 
 from __future__ import annotations
@@ -21,23 +29,28 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-import pandas as pd
-
 from river_graph.experiments.evaluate import metrics
 from river_graph.experiments.h3_masks import load_mask
-from river_graph.experiments.h3_runs import audit_run
+from river_graph.experiments.h3_runs import (
+    audit_run,
+    expected_config_for,
+    task_grid,
+)
 from river_graph.experiments.h3_training import (
     H3Trainer,
     load_protocol,
     restrict_to_stations,
 )
+from river_graph.experiments.provenance import sha256_file
 
 TOLERANCE = 1e-6
+TERMINAL_SUFFIXES = (".intent.json", ".pending.json")
 
 
 def restore_inputs(record: dict, masks_dir: Path) -> tuple[dict, dict]:
@@ -66,8 +79,7 @@ def forward_from_checkpoint(
         weights_only=False,
     )
     state = checkpoint["state_dict"]
-    model_keys = set(trainer.model.state_dict())
-    if set(state) != model_keys:
+    if set(state) != set(trainer.model.state_dict()):
         raise ValueError("checkpoint state_dict keys disagree with the model")
     trainer.model.load_state_dict(state)
     trainer.model.eval()
@@ -95,15 +107,13 @@ def forward_from_checkpoint(
         "pred_log_clipped": clipped.numpy(),
         "y_pred": np.expm1(clipped.numpy()),
         "clip_log_bounds": [float(bounds[0]), float(bounds[1])],
-        "base_only_log": base.numpy(),
     }
 
 
 def compare(stored, rebuilt, key: str) -> None:
     a = np.asarray(stored, dtype=np.float64)
     b = np.asarray(rebuilt, dtype=np.float64)
-    same_nan = np.array_equal(np.isnan(a), np.isnan(b))
-    if not same_nan:
+    if not np.array_equal(np.isnan(a), np.isnan(b)):
         raise ValueError(key + ": NaN pattern differs from the stored values")
     mask = ~np.isnan(a)
     if not np.allclose(a[mask], b[mask], rtol=TOLERANCE, atol=TOLERANCE):
@@ -117,9 +127,7 @@ def compare(stored, rebuilt, key: str) -> None:
 def verify_record(record: dict, root: Path, masks_dir: Path, protocol: dict) -> dict:
     record["_root"] = str(root)
     dataset, split = restore_inputs(record, masks_dir)
-    stored = pd.read_parquet(
-        root / record["artifacts"]["validation"]["path"]
-    )
+    stored = pd.read_parquet(root / record["artifacts"]["validation"]["path"])
     rebuilt = forward_from_checkpoint(record, dataset, split, protocol)
 
     if not np.array_equal(stored["cell"].to_numpy(), rebuilt["cells"]):
@@ -135,11 +143,12 @@ def verify_record(record: dict, root: Path, masks_dir: Path, protocol: dict) -> 
         stored["clipped"].to_numpy(),
         stored["pred_log_clipped"].to_numpy() != stored["total_log"].to_numpy(),
     )
-    bounds = record["training"]["clip_log_bounds"]
-    np.testing.assert_allclose(rebuilt["clip_log_bounds"], bounds, rtol=0, atol=0)
+    np.testing.assert_allclose(
+        rebuilt["clip_log_bounds"], record["training"]["clip_log_bounds"],
+        rtol=0, atol=0,
+    )
 
-    # no NaN may reach a prediction, and the branch columns must match the arm:
-    # ENV has no graph branch, H2X has no environmental base, H3A carries both.
+    # no NaN may reach a prediction, and the branch columns must match the arm
     for key in ("total_log", "pred_log_clipped", "y_pred"):
         if not np.isfinite(stored[key].to_numpy()).all():
             raise ValueError(key + " contains non-finite values")
@@ -164,27 +173,66 @@ def verify_record(record: dict, root: Path, masks_dir: Path, protocol: dict) -> 
     raw_rmse = float(np.sqrt(np.mean(residual**2)))
     if abs(raw_rmse - record["raw_log_metrics"]["raw_log_rmse"]) > TOLERANCE:
         raise ValueError("raw log RMSE does not recompute")
-    if float(np.mean(residual**2)) != record["training"]["best_val_mse_raw"] and abs(
+    if abs(
         float(np.mean(residual**2)) - record["training"]["best_val_mse_raw"]
     ) > TOLERANCE:
         raise ValueError("selected checkpoint does not reproduce the raw loss")
+    checkpoint_path = root / record["artifacts"]["checkpoint"]["path"]
     return {
         "stem": Path(record["_manifest"]).stem,
         "arm": record["config"]["arm"],
         "seed": record["config"]["seed"],
         "mask": record["config"]["mask"],
         "scenario": record["config"]["scenario"],
+        "config_hash": record["config_hash"],
+        "checkpoint_sha256": sha256_file(checkpoint_path),
         "log_rmse": recomputed["log_rmse"],
         "mae": recomputed["mae"],
         "raw_log_rmse": raw_rmse,
         "cells": len(stored),
         "finite": True,
-        "clipped_fraction": float(stored["clipped"].to_numpy().mean()),
+        "clipped_cells": int(stored["clipped"].sum()),
+        "clipped_fraction": float(stored["clipped"].mean()),
         "epochs": int(record["training"]["epochs"]),
         "best_epoch": int(record["training"]["best_epoch"]),
         "parameters": int(record["training"]["parameter_count"]),
         "seconds": float(record["training"]["elapsed_seconds"]),
     }
+
+
+def collect_records(root: Path) -> dict:
+    records = {}
+    for manifest in sorted((root / "runs").glob("*.json")):
+        if manifest.name.endswith(TERMINAL_SUFFIXES):
+            continue
+        record = json.loads(manifest.read_text(encoding="utf-8"))
+        if record.get("status") != "complete":
+            continue
+        record["_manifest"] = str(manifest)
+        key = (
+            record["config"]["arm"],
+            int(record["config"]["seed"]),
+            record["config"]["mask"],
+        )
+        if key in records:
+            raise ValueError("duplicate run record for " + str(key))
+        records[key] = record
+    return records
+
+
+def select(records: dict, expected: list | None) -> list[dict]:
+    if expected is None:
+        return list(records.values())
+    wanted = [(arm, int(seed), mask) for arm, seed, mask in expected]
+    missing = sorted(set(wanted) - set(records))
+    extra = sorted(set(records) - set(wanted))
+    if missing or extra:
+        raise ValueError(
+            "run set does not match the stage grid: missing=" + str(missing[:6])
+            + " (" + str(len(missing)) + ") extra=" + str(extra[:6])
+            + " (" + str(len(extra)) + ")"
+        )
+    return [records[key] for key in wanted]
 
 
 def base_only_versus_env(records: list[dict]) -> list[dict]:
@@ -205,17 +253,21 @@ def base_only_versus_env(records: list[dict]) -> list[dict]:
                  "status": "no independently trained ENV run to compare"}
             )
             continue
-        root = Path(record["_root"])
-        stored = pd.read_parquet(root / record["artifacts"]["validation"]["path"])
+        stored = pd.read_parquet(
+            Path(record["_root"]) / record["artifacts"]["validation"]["path"]
+        )
         env_record = by_key[key]
         env_stored = pd.read_parquet(
             Path(env_record["_root"]) / env_record["artifacts"]["validation"]["path"]
         )
         if not np.array_equal(stored["cell"].to_numpy(), env_stored["cell"].to_numpy()):
             raise ValueError("ENV and H3A validation cells are not aligned")
-        base_only = stored["base_log"].to_numpy()
-        env_pred = env_stored["total_log"].to_numpy()
-        identical = bool(np.allclose(base_only, env_pred, rtol=0, atol=0))
+        identical = bool(
+            np.allclose(
+                stored["base_log"].to_numpy(), env_stored["total_log"].to_numpy(),
+                rtol=0, atol=0,
+            )
+        )
         findings.append(
             {
                 "mask": config["mask"],
@@ -234,64 +286,62 @@ def base_only_versus_env(records: list[dict]) -> list[dict]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--root", default="experiments/h3a_v1")
+    ap.add_argument("--root", default=None,
+                    help="defaults to the protocol's result_root")
     ap.add_argument("--masks-dir", default=None)
     ap.add_argument("--protocol", default="configs/h3a_v1.json")
     ap.add_argument("--stage", default=None, choices=("smoke", "pilot", "expand"))
-    ap.add_argument("--arm", default=None)
-    ap.add_argument("--seed", type=int, default=None)
-    ap.add_argument("--mask", default=None)
+    ap.add_argument("--arm", action="append", default=None)
+    ap.add_argument("--seed", action="append", type=int, default=None)
+    ap.add_argument("--mask", action="append", default=None)
     ap.add_argument("--json-out", default=None)
     args = ap.parse_args()
 
-    root = ROOT / args.root
     protocol = load_protocol(ROOT / args.protocol)
+    root = ROOT / (args.root or protocol["result_root"])
     masks_dir = Path(args.masks_dir) if args.masks_dir else (
-        root / "masks" if (root / "masks").is_dir() else ROOT / "experiments/masks"
+        root / "masks" if (root / "masks").is_dir() else ROOT / protocol["masks"]["dir"]
     )
     if not masks_dir.is_absolute():
         masks_dir = ROOT / masks_dir
 
-    manifests = sorted((root / "runs").glob("*.json"))
-    manifests = [p for p in manifests if not p.name.endswith((".intent.json",
-                                                             ".pending.json"))]
-    records = []
-    for path in manifests:
-        record = json.loads(path.read_text(encoding="utf-8"))
-        if record.get("status") != "complete":
-            continue
-        record["_manifest"] = str(path)
-        config = record["config"]
-        if args.stage and record.get("stage") != args.stage:
-            continue
-        if args.arm and config["arm"] != args.arm:
-            continue
-        if args.seed is not None and config["seed"] != args.seed:
-            continue
-        if args.mask and config["mask"] != args.mask:
-            continue
-        records.append(record)
+    records = collect_records(root)
     if not records:
-        print("no run records matched")
+        print("no run records found under " + str(root))
         return 1
+    expected = (
+        task_grid(args.stage, protocol, args.arm, args.seed, args.mask)
+        if args.stage else None
+    )
+    selected = select(records, expected)
 
     verified = []
-    for record in records:
+    for record in selected:
         dataset, split = restore_inputs(record, masks_dir)
-        audit_run(root, Path(record["_manifest"]), dataset, split,
-                  record["config_hash"], expected_config=record["config"])
+        expected_config, expected_hash = expected_config_for(
+            record, protocol, masks_dir
+        )
+        audit_run(
+            root, Path(record["_manifest"]), dataset, split,
+            expected_hash=expected_hash, expected_config=expected_config,
+            strict_identity=True,
+        )
         verified.append(verify_record(record, root, masks_dir, protocol))
         print(
             "verified " + verified[-1]["stem"] + " cells="
             + str(verified[-1]["cells"]) + " log_rmse="
-            + format(verified[-1]["log_rmse"], ".5f"),
+            + format(verified[-1]["log_rmse"], ".5f")
+            + " clipped=" + str(verified[-1]["clipped_cells"]),
             flush=True,
         )
 
-    findings = base_only_versus_env(records)
+    findings = base_only_versus_env(selected)
     summary = {
         "verified_runs": len(verified),
         "root": str(root),
+        "stage": args.stage,
+        "grid_checked": expected is not None,
+        "identity_checked": "strict (current sources, protocol, dataset and mask)",
         "tolerance": TOLERANCE,
         "runs": verified,
         "base_only_vs_env": findings,

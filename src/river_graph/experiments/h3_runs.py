@@ -107,19 +107,56 @@ def dataset_scope(dataset: dict, dataset_path: str, stage: str) -> dict:
             dataset, {"train": np.array([0], dtype=np.int64)}, SMOKE_STATIONS
         )
         return {
-            "dataset_path": str(dataset_path),
+            "dataset_path": normalized_path(dataset_path),
             "dataset_sha256": sha256_file(dataset_path),
             "subset_stations": min(SMOKE_STATIONS, int(dataset["y"].shape[0])),
             "subset_sha256": tensor_digest(subset),
             "subset_rule": "first N stations, cells outside the prefix dropped",
         }
     return {
-        "dataset_path": str(dataset_path),
+        "dataset_path": normalized_path(dataset_path),
         "dataset_sha256": sha256_file(dataset_path),
         "subset_stations": None,
         "subset_sha256": None,
         "subset_rule": None,
     }
+
+
+def current_scope(config: dict) -> dict:
+    """Recompute the dataset identity of a stored record from disk, right now.
+
+    Used by the verification and frozen-evaluation paths: they must check the
+    identity the record SHOULD have given the current sources, protocol, data
+    and masks, not simply trust the record's own hash.
+    """
+    stored = config["dataset"]
+    path = stored["dataset_path"]
+    dataset = torch.load(path, weights_only=False)
+    stage = "smoke" if stored.get("subset_stations") else "pilot"
+    return dataset_scope(dataset, path, stage)
+
+
+def identity_mismatches(stored: dict, expected: dict) -> list[str]:
+    """Top-level differences between two identity payloads."""
+    problems = []
+    for key in sorted(set(stored) | set(expected)):
+        if stored.get(key) != expected.get(key):
+            if key == "source_sha256":
+                old = stored.get(key) or {}
+                new = expected.get(key) or {}
+                for name in sorted(set(old) | set(new)):
+                    if old.get(name) != new.get(name):
+                        problems.append(
+                            "source_sha256[" + name + "]: stored="
+                            + str(old.get(name))[:16] + " current="
+                            + str(new.get(name))[:16]
+                        )
+            else:
+                problems.append(
+                    key + ": stored=" + repr(stored.get(key))
+                    + " current=" + repr(expected.get(key))
+                )
+    return problems
 
 
 def scenario_of(mask: str) -> str:
@@ -195,7 +232,7 @@ def identity(
         "prediction": protocol["prediction"],
         "metrics_definition": protocol["metrics"]["definition_source"],
         "dataset": scope,
-        "mask_path": (Path(masks_dir) / (mask + ".npz")).as_posix(),
+        "mask_path": normalized_path(Path(masks_dir) / (mask + ".npz")),
         "mask_sha256": sha256_file(Path(masks_dir) / (mask + ".npz")),
         "source_sha256": {p: sha256_file(ROOT / p) for p in SOURCE_FILES},
         "dependencies": dependency_versions(),
@@ -209,10 +246,63 @@ def identity(
     return payload, digest
 
 
+def normalized_path(path) -> str:
+    """Repository-relative path when possible, so identities are portable.
+
+    Storing an absolute path would make the same run hash differently on
+    another checkout, which is exactly the kind of drift the identity is
+    supposed to detect.
+    """
+    candidate = Path(path)
+    try:
+        return candidate.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return candidate.as_posix()
+
+
 def payload_hash(config: dict) -> str:
     return hashlib.sha256(
         json.dumps(config, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
+
+
+def effective_protocol(stage: str, protocol: dict) -> dict:
+    """The protocol actually used for a stage (smoke shortens the budget)."""
+    if stage != "smoke":
+        return protocol
+    effective = json.loads(json.dumps(protocol))
+    effective["training"]["max_epochs"] = min(
+        effective["training"]["max_epochs"], SMOKE_EPOCHS
+    )
+    effective["training"]["patience"] = min(
+        effective["training"]["patience"], SMOKE_EPOCHS
+    )
+    return effective
+
+
+def expected_config_for(record: dict, protocol: dict, masks_dir: Path):
+    """Recompute the identity a stored record SHOULD have, from the current
+    sources, protocol, dataset content and mask content.
+
+    Verification and export use this instead of the record's own hash, so a
+    changed source file, a changed protocol, a changed dataset or a changed
+    mask is a hard failure rather than a silent pass.
+    """
+    config = record["config"]
+    scope = current_scope(config)
+    stage = "smoke" if scope.get("subset_stations") else "pilot"
+    effective = effective_protocol(stage, protocol)
+    expected, digest = identity(
+        config["arm"],
+        config["seed"],
+        config["mask"],
+        effective,
+        scope,
+        Path(masks_dir),
+        config.get("cpu_threads", 1),
+        config.get("model_params", {}).get("edge_set", "river"),
+    )
+    return expected, digest
 
 
 def build_split(arm: str, seed: int, stage: str, protocol: dict, mask: str,
@@ -224,8 +314,12 @@ def build_split(arm: str, seed: int, stage: str, protocol: dict, mask: str,
     if stage == "smoke":
         dataset, split = restrict_to_stations(dataset, split, SMOKE_STATIONS)
     scope = dataset_scope(dataset, dataset_path, stage)
+    # The identity must describe the protocol that will ACTUALLY be used, so a
+    # shortened smoke budget appears in the stored configuration instead of the
+    # full budget the run never had.
     config, config_hash = identity(
-        arm, seed, mask, protocol, scope, Path(masks_dir), cpu_threads, edge_set
+        arm, seed, mask, effective_protocol(stage, protocol), scope,
+        Path(masks_dir), cpu_threads, edge_set,
     )
     return dataset, split, config, config_hash
 
@@ -252,15 +346,7 @@ def train_and_store(
         edge_set,
     )
     if stage == "smoke":
-        protocol = json.loads(json.dumps(protocol))
-        protocol["training"]["max_epochs"] = min(
-            protocol["training"]["max_epochs"], SMOKE_EPOCHS
-        )
-        protocol["training"]["patience"] = min(
-            protocol["training"]["patience"], SMOKE_EPOCHS
-        )
-        config["training"] = protocol["training"]
-        config_hash = payload_hash(config)
+        protocol = effective_protocol(stage, protocol)
 
     stem = stem_for(
         arm, seed, mask, protocol["protocol_version"],
@@ -419,7 +505,13 @@ def check_metrics(saved: dict, actual: dict, tolerance: float = 1e-6) -> None:
 
 
 def audit_run(
-    root, manifest_path, dataset, split, expected_hash=None, expected_config=None
+    root,
+    manifest_path,
+    dataset,
+    split,
+    expected_hash=None,
+    expected_config=None,
+    strict_identity: bool = False,
 ) -> dict:
     """Re-derive everything a record claims, from the files on disk."""
     root = Path(root)
@@ -435,6 +527,20 @@ def audit_run(
             + str(record["config_hash"])[:12] + ", current "
             + str(expected_hash)[:12] + ")"
         )
+    if strict_identity:
+        # The training path can pass the record's own hash back in, which only
+        # proves internal consistency.  Verification and export must instead
+        # pass a freshly recomputed identity and have EVERY field compared,
+        # including the source files, the frozen protocol, the dataset content
+        # hash and the mask content hash.
+        if expected_config is None:
+            raise ValueError("strict identity checking needs the expected config")
+        problems = identity_mismatches(record["config"], expected_config)
+        if problems:
+            raise ValueError(
+                "stored run identity disagrees with the current sources, "
+                "protocol, data or masks:\n  " + "\n  ".join(problems)
+            )
     if record.get("status") != "complete":
         raise ValueError("run has no completion marker")
     if record.get("test_metrics") is not None:
@@ -526,6 +632,60 @@ def task_grid(stage: str, protocol: dict, arms=None, seeds=None, masks=None) -> 
         if mask not in KEY_SCENARIOS:
             raise ValueError("unknown mask: " + str(mask))
     return [(arm, int(seed), mask) for mask in masks for seed in seeds for arm in arms]
+
+
+def artifact_entries(records: list) -> list[dict]:
+    """Identity of an exact run set: config hash and checkpoint hash per run."""
+    entries = []
+    for record, manifest in sorted(
+        records, key=lambda item: Path(item[1]).stem
+    ):
+        root = Path(manifest).parent.parent
+        entries.append(
+            {
+                "stem": Path(manifest).stem,
+                "arm": record["config"]["arm"],
+                "seed": record["config"]["seed"],
+                "mask": record["config"]["mask"],
+                "config_hash": record["config_hash"],
+                "checkpoint_sha256": sha256_file(
+                    root / record["artifacts"]["checkpoint"]["path"]
+                ),
+            }
+        )
+    return entries
+
+
+def artifact_manifest_hash(entries: list[dict]) -> str:
+    return hashlib.sha256(
+        json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+DECISION_FILES = {
+    "pilot": "pilot_decision.json",
+    "expand": "expansion_decision.json",
+}
+
+
+def require_decision(root: Path, kind: str, action: str) -> dict:
+    """Refuse an action until the decision that licenses it says promote.
+
+    T17 (expand) needs the T16 pilot decision; T18 and the frozen test export
+    need the T17 expansion decision.  The gate is code, not documentation.
+    """
+    path = Path(root) / DECISION_FILES[kind]
+    if not path.is_file():
+        raise SystemExit(
+            "refusing to " + action + ": " + str(path) + " does not exist"
+        )
+    decision = json.loads(path.read_text(encoding="utf-8"))
+    if decision.get("outcome") != "promote":
+        raise SystemExit(
+            "refusing to " + action + ": the " + kind + " decision outcome is "
+            + repr(decision.get("outcome")) + ", not 'promote'"
+        )
+    return decision
 
 
 def load_default_protocol() -> dict:

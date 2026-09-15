@@ -38,6 +38,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from river_graph.experiments.h3_masks import assert_visible_roles
 from river_graph.models.gcn import GCNDocModel
 from river_graph.models.h3 import (
     ENV_FEATURE_NAMES,
@@ -136,6 +137,8 @@ def restrict_to_stations(
         value = np.asarray(value)
         if value.ndim == 1 and value.dtype.kind in "iu":
             subset_split[key] = value[allowed[value // t]]
+        elif key == "visible_roles":
+            subset_split[key] = value
         # station-name arrays (val_sites) are not cell indices and are dropped
     return subset, subset_split
 
@@ -161,11 +164,17 @@ class H3Trainer:
     def prepare(self, dataset: dict, split: dict) -> None:
         """Build every input tensor the arms share; never mutates the dataset."""
         h2x = self.protocol["arms"]["h2x"]
+        if h2x["gate_mode"] != "static":
+            raise ValueError(
+                "the H3A protocol freezes the static transport trunk; "
+                "refusing gate_mode=" + repr(h2x["gate_mode"])
+            )
+        # Only the released interface is used, so the H3 code runs against the
+        # committed models without requiring unreleased gate selectors.
         probe = GCNDocModel(
             architecture="transport_enc",
             env_encoder=h2x["env_encoder"],
             env_groups=h2x["env_groups"],
-            gate_mode=h2x["gate_mode"],
         )
         (
             self.xt,
@@ -196,22 +205,35 @@ class H3Trainer:
                        dtype=np.int64)
         )
 
-        # base_visible marks val+context; val and val_context are hidden here so
-        # they can never reach an input.  test is never marked visible at all.
-        self.base_visible = base_visible.clone()
-        self.base_visible.reshape(-1)[self.val_cells] = False
-        self.base_visible.reshape(-1)[self.val_context_cells] = False
+        # Visibility is declared by the mask, not inferred from which keys
+        # happen to exist: a role that is present but not listed in
+        # visible_roles stays closed, and val/test may never be listed at all.
+        self.visible_roles = assert_visible_roles(split)
+        del base_visible  # only the declared roles decide what the model sees
 
-        # selection / validation forward: context + all train + (val_context)
-        self.eval_visible = self.base_visible.clone()
-        self.eval_visible.reshape(-1)[self.train_cells] = True
-        self.eval_visible.reshape(-1)[self.val_context_cells] = True
+        role_cells = {
+            "train": self.train_cells,
+            "val_context": self.val_context_cells,
+            "context": self.context_cells,
+        }
+        # training forward: the always-visible legacy context plus a fresh half
+        # of train (added per epoch in fit)
+        self.train_context = torch.zeros(self.n * self.t, dtype=torch.bool)
+        if "context" in self.visible_roles:
+            self.train_context[role_cells["context"]] = True
+        self.base_visible = self.train_context.reshape(self.n, self.t)
+
+        # selection / validation forward: the declared visible roles only
+        opened = torch.zeros(self.n * self.t, dtype=torch.bool)
+        for role in self.visible_roles:
+            opened[role_cells[role]] = True
+        self.eval_visible = opened.reshape(self.n, self.t)
 
         # frozen-evaluation forward: every non-test observation is open
-        self.full_visible = self.base_visible.clone()
-        self.full_visible.reshape(-1)[self.train_cells] = True
-        self.full_visible.reshape(-1)[self.val_context_cells] = True
-        self.full_visible.reshape(-1)[self.val_cells] = True
+        everything = opened.clone()
+        everything[self.val_context_cells] = True
+        everything[self.val_cells] = True
+        self.full_visible = everything.reshape(self.n, self.t)
 
     # ----------------------------------------------------------------- model
 

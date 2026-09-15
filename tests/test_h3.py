@@ -59,9 +59,9 @@ def test_env_feature_names_and_order_are_frozen():
     assert len(ENV_FEATURE_NAMES) == 21
     assert ENV_FEATURE_NAMES[:8] == (
         "temp_std",
-        "temp_missing",
+        "temp_observed",
         "flow_std",
-        "flow_missing",
+        "flow_observed",
         "season_sin",
         "season_cos",
         "lat_std",
@@ -71,6 +71,9 @@ def test_env_feature_names_and_order_are_frozen():
     # columns 8 and 9 of the graph tensor are the DOC slots and must be absent
     assert env_feature_index() == list(range(8)) + list(range(10, 23))
     assert 8 not in env_feature_index() and 9 not in env_feature_index()
+    # the mask channels carry 1 where the covariate WAS observed, so the name
+    # must not read as the opposite of the value
+    assert "missing" not in " ".join(ENV_FEATURE_NAMES)
 
 
 def test_env_view_matches_independent_elementwise_expectation():

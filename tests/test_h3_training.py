@@ -56,6 +56,7 @@ def roles() -> dict[str, np.ndarray]:
     val_target sits at station 6 in months 0-2 and val_context at station 5,
     month 0, directly upstream of station 6; exposing val_context therefore has
     a real chance of moving a validation prediction for the graph arms.
+    Visibility is declared explicitly, exactly as the real masks do.
     """
     used = np.array([0, 1, 2, 3, 20, 24, 25, 26, 28, 29, 30, 31], dtype=np.int64)
     train = np.setdiff1d(np.arange(32, dtype=np.int64), used)
@@ -65,12 +66,14 @@ def roles() -> dict[str, np.ndarray]:
         "val": np.array([24, 25, 26], dtype=np.int64),
         "val_context": np.array([20], dtype=np.int64),
         "context": np.array([28, 29, 30, 31], dtype=np.int64),
+        "visible_roles": np.array(["train", "context", "val_context"], dtype="<U16"),
     }
 
 
 def e2a_roles() -> dict[str, np.ndarray]:
+    """The same pool with val_context recorded but not opened."""
     split = roles()
-    split.pop("val_context")
+    split["visible_roles"] = np.array(["train", "context"], dtype="<U16")
     return split
 
 
@@ -122,8 +125,10 @@ def test_visibility_roles_are_exactly_as_frozen(arm, split_factory):
         assert not evaluation[split[role]].any(), role
     assert evaluation[split["train"]].all()
     assert evaluation[split["context"]].all()
-    if "val_context" in split:
+    if "val_context" in split["visible_roles"]:
         assert evaluation[split["val_context"]].all()
+    else:
+        assert not evaluation[split["val_context"]].any()
     # the outer test is hidden even in the fully-open evaluation arrangement
     assert not trainer.full_visible.reshape(-1)[split["test"]].any()
     # during training only the context cells are visible before re-masking

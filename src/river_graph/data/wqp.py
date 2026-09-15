@@ -124,9 +124,31 @@ def extract_doc_obs(results: pd.DataFrame) -> pd.DataFrame:
     return doc[["site_no", "date", "value"]].dropna().rename(columns={"value": "doc"})
 
 
-def extract_covariate_obs(results: pd.DataFrame, variable: str) -> pd.DataFrame:
-    """Uncensored observations of one covariate (temperature/ph/spec_conductance)."""
+def extract_covariate_obs(
+    results: pd.DataFrame, variable: str, audit: list | None = None
+) -> pd.DataFrame:
+    """Uncensored observations of one covariate that pass the quality rules.
+
+    Filtering by characteristic and detection condition is not enough: the
+    cached provider records contain values that cannot be real measurements,
+    including a water temperature of 1310 deg C at station 05357225 in June
+    2017 that reached the model inputs. Every candidate row is therefore
+    classified by river_graph.data.quality first, and only accepted rows are
+    returned. Rejected rows are marked missing, never repaired.
+
+    Pass a list as the audit argument to also collect the full audited frame
+    (raw value, unit, rejection reason) for the build report.
+    """
+    from river_graph.data.quality import apply_rules
+
     sub = results[
         (results["variable"] == variable) & (results["detection_condition"].isna())
     ]
-    return sub[["site_no", "date", "value"]].dropna().rename(columns={"value": variable})
+    candidate = sub[["site_no", "date", "value"]].copy()
+    candidate["unit"] = sub["unit"].values if "unit" in sub.columns else None
+    audited = apply_rules(candidate, variable)
+    if audit is not None:
+        audit.append(audited)
+    accepted = audited[audited["qc_status"] == "accepted"]
+    out = accepted[["site_no", "date", "value"]].dropna()
+    return out.rename(columns={"value": variable})

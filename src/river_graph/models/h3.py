@@ -34,10 +34,13 @@ from torch import nn
 
 # The 21 non-DOC columns, in the frozen order of configs/h3a_v1.json.
 ENV_FEATURE_NAMES = (
+    # The two mask channels carry x_mask, whose value is 1 where the covariate
+    # WAS observed. The names say "observed" so the name cannot be read as the
+    # opposite of the value.
     "temp_std",
-    "temp_missing",
+    "temp_observed",
     "flow_std",
-    "flow_missing",
+    "flow_observed",
     "season_sin",
     "season_cos",
     "lat_std",
@@ -185,7 +188,23 @@ def make_h2x_trunk(
     env_emb: int = 32,
     gate_mode: str = "static",
 ) -> nn.Module:
-    """A static TransportGCNImputer, i.e. the frozen H2X trunk."""
+    """The frozen H2X trunk: a *static* TransportGCNImputer.
+
+    H3 uses only the static transport path, which is the released default of
+    TransportGCNImputer, so this factory deliberately constructs the committed
+    interface instead of passing an optional gate selector.  The released
+    static path and the experimental static gate mode are numerically
+    identical here: same gate width, same parameter order, same forward
+    expression, and this is asserted in tests/test_h3.py.
+
+    A non-static gate mode is refused rather than silently ignored, because
+    the H3 protocol froze the static trunk.
+    """
+    if gate_mode != "static":
+        raise ValueError(
+            "the H3A protocol freezes the static transport trunk; refusing "
+            "gate_mode=" + repr(gate_mode)
+        )
     from river_graph.models.hydro import TransportGCNImputer
 
     return TransportGCNImputer(
@@ -196,7 +215,6 @@ def make_h2x_trunk(
         dropout=dropout,
         env_dim=env_dim,
         env_emb=env_emb,
-        gate_mode=gate_mode,
     )
 
 

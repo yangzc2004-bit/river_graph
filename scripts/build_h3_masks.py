@@ -26,9 +26,9 @@ from river_graph.experiments.h3_masks import (
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--dataset", default="data/processed/mississippi_graph_v04.pt")
+    ap.add_argument("--dataset", default="data/processed/mississippi_graph_v05.pt")
     ap.add_argument("--source-masks", default="experiments/masks")
-    ap.add_argument("--out", default="experiments/h3a_v1/masks")
+    ap.add_argument("--out", default="experiments/h3a_v1r2/masks")
     ap.add_argument("--edges", default="data/processed/graph_edges.csv")
     args = ap.parse_args()
 
@@ -44,10 +44,11 @@ def main() -> None:
     hashes = write_masks(masks, manifest, Path(args.out))
 
     print(f"wrote {len(masks)} masks to {args.out}")
-    for name in KEY_SCENARIOS:
+    for name in list(KEY_SCENARIOS) + list(manifest["diagnostic_scenarios"]):
         entry = manifest["masks"][name]
         roles = " ".join(f"{k}={v}" for k, v in entry["roles"].items())
-        print(f"  {name:22s} {roles}  sha={hashes[name][:12]}")
+        visible = ",".join(entry["visible_roles"])
+        print(f"  {name:24s} {roles}  visible=[{visible}] sha={hashes[name][:12]}")
     e3 = next(k for k in manifest["masks"] if k.startswith("e3_internal"))
     cv = manifest["masks"][e3]["cv_report"]
     print(

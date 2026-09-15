@@ -26,7 +26,7 @@
 | T13 三组冒烟测试 | 完成 | `experiments/h3a_smoke_v1/`, `scripts/h3_smoke_report.py` | 3 条链路（150 站子集、各 3 epoch）全部保存/恢复/审计通过；无 NaN、无隐藏标签泄漏；旧静态前向兼容测试 93 passed |
 | T14 第一组真实实验 | 完成 | `experiments/h3a_v1/runs/` 等 | ENV/H2X/H3A × E2b × seed 0 共 3 次，身份与预测核验通过 |
 | T15 补齐三种子 pilot | 完成 | `experiments/h3a_v1/*.csv` | 27 次全部完成并逐条独立复算（`verification_summary.json`） |
-| T16 架构晋级决定 | 完成 | `experiments/h3a_v1/pilot_decision.json`, `pilot_decision.md` | 四类冻结规则全部通过，结论 **晋级** |
+| T16 架构晋级决定 | 完成 | `experiments/h3a_v1/pilot_decision.json`, `pilot_decision.md` | 四类冻结规则全部通过，结论 **晋级**（措辞应为"达到 pilot 扩展标准"） |
 
 ## T16 结果摘要
 
@@ -44,7 +44,15 @@
 同时如实报告与 ENV 的差距：E1 MAE −8.21%、E3 MAE −3.96%。
 未截断（原始 log1p）输出上 H3A 仍优于两对照，但 E1 相对 H2X 仅 −0.05%，基本持平。
 
-27 次运行全部触发早停（30–123 epoch），说明 patience=20 与 200 轮上限未成为约束。
+27 次运行全部触发早停（30–123 epoch）。这只说明 200 轮上限未触及，
+**不能**说明 patience=20 没有约束训练：每次都在 best_epoch + patience 处停止，
+正是 patience 在起作用。修订 2 的 `training_trajectory.csv` 增加了
+`stopped_at_patience` 列来直接区分这两种情况。
+
+> 措辞更正（修订 2）：T16 的结论应表述为"**达到 pilot 扩展标准**"，
+> 而不是"结构收益成立"。后者容易被读成已完成泛化确认。
+> `pilot_decision.json` 与 `pilot_decision.md` 是冻结的历史记录，未作改写；
+> 本行即为更正说明。
 
 ## 剩余问题
 
@@ -78,5 +86,10 @@ T16 判定为晋级，因此 T17 的进入条件已满足，但本轮按计划�
 - **T19**：冻结评估入口已实现并上锁（`scripts/run_h3_frozen_eval.py`），
   导出外层 test 前需要 T17（河网收益主张还需 T18）。
 
-本轮不启动 T17–T19，也不据此调整任何阈值。下一轮开始时使用同一份冻结协议，
-pilot 的 27 次按身份自动复用，不重复训练。
+本轮不启动 T17–T19，也不据此调整任何阈值。
+
+> **修订 2（2026-09-15）**：review 发现输入质量、可复现依赖与后续阶段控制问题后，
+> 已执行 R1–R4 修复，并在新数据版本与新目录下重新确认 pilot。
+> 详见 `docs/h3a_v1r2_repair_log.md`。
+> 因此"复用原 27 次、只加 93 次"的承诺**不再成立**：数据身份已改变，
+> 且旧输入参与过模型选择，旧结果只能作为修订 1 的历史记录保留。

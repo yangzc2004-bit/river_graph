@@ -17,6 +17,14 @@ import pandas as pd
 
 from river_graph.data.aggregate import to_monthly
 from river_graph.data.nwis import fetch_daily_discharge, load_daily_discharge
+from river_graph.data.quality import (
+    RULE_VERSION,
+    RULES,
+    rejection_sample,
+    rules_digest,
+    summarize,
+    write_report,
+)
 from river_graph.data.wqp import (
     extract_covariate_obs,
     extract_doc_obs,
@@ -27,6 +35,7 @@ from river_graph.dataset import build_dataset, save_dataset
 
 RAW = Path("data/raw")
 PROCESSED = Path("data/processed")
+COVARIATES = ("temperature", "ph", "spec_conductance")
 
 
 def select_sites(nodes: pd.DataFrame, edges: pd.DataFrame, smoke: int | None) -> list[str]:
@@ -49,6 +58,16 @@ def select_sites(nodes: pd.DataFrame, edges: pd.DataFrame, smoke: int | None) ->
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", type=int, default=None, help="limit to N sites")
+    ap.add_argument(
+        "--version",
+        default="v05",
+        help=(
+            "output version tag. v05 is the first build that applies the "
+            "pre-registered covariate quality rules; existing versions are "
+            "never overwritten because a frozen experiment names its exact "
+            "dataset hash."
+        ),
+    )
     args = ap.parse_args()
 
     with open(PROCESSED / "mississippi_graph.pkl", "rb") as fh:
@@ -82,9 +101,42 @@ def main() -> None:
     print(f"DOC obs (dissolved, mg/L, uncensored): {len(doc_obs):,} "
           f"across {doc_obs['site_no'].nunique()} sites")
 
+    # --- covariate quality rules (R1) ---
+    # A value is rejected only when its unit or its physical range makes it
+    # impossible for that variable. DOC keeps its already-frozen unit and
+    # detection filters and gains no value-range rule, so real extremes stay.
+    audit_frames = []
+    covariate_obs = {
+        name: extract_covariate_obs(allres, name, audit=audit_frames)
+        for name in COVARIATES
+    }
+    audited = pd.concat(audit_frames, ignore_index=True)
+    quality = summarize(audited)
+    print(f"\n[quality] rule version {RULE_VERSION}")
+    for (variable, reason), count in (
+        audited[audited.qc_status == "rejected"]
+        .groupby(["variable", "qc_reason"]).size().items()
+    ):
+        print(f"  rejected {variable}: {reason} x {count}")
+    rejected_path = PROCESSED / "covariate_rejections.csv"
+    audited[audited.qc_status == "rejected"].to_csv(rejected_path, index=False)
+    quality_report = {
+        "rule_version": RULE_VERSION,
+        "rules_sha256": rules_digest(),
+        "rules": RULES,
+        "summary": quality,
+        "sample": rejection_sample(audited),
+        "rejections_file": rejected_path.name,
+        "doc_note": (
+            "DOC is the target, not a covariate: the extractor keeps its "
+            "frozen unit/detection filters and no value range is imposed."
+        ),
+    }
+    write_report(PROCESSED / "covariate_quality_report.json", quality_report)
+
     # --- monthly aggregation ---
     monthly_doc = to_monthly(doc_obs, "doc")
-    temp_obs = extract_covariate_obs(allres, "temperature")
+    temp_obs = covariate_obs["temperature"]
     monthly_temp = to_monthly(temp_obs, "temperature")
     print("\n[validation 2] monthly DOC labels per site:")
     print(monthly_doc.groupby("site_no").size().describe().round(1))
@@ -165,11 +217,29 @@ def main() -> None:
         regime=np.asarray(regime, dtype=np.float32),
     )
     tag = f"_smoke{args.smoke}" if args.smoke else ""
-    out = PROCESSED / f"mississippi_graph_v04{tag}.pt"
+    out = PROCESSED / f"mississippi_graph_{args.version}{tag}.pt"
     save_dataset(dataset, out)
-    print(f"\nsaved {out}: N={len(dataset['site_no'])}, T={len(dataset['months'])}, "
-          f"E={dataset['edge_index'].shape[1]}, "
+    provenance = {
+        "version": args.version,
+        "output": out.name,
+        "sites": len(dataset["site_no"]),
+        "months": len(dataset["months"]),
+        "edges": int(dataset["edge_index"].shape[1]),
+        "quality_rule_version": RULE_VERSION,
+        "quality_rules_sha256": rules_digest(),
+        "quality_summary": quality,
+        "temperature_cells_outside_rule": int(
+            ((dataset["x"][:, :, 0] > RULES["temperature"]["max"])
+             | (dataset["x"][:, :, 0] < RULES["temperature"]["min"])).sum()
+        ),
+        "smoke_sites": args.smoke,
+    }
+    write_report(out.with_suffix(".provenance.json"), provenance)
+    print(f"\nsaved {out}: N={provenance['sites']}, T={provenance['months']}, "
+          f"E={provenance['edges']}, "
           f"label coverage={dataset['y_mask'].float().mean():.1%}")
+    print(f"temperature cells still outside the rule: "
+          f"{provenance['temperature_cells_outside_rule']}")
 
 
 if __name__ == "__main__":

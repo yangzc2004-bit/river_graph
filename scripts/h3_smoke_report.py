@@ -26,8 +26,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from river_graph.experiments.h3_masks import load_mask
-from river_graph.experiments.h3_runs import atomic_json, audit_run
-from river_graph.experiments.h3_training import restrict_to_stations
+from river_graph.experiments.h3_runs import (
+    atomic_json,
+    audit_run,
+    expected_config_for,
+)
+from river_graph.experiments.h3_training import (
+    load_protocol,
+    restrict_to_stations,
+)
 
 LEGACY_TESTS = (
     "tests/test_gcn.py",
@@ -41,11 +48,12 @@ LEGACY_TESTS = (
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--root", default="experiments/h3a_smoke_v1")
-    ap.add_argument("--masks-dir", default="experiments/h3a_v1/masks")
+    ap.add_argument("--root", default="experiments/h3a_smoke_v1r2")
+    ap.add_argument("--masks-dir", default="experiments/h3a_v1r2/masks")
     args = ap.parse_args()
     root = ROOT / args.root
     masks_dir = ROOT / args.masks_dir
+    protocol = load_protocol(ROOT / "configs/h3a_v1.json")
 
     manifests = sorted(
         p for p in (root / "runs").glob("*.json")
@@ -64,7 +72,9 @@ def main() -> int:
         subset = config["dataset"]["subset_stations"]
         if subset:
             dataset, split = restrict_to_stations(dataset, split, int(subset))
-        audit_run(root, manifest, dataset, split, record["config_hash"])
+        expected, expected_hash = expected_config_for(record, protocol, masks_dir)
+        audit_run(root, manifest, dataset, split, expected_hash=expected_hash,
+                  expected_config=expected, strict_identity=True)
         frame = pd.read_parquet(root / record["artifacts"]["validation"]["path"])
         arm = config["arm"]
         finite = bool(

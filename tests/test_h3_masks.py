@@ -19,6 +19,7 @@ from river_graph.experiments.h3_masks import (
     INTERNAL_VAL_SEED,
     KEY_SCENARIOS,
     MASK_SOURCES,
+    assert_visible_roles,
     build_masks,
     component_report,
     e3_internal_split,
@@ -29,8 +30,9 @@ from river_graph.experiments.h3_masks import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-H3_MASKS = ROOT / "experiments/h3a_v1/masks"
-H3_MANIFEST = ROOT / "experiments/h3a_v1/split_manifest.json"
+H3_MASKS = ROOT / "experiments/h3a_v1r2/masks"
+H3_MANIFEST = ROOT / "experiments/h3a_v1r2/split_manifest.json"
+FROZEN_MASKS = ROOT / "experiments/h3a_v1/masks"
 SOURCE_MASKS = ROOT / "experiments/masks"
 
 
@@ -126,15 +128,40 @@ def test_written_masks_have_disjoint_roles():
 
 
 @pytestmark_data
-def test_e2a_and_e2b_share_the_same_scoring_target():
-    a = load_mask(H3_MASKS / "e2a_partial.npz")
+def test_e2b_diagnostic_shares_the_scoring_target():
+    """The selection-visibility diagnostic must reuse the e2b target pool."""
+    a = load_mask(H3_MASKS / "e2b_partial_hiddenctx.npz")
     b = load_mask(H3_MASKS / "e2b_partial.npz")
-    for role in ("train", "val", "test", "context"):
+    for role in ("train", "val", "test", "context", "val_context"):
         np.testing.assert_array_equal(a[role], b[role])
-    assert "val_context" not in a
+    assert "val_context" in b["visible_roles"]
+    assert "val_context" not in a["visible_roles"]
     assert len(b["val_context"]) == round(
         0.2 * (len(b["val"]) + len(b["val_context"]))
     )
+
+
+@pytestmark_data
+def test_e2a_strict_has_no_future_context_and_never_opens_val_context():
+    """R3: the strict temporal control must not see any test-period DOC."""
+    split = load_mask(H3_MASKS / "e2a_strict.npz")
+    assert "context" not in split
+    assert "val_context" in split          # recorded, so no cell vanishes
+    assert "val_context" not in split["visible_roles"]
+    assert set(split["visible_roles"].tolist()) == {"train"}
+    frozen = load_mask(SOURCE_MASKS / "e2a_strict.npz")
+    np.testing.assert_array_equal(split["test"], np.sort(frozen["test"]))
+    assert len(split["test"]) == 3184      # the original strict target pool
+
+
+@pytestmark_data
+def test_every_written_mask_declares_valid_visible_roles():
+    manifest = json.loads(H3_MANIFEST.read_text(encoding="utf-8"))
+    for name in list(KEY_SCENARIOS) + list(manifest["diagnostic_scenarios"]):
+        split = load_mask(H3_MASKS / f"{name}.npz")
+        roles = assert_visible_roles(split)
+        assert roles == tuple(manifest["masks"][name]["visible_roles"])
+        assert "val" not in roles and "test" not in roles
 
 
 @pytestmark_data

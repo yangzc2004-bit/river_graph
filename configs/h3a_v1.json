@@ -1,14 +1,28 @@
 {
   "protocol_version": "h3a_v1",
+  "protocol_revision": 2,
   "frozen_at": "2026-09-15",
+  "revision_notes": {
+    "revision_2": [
+      "dataset moved to v05, the first build that applies the pre-registered covariate quality rules; v04 is kept but its water temperature channel contains values that cannot be measurements (up to 1310 deg C), which influenced early-stopping selection",
+      "masks now declare visible_roles explicitly; e2a_strict is restored as the strict no-future-context temporal control and the previous partial-selection variant is renamed e2b_partial_hiddenctx and marked diagnostic",
+      "the H2X trunk is constructed through the released interface only, so the committed repository runs without unreleased gate selectors",
+      "clip reporting is generated from the per-run predictions instead of a fixed statement"
+    ]
+  },
   "description": "H3-A: independent environmental base prediction + static river-network residual branch. log1p(DOC) space: z_hat = base + correction.",
   "dataset": {
-    "path": "data/processed/mississippi_graph_v04.pt",
-    "note": "v04 development data. Mixed station types and era mismatch limits still apply; results are not a replacement for later core-river confirmation."
+    "path": "data/processed/mississippi_graph_v05.pt",
+    "note": "v05 development data: v04 inputs with the pre-registered covariate quality rules applied. DOC labels are unchanged. Mixed station types and era mismatch limits still apply; results are not a replacement for later core-river confirmation.",
+    "superseded": "data/processed/mississippi_graph_v04.pt",
+    "quality_rule_version": "covariate_quality_v1",
+    "quality_report": "data/processed/covariate_quality_report.json",
+    "why_replaced": "the v04 water temperature channel carried provider values that cannot be measurements (up to 1310 deg C at 05357225, June 2017); they reached the model inputs and influenced early-stopping selection in the T01-T16 round"
   },
   "masks": {
-    "dir": "experiments/h3a_v1/masks",
-    "manifest": "experiments/h3a_v1/split_manifest.json",
+    "dir": "experiments/h3a_v1r2/masks",
+    "manifest": "experiments/h3a_v1r2/split_manifest.json",
+    "revision_1_dir": "experiments/h3a_v1/masks",
     "builder": "scripts/build_h3_masks.py",
     "dev_scenarios": [
       "e1_r20_seed42",
@@ -19,21 +33,26 @@
       "e1_r20_seed42",
       "e1_r20_seed43",
       "e1_r20_seed44",
-      "e2a_partial",
+      "e2a_strict",
       "e2b_partial",
       "e3_internal_seed42",
       "e3_internal_seed43",
       "e3_internal_seed44"
     ],
+    "diagnostic_scenarios": [
+      "e2b_partial_hiddenctx"
+    ],
+    "visibility_rule": "every mask stores a visible_roles array; only the roles it lists may be opened in the selection/validation forward, and val/test may never be listed",
     "role_rules": {
       "train": "gradient targets and visible context; half re-masked visible each epoch",
       "val": "internal validation targets: never in training input, never in the loss; scored and used for early stopping",
-      "val_context": "e2b only: visible in the selection/eval forward, never fitted, never scored",
+      "val_context": "opened only when the mask lists it in visible_roles (currently e2b_partial); otherwise recorded but closed, never fitted, never scored",
       "context": "legacy E2b future context: always visible, never fitted, never scored",
       "test": "outer test cells/stations: always hidden in every pilot stage; only the frozen evaluation entry may open them"
     }
   },
-  "result_root": "experiments/h3a_v1",
+  "result_root": "experiments/h3a_v1r2",
+  "previous_result_root": "experiments/h3a_v1",
   "arms": {
     "env": {
       "inputs": "env21",
@@ -194,7 +213,16 @@
       "implementation_defect",
       "structure_not_supported"
     ],
-    "on_failure": "diagnose on the existing validation results only; do not extend training, do not add seeds to pick the best result. The next structural change starts a new protocol and a new directory."
+    "on_failure": "diagnose on the existing validation results only; do not extend training, do not add seeds to pick the best result. The next structural change starts a new protocol and a new directory.",
+    "expand": {
+      "scope": "T17 five-seed decision over the 8 key scenarios; E1/E3 average their masks first and then their seeds, E2a and E2b are reported separately",
+      "e2b_log_rmse_relative_reduction_min": 0.02,
+      "e2b_must_beat": ["env", "h2x"],
+      "e1_e3_mae_regression_vs_h2x_max": 0.03,
+      "e2b_seeds_beating_both_controls_min": 4,
+      "e2b_seeds_total": 5,
+      "artifact_manifest_required": true
+    }
   },
   "budget": {
     "smoke": 3,

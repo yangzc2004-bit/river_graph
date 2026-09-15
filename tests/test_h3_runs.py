@@ -59,6 +59,7 @@ def tiny_split() -> dict[str, np.ndarray]:
         "val": np.array([24, 25, 26], dtype=np.int64),
         "val_context": np.array([20], dtype=np.int64),
         "context": np.array([28, 29], dtype=np.int64),
+        "visible_roles": np.array(["train", "context", "val_context"], dtype="<U16"),
     }
 
 
