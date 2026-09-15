@@ -143,12 +143,82 @@ H3 只用已发布的静态传输通路。已核对两种实现在 H3 所用配�
    这与 review 中固定权重诊断的方向一致（该诊断预测 H3A 相对 H2X 约 −5.7%，
    本次重训实测 −3.50%；诊断不能替代重训，量级差异即来自重新选择权重）。
 
+## 实施过程中发生的事故与恢复（必须记录）
+
+### 1. 行尾导致身份不可移植
+
+clean checkout 的哈希与工作区不一致，根因是 `core.autocrlf=true`：
+同一提交在 Windows 检出为 CRLF，在别处为 LF，于是**每一个**源码文件哈希都不同。
+已修复：新增 `.gitattributes`（`* text=auto eol=lf`，二进制格式显式标为 `binary`），
+把检出统一到 LF。这不是"忽略哈希差异"：真实源码改动仍然改变哈希，
+被消除的只有行尾这一项差异。加入后 `git status` 仍只显示原有的 16 个用户改动文件，
+没有引入额外脏文件。
+
+### 2. 用 junction 搭 clean worktree 时误删了 `.venv` 与 `data/`
+
+为了在干净检出里复算，本机用 `git worktree add` 建了 `D:\river_graph_clean`，
+并把 `data` 与 `.venv` 以 NTFS junction 接到主仓库。
+随后执行 `git worktree remove --force` 时，Git 递归跟随了这两个 junction，
+**清空了主仓库的 `.venv` 与 `data\`**（`data/` 与 `.venv` 均被 .gitignore，
+未进入版本库，因此仓库本身没有损失）。
+
+恢复情况：
+
+| 对象 | 状态 | 恢复方式 |
+|---|---|---|
+| `.venv` | 已恢复 | `uv sync --all-extras`，版本与 `uv.lock` 完全一致（torch 2.14.0+cpu、numpy 2.5.3、pandas 3.0.5、torch-geometric 2.8.0.post1） |
+| `data/raw` WQP 缓存、NWIS 日值、NLDI/StreamCat | 重新下载中 | 官方入口脚本，逐站缓存可续跑 |
+| `data/processed` 数据集 | 重新构建中 | `build_graph.py` → `fetch_reach_attributes.py` → `fetch_streamcat.py` → `build_edge_features.py` → `build_dataset.py --version v05` |
+| `cache/nldplus_vaa.parquet` | 未受影响 | 得以保留 |
+| 仓库内容（代码、文档、`experiments/` 全部产物） | 未受影响 | — |
+
+两点教训已落到流程上：
+
+1. **不要在带 junction 的 worktree 上执行 `git worktree remove`**；先用
+   `cmd /c rmdir` 只删链接，再删 worktree。本次后续所有 worktree 操作都遵循这一点。
+2. `data/` 与 `.venv` 不在版本库内，属于可重建的本地缓存；本轮之后，
+   任何依赖它们的结论都必须能用仓库内的脚本重新生成。
+
+需要说明的是：`data/` 的重建**不保证逐字节复现**。NLDI/StreamCat/WQP 都是活的数据源，
+重建后的图与月度矩阵可能与记录中的 `dataset_sha256` 不同。运行身份记录的是当时
+确切的哈希，这正是它的用途；若重建结果哈希不同，旧记录仍然自洽，但无法在本机重放，
+必须重新下载或从备份恢复当时的输入。
+
+重建顺序（每一步都可续跑）：
+
+```
+python scripts/fetch_doc_inventory.py        # NWIS 站点目录（80 批）
+python scripts/analyze_doc_inventory.py      # -> doc_site_inventory.csv
+python scripts/build_graph.py                # NLDI，-> graph_nodes/edges + pkl
+python scripts/fetch_reach_attributes.py     # -> reach_attributes.csv
+python scripts/fetch_streamcat.py            # -> streamcat_attributes.csv
+python scripts/build_edge_features.py        # -> edge_features.csv
+python scripts/build_dataset.py --version v05
+```
+
+已核对：重建的图与原始一致（571 节点、562 边）。
+
+### 3. 干净检出能复现到哪一步
+
+`.gitattributes` 生效后，把记录里的 `source_sha256` 与提交 blob 逐项比对：
+
+| 源码 | 干净检出可复现 |
+|---|---|
+| `configs/h3a_v1.json`、`models/h3.py`、`experiments/h3_masks.py`、`h3_training.py`、`h3_runs.py`、`evaluate.py`、`build_h3_masks.py`、`run_h3.py` | **是（8/10）** |
+| `models/gcn.py`、`models/hydro.py` | 否——工作区里这两个文件带着**尚未提交**的动态门控改动 |
+
+两个不一致的文件正是 review 发现 2 涉及的依赖。H3 只用已发布的静态通路，
+两种实现在该配置下逐位相同（见 R2 表），但身份的源码哈希如实记录了实际使用的那一版。
+用户提交其门控工作后这一项自然闭合；在那之前，干净检出上的
+`scripts/verify_h3.py` 会在身份核验处明确报出这两个文件，而不是静默通过。
+
 ## 仍未解决
 
 - WQP 缓存中有 57 条 DOC 标签为 0 mg/L；本轮未改动 DOC 标签（review 明确要求
   不因模型难预测而删除目标值），留待下一轮单独决定规则。
 - 外层 test 仍未读取；\`scripts/run_h3_frozen_eval.py\` 已上锁，
   需要 T17 完成且清单一致。
-- 运行身份记录工作树源码的 sha256，本机 \`core.autocrlf\` 为 true，
-  跨机复算需先固定行尾。
+- 运行身份记录工作树源码的 sha256。行尾已由 \`.gitattributes\` 固定为 LF，
+  但 \`gcn.py\`/\`hydro.py\` 仍未提交，见上文第 3 节。
+- \`data/\` 正在按脚本重建（WQP 站点缓存受限流影响，耗时较长，可续跑）。
 - T17–T19 未执行。
