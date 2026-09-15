@@ -1,0 +1,162 @@
+{
+  "task": "T16",
+  "protocol_version": "h3a_v1",
+  "candidate": "h3a",
+  "controls": [
+    "env",
+    "h2x"
+  ],
+  "outcome": "promote",
+  "rules_passed": true,
+  "decision": {
+    "passed": true,
+    "e2b_relative_log_rmse": {
+      "env": -0.0721465869949156,
+      "h2x": -0.05687026073445134
+    },
+    "e2b_thresholds_met": {
+      "env": true,
+      "h2x": true
+    },
+    "mae_guard": {
+      "E1": {
+        "relative_mae_vs_h2x": -0.0022959604535963685,
+        "relative_mae_vs_env": -0.08205903584722418,
+        "regression_within_limit": true
+      },
+      "E3": {
+        "relative_mae_vs_h2x": -0.019188737908290565,
+        "relative_mae_vs_env": -0.03958221595811784,
+        "regression_within_limit": true
+      }
+    },
+    "e2b_seeds_better_than_both": [
+      0,
+      2
+    ],
+    "e2b_seed_requirement_met": true,
+    "thresholds": {
+      "e2b_log_rmse_relative_max": -0.02,
+      "e1_e3_mae_regression_vs_h2x_max": 0.03,
+      "e2b_seeds_better_than_both_required": 2
+    },
+    "scenario_means": {
+      "E1": {
+        "h3a": {
+          "log_rmse": 0.2958081861337026,
+          "mae": 1.299093246459961
+        },
+        "env": {
+          "log_rmse": 0.31738318006197613,
+          "mae": 1.4152252674102783
+        },
+        "h2x": {
+          "log_rmse": 0.295934130748113,
+          "mae": 1.3020827770233154
+        }
+      },
+      "E2b": {
+        "h3a": {
+          "log_rmse": 0.27828742067019147,
+          "mae": 1.1304982900619507
+        },
+        "env": {
+          "log_rmse": 0.2999260624249776,
+          "mae": 1.2388557195663452
+        },
+        "h2x": {
+          "log_rmse": 0.2950680156548818,
+          "mae": 1.2176262935002644
+        }
+      },
+      "E3": {
+        "h3a": {
+          "log_rmse": 0.33140985171000165,
+          "mae": 1.5925323168436687
+        },
+        "env": {
+          "log_rmse": 0.3436330258846283,
+          "mae": 1.6581662098566692
+        },
+        "h2x": {
+          "log_rmse": 0.33968599637349445,
+          "mae": 1.6236888567606609
+        }
+      }
+    }
+  },
+  "checks": {
+    "pilot_runs": 27,
+    "grid_complete": true,
+    "all_records_audited": true,
+    "independent_verification": {
+      "verified_runs": 27,
+      "covers_the_whole_pilot": true
+    },
+    "label_isolation_and_model_tests": {
+      "command": "pytest tests/test_h3.py tests/test_h3_training.py tests/test_h3_masks.py tests/test_h3_runs.py",
+      "exit_code": 0,
+      "summary": "76 passed, 1 warning in 11.77s",
+      "passed": true
+    },
+    "outer_test_untouched": true
+  },
+  "raw_log_diagnostics": {
+    "E1": {
+      "h3a": {
+        "raw_log_rmse": 0.2954653302828471,
+        "relative_vs_env": -0.06913378984695462,
+        "relative_vs_h2x": -0.000521741351244831
+      },
+      "env": {
+        "raw_log_rmse": 0.31740901867548627,
+        "relative_vs_env": 0.0,
+        "relative_vs_h2x": 0.07370774419283
+      },
+      "h2x": {
+        "raw_log_rmse": 0.29561956723531085,
+        "relative_vs_env": -0.06864786492551611,
+        "relative_vs_h2x": 0.0
+      }
+    },
+    "E2b": {
+      "h3a": {
+        "raw_log_rmse": 0.3263505796591441,
+        "relative_vs_env": -0.11693688577209704,
+        "relative_vs_h2x": -0.03296033337387738
+      },
+      "env": {
+        "raw_log_rmse": 0.36956653992335003,
+        "relative_vs_env": 0.0,
+        "relative_vs_h2x": 0.09509688610608968
+      },
+      "h2x": {
+        "raw_log_rmse": 0.3374738295873006,
+        "relative_vs_env": -0.08683878779368293,
+        "relative_vs_h2x": 0.0
+      }
+    },
+    "E3": {
+      "h3a": {
+        "raw_log_rmse": 0.33140985171000165,
+        "relative_vs_env": -0.03557042907374819,
+        "relative_vs_h2x": -0.02436410317719706
+      },
+      "env": {
+        "raw_log_rmse": 0.3436330258846283,
+        "relative_vs_env": 0.0,
+        "relative_vs_h2x": 0.011619641531510183
+      },
+      "h2x": {
+        "raw_log_rmse": 0.33968599637349445,
+        "relative_vs_env": -0.011486176280562255,
+        "relative_vs_h2x": 0.0
+      }
+    }
+  },
+  "notes": [
+    "thresholds are development decision rules, not ecological effect sizes and not significance tests",
+    "three training seeds test optimisation stability; they are not independent ecological replicates",
+    "the outer test was never read while this decision was produced"
+  ]
+}

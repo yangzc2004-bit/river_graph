@@ -1,0 +1,141 @@
+{
+  "config": {
+    "schema_version": 1,
+    "protocol_version": "h3a_v1",
+    "model": "H3_ENV_h3a_v1",
+    "arm": "env",
+    "mask": "e1_r20_seed42",
+    "scenario": "E1",
+    "seed": 0,
+    "model_params": {
+      "arms": {
+        "env": {
+          "inputs": "env21",
+          "family": "environmental_mlp",
+          "hidden": 64,
+          "layers": 2,
+          "activation": "relu",
+          "dropout": 0.1,
+          "head": "scalar"
+        },
+        "h2x": {
+          "inputs": "h2x",
+          "family": "transport_gcn",
+          "hidden": 64,
+          "layers": 2,
+          "dropout": 0.1,
+          "gate_mode": "static",
+          "env_encoder": true,
+          "env_emb": 32,
+          "env_groups": null,
+          "share_weights": false,
+          "edge_dropout": 0
+        },
+        "h3a": {
+          "inputs": "env21+h2x",
+          "family": "h3_residual",
+          "base": "env",
+          "correction": "h2x",
+          "combination": "base_plus_correction",
+          "scale": "log1p",
+          "pretraining": false,
+          "freeze_base": false,
+          "auxiliary_loss": null,
+          "learnable_fusion": false
+        }
+      },
+      "edge_set": "river"
+    },
+    "resolved_init_seeds": {
+      "base": 0,
+      "correction": 200003,
+      "h2x": 0
+    },
+    "training": {
+      "optimizer": "Adam",
+      "lr": 0.001,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0,
+      "dropout": 0.1,
+      "max_epochs": 200,
+      "patience": 20,
+      "early_stop_min_delta": 1e-06,
+      "early_stop_monitor": "val_target unclipped log1p MSE",
+      "loss": "log1p_mse",
+      "loss_scope": "train cells of the current month only",
+      "update_unit": "one month = one full-graph forward/backward; month order reshuffled every epoch",
+      "gradient_clip_norm": 1,
+      "remask_fraction": 0.5,
+      "remask_rule": "every epoch a fresh random half of the train cells is visible as context and the other half is hidden and carries the loss",
+      "visible_roles": {
+        "train_forward": [
+          "context",
+          "train_context_half"
+        ],
+        "selection_forward": [
+          "context",
+          "train"
+        ],
+        "selection_forward_e2b_adds": [
+          "val_context"
+        ],
+        "validation_forward": [
+          "context",
+          "train"
+        ],
+        "validation_forward_e2b_adds": [
+          "val_context"
+        ]
+      },
+      "hidden_roles_always": [
+        "val",
+        "test"
+      ],
+      "deterministic_seeding": "torch.manual_seed(seed); numpy.random.seed(seed); numpy default_rng(seed) for the cell permutation"
+    },
+    "prediction": {
+      "clip_rule": "clamp the log1p prediction to [min(train log labels), quantile(train log labels, 0.995)]",
+      "clip_quantile": 0.995,
+      "raw_log_saved": true,
+      "mgL_transform": "expm1 applied once to the whole log1p prediction; base and correction are never expm1-ed separately before summing",
+      "export_scope_pilot": "internal validation cells only; no outer-test metric is computed or stored in pilot/expand stages"
+    },
+    "metrics_definition": "river_graph.experiments.evaluate.metrics (identical to the frozen benchmark)",
+    "dataset": {
+      "dataset_path": "data/processed/mississippi_graph_v04.pt",
+      "dataset_sha256": "5df38733348b205c37e73682dc19f77b7bce97470a71ea11be544937ca609ca9",
+      "subset_stations": null,
+      "subset_sha256": null,
+      "subset_rule": null
+    },
+    "mask_path": "D:/river_graph/experiments/h3a_v1/masks/e1_r20_seed42.npz",
+    "mask_sha256": "cbc566183e1758ae2311e6e482f3b6ce66b80bbce8a8b901131df6a92b0f0c4f",
+    "source_sha256": {
+      "configs/h3a_v1.json": "ace50e04901e24edb34ae82de40abe776b7e0cc0da88abc5789da07bbae8ba9c",
+      "src/river_graph/models/h3.py": "7453f3e26ffb6ea76f9f406baedf1419812cfd0a653af718ec9e69c51b7ae76e",
+      "src/river_graph/models/gcn.py": "7954280bf255d6f780550db70763a12efebb933d86a0ee9dc688594d88b3bdc3",
+      "src/river_graph/models/hydro.py": "42ff41a0b7bf0939e75c091e488f20b16e9432ce7c06ab0b6cefe5c6abc9ba8b",
+      "src/river_graph/experiments/h3_masks.py": "39789ea9504d261eeeb05ece3ae118c40308e1e790fa7bd26f7c1c09a9a4aae4",
+      "src/river_graph/experiments/h3_training.py": "f5a641ccf0add028b59b03a06ff83466bbb4bffc824ae0f5d547243b5344da7f",
+      "src/river_graph/experiments/h3_runs.py": "2badecf039e75e3226e250e6d0335a3bfcd37072beed99a174fb5ea4e3291099",
+      "src/river_graph/experiments/evaluate.py": "70a0014e2d272500ad5714f6430f11e05e016ace7596b9413b0aa2c141faae31",
+      "scripts/build_h3_masks.py": "e01fafedb9f27e2944695588542c17d1b42e007e871b4ff168b266e731d17814",
+      "scripts/run_h3.py": "b7ac3af9bb85e453854a6a7ff6255bbab7ab1e9a90e86407142aabdca3d6105d"
+    },
+    "dependencies": {
+      "torch": "2.14.0",
+      "torch-geometric": "2.8.0.post1",
+      "numpy": "2.5.3",
+      "pandas": "3.0.5",
+      "pyarrow": "25.0.1"
+    },
+    "python": "3.12.12",
+    "cpu_threads": 1,
+    "outer_test_policy": "hidden in pilot/expand; only the frozen evaluation entry may read it"
+  },
+  "config_hash": "43baf308c55dc5a7d82ecc40e5922bf572278ce76b0687cfe6e2af34c34ef976"
+}

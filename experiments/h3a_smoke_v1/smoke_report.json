@@ -1,0 +1,94 @@
+{
+  "task": "T13",
+  "root": "experiments/h3a_smoke_v1",
+  "runs": [
+    {
+      "stem": "H3_ENV_h3a_v1_s0__e2b_partial__sub150",
+      "arm": "env",
+      "seed": 0,
+      "mask": "e2b_partial",
+      "config_hash": "0875701dffddb523f09c5c7f3a3a387c4f43b492d9d0e554bcc245bed53ceb31",
+      "parameter_count": 5633,
+      "epochs": 3,
+      "best_epoch": 2,
+      "seconds": 2.9,
+      "validation_cells": 605,
+      "finite": true,
+      "clipped": 1,
+      "log_rmse": 0.32742616534233093,
+      "mae": 1.2076833248138428,
+      "raw_log_rmse": 1.0031280517578125,
+      "init": {
+        "base_seed": 0,
+        "correction_seed": null,
+        "correction_head_zeroed": null
+      },
+      "test_metrics": null
+    },
+    {
+      "stem": "H3_H2X_h3a_v1_s0__e2b_partial__sub150",
+      "arm": "h2x",
+      "seed": 0,
+      "mask": "e2b_partial",
+      "config_hash": "73905fe48b045d2d0531492159ac85a187d3f8c6267916309275ee8beb6caf67",
+      "parameter_count": 23461,
+      "epochs": 3,
+      "best_epoch": 2,
+      "seconds": 9.8,
+      "validation_cells": 605,
+      "finite": true,
+      "clipped": 1,
+      "log_rmse": 0.2713824510574341,
+      "mae": 0.9549564719200134,
+      "raw_log_rmse": 0.5149880051612854,
+      "init": {
+        "base_seed": null,
+        "correction_seed": 0,
+        "correction_head_zeroed": false
+      },
+      "test_metrics": null
+    },
+    {
+      "stem": "H3_H3A_h3a_v1_s0__e2b_partial__sub150",
+      "arm": "h3a",
+      "seed": 0,
+      "mask": "e2b_partial",
+      "config_hash": "5d20e49b743c5e3041ed2b4eeecd6ee66d6fe0c717487e3170431fba1aaaa535",
+      "parameter_count": 29094,
+      "epochs": 3,
+      "best_epoch": 3,
+      "seconds": 11.7,
+      "validation_cells": 605,
+      "finite": true,
+      "clipped": 1,
+      "log_rmse": 0.2906908392906189,
+      "mae": 1.0756292343139648,
+      "raw_log_rmse": 0.7601299285888672,
+      "init": {
+        "base_seed": 0,
+        "correction_seed": 200003,
+        "base_linear_layers": 3,
+        "correction_linear_layers": 17,
+        "correction_head_zeroed": true,
+        "edge_set": "river"
+      },
+      "test_metrics": null
+    }
+  ],
+  "checks": {
+    "all_records_audited": true,
+    "all_artifacts_present_and_hashed": true,
+    "no_non_finite_predictions": true,
+    "no_hidden_label_leak": true,
+    "legacy_static_forward_tests": {
+      "command": "pytest tests/test_gcn.py tests/test_hydro.py tests/test_hydro_h2.py tests/test_hydro_h2e.py tests/test_hydro_h15.py tests/test_masks.py",
+      "exit_code": 0,
+      "summary": "93 passed, 1 warning in 4.91s"
+    }
+  },
+  "problems": [],
+  "notes": [
+    "smoke runs are plumbing checks on a station subset; they are not results and never choose an architecture or a hyper-parameter",
+    "the outer test is not read at any point"
+  ]
+}

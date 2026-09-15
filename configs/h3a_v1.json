@@ -1,0 +1,218 @@
+{
+  "protocol_version": "h3a_v1",
+  "frozen_at": "2026-09-15",
+  "description": "H3-A: independent environmental base prediction + static river-network residual branch. log1p(DOC) space: z_hat = base + correction.",
+  "dataset": {
+    "path": "data/processed/mississippi_graph_v04.pt",
+    "note": "v04 development data. Mixed station types and era mismatch limits still apply; results are not a replacement for later core-river confirmation."
+  },
+  "masks": {
+    "dir": "experiments/h3a_v1/masks",
+    "manifest": "experiments/h3a_v1/split_manifest.json",
+    "builder": "scripts/build_h3_masks.py",
+    "dev_scenarios": [
+      "e1_r20_seed42",
+      "e2b_partial",
+      "e3_internal_seed42"
+    ],
+    "key_scenarios": [
+      "e1_r20_seed42",
+      "e1_r20_seed43",
+      "e1_r20_seed44",
+      "e2a_partial",
+      "e2b_partial",
+      "e3_internal_seed42",
+      "e3_internal_seed43",
+      "e3_internal_seed44"
+    ],
+    "role_rules": {
+      "train": "gradient targets and visible context; half re-masked visible each epoch",
+      "val": "internal validation targets: never in training input, never in the loss; scored and used for early stopping",
+      "val_context": "e2b only: visible in the selection/eval forward, never fitted, never scored",
+      "context": "legacy E2b future context: always visible, never fitted, never scored",
+      "test": "outer test cells/stations: always hidden in every pilot stage; only the frozen evaluation entry may open them"
+    }
+  },
+  "result_root": "experiments/h3a_v1",
+  "arms": {
+    "env": {
+      "inputs": "env21",
+      "family": "environmental_mlp",
+      "hidden": 64,
+      "layers": 2,
+      "activation": "relu",
+      "dropout": 0.1,
+      "head": "scalar"
+    },
+    "h2x": {
+      "inputs": "h2x",
+      "family": "transport_gcn",
+      "hidden": 64,
+      "layers": 2,
+      "dropout": 0.1,
+      "gate_mode": "static",
+      "env_encoder": true,
+      "env_emb": 32,
+      "env_groups": null,
+      "share_weights": false,
+      "edge_dropout": 0
+    },
+    "h3a": {
+      "inputs": "env21+h2x",
+      "family": "h3_residual",
+      "base": "env",
+      "correction": "h2x",
+      "combination": "base_plus_correction",
+      "scale": "log1p",
+      "pretraining": false,
+      "freeze_base": false,
+      "auxiliary_loss": null,
+      "learnable_fusion": false
+    }
+  },
+  "conditional_arms": {
+    "h3a_no_message": {
+      "note": "T18 control: identical to h3a but the correction branch is fed an empty edge set, so relation paths stay inactive while the self path remains. Defined here so it needs no later re-freeze; trained only if the T17 structural gain holds.",
+      "base": "h3a.base",
+      "correction": "h3a.correction",
+      "edge_set": "empty",
+      "round_budget": 40
+    }
+  },
+  "init": {
+    "base_seed_offset": 0,
+    "correction_seed_offset": 200003,
+    "h2x_seed_offset": 0,
+    "scheme": "pytorch Linear default (kaiming_uniform a=sqrt(5) weight, U(-1/sqrt(fan_in), 1/sqrt(fan_in)) bias), drawn from an explicit torch.Generator so construction order cannot change the parameters",
+    "env_vs_h3a_base": "identical sub-seed and identical module structure, so the two base branches start bit-identical",
+    "correction_head": "weight and bias exactly zero",
+    "zero_head_note": "with a zero correction head the correction backbone receives no gradient on the first backward pass; this is expected and is asserted in T07. The base branch and the head itself still receive gradients from step one.",
+    "decomposition_note": "the base/correction split is a numeric decomposition, not an identifiable ecological process decomposition"
+  },
+  "training": {
+    "optimizer": "Adam",
+    "lr": 0.001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-8,
+    "weight_decay": 0,
+    "dropout": 0.1,
+    "max_epochs": 200,
+    "patience": 20,
+    "early_stop_min_delta": 0.000001,
+    "early_stop_monitor": "val_target unclipped log1p MSE",
+    "loss": "log1p_mse",
+    "loss_scope": "train cells of the current month only",
+    "update_unit": "one month = one full-graph forward/backward; month order reshuffled every epoch",
+    "gradient_clip_norm": 1,
+    "remask_fraction": 0.5,
+    "remask_rule": "every epoch a fresh random half of the train cells is visible as context and the other half is hidden and carries the loss",
+    "visible_roles": {
+      "train_forward": [
+        "context",
+        "train_context_half"
+      ],
+      "selection_forward": [
+        "context",
+        "train"
+      ],
+      "selection_forward_e2b_adds": [
+        "val_context"
+      ],
+      "validation_forward": [
+        "context",
+        "train"
+      ],
+      "validation_forward_e2b_adds": [
+        "val_context"
+      ]
+    },
+    "hidden_roles_always": [
+      "val",
+      "test"
+    ],
+    "deterministic_seeding": "torch.manual_seed(seed); numpy.random.seed(seed); numpy default_rng(seed) for the cell permutation"
+  },
+  "prediction": {
+    "clip_rule": "clamp the log1p prediction to [min(train log labels), quantile(train log labels, 0.995)]",
+    "clip_quantile": 0.995,
+    "raw_log_saved": true,
+    "mgL_transform": "expm1 applied once to the whole log1p prediction; base and correction are never expm1-ed separately before summing",
+    "export_scope_pilot": "internal validation cells only; no outer-test metric is computed or stored in pilot/expand stages"
+  },
+  "seeds": {
+    "pilot": [
+      0,
+      1,
+      2
+    ],
+    "expand": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "note": "training seeds test optimisation stability only; they are not independent ecological replicates"
+  },
+  "metrics": {
+    "space": "mg/L for the headline metrics, computed on internal validation (val) cells only",
+    "definition_source": "river_graph.experiments.evaluate.metrics (identical to the frozen benchmark)",
+    "primary": "log_rmse",
+    "reported": [
+      "mae",
+      "rmse",
+      "r2",
+      "log_mae",
+      "log_rmse",
+      "log_r2",
+      "pbias",
+      "n"
+    ],
+    "extra": [
+      "raw_log_rmse",
+      "raw_log_mae"
+    ],
+    "raw_definition": "sqrt(mean((log1p(y_true) - total_log)^2)) on unclipped log1p output; this is the early-stopping criterion, reported alongside the frozen clipped metric",
+    "aggregation": "within a scenario average the masks first, then average over training seeds; never pool cells across masks"
+  },
+  "promotion": {
+    "scope": "development decision at T16; these thresholds are decision rules, not ecological effect sizes or significance tests",
+    "e2b_log_rmse_relative_reduction_min": 0.02,
+    "e2b_must_beat": [
+      "env",
+      "h2x"
+    ],
+    "e1_e3_mae_regression_vs_h2x_max": 0.03,
+    "e2b_seeds_beating_both_controls_min": 2,
+    "e2b_seeds_total": 3,
+    "artifact_and_isolation_checks": "all runs audited, all hidden-label isolation tests green",
+    "outcomes": [
+      "promote",
+      "implementation_defect",
+      "structure_not_supported"
+    ],
+    "on_failure": "diagnose on the existing validation results only; do not extend training, do not add seeds to pick the best result. The next structural change starts a new protocol and a new directory."
+  },
+  "budget": {
+    "smoke": 3,
+    "first_real": 3,
+    "pilot_fill": 24,
+    "pilot_total": 27,
+    "expand_total": 120,
+    "no_message_total": 160,
+    "note": "staged plan: this round executes smoke + first_real + pilot_fill = 27 formal configurations."
+  },
+  "references": {
+    "h2x_dynamic_gate": "experiments/dynamic_gate_v1",
+    "frozen_benchmark": "experiments/frozen_results",
+    "strong_rf_reference": {
+      "E1": 1.238,
+      "E2a": 1.048,
+      "E2b": 1.079,
+      "E3": 1.65
+    }
+  }
+}
