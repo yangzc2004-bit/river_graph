@@ -1,9 +1,16 @@
-"""Temporary recovery helper: warm the per-station WQP cache in parallel.
+"""Warm the per-station WQP cache in parallel.
 
-The dataset build fetches stations sequentially, which is fine for a few new
-stations but not for rebuilding 571 of them. This uses the same resumable
-fetch_station_results function from river_graph.data.wqp, only with a small
-thread pool, and skips anything already cached.
+    python scripts/warm_wqp_cache.py [workers]
+
+The underlying fetch is resumable and skips anything already cached, so
+re-running this script is always safe.
+
+The dataset build fetches stations sequentially. That is fine for a handful of
+new stations, but rebuilding all 571 of them that way takes hours when the
+endpoint is throttling (it answers with HTTP 500 and the fetch backs off).
+This uses the same resumable fetch_station_results function from
+river_graph.data.wqp, only with a small thread pool, so a full cache rebuild
+finishes in about an hour instead of most of a day.
 """
 
 from __future__ import annotations

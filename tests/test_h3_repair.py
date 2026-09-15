@@ -46,8 +46,13 @@ from river_graph.models.h3 import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-V04 = ROOT / "data/processed/mississippi_graph_v04.pt"
-V05 = ROOT / "data/processed/mississippi_graph_v05.pt"
+# Local dataset builds are gitignored and the providers keep publishing, so a
+# later rebuild is a different dataset; tests therefore work with whatever
+# builds exist locally rather than naming one frozen version.
+LOCAL_BUILDS = sorted(
+    p for p in (ROOT / "data/processed").glob("mississippi_graph_v0*.pt")
+    if not p.stem.endswith("_smoke50")
+)
 RAW_STATION = ROOT / "data/raw/wqp_results/05357225.csv"
 
 
@@ -175,23 +180,52 @@ def test_the_real_cached_record_is_rejected():
     assert audited.qc_status.tolist() == ["rejected"]
 
 
-@pytest.mark.skipif(
-    not (V04.is_file() and V05.is_file()), reason="dataset versions not present"
-)
-def test_v05_fixes_the_temperature_channel_and_keeps_the_doc_labels():
-    v04 = torch.load(V04, weights_only=False)
-    v05 = torch.load(V05, weights_only=False)
+def test_the_extractor_drops_the_impossible_value_and_keeps_the_rest():
+    """The regression, at the exact place the rules were missing."""
+    from river_graph.data.wqp import extract_covariate_obs
+
+    results = pd.DataFrame(
+        {
+            "variable": ["temperature"] * 3 + ["organic_carbon"],
+            "detection_condition": [None] * 4,
+            "site_no": ["05357225"] * 4,
+            "date": pd.to_datetime(
+                ["2017-06-26", "2017-06-27", "2017-06-28", "2017-06-26"]
+            ),
+            "value": [1310.0, 21.5, 13.1, 8.8],
+            "unit": ["deg C", "deg C", "deg F", "mg/L"],
+        }
+    )
+    audit: list = []
+    kept = extract_covariate_obs(results, "temperature", audit=audit)
+    assert kept["temperature"].tolist() == [21.5]
+    rejected = audit[0][audit[0].qc_status == "rejected"]
+    assert sorted(rejected.qc_reason.tolist()) == [
+        "above_physical_max",
+        "unsupported_unit",
+    ]
+    # the DOC extractor is untouched: the target keeps its frozen filters and
+    # gains no value range, so a high DOC is never dropped for being hard
+    from river_graph.data.wqp import extract_doc_obs
+
+    doc = extract_doc_obs(
+        results.assign(
+            fraction=[None, None, None, "Dissolved"],
+            usgs_pcode=[None, None, None, "00681"],
+        )
+    )
+    assert doc["doc"].tolist() == [8.8]
+
+
+@pytest.mark.skipif(not LOCAL_BUILDS, reason="no local dataset build present")
+def test_local_dataset_temperature_channel_respects_the_rules():
+    """Whatever build is on disk, the rule must hold for its temperature."""
     rule = RULES["temperature"]
-    temp = v05["x"][:, :, 0]
-    assert float(temp.min()) >= rule["min"]
-    assert float(temp.max()) <= rule["max"]
-    # the defect that motivated the rebuild is really gone
-    assert float(v04["x"][:, :, 0].max()) > rule["max"]
-    # and nothing else moved
-    assert torch.equal(v04["y"], v05["y"])
-    assert torch.equal(v04["y_mask"], v05["y_mask"])
-    assert torch.equal(v04["regime"], v05["regime"])
-    assert torch.equal(v04["edge_attr"], v05["edge_attr"])
+    for path in LOCAL_BUILDS:
+        dataset = torch.load(path, weights_only=False)
+        temp = dataset["x"][:, :, 0]
+        assert float(temp.min()) >= rule["min"], path.name
+        assert float(temp.max()) <= rule["max"], path.name
 
 
 # ------------------------------------------------------- R2: dependencies

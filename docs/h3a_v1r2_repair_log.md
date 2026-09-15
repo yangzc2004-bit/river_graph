@@ -193,10 +193,29 @@ python scripts/build_graph.py                # NLDI，-> graph_nodes/edges + pkl
 python scripts/fetch_reach_attributes.py     # -> reach_attributes.csv
 python scripts/fetch_streamcat.py            # -> streamcat_attributes.csv
 python scripts/build_edge_features.py        # -> edge_features.csv
-python scripts/build_dataset.py --version v05
+python scripts/warm_wqp_cache.py 8           # 并行预热逐站 WQP 缓存（可续跑）
+python scripts/build_dataset.py --version v06
 ```
 
-已核对：重建的图与原始一致（571 节点、562 边）。
+重建结果与记录中的 v05 **不相同**，这一点必须明确：
+
+| 项 | 记录中的 v05 | 重建的 v06 |
+|---|---|---|
+| 站点 / 边 | 571 / 562 | 571 / 562（一致） |
+| 月份数 | 652（1972-04 → 2026-07） | 653（1972-04 → 2026-08） |
+| 观测单元 | 33048 | 32420 |
+| 数据集 sha256 | `5687878…` | `2baf13a…` |
+
+WQP/NWIS 是活的数据源：重建时又发布了新的月份，因此月度网格多出一列，
+所有扁平单元索引随之平移。因为旧的 v05 字节已经不存在，本机**无法**重放
+`experiments/h3a_v1r2/` 里的 27 条记录——这正是运行身份要记录
+`dataset_sha256` 的原因。记录本身仍然自洽、完整、已提交，只是需要当时的输入字节
+才能逐位复核。
+
+为避免同名文件被误当作记录中的 v05，重建产物命名为 **v06**，没有覆盖 v05 这个名字。
+
+同时保留 `scripts/warm_wqp_cache.py`：单线程逐站预热 571 个站点在受限流时会拖到数小时，
+该脚本用同一套可续跑的抓取函数、只加一个小线程池，是重建 `data/` 的必要工具。
 
 ### 3. 干净检出能复现到哪一步
 
