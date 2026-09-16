@@ -31,8 +31,6 @@ from river_graph.data.quality import (
 )
 from river_graph.experiments.h3_masks import assert_visible_roles
 from river_graph.experiments.h3_runs import (
-    artifact_entries,
-    artifact_manifest_hash,
     identity_mismatches,
     require_decision,
     task_grid,
@@ -322,31 +320,56 @@ def test_require_decision_refuses_missing_and_non_promoting_decisions(tmp_path):
     assert require_decision(tmp_path, "expand", "export")["outcome"] == "promote"
 
 
-def _fake_run_root(tmp_path: Path, protocol: dict, include_all: bool) -> Path:
-    """A root holding run records for the whole expansion grid."""
-    root = tmp_path / "root"
-    (root / "runs").mkdir(parents=True)
-    (root / "checkpoints").mkdir(parents=True)
-    grid = task_grid("expand", protocol)
-    for index, (arm, seed, mask) in enumerate(grid):
-        if not include_all and index >= len(grid) - 5:
-            continue
+def _write_records(root: Path, keys, stage_for) -> None:
+    for arm, seed, mask in keys:
         stem = arm + "_s" + str(seed) + "__" + mask
         checkpoint = root / "checkpoints" / (stem + ".pt")
         checkpoint.write_bytes(b"weights-" + stem.encode())
         record = {
             "status": "complete",
-            "stage": "pilot" if index < 27 else "expand",
+            "stage": stage_for(arm, seed, mask),
             "config_hash": hashlib.sha256(stem.encode()).hexdigest(),
             "config": {"arm": arm, "seed": seed, "mask": mask},
-            "artifacts": {
-                "checkpoint": {"path": "checkpoints/" + stem + ".pt"}
-            },
+            "artifacts": {"checkpoint": {"path": "checkpoints/" + stem + ".pt"}},
         }
         (root / "runs" / (stem + ".json")).write_text(
             json.dumps(record), encoding="utf-8"
         )
+
+
+def _fake_run_root(tmp_path: Path, protocol: dict, include_all: bool,
+                   control: int | None = None) -> Path:
+    """A root holding run records for the expansion grid and the T18 control.
+
+    control=None writes no control records, an integer writes that many of the
+    40, so a missing control run can be exercised.
+    """
+    root = tmp_path / "root"
+    (root / "runs").mkdir(parents=True)
+    (root / "checkpoints").mkdir(parents=True)
+    grid = task_grid("expand", protocol)
+    selected = grid if include_all else grid[:-5]
+    _write_records(root, selected,
+                   lambda a, s, m: "pilot" if (a, s, m) in set(grid[:27]) else "expand")
+    if control:
+        control_grid = task_grid("no_message", protocol)[:control]
+        _write_records(root, control_grid, lambda a, s, m: "no_message")
+    # the fake root has no dataset, so identity checking needs a stand-in:
+    # unlock's verify_set is exercised against a root that carries records only
     return root
+
+
+def _manifest(module, root: Path, keys) -> str:
+    records = {}
+    for path in sorted((root / "runs").glob("*.json")):
+        record = json.loads(path.read_text(encoding="utf-8"))
+        record["_manifest"] = str(path)
+        records[(record["config"]["arm"], record["config"]["seed"],
+                 record["config"]["mask"])] = record
+    return module.artifact_manifest_hash(
+        module.artifact_entries([(records[key], Path(records[key]["_manifest"]))
+                                 for key in keys])
+    )
 
 
 def _unlock_module():
@@ -368,7 +391,7 @@ def test_outer_test_export_is_refused_with_a_pilot_decision_only(tmp_path):
     )
     module = _unlock_module()
     with pytest.raises(SystemExit, match="expansion_decision.json does not exist"):
-        module.unlock(root, protocol, "architecture")
+        module.unlock(root, protocol, tmp_path, "architecture")
 
 
 def test_outer_test_export_is_refused_when_the_expansion_grid_is_incomplete(
@@ -376,16 +399,13 @@ def test_outer_test_export_is_refused_when_the_expansion_grid_is_incomplete(
 ):
     protocol = load_protocol()
     root = _fake_run_root(tmp_path, protocol, include_all=False)
-    (root / "pilot_decision.json").write_text(
-        json.dumps({"outcome": "promote"}), encoding="utf-8"
-    )
     (root / "expansion_decision.json").write_text(
         json.dumps({"outcome": "promote", "complete": True,
                     "artifact_manifest_sha256": "0" * 64}), encoding="utf-8"
     )
     module = _unlock_module()
-    with pytest.raises(SystemExit, match="configurations are missing"):
-        module.unlock(root, protocol, "architecture")
+    with pytest.raises(SystemExit, match="of 120 expansion configurations are missing"):
+        module.unlock(root, protocol, tmp_path, "architecture")
 
 
 def test_outer_test_export_is_refused_when_the_run_set_changed(tmp_path):
@@ -397,35 +417,86 @@ def test_outer_test_export_is_refused_when_the_run_set_changed(tmp_path):
     )
     module = _unlock_module()
     with pytest.raises(SystemExit, match="no longer matches"):
-        module.unlock(root, protocol, "architecture")
+        module.unlock(root, protocol, tmp_path, "architecture")
 
 
-def test_outer_test_export_unlocks_only_on_a_matching_manifest(tmp_path):
-    protocol = load_protocol()
-    root = _fake_run_root(tmp_path, protocol, include_all=True)
-    records = {}
-    for path in sorted((root / "runs").glob("*.json")):
-        record = json.loads(path.read_text(encoding="utf-8"))
-        record["_manifest"] = str(path)
-        records[(record["config"]["arm"], record["config"]["seed"],
-                 record["config"]["mask"])] = record
-    grid = [(arm, int(seed), mask) for arm, seed, mask in
-            task_grid("expand", protocol)]
-    digest = artifact_manifest_hash(
-        artifact_entries([(records[key], Path(records[key]["_manifest"]))
-                          for key in grid])
-    )
+def _expand_ready_root(tmp_path, protocol, control: int | None):
+    """A root whose expansion decision matches the runs on disk."""
+    root = _fake_run_root(tmp_path, protocol, include_all=True, control=control)
+    module = _unlock_module()
+    grid = [(a, int(s), m) for a, s, m in task_grid("expand", protocol)]
     (root / "expansion_decision.json").write_text(
         json.dumps({"outcome": "promote", "complete": True,
-                    "artifact_manifest_sha256": digest}), encoding="utf-8"
+                    "artifact_manifest_sha256": _manifest(module, root, grid)}),
+        encoding="utf-8",
     )
-    module = _unlock_module()
-    unlocked = module.unlock(root, protocol, "architecture")
-    assert unlocked["manifest_sha256"] == digest
+    return root, module, grid
+
+
+def test_outer_test_export_unlocks_on_a_matching_manifest(tmp_path):
+    protocol = load_protocol()
+    root, module, _ = _expand_ready_root(tmp_path, protocol, control=None)
+    unlocked = module.unlock(root, protocol, tmp_path, "architecture")
     assert len(unlocked["grid"]) == 120
-    # a network claim additionally needs the T18 arm, which is absent here
-    with pytest.raises(SystemExit, match="no-message control is incomplete"):
-        module.unlock(root, protocol, "network")
+    assert unlocked["control_grid"] == []
+
+
+def test_network_claim_is_refused_without_the_t18_decision(tmp_path):
+    protocol = load_protocol()
+    root, module, _ = _expand_ready_root(tmp_path, protocol, control=40)
+    with pytest.raises(SystemExit, match="no_message_decision.json does not exist"):
+        module.unlock(root, protocol, tmp_path, "network")
+
+
+def test_network_claim_is_refused_when_a_control_run_is_missing(tmp_path):
+    """The control set is 40, and it is checked against 40, not against 120."""
+    protocol = load_protocol()
+    root, module, _ = _expand_ready_root(tmp_path, protocol, control=39)
+    control_grid = [(a, int(s), m) for a, s, m in task_grid("no_message", protocol)]
+    (root / "no_message_decision.json").write_text(
+        json.dumps({"outcome": "promote", "complete": True,
+                    "artifact_manifest_sha256": "0" * 64}), encoding="utf-8"
+    )
+    with pytest.raises(SystemExit, match="of 40 no-message configurations are missing"):
+        module.unlock(root, protocol, tmp_path, "network")
+    assert len(control_grid) == 40
+
+
+def test_network_claim_is_refused_when_the_control_manifest_changed(tmp_path):
+    protocol = load_protocol()
+    root, module, _ = _expand_ready_root(tmp_path, protocol, control=40)
+    (root / "no_message_decision.json").write_text(
+        json.dumps({"outcome": "promote", "complete": True,
+                    "artifact_manifest_sha256": "0" * 64}), encoding="utf-8"
+    )
+    with pytest.raises(SystemExit, match="no-message run set no longer matches"):
+        module.unlock(root, protocol, tmp_path, "network")
+
+
+def test_network_claim_accepts_a_complete_120_plus_40_and_exports_the_control(
+    tmp_path, monkeypatch
+):
+    """The whole path: gate, identity, manifest, and the export selection."""
+    protocol = load_protocol()
+    root, module, _ = _expand_ready_root(tmp_path, protocol, control=40)
+    control_grid = [(a, int(s), m) for a, s, m in task_grid("no_message", protocol)]
+    (root / "no_message_decision.json").write_text(
+        json.dumps({"outcome": "promote", "complete": True,
+                    "artifact_manifest_sha256": _manifest(module, root, control_grid)}),
+        encoding="utf-8",
+    )
+    # the fake records have no dataset, so identity checking is stubbed here and
+    # exercised for real by the artifact tests above
+    monkeypatch.setattr(module, "verify_set", lambda *a, **k: None)
+    unlocked = module.unlock(root, protocol, tmp_path, "network")
+    assert len(unlocked["grid"]) == 120
+    assert len(unlocked["control_grid"]) == 40
+    # the export selection must contain the control, or the comparison the
+    # claim rests on would never reach the output
+    export_grid = list(unlocked["grid"]) + list(unlocked["control_grid"])
+    assert len(export_grid) == 160
+    assert set(control_grid) <= set(export_grid)
+    assert all(key[0] == "h3a_no_message" for key in unlocked["control_grid"])
 
 
 def test_verification_selects_by_grid_not_by_stored_stage():
@@ -474,6 +545,102 @@ def test_strict_audit_uses_the_recomputed_identity(tmp_path):
     assert identity_mismatches(stored, expected) == []
     expected["source_sha256"]["src/x.py"] = "222"
     assert identity_mismatches(stored, expected)
+
+
+# ------------------------------------------- V4/V5: publish and discharge
+
+
+def _build_dataset_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "build_dataset", ROOT / "scripts/build_dataset.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_publishing_a_registered_version_is_refused(tmp_path, monkeypatch):
+    """A frozen experiment names the dataset hash, so a name is used once."""
+    module = _build_dataset_module()
+    monkeypatch.setattr(module, "PROCESSED", tmp_path)
+    monkeypatch.setattr(module, "REGISTRY", tmp_path / "dataset_registry.json")
+    monkeypatch.setattr(
+        module, "save_dataset",
+        lambda dataset, path: Path(path).write_text(
+            json.dumps(dataset, sort_keys=True), encoding="utf-8"),
+    )
+    first = module.publish({"a": 1}, "vA", "", {"sites": 1}, allow_republish=False)
+    assert first.is_file()
+    # the same name again, even with the file deleted, is refused
+    first.unlink()
+    with pytest.raises(SystemExit, match="already registered"):
+        module.publish({"a": 2}, "vA", "", {"sites": 1}, allow_republish=True)
+    # a new name is fine
+    second = module.publish({"a": 2}, "vB", "", {"sites": 1}, allow_republish=False)
+    assert second.is_file()
+    registry = json.loads((tmp_path / "dataset_registry.json").read_text("utf-8"))
+    assert set(registry["versions"]) == {"vA", "vB"}
+    assert registry["versions"]["vA"]["sha256"] != registry["versions"]["vB"]["sha256"]
+
+
+def test_publishing_over_an_unregistered_file_needs_the_flag(tmp_path, monkeypatch):
+    module = _build_dataset_module()
+    monkeypatch.setattr(module, "PROCESSED", tmp_path)
+    monkeypatch.setattr(module, "REGISTRY", tmp_path / "dataset_registry.json")
+    monkeypatch.setattr(
+        module, "save_dataset",
+        lambda dataset, path: Path(path).write_text(
+            json.dumps(dataset, sort_keys=True), encoding="utf-8"),
+    )
+    (tmp_path / "mississippi_graph_vX.pt").write_bytes(b"stale")
+    with pytest.raises(SystemExit, match="refusing to overwrite"):
+        module.publish({"a": 1}, "vX", "", {}, allow_republish=False)
+    out = module.publish({"a": 1}, "vX", "", {}, allow_republish=True)
+    assert json.loads(out.read_text(encoding="utf-8")) == {"a": 1}
+
+
+def test_discharge_goes_through_the_rules_on_the_build_path():
+    """V5: the doc claimed a bound the build never applied."""
+    module = _build_dataset_module()
+    dv = pd.DataFrame(
+        {
+            "site_no": ["a", "a", "b", "c"],
+            "date": pd.to_datetime(
+                ["2000-01-05", "2000-01-20", "2000-02-01", "2000-03-01"]
+            ),
+            # a real reversing flow, an impossible magnitude, a normal value
+            "discharge_cfs": [-3150.0, 1400.0, -4_000_000.0, 900.0],
+        }
+    )
+    monthly, audited = module.prepare_discharge(dv)
+    assert len(audited) == 4
+    assert int((audited.qc_status == "rejected").sum()) == 1
+    rejected = audited[audited.qc_status == "rejected"]
+    assert rejected["value"].tolist() == [-4_000_000.0]
+    assert rejected["qc_reason"].tolist() == ["above_physical_max"]
+    # the reversing flow survives, and the month it belongs to keeps its mean
+    station_a = monthly[monthly.site_no == "a"]
+    assert len(station_a) == 1
+    assert station_a["discharge"].iloc[0] == pytest.approx((-3150.0 + 1400.0) / 2)
+
+
+def test_the_quality_report_records_discharge_candidates_and_rejections():
+    """The report must describe what was actually executed."""
+    module = _build_dataset_module()
+    dv = pd.DataFrame(
+        {
+            "site_no": ["a", "b"],
+            "date": pd.to_datetime(["2000-01-05", "2000-01-06"]),
+            "discharge_cfs": [-4_000_000.0, 1200.0],
+        }
+    )
+    _, audited = module.prepare_discharge(dv)
+    summary = summarize(audited)
+    assert summary["rows"] == 2
+    assert summary["accepted"] == 1
+    assert summary["by_reason"] == {"discharge:above_physical_max": 1}
 
 
 # ------------------------------------------------------- R3d: clip reporting

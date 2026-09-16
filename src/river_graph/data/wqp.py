@@ -53,30 +53,109 @@ def _query_url(site_no: str) -> str:
     return f"{WQP_RESULT_URL}?{urllib.parse.urlencode(params)}"
 
 
+def _payload_looks_complete(raw: bytes, declared_length: str | None) -> bool:
+    """A truncated response still starts with the CSV header.
+
+    The previous check only looked at the first characters, so a body cut off
+    mid-download was cached as if it were the whole station history. Three
+    stations ended up holding 2, 11 and 15 DOC samples where the NWIS catalog
+    reports 432, 382 and 445, and the missing history propagated into every
+    later dataset build.
+
+    Two independent structural signals are used: the declared Content-Length
+    must have been delivered, and the record structure must close cleanly (the
+    last record must have the same number of fields as the header).
+    """
+    if not raw:
+        return False
+    if declared_length is not None:
+        try:
+            if len(raw) < int(declared_length):
+                return False
+        except ValueError:
+            pass
+    import csv
+    import io
+
+    text = raw.decode("utf-8", errors="replace")
+    if not text.startswith("Org_Identifier"):
+        return False
+    if not text.endswith("\n"):
+        return False
+    reader = csv.reader(io.StringIO(text))
+    try:
+        width = len(next(reader))
+    except StopIteration:
+        return False
+    last = width
+    for row in reader:
+        last = len(row)
+    return last == width
+
+
+def cached_doc_sample_count(path: str | Path) -> int:
+    """DOC samples a cached file actually contains, after the frozen filters."""
+    frame = load_station_results(path)
+    if frame.empty:
+        return 0
+    return len(extract_doc_obs(frame))
+
+
 def fetch_station_results(
-    site_no: str, cache_dir: str | Path, max_attempts: int = 6
+    site_no: str,
+    cache_dir: str | Path,
+    max_attempts: int = 6,
+    min_doc_samples: int | None = None,
 ) -> Path | None:
     """Download one station's results CSV (cached). None on persistent failure.
 
-    Only definitive responses are cached: a valid CSV (possibly header-only,
-    meaning the station has no results for these characteristics) or a 404.
-    Server overloads (500/429) and timeouts are retried with backoff.
+    Only definitive responses are cached: a structurally complete CSV
+    (possibly header-only, meaning the station has no results for these
+    characteristics) or a 404. Server overloads (500/429) and timeouts are
+    retried with backoff.
+
+    min_doc_samples is an independent expectation, normally the sample count
+    the NWIS series catalog reports for this station. A response that arrives
+    intact but short of that count is treated as incomplete and retried, and an
+    existing cache file that is short of it is refetched instead of reused.
+    Transport truncation cannot be detected from the header, so this semantic
+    check is what actually protects the history.
     """
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     out = cache_dir / f"{site_no}.csv"
-    if out.exists():
+    if out.exists() and min_doc_samples is None:
         return out
+    if out.exists():
+        have = cached_doc_sample_count(out)
+        if have >= int(min_doc_samples):
+            return out
+        print(f"  {site_no}: cached file holds {have} DOC samples, catalog says "
+              f"{min_doc_samples}; refetching")
+        out.unlink()
     req = urllib.request.Request(_query_url(site_no), headers={"User-Agent": USER_AGENT})
+    best: bytes | None = None
     for attempt in range(max_attempts):
         try:
             with urllib.request.urlopen(req, timeout=300) as resp:
-                text = resp.read().decode("utf-8", errors="replace")
-            if text.startswith("Org_Identifier"):
-                out.write_text(text, encoding="utf-8")
+                declared = resp.headers.get("Content-Length")
+                raw = resp.read()
+            if not _payload_looks_complete(raw, declared):
+                print(f"  {site_no}: incomplete response "
+                      f"({len(raw)} of {declared} bytes), retry {attempt + 1}")
+                time.sleep(min(20 * (attempt + 1), 120))
+                continue
+            out.write_bytes(raw)
+            if min_doc_samples is None:
                 return out
-            # server-side truncation marker: retry
-            print(f"  {site_no}: malformed response, retry {attempt + 1}")
+            have = cached_doc_sample_count(out)
+            if have >= int(min_doc_samples):
+                return out
+            print(f"  {site_no}: response holds {have} DOC samples, catalog says "
+                  f"{min_doc_samples}, retry {attempt + 1}")
+            if best is None or len(raw) > len(best):
+                best = raw
+            out.unlink()
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 out.write_text("Org_Identifier\n", encoding="utf-8")  # definitive empty
@@ -85,6 +164,13 @@ def fetch_station_results(
         except Exception as e:  # noqa: BLE001 - timeouts, SSL resets, ...
             print(f"  {site_no}: {e}, retry {attempt + 1}")
         time.sleep(min(20 * (attempt + 1), 120))
+    if best is not None:
+        # keep the longest response seen rather than losing the station, and
+        # say so: the caller can decide whether to use a short station
+        out.write_bytes(best)
+        print(f"  {site_no}: kept the longest response ({len(best)} bytes) but it "
+              f"is still short of the catalog count")
+        return out
     print(f"  {site_no}: FAILED after {max_attempts} attempts")
     return None
 

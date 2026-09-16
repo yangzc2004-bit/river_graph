@@ -48,8 +48,8 @@ LEGACY_TESTS = (
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--root", default="experiments/h3a_smoke_v1r2")
-    ap.add_argument("--masks-dir", default="experiments/h3a_v1r2/masks")
+    ap.add_argument("--root", default="experiments/h3a_smoke_v1r3")
+    ap.add_argument("--masks-dir", default="experiments/h3a_v1r3/masks")
     args = ap.parse_args()
     root = ROOT / args.root
     masks_dir = ROOT / args.masks_dir

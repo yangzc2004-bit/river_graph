@@ -1,6 +1,6 @@
 {
   "protocol_version": "h3a_v1",
-  "protocol_revision": 2,
+  "protocol_revision": 3,
   "frozen_at": "2026-09-15",
   "revision_notes": {
     "revision_2": [
@@ -8,21 +8,35 @@
       "masks now declare visible_roles explicitly; e2a_strict is restored as the strict no-future-context temporal control and the previous partial-selection variant is renamed e2b_partial_hiddenctx and marked diagnostic",
       "the H2X trunk is constructed through the released interface only, so the committed repository runs without unreleased gate selectors",
       "clip reporting is generated from the per-run predictions instead of a fixed statement"
+    ],
+    "revision_3": [
+      "dataset moved to v06; the v05 bytes were destroyed by a worktree/junction incident and cannot be restored, so the r2 runs remain as saved results whose input snapshot is unavailable",
+      "cache completeness is now audited against the NWIS series catalog; 48 stations were short and the fetch path no longer caches a truncated response",
+      "the frozen masks declare the grid they were encoded on and are migrated by station/month when the grid changes",
+      "dataset versions are published once: a registered version is never re-bound and an unregistered file is not overwritten by default",
+      "NWIS discharge goes through the same quality rules as the WQP covariates, with a two-sided magnitude bound",
+      "the T18 no-message control has its own 40-run grid, gate and decision, and a network claim exports it"
     ]
   },
   "description": "H3-A: independent environmental base prediction + static river-network residual branch. log1p(DOC) space: z_hat = base + correction.",
   "dataset": {
-    "path": "data/processed/mississippi_graph_v05.pt",
-    "note": "v05 development data: v04 inputs with the pre-registered covariate quality rules applied. DOC labels are unchanged. Mixed station types and era mismatch limits still apply; results are not a replacement for later core-river confirmation.",
-    "superseded": "data/processed/mississippi_graph_v04.pt",
+    "path": "data/processed/mississippi_graph_v07.pt",
+    "note": "v06 development data: the covariate quality rules applied on top of a rebuilt cache, with cache completeness checked against the NWIS catalog. The providers keep publishing, so this grid has 653 months and 32420 observed cells; masks are migrated to it by station/month. Mixed station types and era mismatch limits still apply.",
+    "superseded": [
+      "data/processed/mississippi_graph_v04.pt",
+      "data/processed/mississippi_graph_v05.pt"
+    ],
+    "v05_status": "the v05 bytes were destroyed locally and cannot be restored; the revision-2 runs remain as saved results whose input snapshot is unavailable",
     "quality_rule_version": "covariate_quality_v1",
     "quality_report": "data/processed/covariate_quality_report.json",
     "why_replaced": "the v04 water temperature channel carried provider values that cannot be measurements (up to 1310 deg C at 05357225, June 2017); they reached the model inputs and influenced early-stopping selection in the T01-T16 round"
   },
   "masks": {
-    "dir": "experiments/h3a_v1r2/masks",
-    "manifest": "experiments/h3a_v1r2/split_manifest.json",
+    "dir": "experiments/h3a_v1r3/masks",
+    "manifest": "experiments/h3a_v1r3/split_manifest.json",
     "revision_1_dir": "experiments/h3a_v1/masks",
+    "revision_2_dir": "experiments/h3a_v1r2/masks",
+    "source_grid": "experiments/masks/source_grid.json",
     "builder": "scripts/build_h3_masks.py",
     "dev_scenarios": [
       "e1_r20_seed42",
@@ -51,8 +65,8 @@
       "test": "outer test cells/stations: always hidden in every pilot stage; only the frozen evaluation entry may open them"
     }
   },
-  "result_root": "experiments/h3a_v1r2",
-  "previous_result_root": "experiments/h3a_v1",
+  "result_root": "experiments/h3a_v1r3",
+  "previous_result_roots": ["experiments/h3a_v1", "experiments/h3a_v1r2"],
   "arms": {
     "env": {
       "inputs": "env21",

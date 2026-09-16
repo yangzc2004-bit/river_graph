@@ -604,10 +604,13 @@ def audit_run(
     return record
 
 
+NO_MESSAGE_ARM = "h3a_no_message"
+
+
 def scenarios_for_stage(stage: str, protocol: dict) -> tuple:
     if stage == "smoke":
         return (protocol["masks"]["dev_scenarios"][1],)
-    if stage == "expand":
+    if stage in ("expand", "no_message"):
         return tuple(KEY_SCENARIOS)
     return tuple(protocol["masks"]["dev_scenarios"])
 
@@ -615,14 +618,24 @@ def scenarios_for_stage(stage: str, protocol: dict) -> tuple:
 def seeds_for_stage(stage: str, protocol: dict) -> tuple:
     if stage == "smoke":
         return (0,)
-    if stage == "expand":
+    if stage in ("expand", "no_message"):
         return tuple(protocol["seeds"]["expand"])
     return tuple(protocol["seeds"]["pilot"])
 
 
+def default_arms_for_stage(stage: str) -> tuple:
+    """The no-message control is its own arm, never part of the three-arm grid."""
+    return (NO_MESSAGE_ARM,) if stage == "no_message" else tuple(ARMS[:3])
+
+
 def task_grid(stage: str, protocol: dict, arms=None, seeds=None, masks=None) -> list:
-    """Exact list of (arm, seed, mask) configurations a stage will run."""
-    arms = tuple(arms) if arms else tuple(ARMS[:3])
+    """Exact list of (arm, seed, mask) configurations a stage will run.
+
+    The T18 no-message control is 8 key scenarios x 5 seeds = 40 runs and is
+    defined here on its own, so a completeness check can compare it against
+    its own size instead of against the 120-run three-arm grid.
+    """
+    arms = tuple(arms) if arms else default_arms_for_stage(stage)
     for arm in arms:
         if arm not in ARMS:
             raise ValueError("unknown arm: " + str(arm))
@@ -665,6 +678,7 @@ def artifact_manifest_hash(entries: list[dict]) -> str:
 DECISION_FILES = {
     "pilot": "pilot_decision.json",
     "expand": "expansion_decision.json",
+    "no_message": "no_message_decision.json",
 }
 
 

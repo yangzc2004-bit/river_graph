@@ -66,7 +66,11 @@ ISOLATION_TESTS = (
 STAGE_RESULT = {
     "pilot": ("pilot_decision", "T16"),
     "expand": ("expansion_decision", "T17"),
+    "no_message": ("no_message_decision", "T18"),
 }
+# The T18 control is a diagnostic, not a promotion: it shows whether the full
+# model's advantage needs neighbour messages at all.
+DIAGNOSTIC_STAGES = ("no_message",)
 
 
 def load_runs(root: Path, masks_dir: Path, protocol: dict) -> tuple[list, list]:
@@ -78,7 +82,17 @@ def load_runs(root: Path, masks_dir: Path, protocol: dict) -> tuple[list, list]:
         if record.get("status") != "complete":
             continue
         config = record["config"]
-        dataset = torch.load(config["dataset"]["dataset_path"], weights_only=False)
+        dataset_path = Path(config["dataset"]["dataset_path"])
+        if not dataset_path.is_file():
+            raise SystemExit(
+                "the input snapshot this run was produced from is not present: "
+                + str(dataset_path) + " (recorded sha256 "
+                + str(config["dataset"].get("dataset_sha256"))[:16] + "). "
+                "The saved predictions and metrics can still be re-checked from "
+                "the stored artifacts, but the run cannot be re-derived or "
+                "re-analysed until that exact dataset is restored."
+            )
+        dataset = torch.load(dataset_path, weights_only=False)
         split = load_mask(masks_dir / (config["mask"] + ".npz"))
         if config["dataset"]["subset_stations"]:
             dataset, split = restrict_to_stations(
@@ -113,9 +127,16 @@ def load_runs(root: Path, masks_dir: Path, protocol: dict) -> tuple[list, list]:
     return records, rows
 
 
+def table_prefix(stage: str) -> str:
+    """Diagnostic stages share a root, so their tables get their own names."""
+    return "" if stage in ("pilot", "expand") else stage + "_"
+
+
 def require_complete_grid(rows: list[dict], protocol: dict, stage: str) -> pd.DataFrame:
     grid = set(task_grid(stage, protocol))
     frame = pd.DataFrame(rows)
+    if frame.empty:
+        raise SystemExit("no runs for stage " + stage)
     present = set(zip(frame.arm, frame.seed, frame["mask"]))
     missing = sorted(grid - present)
     if missing:
@@ -335,19 +356,19 @@ def isolation_status() -> dict:
 
 
 def write_tables(root: Path, records: list, per_run: pd.DataFrame,
-                 protocol: dict) -> pd.DataFrame:
+                 protocol: dict, prefix: str = "") -> pd.DataFrame:
     per_seed = (
         per_run.groupby(["arm", "seed", "scenario"])[list(METRICS)]
         .mean()
         .reset_index()
     )
-    per_run.to_csv(root / "validation_per_run.csv", index=False)
-    per_seed.to_csv(root / "validation_per_seed_scenario.csv", index=False)
+    per_run.to_csv(root / (prefix + "validation_per_run.csv"), index=False)
+    per_seed.to_csv(root / (prefix + "validation_per_seed_scenario.csv"), index=False)
     (
         per_seed.groupby(["arm", "scenario"])[list(METRICS)]
         .agg(["mean", "std"])
         .reset_index()
-        .to_csv(root / "validation_summary.csv", index=False)
+        .to_csv(root / (prefix + "validation_summary.csv"), index=False)
     )
     trajectory = per_run[
         ["stem", "arm", "seed", "mask", "epochs", "best_epoch", "parameters",
@@ -359,7 +380,7 @@ def write_tables(root: Path, records: list, per_run: pd.DataFrame,
     trajectory["stopped_at_patience"] = (
         trajectory.epochs - trajectory.best_epoch
     ) >= patience
-    trajectory.to_csv(root / "training_trajectory.csv", index=False)
+    trajectory.to_csv(root / (prefix + "training_trajectory.csv"), index=False)
 
     branch_rows = []
     for item in records:
@@ -383,7 +404,7 @@ def write_tables(root: Path, records: list, per_run: pd.DataFrame,
             )
         branch_rows.append(row)
     branch = pd.DataFrame(branch_rows)
-    branch.to_csv(root / "branch_behaviour.csv", index=False)
+    branch.to_csv(root / (prefix + "branch_behaviour.csv"), index=False)
     return per_seed
 
 
@@ -396,9 +417,13 @@ def write_decision_page(root: Path, payload: dict, decision: dict,
         "implementation_defect": "**实现缺陷待修复** —— 检查项未通过，收益结论暂不成立。",
         "structure_not_supported": "**当前结构未获支持** —— 检查项通过，但验证收益未达冻结阈值。",
     }[payload["outcome"]]
-    title = "pilot decision (T16)" if stage == "pilot" else "expansion decision (T17)"
+    titles = {
+        "pilot": "pilot decision (T16)",
+        "expand": "expansion decision (T17)",
+        "no_message": "no-message control (T18)",
+    }
     lines = [
-        "# H3-A v1 " + title,
+        "# H3-A v1 " + titles[stage],
         "",
         "判定：" + verdict,
         "",
@@ -407,6 +432,37 @@ def write_decision_page(root: Path, payload: dict, decision: dict,
         "| 规则 | 阈值 | 实测 | 通过 |",
         "|---|---|---|---|",
     ]
+    if stage in DIAGNOSTIC_STAGES:
+        lines = [
+            "# H3-A v1 no-message control (T18)",
+            "",
+            "判定：" + verdict,
+            "",
+            "这是诊断，不是晋级判定：它回答收益是否必须依赖邻居消息。",
+            "",
+            "## 四个 arm 的逐场景平均（先对 mask、再对训练种子平均）",
+            "",
+            "| 场景 | ENV | H2X | H3A（全图） | H3A（无消息） | 无消息相对全图 |",
+            "|---|---|---|---|---|---|",
+        ]
+        for scenario, arms in decision["scenario_means"].items():
+            lines.append(
+                "| {} | {:.4f} | {:.4f} | {:.4f} | {:.4f} | {:+.2%} |".format(
+                    scenario,
+                    arms["env"]["log_rmse"], arms["h2x"]["log_rmse"],
+                    arms["h3a"]["log_rmse"], arms["h3a_no_message"]["log_rmse"],
+                    decision["comparison"][scenario]["full_minus_no_message_relative"],
+                )
+            )
+        lines += [
+            "",
+            decision["note"],
+            "",
+        ]
+        (root / (STAGE_RESULT[stage][0] + ".md")).write_text(
+            "\n".join(lines) + "\n", encoding="utf-8"
+        )
+        return
     for control in CONTROLS:
         lines.append(
             "| {} 相对 {} 的平均验证 log_RMSE | <= {:+.0%} | {:+.2%} | {} |".format(
@@ -425,6 +481,20 @@ def write_decision_page(root: Path, payload: dict, decision: dict,
                 "是" if guard["regression_within_limit"] else "否",
             )
         )
+    thin = [
+        control for control, value in decision["relative_log_rmse"].items()
+        if value > decision["thresholds"]["primary_log_rmse_relative_max"] * 0.75
+    ]
+    if thin:
+        lines += [
+            "",
+            "> **余量提示**：" + "、".join(c.upper() for c in thin)
+            + " 的收益紧贴阈值 "
+            + format(decision["thresholds"]["primary_log_rmse_relative_max"], "+.0%")
+            + "（实测 "
+            + "、".join(format(decision["relative_log_rmse"][c], "+.2%") for c in thin)
+            + "）。判定按冻结规则成立，但没有余量，不宜表述为稳健优势。",
+        ]
     lines.append(
         "| {} 同时优于两对照的训练种子 | >= {} | {}/{} | {} |".format(
             decision["primary_scenario"],
@@ -523,13 +593,81 @@ def write_decision_page(root: Path, payload: dict, decision: dict,
         "- 训练种子只检验优化稳定性，不提供新的独立流域证据。",
         "- 本轮没有读取外层 test；外层 test 只能由 scripts/run_h3_frozen_eval.py",
         "  在扩展判定为 promote 且配置与产物清单完整时导出，而且只能当作开发基准。",
-        "- v05 数据已应用冻结的协变量质量规则；DOC 标签本身未改动。",
+        "- 数据：" + str(payload.get("dataset", "unknown"))
+        + "，已应用冻结的协变量质量规则；DOC 标签本身未改动。",
         "- 混合站点类型与年代不匹配的限制仍然适用。",
         "",
     ]
     (root / (STAGE_RESULT[stage][0] + ".md")).write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
     )
+
+
+def diagnostic_decision(per_run: pd.DataFrame, stage: str) -> dict:
+    """The T18 control is descriptive: it asks whether messages matter at all.
+
+    No promotion rule is applied here. The decision records the four arms side
+    by side and, for every scenario, how much of the full model's error the
+    no-message variant already accounts for.
+    """
+    per_seed = (
+        per_run.groupby(["arm", "seed", "scenario"])[list(METRICS)]
+        .mean()
+        .reset_index()
+    )
+    summary = per_seed.groupby(["arm", "scenario"])[list(METRICS)].mean()
+    log_rmse = summary["log_rmse"].unstack("arm")
+    mae = summary["mae"].unstack("arm")
+    arms = sorted(log_rmse.columns)
+    scenarios = sorted(log_rmse.index)
+    comparison = {}
+    for scenario in scenarios:
+        full = log_rmse.loc[scenario, CANDIDATE]
+        message_free = log_rmse.loc[scenario, "h3a_no_message"]
+        comparison[scenario] = {
+            "full_minus_no_message_relative": float(message_free / full - 1.0),
+            "no_message_relative_vs_env": float(
+                message_free / log_rmse.loc[scenario, "env"] - 1.0
+            ),
+            "no_message_relative_vs_h2x": float(
+                message_free / log_rmse.loc[scenario, "h2x"] - 1.0
+            ),
+        }
+    seeds = (
+        per_seed[per_seed.arm == "h3a_no_message"]
+        .pivot(index="seed", columns="scenario", values="log_rmse")
+    )
+    full_seeds = (
+        per_seed[per_seed.arm == CANDIDATE]
+        .pivot(index="seed", columns="scenario", values="log_rmse")
+    )
+    better_than_full = [
+        int(seed) for seed in seeds.index
+        if all(seeds.loc[seed, s] < full_seeds.loc[seed, s] for s in scenarios)
+    ]
+    return {
+        "stage": stage,
+        "passed": True,
+        "arms": arms,
+        "scenario_means": {
+            scenario: {
+                arm: {
+                    "log_rmse": float(log_rmse.loc[scenario, arm]),
+                    "mae": float(mae.loc[scenario, arm]),
+                }
+                for arm in arms
+            }
+            for scenario in scenarios
+        },
+        "comparison": comparison,
+        "seeds_where_no_message_beats_full_everywhere": better_than_full,
+        "note": (
+            "an empty graph leaves the relation parameters inactive, so this "
+            "tests whether neighbour messages are necessary; it is not a "
+            "capacity-matched local model, and a tie does not prove the local "
+            "residual alone is sufficient at equal capacity"
+        ),
+    }
 
 
 def main() -> int:
@@ -548,11 +686,19 @@ def main() -> int:
     records, rows = load_runs(root, masks_dir, protocol)
     if not rows:
         raise SystemExit("no complete runs under " + str(root))
+    # a diagnostic stage shares the root with the three-arm grids, so restrict
+    # to its own arms before checking completeness
+    stage_arms = {arm for arm, _, _ in task_grid(args.stage, protocol)}
+    records = [r for r in records if r["record"]["config"]["arm"] in stage_arms]
+    rows = [r for r in rows if r["arm"] in stage_arms]
+    if not rows:
+        raise SystemExit("no runs for stage " + args.stage + " under " + str(root))
+    prefix = table_prefix(args.stage)
     per_run = require_complete_grid(rows, protocol, args.stage)
-    per_seed = write_tables(root, records, per_run, protocol)
-    branch = pd.read_csv(root / "branch_behaviour.csv")
+    per_seed = write_tables(root, records, per_run, protocol, prefix)
+    branch = pd.read_csv(root / (prefix + "branch_behaviour.csv"))
     clipping = clipping_report(per_run, per_seed)
-    atomic_json(root / "clipping_report.json", clipping)
+    atomic_json(root / (prefix + "clipping_report.json"), clipping)
 
     if args.report:
         print(per_seed.to_string(index=False))
@@ -567,7 +713,10 @@ def main() -> int:
     )
     verification_ok = verification.get("verified_runs", 0) == len(per_run)
     entries, manifest_hash = artifact_manifest(records, root)
-    decision = decide(per_run, protocol, args.stage)
+    if args.stage in DIAGNOSTIC_STAGES:
+        decision = diagnostic_decision(per_run, args.stage)
+    else:
+        decision = decide(per_run, protocol, args.stage)
     checks = {
         "runs": len(per_run),
         "grid_complete": True,

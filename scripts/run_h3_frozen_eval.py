@@ -89,7 +89,41 @@ def collect(root: Path) -> dict:
     return records
 
 
-def unlock(root: Path, protocol: dict, claim: str) -> dict:
+def verify_set(records: dict, grid: list, masks_dir: Path, protocol: dict,
+               label: str) -> None:
+    """Every record in an exact run set must match the current identity.
+
+    A count is not evidence. The control set is 40 runs, so it is checked
+    against its OWN grid and every record is re-derived from the current
+    sources, protocol, dataset content hash and mask content hash.
+    """
+    for key in grid:
+        record = records[key]
+        expected, expected_hash = expected_config_for(record, protocol, masks_dir)
+        try:
+            audit_run(
+                Path(record["_manifest"]).parent.parent,
+                Path(record["_manifest"]),
+                torch.load(record["config"]["dataset"]["dataset_path"],
+                           weights_only=False),
+                load_mask(masks_dir / (record["config"]["mask"] + ".npz")),
+                expected_hash=expected_hash,
+                expected_config=expected,
+                strict_identity=True,
+            )
+        except FileNotFoundError as exc:
+            raise SystemExit(
+                "refusing to export the outer test: the input snapshot for "
+                + label + " run " + str(key) + " is missing (" + str(exc) + ")"
+            ) from exc
+        except ValueError as exc:
+            raise SystemExit(
+                "refusing to export the outer test: " + label + " run "
+                + str(key) + " does not match its recorded identity: " + str(exc)
+            ) from exc
+
+
+def unlock(root: Path, protocol: dict, masks_dir: Path, claim: str) -> dict:
     """Every condition that must hold before the outer test may be read."""
     decision = require_decision(root, "expand", "export the outer test")
     if not decision.get("complete"):
@@ -100,14 +134,16 @@ def unlock(root: Path, protocol: dict, claim: str) -> dict:
     records = collect(root)
     grid = [(arm, int(seed), mask)
             for arm, seed, mask in task_grid("expand", protocol)]
+    control_grid = [(arm, int(seed), mask)
+                    for arm, seed, mask in task_grid("no_message", protocol)]
     missing = sorted(set(grid) - set(records))
     if missing:
         raise SystemExit(
             "refusing to export the outer test: " + str(len(missing))
-            + " expansion configurations are missing, e.g. " + str(missing[:5])
+            + " of " + str(len(grid)) + " expansion configurations are missing, "
+            "e.g. " + str(missing[:5])
         )
-    allowed = set(grid) | {(NO_MESSAGE_ARM, seed, mask) for _, seed, mask in grid}
-    extra = sorted(set(records) - allowed)
+    extra = sorted(set(records) - set(grid) - set(control_grid))
     if extra:
         raise SystemExit(
             "refusing to export the outer test: unexpected runs present "
@@ -124,18 +160,41 @@ def unlock(root: Path, protocol: dict, claim: str) -> dict:
             + str(decision.get("artifact_manifest_sha256"))[:12] + " vs "
             + digest[:12] + ")"
         )
+
+    control = None
     if claim == "network":
-        have = [key for key in records if key[0] == NO_MESSAGE_ARM]
-        if len(have) != len(grid):
+        control = require_decision(root, "no_message",
+                                   "claim a river-network contribution")
+        if not control.get("complete"):
             raise SystemExit(
                 "refusing a network-contribution claim: the T18 no-message "
-                "control is incomplete (" + str(len(have)) + "/"
-                + str(len(grid)) + ")"
+                "decision is not marked complete"
             )
+        missing_control = sorted(set(control_grid) - set(records))
+        if missing_control:
+            raise SystemExit(
+                "refusing a network-contribution claim: " + str(len(missing_control))
+                + " of " + str(len(control_grid)) + " no-message configurations "
+                "are missing, e.g. " + str(missing_control[:5])
+            )
+        control_entries = artifact_entries(
+            [(records[key], Path(records[key]["_manifest"])) for key in control_grid]
+        )
+        control_digest = artifact_manifest_hash(control_entries)
+        if control_digest != control.get("artifact_manifest_sha256"):
+            raise SystemExit(
+                "refusing a network-contribution claim: the no-message run set "
+                "no longer matches the T18 decision (manifest "
+                + str(control.get("artifact_manifest_sha256"))[:12] + " vs "
+                + control_digest[:12] + ")"
+            )
+        verify_set(records, control_grid, masks_dir, protocol, "no-message")
     return {
         "decision": decision,
+        "control_decision": control,
         "records": records,
         "grid": grid,
+        "control_grid": control_grid if claim == "network" else [],
         "manifest_sha256": digest,
     }
 
@@ -188,10 +247,13 @@ def main(argv=None) -> int:
     masks_dir = (
         Path(args.masks_dir) if args.masks_dir else ROOT / protocol["masks"]["dir"]
     )
-    unlocked = unlock(root, protocol, args.claim)
+    unlocked = unlock(root, protocol, masks_dir, args.claim)
     records = unlocked["records"]
+    # a network claim exports the control alongside the three arms, otherwise
+    # the comparison the claim rests on would not be in the output at all
+    export_grid = list(unlocked["grid"]) + list(unlocked["control_grid"])
     selected = [
-        key for key in unlocked["grid"]
+        key for key in export_grid
         if (not args.arm or key[0] in args.arm)
         and (not args.seed or key[1] in args.seed)
         and (not args.mask or key[2] in args.mask)
@@ -200,7 +262,9 @@ def main(argv=None) -> int:
         "frozen evaluation unlocked: claim=" + args.claim
         + " expansion decision outcome=" + unlocked["decision"]["outcome"]
         + " manifest=" + unlocked["manifest_sha256"][:12]
-        + " runs=" + str(len(selected)),
+        + " runs=" + str(len(selected))
+        + " (three-arm " + str(len(unlocked["grid"]))
+        + ", no-message control " + str(len(unlocked["control_grid"])) + ")",
         flush=True,
     )
     if args.dry_run:

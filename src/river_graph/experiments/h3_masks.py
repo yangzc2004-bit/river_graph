@@ -78,6 +78,156 @@ VISIBLE_ROLE_CHOICES = ("context", "train", "val_context")
 NEVER_VISIBLE_ROLES = ("val", "test")
 
 
+SOURCE_GRID_FILE = "source_grid.json"
+SOURCE_GRID_VERSION = 1
+
+
+def station_order_digest(sites: list[str]) -> str:
+    """Digest of the station order, which is what a flat index really means."""
+    import hashlib
+
+    return hashlib.sha256("\n".join(str(s) for s in sites).encode("utf-8")).hexdigest()
+
+
+def grid_of(y_mask: np.ndarray) -> dict:
+    n, t = y_mask.shape
+    return {
+        "n_stations": int(n),
+        "n_months": int(t),
+        "observed_cells": int(y_mask.sum()),
+    }
+
+
+def source_grid_path(source_dir: Path) -> Path:
+    return Path(source_dir) / SOURCE_GRID_FILE
+
+
+def read_source_grid(source_dir: Path) -> dict:
+    """The grid the frozen masks were encoded on.
+
+    A flat index means station_index * n_months + month_index. With the same
+    integers and a different month count the same number points at a different
+    station and month, so importing a frozen mask without checking this is not
+    a migration, it is silent corruption: combining a 653-month dataset with
+    652-month indices produced "cell 137646 in both val and test".
+    """
+    path = source_grid_path(source_dir)
+    if not path.is_file():
+        raise ValueError(
+            "missing " + str(path) + ": the frozen masks must declare the grid "
+            "they were built on before they can be reused. Register it with "
+            "scripts/build_h3_masks.py --register-source-grid."
+        )
+    record = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("n_stations", "n_months", "observed_cells", "station_order_sha256"):
+        if key not in record:
+            raise ValueError("source grid record is missing " + key)
+    return record
+
+
+def write_source_grid(
+    source_dir: Path, sites: list[str], grid: dict | None = None,
+    y_mask: np.ndarray | None = None,
+) -> dict:
+    """Record the grid the frozen masks were encoded on.
+
+    The grid can be taken from the dataset that produced them, or declared
+    explicitly from a manifest when that dataset is no longer available. The
+    station order always comes from the current station list, which must have
+    the same length.
+    """
+    if grid is None:
+        if y_mask is None:
+            raise ValueError("either grid or y_mask is required")
+        grid = grid_of(y_mask)
+    if int(grid["n_stations"]) != len(sites):
+        raise ValueError(
+            "declared grid has " + str(grid["n_stations"])
+            + " stations but the station list has " + str(len(sites))
+        )
+    record = {
+        "version": SOURCE_GRID_VERSION,
+        "n_stations": int(grid["n_stations"]),
+        "n_months": int(grid["n_months"]),
+        "observed_cells": int(grid["observed_cells"]),
+        "station_order_sha256": station_order_digest(sites),
+        "note": (
+            "grid the frozen masks in this directory were encoded on; a mask "
+            "built on a different grid must be migrated by station/month, "
+            "never re-indexed by copying integers"
+        ),
+    }
+    path = source_grid_path(source_dir)
+    temp = path.with_name(path.name + ".tmp")
+    temp.write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
+    temp.replace(path)
+    return record
+
+
+def migrate_cells(
+    cells: np.ndarray, source: dict, y_mask: np.ndarray, role: str, audit: dict
+) -> np.ndarray:
+    """Re-encode flat indices from the source grid onto this grid.
+
+    Indices are decoded to (station_row, month_col) and re-encoded, which
+    preserves the station/month assignment exactly. Cells that are no longer
+    observed on the new grid are dropped and counted, because a cell cannot be
+    assigned a role when its label has disappeared.
+    """
+    cells = np.asarray(cells, dtype=np.int64)
+    if cells.size == 0:
+        return cells
+    old_t = int(source["n_months"])
+    new_t = int(y_mask.shape[1])
+    rows = cells // old_t
+    cols = cells % old_t
+    if rows.max() >= y_mask.shape[0]:
+        raise ValueError(
+            "source mask " + role + " refers to station row " + str(int(rows.max()))
+            + " but this dataset has " + str(y_mask.shape[0]) + " stations"
+        )
+    if cols.max() >= new_t:
+        raise ValueError(
+            "source mask " + role + " refers to month column " + str(int(cols.max()))
+            + " but this dataset has " + str(new_t) + " months"
+        )
+    observed = y_mask[rows, cols]
+    migrated = np.sort((rows[observed] * new_t + cols[observed]).astype(np.int64))
+    audit[role] = {
+        "before": int(cells.size),
+        "after": int(migrated.size),
+        "dropped_unobserved": int(cells.size - migrated.size),
+    }
+    return migrated
+
+
+def assert_source_grid(source: dict, y_mask: np.ndarray, sites: list[str]) -> dict:
+    """Compare the grid and station order the frozen masks assume with this one."""
+    actual = grid_of(y_mask)
+    problems = []
+    digest = station_order_digest(sites)
+    if source["station_order_sha256"] != digest:
+        problems.append(
+            "station order differs (source "
+            + str(source["station_order_sha256"])[:12] + ", this dataset "
+            + digest[:12] + "); flat indices cannot be migrated"
+        )
+    if source["n_stations"] != actual["n_stations"]:
+        problems.append(
+            "station count differs: source " + str(source["n_stations"])
+            + ", this dataset " + str(actual["n_stations"])
+        )
+    if problems:
+        raise ValueError("; ".join(problems))
+    return {
+        "source": {k: source[k] for k in
+                   ("n_stations", "n_months", "observed_cells")},
+        "target": actual,
+        "identical_grid": bool(source["n_months"] == actual["n_months"]),
+        "requires_migration": bool(source["n_months"] != actual["n_months"]),
+    }
+
+
 def load_mask(path: Path) -> dict[str, np.ndarray]:
     with np.load(path, allow_pickle=False) as z:
         return {k: z[k] for k in z.files}
@@ -250,8 +400,29 @@ def build_masks(
     masks: dict[str, dict[str, np.ndarray]] = {}
     entries: dict[str, dict] = {}
 
+    # The frozen masks are encoded on whatever grid they were built on. Check
+    # it before importing anything: identical integers on a different grid mean
+    # different stations and months.
+    source_grid = read_source_grid(source_dir)
+    grid_check = assert_source_grid(source_grid, y_mask, sites)
+    migration_audit: dict[str, dict] = {}
+    print(
+        "source grid " + json.dumps(grid_check["source"])
+        + " target " + json.dumps(grid_check["target"])
+        + ("; migrating by station/month" if grid_check["requires_migration"]
+           else "; grids identical")
+    )
+
     for name, source in MASK_SOURCES.items():
         original = load_mask(source_dir / f"{source}.npz")
+        if grid_check["requires_migration"]:
+            original = dict(original)
+            for role in ROLES:
+                if role in original:
+                    original[role] = migrate_cells(
+                        original[role], source_grid, y_mask,
+                        source + "." + role, migration_audit.setdefault(source, {}),
+                    )
         if name in E1_MASKS:
             split = {
                 "train": np.sort(original["train"]).astype(np.int64),
@@ -344,11 +515,33 @@ def build_masks(
     if "context" in masks["e2a_strict"]:
         raise ValueError("the strict temporal control must have no future context")
 
-    # Outer test positions must be identical to the frozen masks.
+    # Outer test positions must be identical to the frozen masks ON THE SOURCE
+    # GRID. Comparing raw integers would be meaningless once the month count
+    # changes, so the comparison is in (station, month) coordinates.
+    old_t = int(source_grid["n_months"])
+    new_t = int(t)
+
+    def pairs(cells: np.ndarray, width: int) -> set:
+        cells = np.asarray(cells, dtype=np.int64)
+        return set(zip((cells // width).tolist(), (cells % width).tolist()))
+
     for name, source in MASK_SOURCES.items():
         original = load_mask(source_dir / f"{source}.npz")
-        if not np.array_equal(np.sort(masks[name]["test"]), np.sort(original["test"])):
-            raise ValueError(f"{name}: outer test changed relative to {source}")
+        frozen_test = pairs(original["test"], old_t)
+        built_test = pairs(masks[name]["test"], new_t)
+        dropped = frozen_test - built_test
+        added = built_test - frozen_test
+        if added:
+            raise ValueError(
+                f"{name}: migration invented " + str(len(added))
+                + " test cells that are not in " + source
+            )
+        # frozen cells that are no longer observed legitimately disappear; they
+        # are reported per role in migration_audit rather than silently ignored
+        entries[name]["outer_test_cells_dropped_unobserved"] = len(dropped)
+        entries[name]["outer_test_preserved_fraction"] = (
+            1.0 - len(dropped) / len(frozen_test) if frozen_test else 1.0
+        )
 
     manifest = {
         "protocol_version": "h3a_v1",
@@ -364,6 +557,8 @@ def build_masks(
         "dev_scenarios": list(DEV_SCENARIOS),
         "key_scenarios": list(KEY_SCENARIOS),
         "diagnostic_scenarios": list(DIAGNOSTIC_SCENARIOS),
+        "source_grid_check": grid_check,
+        "migration_audit": migration_audit,
         "masks": entries,
         "invariants": [
             "roles never overlap inside a mask",

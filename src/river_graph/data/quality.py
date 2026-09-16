@@ -25,6 +25,9 @@ import pandas as pd
 
 RULE_VERSION = "covariate_quality_v1"
 
+# Repository root, used by callers that record where a rule set was applied.
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 # Units are compared after strip().lower().  None means "any unit is accepted"
 # (used only where the reader already normalises the unit, e.g. NWIS cfs).
 RULES: dict[str, dict] = {
@@ -141,10 +144,15 @@ def apply_rules(frame: pd.DataFrame, variable: str) -> pd.DataFrame:
     if allowed is not None:
         mark(unit == "", "missing_unit")
         mark(~unit.isin(list(allowed)), "unsupported_unit")
+    # A signed variable is bounded on its MAGNITUDE: negative discharge is a
+    # real reversing flow in tidal and backwater reaches, but -4e6 cfs is not
+    # a measurement either. Without this the rule accepted any negative value
+    # while the documentation claimed an absolute bound.
+    checked = value.abs() if rule.get("signed") else value
     if rule.get("min") is not None:
-        mark(value < rule["min"], "below_physical_min")
+        mark(checked < rule["min"], "below_physical_min")
     if rule.get("max") is not None:
-        mark(value > rule["max"], "above_physical_max")
+        mark(checked > rule["max"], "above_physical_max")
 
     out["variable"] = variable
     out["qc_reason"] = reason

@@ -290,7 +290,8 @@ def main() -> int:
                     help="defaults to the protocol's result_root")
     ap.add_argument("--masks-dir", default=None)
     ap.add_argument("--protocol", default="configs/h3a_v1.json")
-    ap.add_argument("--stage", default=None, choices=("smoke", "pilot", "expand"))
+    ap.add_argument("--stage", default=None,
+                    choices=("smoke", "pilot", "expand", "no_message"))
     ap.add_argument("--arm", action="append", default=None)
     ap.add_argument("--seed", action="append", type=int, default=None)
     ap.add_argument("--mask", action="append", default=None)

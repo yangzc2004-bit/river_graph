@@ -40,21 +40,28 @@ from river_graph.experiments.h3_runs import (
 from river_graph.experiments.h3_training import load_protocol
 from river_graph.experiments.provenance import sha256_file
 
-DEFAULT_DATASET = "data/processed/mississippi_graph_v05.pt"
+DEFAULT_DATASET = "data/processed/mississippi_graph_v07.pt"
 DEFAULT_PROTOCOL = "configs/h3a_v1.json"
 STAGE_ROOTS = {
-    "smoke": "experiments/h3a_smoke_v1r2",
-    "pilot": "experiments/h3a_v1r2",
-    "expand": "experiments/h3a_v1r2",
+    "smoke": "experiments/h3a_smoke_v1r3",
+    "pilot": "experiments/h3a_v1r3",
+    "expand": "experiments/h3a_v1r3",
+    # the T18 control shares the root: it is the same experiment family and its
+    # records are distinguished by the arm, not by a separate directory
+    "no_message": "experiments/h3a_v1r3",
 }
 
 
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--stage", choices=("smoke", "pilot", "expand"), default="pilot")
+    ap.add_argument(
+        "--stage",
+        choices=("smoke", "pilot", "expand", "no_message"),
+        default="pilot",
+    )
     ap.add_argument("--root", default=None)
     ap.add_argument("--dataset", default=DEFAULT_DATASET)
-    ap.add_argument("--masks-dir", default="experiments/h3a_v1r2/masks")
+    ap.add_argument("--masks-dir", default="experiments/h3a_v1r3/masks")
     ap.add_argument("--protocol", default=DEFAULT_PROTOCOL)
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--cpu-threads", type=int, default=1)
@@ -175,8 +182,8 @@ def main(argv=None) -> int:
     gates = []
     if args.stage == "expand":
         gates.append(("pilot", "run the T17 expansion grid"))
-        if any(arm == "h3a_no_message" for arm, _, _ in grid):
-            gates.append(("expand", "run the T18 no-message control"))
+    if args.stage == "no_message":
+        gates.append(("expand", "run the T18 no-message control"))
     for kind, action in gates:
         try:
             require_decision(root, kind, action)

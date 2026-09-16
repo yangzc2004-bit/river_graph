@@ -19,21 +19,27 @@ from river_graph.experiments.h3_masks import (
     INTERNAL_VAL_SEED,
     KEY_SCENARIOS,
     MASK_SOURCES,
+    assert_source_grid,
     assert_visible_roles,
     build_masks,
     component_report,
     e3_internal_split,
     e3_internal_stations,
     load_mask,
+    migrate_cells,
+    read_source_grid,
     split_val_context,
+    station_order_digest,
     write_masks,
+    write_source_grid,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-H3_MASKS = ROOT / "experiments/h3a_v1r2/masks"
-H3_MANIFEST = ROOT / "experiments/h3a_v1r2/split_manifest.json"
-FROZEN_MASKS = ROOT / "experiments/h3a_v1/masks"
+H3_MASKS = ROOT / "experiments/h3a_v1r3/masks"
+H3_MANIFEST = ROOT / "experiments/h3a_v1r3/split_manifest.json"
 SOURCE_MASKS = ROOT / "experiments/masks"
+FROZEN_MASKS = SOURCE_MASKS
+SOURCE_GRID = SOURCE_MASKS / "source_grid.json"
 
 
 def synthetic_world(n: int = 30, t: int = 12, seed: int = 0):
@@ -108,12 +114,27 @@ pytestmark_data = pytest.mark.skipif(
 )
 
 
+def _pairs(cells, width: int) -> set:
+    cells = np.asarray(cells, dtype=np.int64)
+    return set(zip((cells // width).tolist(), (cells % width).tolist()))
+
+
 @pytestmark_data
-def test_written_masks_match_the_frozen_outer_test():
+def test_written_masks_match_the_frozen_outer_test_in_station_month_coordinates():
+    """Raw integers are grid-dependent; (station, month) pairs are not."""
+    manifest = json.loads(H3_MANIFEST.read_text(encoding="utf-8"))
+    old_t = manifest["source_grid_check"]["source"]["n_months"]
+    new_t = manifest["source_grid_check"]["target"]["n_months"]
     for name, source in MASK_SOURCES.items():
         built = load_mask(H3_MASKS / f"{name}.npz")
         frozen = load_mask(SOURCE_MASKS / f"{source}.npz")
-        np.testing.assert_array_equal(built["test"], np.sort(frozen["test"]))
+        frozen_pairs = _pairs(frozen["test"], old_t)
+        built_pairs = _pairs(built["test"], new_t)
+        assert not (built_pairs - frozen_pairs), name
+        dropped = frozen_pairs - built_pairs
+        assert len(dropped) == manifest["masks"][name][
+            "outer_test_cells_dropped_unobserved"
+        ]
 
 
 @pytestmark_data
@@ -149,9 +170,15 @@ def test_e2a_strict_has_no_future_context_and_never_opens_val_context():
     assert "val_context" in split          # recorded, so no cell vanishes
     assert "val_context" not in split["visible_roles"]
     assert set(split["visible_roles"].tolist()) == {"train"}
+    manifest = json.loads(H3_MANIFEST.read_text(encoding="utf-8"))
+    old_t = manifest["source_grid_check"]["source"]["n_months"]
+    new_t = manifest["source_grid_check"]["target"]["n_months"]
     frozen = load_mask(SOURCE_MASKS / "e2a_strict.npz")
-    np.testing.assert_array_equal(split["test"], np.sort(frozen["test"]))
-    assert len(split["test"]) == 3184      # the original strict target pool
+    assert len(frozen["test"]) == 3184     # the original strict target pool
+    # migrated to this grid; the station/month assignment is unchanged, and
+    # with a complete cache nothing was dropped
+    assert _pairs(frozen["test"], old_t) == _pairs(split["test"], new_t)
+    assert len(split["test"]) == len(frozen["test"]) == 3184
 
 
 @pytestmark_data
@@ -168,7 +195,9 @@ def test_every_written_mask_declares_valid_visible_roles():
 def test_e3_internal_validation_stations_carry_no_train_cells():
     for name in ("e3_internal_seed42", "e3_internal_seed43", "e3_internal_seed44"):
         split = load_mask(H3_MASKS / f"{name}.npz")
-        t = 652
+        t = json.loads(H3_MANIFEST.read_text(encoding="utf-8"))[
+            "source_grid_check"
+        ]["target"]["n_months"]
         val_rows = set((split["val"] // t).tolist())
         assert val_rows
         assert not (set((split["train"] // t).tolist()) & val_rows)
@@ -240,6 +269,79 @@ def test_rebuilding_the_masks_is_reproducible():
         assert manifest["masks"][name]["roles"] == json.loads(
             H3_MANIFEST.read_text(encoding="utf-8")
         )["masks"][name]["roles"]
+
+
+def test_the_frozen_masks_declare_their_source_grid():
+    record = json.loads(SOURCE_GRID.read_text(encoding="utf-8"))
+    assert record["n_stations"] == 571
+    assert record["n_months"] == 652
+    assert record["observed_cells"] == 33048
+    assert record["station_order_sha256"]
+
+
+def test_a_missing_source_grid_record_is_refused(tmp_path):
+    with pytest.raises(ValueError, match="source_grid.json"):
+        read_source_grid(tmp_path)
+
+
+def test_a_different_station_order_is_refused_before_import(tmp_path):
+    y_mask = np.zeros((4, 6), dtype=bool)
+    source = write_source_grid(tmp_path, ["a", "b", "c", "d"], y_mask=y_mask)
+    assert source["n_stations"] == 4
+    with pytest.raises(ValueError, match="station order differs"):
+        assert_source_grid(source, y_mask, ["d", "c", "b", "a"])
+
+
+def test_a_station_count_change_is_refused_before_import(tmp_path):
+    y_mask = np.zeros((4, 6), dtype=bool)
+    source = write_source_grid(tmp_path, ["a", "b", "c", "d"], y_mask=y_mask)
+    source["station_order_sha256"] = station_order_digest(["a", "b", "c"])
+    with pytest.raises(ValueError, match="station count differs"):
+        assert_source_grid(source, np.zeros((3, 6), dtype=bool), ["a", "b", "c"])
+
+
+def test_migration_preserves_station_and_month_pairs():
+    """A flat index only means something together with its grid."""
+    y_mask = np.ones((3, 13), dtype=bool)
+    source = {"n_stations": 3, "n_months": 12, "observed_cells": 36}
+    cells = np.array([2 * 12 + 11, 1], dtype=np.int64)
+    audit: dict = {}
+    moved = migrate_cells(cells, source, y_mask, "train", audit)
+    assert sorted((int(c) // 13, int(c) % 13) for c in moved) == [(0, 1), (2, 11)]
+    assert audit["train"] == {"before": 2, "after": 2, "dropped_unobserved": 0}
+
+
+def test_migration_drops_cells_that_are_no_longer_observed():
+    y_mask = np.ones((3, 13), dtype=bool)
+    y_mask[2, 11] = False            # this observation disappeared
+    source = {"n_stations": 3, "n_months": 12, "observed_cells": 36}
+    cells = np.array([2 * 12 + 11, 1], dtype=np.int64)
+    audit: dict = {}
+    moved = migrate_cells(cells, source, y_mask, "val", audit)
+    assert moved.tolist() == [1]
+    assert audit["val"]["dropped_unobserved"] == 1
+
+
+def test_migration_refuses_a_station_row_outside_the_dataset():
+    y_mask = np.ones((2, 8), dtype=bool)
+    source = {"n_stations": 3, "n_months": 12, "observed_cells": 36}
+    with pytest.raises(ValueError, match="station row 2"):
+        migrate_cells(np.array([2 * 12 + 1]), source, y_mask, "train", {})
+
+
+@pytestmark_data
+def test_the_written_manifest_records_the_grid_check_and_the_migration():
+    manifest = json.loads(H3_MANIFEST.read_text(encoding="utf-8"))
+    check = manifest["source_grid_check"]
+    assert check["source"]["n_months"] == 652
+    assert check["target"]["n_months"] == 653
+    assert check["requires_migration"] is True
+    assert manifest["migration_audit"]
+    for source, roles in manifest["migration_audit"].items():
+        for role, counts in roles.items():
+            assert counts["after"] <= counts["before"], (source, role)
+    for name in KEY_SCENARIOS:
+        assert "outer_test_cells_dropped_unobserved" in manifest["masks"][name]
 
 
 def test_write_masks_records_hashes_and_leaves_no_temp_files(tmp_path):
