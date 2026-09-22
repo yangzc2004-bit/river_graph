@@ -40,6 +40,30 @@ MIN_QUERY_DEFAULT = 2
 MIN_COMPONENT_STATIONS = 7
 MIN_K5_MONTHS = 3
 
+# Frozen H2X base config (GCNDocModel / TransportGCNImputer defaults + run_gnn H2X).
+BASE_MODEL_CONFIG = {
+    "name": "H2X",
+    "architecture": "transport_enc",
+    "variant": "river",
+    "edge_set": "river",
+    "edge_direction": "both",
+    "hidden": 64,
+    "layers": 2,
+    "dropout": 0.1,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "edge_dropout": 0.0,
+    "share_weights": False,
+    "max_epochs": 200,
+    "patience": 20,
+    "env_groups": None,
+    "env_encoder": True,
+    "env_emb": 32,
+    "loss": "log1p_mse",
+    "train_split_seed": 42,
+    "model_seeds": list(MODEL_SEEDS),
+}
+
 
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
@@ -177,7 +201,7 @@ def validate_tasks(tasks: list[dict], y_mask: np.ndarray, k_list, min_query: int
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="data/processed/mississippi_graph_graphfix_st357.pt")
-    ap.add_argument("--nodes", default="data/processed/graph_nodes.csv")
+    ap.add_argument("--nodes", default="data/processed/graph_nodes_graphfix_st357.csv")
     ap.add_argument("--out-dir", default="experiments/kshot_protocol_v2")
     args = ap.parse_args()
 
@@ -217,6 +241,30 @@ def main() -> None:
                 comps.append((len(comp_rows), comp_rows, feas))
             comps.sort(key=lambda x: x[0], reverse=True)
             for rank, (n_st, comp_rows, feas) in enumerate(comps):
+                # structural path check inside the component (undirected)
+                comp_g = nx.Graph()
+                comp_g.add_nodes_from(comp_rows)
+                for a, b in edge_index.T.tolist():
+                    a, b = int(a), int(b)
+                    if a in set(comp_rows) and b in set(comp_rows):
+                        comp_g.add_edge(a, b)
+                if n_st <= 1:
+                    pairs_connected = True
+                    mean_comp_hop = 0.0
+                else:
+                    try:
+                        lengths = dict(nx.all_pairs_shortest_path_length(comp_g))
+                        hops = [
+                            lengths[a][b]
+                            for a in comp_rows
+                            for b in comp_rows
+                            if a < b and b in lengths.get(a, {})
+                        ]
+                        pairs_connected = len(hops) == n_st * (n_st - 1) // 2
+                        mean_comp_hop = float(np.mean(hops)) if hops else float("nan")
+                    except Exception:
+                        pairs_connected = False
+                        mean_comp_hop = float("nan")
                 audit_rows.append(
                     {
                         "scale": label,
@@ -230,7 +278,8 @@ def main() -> None:
                         "months_k3": feas[3],
                         "months_k5": feas[5],
                         "months_ge5_support": feas["n_months_ge5_support"],
-                        "support_query_paths_possible": True,  # undirected hops exist or None later
+                        "support_query_paths_possible": bool(pairs_connected),
+                        "mean_comp_hop": mean_comp_hop,
                     }
                 )
             # primary selection: HUC6 largest component
@@ -315,6 +364,35 @@ def main() -> None:
     rej_md.append("- **K = (0, 1, 3, 5)** only; K=10 dropped (no candidate component supports it).")
     rej_md.append("- **Base model = H2X** (`transport_enc`); H2 is ablation only.")
     rej_md.append("")
+    rej_md.append("## Component-choice note (HUC6 103001)")
+    rej_md.append(
+        "- `103001` largest component = 10 stations / 17 K=5 months; a secondary 7-station "
+        "component offers 35 K=5 months. Main protocol keeps the **largest** component "
+        "(more query sites per month, fewer task-months). Documented, not a blocker."
+    )
+    rej_md.append("")
+    rej_md.append("## All HUC6 components ranked 0 — eligibility table")
+    rej_md.append("")
+    rej_md.append("| HUC6 | n_comp | n_st | K=5 months | eligible | note |")
+    rej_md.append("|------|-------:|-----:|-----------:|----------|------|")
+    huc6_top = audit[(audit.scale == "huc6") & (audit.component_rank == 0)].sort_values("code")
+    for row in huc6_top.itertuples(index=False):
+        ok = row.n_stations_component >= MIN_COMPONENT_STATIONS and row.months_ge5_support >= MIN_K5_MONTHS
+        code = row.code
+        note = []
+        if code in PRIMARY_HUC6:
+            note.append("PRIMARY")
+        elif code in BACKUP_HUC6:
+            note.append("backup")
+        if not ok:
+            note.append("too few stations/months")
+        if code == "103001":
+            note.append("largest-comp preferred over 7st/35mo comp")
+        rej_md.append(
+            f"| `{code}` | {int(row.n_components)} | {int(row.n_stations_component)} | "
+            f"{int(row.months_ge5_support)} | {'yes' if ok else 'no'} | {', '.join(note) or '—'} |"
+        )
+    rej_md.append("")
     rej_md.append("## HUC8 not used as primary")
     for code in SECONDARY_HUC8:
         sub = audit[(audit.scale == "huc8") & (audit.code == code)]
@@ -371,11 +449,18 @@ def main() -> None:
         "model_seeds": list(MODEL_SEEDS),
         "base_model": {
             "primary": "H2X",
-            "architecture": "transport_enc",
-            "variant": "river",
-            "edge_set": "river",
-            "edge_direction": "both",
-            "ablation": "H2 architecture=transport",
+            "config": BASE_MODEL_CONFIG,
+            "ablation": {
+                "name": "H2",
+                "architecture": "transport",
+                "hidden": 64,
+                "layers": 2,
+                "dropout": 0.1,
+                "lr": 0.001,
+                "max_epochs": 200,
+                "patience": 20,
+                "env_encoder": False,
+            },
         },
         "success_gate": {
             "primary_endpoint": "K=5",
@@ -403,16 +488,19 @@ def main() -> None:
     )
 
     # ---------- manifest ----------
+    script_path = Path(__file__).resolve()
     manifest = {
         "created_at": protocol["created_at"],
         "code_commit": commit,
         "workspace_dirty": dirty,
+        "generator_script": str(script_path),
+        "generator_script_sha256": sha256_file(script_path),
         "dataset_sha256": protocol["dataset_sha256"],
         "nodes_sha256": protocol["nodes_sha256"],
         "task_hashes": all_task_hash,
         "artifact_hashes": {
-            p.name: sha256_file(p)
-            for p in out.rglob("*")
+            str(p.relative_to(out)): sha256_file(p)
+            for p in sorted(out.rglob("*"))
             if p.is_file() and p.name != "manifest.json"
         },
     }
