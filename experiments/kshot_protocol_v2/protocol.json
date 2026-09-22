@@ -1,0 +1,67 @@
+{
+  "version": "kshot_protocol_v2",
+  "created_at": "2026-09-22T20:53:40",
+  "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "nodes": "data/processed/graph_nodes.csv",
+  "nodes_sha256": "4b00a74e9f837c21a5b37780eb34d0f7980724bef1ec06a6b6e1b0e45d79f500",
+  "regions_primary": [
+    "103001",
+    "510020",
+    "102701",
+    "101302",
+    "101900"
+  ],
+  "region_rule": "hide all HUC6 labels; evaluate largest connected component inside HUC6",
+  "k_list": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "min_query": 2,
+  "task_seeds": [
+    42,
+    43,
+    44
+  ],
+  "model_seeds": [
+    42,
+    43,
+    44
+  ],
+  "base_model": {
+    "primary": "H2X",
+    "architecture": "transport_enc",
+    "variant": "river",
+    "edge_set": "river",
+    "edge_direction": "both",
+    "ablation": "H2 architecture=transport"
+  },
+  "success_gate": {
+    "primary_endpoint": "K=5",
+    "metric": "paired ΔMAE vs each baseline on fixed query cells",
+    "bootstrap": "cluster by task-month, 95% CI upper bound of ΔMAE < 0",
+    "effect_size": "MAE reduction vs best simple baseline >= 10%",
+    "baselines_to_beat": [
+      "K=0_base",
+      "local_mean",
+      "mean_bias",
+      "IDW",
+      "nearest"
+    ],
+    "shuffle": "gnn_true must beat gnn_shuf_values and gnn_shuf_sites significantly",
+    "regions": "at least 4 of 5 primary basins pass; no basin may worsen >5% and still claim overall success",
+    "curve": "MAE(K=5) < MAE(K=0) and MAE(K=5) <= MAE(K=1)",
+    "fallback_story": "if only 1-2 basins pass, report river-type transferability instead of universal claim"
+  },
+  "judge_requires_support_encoder": {
+    "must_exceed_simple_baselines": true,
+    "cross_fitted_base": true,
+    "analytic_blend_role": "baseline only, not model claim"
+  },
+  "huc8_role": "secondary case study only",
+  "k10_role": "appendix / coarse-scale exploratory only",
+  "code_commit": "175b756338357c7224b38834c84683f8b1a824cf",
+  "workspace_dirty": true
+}
