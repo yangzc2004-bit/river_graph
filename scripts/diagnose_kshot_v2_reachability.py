@@ -150,37 +150,72 @@ def reachability_rows(dataset, regions, tasks_meta) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def tributary_rows(dataset, regions, tasks_meta, edge_features: Path | None) -> pd.DataFrame:
-    t = dataset["y"].shape[1]
-    hop, _ = hop_maps(dataset)
+def load_node_stream_orders(
+    dataset, reach_attributes: Path | None, edge_features: Path | None
+) -> tuple[dict[int, float], str]:
+    """Node-level stream order.
+
+    ``reach_attributes.csv`` is authoritative: one ``streamorde`` per station,
+    covering every dataset node. ``edge_features.csv`` is only a fallback and
+    leaves many nodes unmapped — if it has to be used, the summary marks the
+    unknown rate instead of forcing a classification.
+    """
     sites = [str(s) for s in dataset["site_no"]]
     site_to_row = {s: i for i, s in enumerate(sites)}
-    orders = {}
-    if edge_features and edge_features.exists():
+
+    def row_of(site: str):
+        s = str(site)
+        for key in (s, s.zfill(8), s.lstrip("0")):
+            if key in site_to_row:
+                return site_to_row[key]
+        return None
+
+    orders: dict[int, float] = {}
+    source = "missing"
+    if reach_attributes and reach_attributes.exists():
+        ra = pd.read_csv(reach_attributes, dtype={"site_no": str})
+        col = next(
+            (c for c in ("streamorde", "stream_order") if c in ra.columns), None
+        )
+        if col and "site_no" in ra.columns:
+            for site, o in zip(ra.site_no.astype(str), ra[col]):
+                r = row_of(site)
+                if r is None:
+                    continue
+                try:
+                    orders[r] = float(o)
+                except (TypeError, ValueError):
+                    continue
+            source = "reach_attributes.csv"
+    if not orders and edge_features and edge_features.exists():
         ef = pd.read_csv(edge_features)
         order_col = next(
             (c for c in ("target_streamorde", "stream_order", "streamorde") if c in ef.columns),
             None,
         )
-
-        def row_of(site: str):
-            s = str(site)
-            for key in (s, s.zfill(8), s.lstrip("0")):
-                if key in site_to_row:
-                    return site_to_row[key]
-            return None
-
         if order_col and {"source", "target"}.issubset(ef.columns):
-            node_order = {}
             for tgt, o in zip(ef.target.astype(str), ef[order_col]):
                 r = row_of(tgt)
                 if r is None:
                     continue
                 try:
-                    node_order[r] = float(o)
-                except Exception:
+                    orders[r] = float(o)
+                except (TypeError, ValueError):
                     continue
-            orders = node_order  # row -> stream order
+            source = "edge_features.csv"
+    return orders, source
+
+
+def tributary_rows(
+    dataset,
+    regions,
+    tasks_meta,
+    reach_attributes: Path | None,
+    edge_features: Path | None,
+) -> pd.DataFrame:
+    t = dataset["y"].shape[1]
+    hop, _ = hop_maps(dataset)
+    orders, order_source = load_node_stream_orders(dataset, reach_attributes, edge_features)
 
     rows = []
     for region, task_seed, payload, task in tasks_meta:
@@ -192,10 +227,14 @@ def tributary_rows(dataset, regions, tasks_meta, edge_features: Path | None) -> 
                     h = hop(sr, qr)
                     if h is None:
                         continue
-                    so = orders.get(sr, np.nan) if isinstance(orders, dict) else np.nan
-                    qo = orders.get(qr, np.nan) if isinstance(orders, dict) else np.nan
+                    so = orders.get(sr, np.nan)
+                    qo = orders.get(qr, np.nan)
                     if np.isfinite(so) and np.isfinite(qo):
-                        rel = "trib_to_main" if so < qo else ("main_to_trib" if so > qo else "same_order")
+                        rel = (
+                            "trib_to_main"
+                            if so < qo
+                            else ("main_to_trib" if so > qo else "same_order")
+                        )
                     else:
                         rel = "unknown_order"
                     rows.append(
@@ -208,7 +247,10 @@ def tributary_rows(dataset, regions, tasks_meta, edge_features: Path | None) -> 
                             "query_row": qr,
                             "hops": h,
                             "within_2hop": h <= 2,
+                            "support_order": so,
+                            "query_order": qo,
                             "order_relation": rel,
+                            "order_source": order_source,
                             "tributary_to_mainstem_le2": bool(h <= 2 and rel == "trib_to_main"),
                         }
                     )
@@ -301,6 +343,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="data/processed/mississippi_graph_graphfix_st357.pt")
     ap.add_argument("--protocol-dir", default="experiments/kshot_protocol_v2")
+    ap.add_argument("--reach-attributes", default="data/processed/reach_attributes.csv")
     ap.add_argument("--edge-features", default="data/processed/edge_features.csv")
     ap.add_argument("--old-h2-dir", default="experiments/kshot_st357/predictions")
     args = ap.parse_args()
@@ -317,7 +360,8 @@ def main() -> None:
     reach = reachability_rows(dataset, regions, tasks_meta)
     reach.to_csv(out / "step2_reachability.csv", index=False)
 
-    # summary stats per region @ K=5 and K=1
+    # summary stats per region @ K=1/3/5 — denominators are explicit: every
+    # percentage is over query cells (fixed set across K), never over pairs.
     def frac_out(k):
         sub = reach[reach.k == k]
         return float(sub.outside_2hop.mean()) if len(sub) else np.nan
@@ -327,36 +371,140 @@ def main() -> None:
         "",
         "## 2-hop coverage on frozen v2 tasks",
         "",
-        "| region | % queries >2 hop (K=1) | % >2 hop (K=5) | n query cells (K=5) |",
-        "|--------|----------------------:|---------------:|--------------------:|",
+        "Denominator of every percentage below: **query cells** at that K.",
+        "The query set is identical for K=1/3/5 (nested support, fixed query),",
+        "so the K columns share one denominator per region. Pooled overall is a",
+        "micro-average over all query cells; the region-macro line weights each",
+        "basin equally.",
+        "",
+        "| region | n query cells | % >2 hop (K=1) | % >2 hop (K=3) | % >2 hop (K=5) |",
+        "|--------|--------------:|---------------:|---------------:|---------------:|",
     ]
+    region_fracs = []
     for region, sub in reach.groupby("region"):
-        s1 = sub[sub.k == 1]
-        s5 = sub[sub.k == 5]
+        s1, s3, s5 = (sub[sub.k == k] for k in (1, 3, 5))
+        n = len(s5)
+        f1, f3, f5 = (s.outside_2hop.mean() for s in (s1, s3, s5))
+        region_fracs.append(float(f1))
         summary_lines.append(
-            f"| `{region}` | {100 * s1.outside_2hop.mean():.1f}% | "
-            f"{100 * s5.outside_2hop.mean():.1f}% | {len(s5)} |"
+            f"| `{region}` | {n} | {100 * f1:.1f}% | {100 * f3:.1f}% | {100 * f5:.1f}% |"
         )
+    n_total = int((reach.k == 5).sum())
+    macro = float(np.mean(region_fracs)) if region_fracs else np.nan
     summary_lines += [
         "",
-        f"- Overall K=1 outside 2-hop: **{100 * frac_out(1):.1f}%**",
-        f"- Overall K=5 outside 2-hop: **{100 * frac_out(5):.1f}%**",
+        (
+            f"- Pooled K=1 outside 2-hop: **{100 * frac_out(1):.1f}%** "
+            f"({int(reach.loc[reach.k == 1, 'outside_2hop'].sum())} of {n_total} query cells)"
+        ),
+        f"- Pooled K=3 outside 2-hop: **{100 * frac_out(3):.1f}%**",
+        f"- Pooled K=5 outside 2-hop: **{100 * frac_out(5):.1f}%**",
+        (
+            f"- Region-macro K=1 outside 2-hop: **{100 * macro:.1f}%** "
+            f"(mean of the 5 per-region rates above)"
+        ),
         "",
         "## Decision rule",
         "",
         "- If outside-2hop > 20–30% at K=1/3 → support encoder is **necessary**.",
-        f"- Current K=1 outside-2hop = **{100 * frac_out(1):.1f}%** → "
+        f"- Current K=1 outside-2hop = **{100 * frac_out(1):.1f}%** (pooled) → "
         + (
             "support encoder required under the pre-registered rule."
             if frac_out(1) > 0.2
             else "most queries are in RF; RF alone does not explain failures."
         ),
         "",
+    ]
+
+    # Tributary→mainstem, with pair-level and query-level denominators kept apart.
+    trib = tributary_rows(
+        dataset, regions, tasks_meta, Path(args.reach_attributes), Path(args.edge_features)
+    )
+    trib.to_csv(out / "step2_tributary_mainstem.csv", index=False)
+    order_source = (
+        str(trib.order_source.iloc[0]) if len(trib) and "order_source" in trib else "missing"
+    )
+    summary_lines += [
+        "## Tributary→mainstem (stream order)",
+        "",
+        (
+            f"Stream-order source: `{order_source}` "
+            "(node-level `streamorde` from reach_attributes.csv)."
+        ),
+        "",
+        "Two different denominators — do not mix them:",
+        "",
+        (
+            "- **pairs** = (support, query) rows in `step2_tributary_mainstem.csv`; "
+            "each query contributes K pairs, so pair counts scale with K."
+        ),
+        "- **query cells** = fixed query set (same as the 2-hop table).",
+        "",
+        "### Pair-level order relation (denominator: pairs at that K)",
+        "",
+        "| region | K | pairs | trib_to_main | main_to_trib | same_order | unknown_order |",
+        "|--------|--:|------:|-------------:|-------------:|-----------:|--------------:|",
+    ]
+    for region, sub in trib.groupby("region"):
+        for k, sk in sub.groupby("k"):
+            n = len(sk)
+            counts = sk.order_relation.value_counts()
+            cell = " | ".join(
+                f"{counts.get(name, 0)} ({100 * counts.get(name, 0) / n:.1f}%)"
+                if n
+                else "—"
+                for name in ("trib_to_main", "main_to_trib", "same_order", "unknown_order")
+            )
+            summary_lines.append(f"| `{region}` | {k} | {n} | {cell} |")
+    n_pairs = len(trib)
+    n_unknown = int((trib.order_relation == "unknown_order").sum()) if n_pairs else 0
+    summary_lines += [
+        "",
+        f"- Unknown stream-order pairs: **{n_unknown} of {n_pairs}** "
+        f"({100 * n_unknown / n_pairs:.1f}%)" if n_pairs else "- No pairs.",
+    ]
+    if n_pairs and n_unknown:
+        summary_lines.append(
+            "- Unknown pairs are **not classified**; they are excluded from "
+            "trib_to_main / main_to_trib rates' interpretation and support **no** "
+            "tributary–mainstem conclusion."
+        )
+    else:
+        summary_lines.append(
+            "- Every pair has a stream-order relation; no unknown residual."
+        )
+    # Query-level: does a query have ≥1 trib→main support within 2 hops?
+    qlevel = (
+        trib.assign(
+            t2=trib.tributary_to_mainstem_le2.astype(int),
+        )
+        .groupby(["region", "k", "task_seed", "month", "query_row"], as_index=False)["t2"]
+        .max()
+    )
+    summary_lines += [
+        "",
+        "### Query-level (denominator: query cells at that K)",
+        "",
+        "A query counts once if **any** of its K supports is a ≤2-hop trib→main pair.",
+        "",
+        "| region | K | n query cells | % with ≥1 trib→main ≤2hop |",
+        "|--------|--:|--------------:|--------------------------:|",
+    ]
+    for region, sub in qlevel.groupby("region"):
+        for k, sk in sub.groupby("k"):
+            n = len(sk)
+            pct = 100 * sk.t2.mean() if n else float("nan")
+            summary_lines.append(f"| `{region}` | {k} | {n} | {pct:.1f}% |")
+    summary_lines += [
+        "",
         "## Proofs",
         "",
         "- `step2_hop_decay.md` — 2-hop RF bitwise proof",
         "- `step2_cross_month.md` — cross-month influence ≡ 0",
-        f"- `step2_tributary_mainstem.csv` — tributary→mainstem pairs",
+        (
+            f"- `step2_tributary_mainstem.csv` — tributary→mainstem pairs "
+            f"(source: `{order_source}`)"
+        ),
         "- `step2_reachability.csv` — per query-cell hops",
         "",
         "## H2 proxy caveat",
@@ -369,9 +517,6 @@ def main() -> None:
     (out / "step2_summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
     (out / "step2_hop_decay.md").write_text(architecture_zero_influence_proof(), encoding="utf-8")
     (out / "step2_cross_month.md").write_text(cross_month_proof(), encoding="utf-8")
-
-    trib = tributary_rows(dataset, regions, tasks_meta, Path(args.edge_features))
-    trib.to_csv(out / "step2_tributary_mainstem.csv", index=False)
 
     decay = old_h2_proxy_decay(reach)
     decay.to_csv(out / "step2_hop_bin_coverage.csv", index=False)
