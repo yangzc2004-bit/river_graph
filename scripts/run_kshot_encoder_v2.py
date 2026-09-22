@@ -194,6 +194,12 @@ def build_episode_tensors(
         s_tokens[i, 4] = 0.0  # time_gap reserved for Case C
         s_tokens[i, 5 : 5 + REGIME_DIM] = s_reg[i]
 
+    # Revision 2026-09-23: residual is centered within the episode so the
+    # encoder cannot learn a global "always add / always subtract" bias that
+    # does not transfer across basins (gate-direction diagnostics D2/D3).
+    if k > 0:
+        s_tokens[:, 1] = s_tokens[:, 1] - float(s_tokens[:, 1].mean())
+
     for j, qc in enumerate(query_cells):
         qr = qc // t
         q_ord[j] = geom.order[qr]
@@ -477,13 +483,18 @@ def main() -> None:
     ap.add_argument("--patience", type=int, default=20)
     ap.add_argument("--encoder-epochs", type=int, default=200)
     ap.add_argument("--out-dir", default="experiments/kshot_encoder_v2")
+    ap.add_argument(
+        "--base-cache-dir",
+        default=None,
+        help="reuse cached H2X base predictions (default: <out-dir>/base_preds)",
+    )
     ap.add_argument("--smoke", action="store_true")
     args = ap.parse_args()
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     (out / "cells").mkdir(exist_ok=True)
-    cache_dir = out / "base_preds"
+    cache_dir = Path(args.base_cache_dir) if args.base_cache_dir else (out / "base_preds")
 
     dataset = load_dataset(args.dataset)
     y = np.asarray(dataset["y"])

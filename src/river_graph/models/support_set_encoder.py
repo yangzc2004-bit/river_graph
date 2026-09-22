@@ -60,8 +60,12 @@ class SupportSetEncoder(nn.Module):
         self.dir_emb = nn.Embedding(N_DIR, 4)
         # hop_emb(8) + dir_emb(4) + order_diff + area_diff + |Δregime|(regime_dim)
         self.bias_lin = nn.Linear(8 + 4 + 2 + regime_dim, 1)
+        # Revision 2026-09-23 (gate-direction diagnostics): output head reads
+        # only the support context `ctx`, not `hq`.  A direct hq skip let the
+        # head learn Δ ≈ g(log1p_base_q) — a query-side shortcut that ignored
+        # support values (see experiments/kshot_encoder_v2/diagnose_gate_direction.csv).
         self.mlp_out = nn.Sequential(
-            nn.Linear(2 * hidden, hidden), nn.ReLU(),
+            nn.Linear(hidden, hidden), nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, 1),
         )
@@ -100,7 +104,7 @@ class SupportSetEncoder(nn.Module):
         logits = torch.einsum("kd,qd->kq", h, hq) / math.sqrt(h.shape[-1]) + bias
         alpha = torch.softmax(logits, dim=0)                         # (K, Q)
         ctx = torch.einsum("kq,kd->qd", alpha, h)                    # (Q, d)
-        return self.mlp_out(torch.cat([hq, ctx], dim=-1)).squeeze(-1)  # (Q,)
+        return self.mlp_out(ctx).squeeze(-1)                         # (Q,)
 
 
 def fit_residual(

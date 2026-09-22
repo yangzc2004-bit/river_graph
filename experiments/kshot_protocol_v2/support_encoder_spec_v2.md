@@ -81,17 +81,28 @@ pool is the pre-registered ablation, not the main model).
 
 ```
 h_i  = MLP_sup(token_i)          # d = 64
-hq   = MLP_qry(query_token)      # d = 64
+hq   = MLP_qry(query_token)      # d = 64  (attention logits only)
 bias = Linear([hop_emb, dir_emb, |streamorde_s - streamorde_q|,
                log1p(1+totdasqkm_s) - log1p(1+totdasqkm_q),
                |regime_s - regime_q|])   # scalar per pair
 α_i  = softmax_i( (hq · h_i)/√d + bias_i )
 c    = Σ_i α_i h_i
-Δ_q  = MLP_out([hq, c])          # scalar; linear head initialised at 0
+Δ_q  = MLP_out(c)                # scalar; linear head initialised at 0
 ```
 
-- `hop_emb = Embedding(hop_cap+2, 8)`; `dir_emb = Embedding(3, 4)`.
-- `MLP_*`: 2 hidden layers width 64, ReLU, dropout 0.1 (match H3A convention).
+**Revision 2026-09-23 (after the gate-direction check failed).** Two changes,
+both forced by `experiments/kshot_encoder_v2/diagnose_gate_direction.csv`:
+
+1. `Δ_q = MLP_out(c)` — the direct `hq` skip into the output head was removed.
+   With the skip, the head learned `Δ ≈ g(log1p_base_q)` and ignored support
+   values (ablating query `log1p_base` moved Δ 2–3× more than shuffling every
+   support value; `mlp_qry` took 22–26% of gradient vs 9–13% for `mlp_sup`).
+   `hq` now affects Δ only through the attention logits.
+2. The support `resid` feature is **centered within the episode**
+   (`r_i − mean_j r_j`) before standardisation, so the encoder cannot learn a
+   global add/subtract bias that fails to transfer across basins.
+
+`mlp_*`: 2 hidden layers width 64, ReLU, dropout 0.1 (match H3A convention).
 - **K=0 is exact:** if `|support| = 0`, return `Δ_q = 0` by construction (skip
   the module; never rely on softmax over an empty set).
 - Output is a **log-space residual**, not a gate. This is the single most
