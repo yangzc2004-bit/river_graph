@@ -108,11 +108,11 @@ def support_features(
 
 
 class SupportEncoder(nn.Module):
-    """Predict query DOC from support features + H2 base.
+    """Predict a blend gate g in (0, 1), not raw DOC.
 
-    Output is the final mg/L prediction (not a residual), so the net can
-    fall back to the base when support is uninformative. Predictions are
-    clamped to the training label range to avoid explosive extrapolation.
+    Final prediction is ``(1-g)*base_q + g*local_mean``, so the head cannot
+    explode outside the support/base range and always interpolates between
+    the H2 base and the local support mean.
     """
 
     def __init__(self, hidden: int = 32):
@@ -126,18 +126,21 @@ class SupportEncoder(nn.Module):
         )
         self.feat_mu = np.zeros((1, FEATURE_DIM), dtype=np.float32)
         self.feat_sd = np.ones((1, FEATURE_DIM), dtype=np.float32)
-        self.y_lo = 0.0
-        self.y_hi = 50.0
 
-    def forward(self, feats: torch.Tensor) -> torch.Tensor:
-        pred = self.net(feats).squeeze(-1)
-        return pred.clamp(min=self.y_lo, max=self.y_hi)
+    def gate(self, feats: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(self.net(feats).squeeze(-1))
+
+    def forward(self, feats: torch.Tensor, base: torch.Tensor, local_mean: torch.Tensor) -> torch.Tensor:
+        g = self.gate(feats)
+        return (1.0 - g) * base + g * local_mean
 
 
 @dataclass
 class SupportEpisodeBatch:
     feats: torch.Tensor
     target: torch.Tensor
+    base: torch.Tensor
+    local_mean: torch.Tensor
     feat_mu: np.ndarray | None = None
     feat_sd: np.ndarray | None = None
 
@@ -157,11 +160,13 @@ def sample_episodes(
     """Episodic support/query samples on candidate rows (train-only region)."""
     rng = np.random.default_rng(seed)
     y_flat = y.ravel()
-    feats, tgts = [], []
+    p0 = pred0.ravel()
+    feats, tgts, bases, locals_ = [], [], [], []
     rows = list(candidate_rows)
     if len(rows) < min_query + 1:
         return SupportEpisodeBatch(
-            torch.zeros((0, FEATURE_DIM)), torch.zeros(0)
+            torch.zeros((0, FEATURE_DIM)), torch.zeros(0),
+            torch.zeros(0), torch.zeros(0),
         )
     for _ in range(n_episodes):
         j = int(rng.integers(0, t))
@@ -175,21 +180,26 @@ def sample_episodes(
         query = [i * t + j for i in obs[k: k + min_query]]
         if not support or not query:
             continue
+        local_mean = float(y_flat[support].mean())
         for q in query:
             feats.append(support_features(pred0, y, support, q, hops, t))
             tgts.append(float(y_flat[q]))
+            bases.append(float(p0[q]))
+            locals_.append(local_mean)
     if not feats:
         return SupportEpisodeBatch(
-            torch.zeros((0, FEATURE_DIM)), torch.zeros(0)
+            torch.zeros((0, FEATURE_DIM)), torch.zeros(0),
+            torch.zeros(0), torch.zeros(0),
         )
     x = np.stack(feats).astype(np.float32)
-    # standardize features so the MLP is scale-stable across regions
     mu = x.mean(axis=0, keepdims=True).astype(np.float32)
     sd = (x.std(axis=0, keepdims=True) + 1e-6).astype(np.float32)
     x = (x - mu) / sd
     return SupportEpisodeBatch(
         torch.tensor(x, dtype=torch.float32),
         torch.tensor(tgts, dtype=torch.float32),
+        torch.tensor(bases, dtype=torch.float32),
+        torch.tensor(locals_, dtype=torch.float32),
         feat_mu=mu,
         feat_sd=sd,
     )
@@ -201,13 +211,10 @@ def fit_support_encoder(
     lr: float = 5e-3,
     epochs: int = 120,
     seed: int = 0,
-    y_lo: float = 0.0,
-    y_hi: float = 50.0,
 ) -> SupportEncoder:
+    """Fit the gate head on episodic (features, base, local_mean, target)."""
     torch.manual_seed(seed)
     model = SupportEncoder(hidden=hidden)
-    model.y_lo = y_lo
-    model.y_hi = y_hi
     if batch.feats.shape[0] == 0:
         return model
     if batch.feat_mu is not None:
@@ -215,12 +222,14 @@ def fit_support_encoder(
         model.feat_sd = batch.feat_sd if batch.feat_sd is not None else model.feat_sd
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     x, yb = batch.feats, batch.target
+    base = batch.base
+    local = batch.local_mean
     n = x.shape[0]
     for _ in range(epochs):
         perm = torch.randperm(n)
         for i in range(0, n, 64):
             idx = perm[i: i + 64]
-            pred = model(x[idx])
+            pred = model(x[idx], base[idx], local[idx])
             loss = torch.mean(torch.abs(pred - yb[idx]))
             opt.zero_grad()
             loss.backward()
@@ -239,11 +248,18 @@ def encode_predict(
 ) -> dict[int, float]:
     model.eval()
     out: dict[int, float] = {}
-    mu = np.asarray(model.feat_mu, dtype=np.float32)
-    sd = np.asarray(model.feat_sd, dtype=np.float32)
+    mu = np.asarray(model.feat_mu, dtype=np.float32).reshape(-1)
+    sd = np.asarray(model.feat_sd, dtype=np.float32).reshape(-1)
+    y_flat = y.ravel()
+    p0 = pred0.ravel()
+    local_mean = float(y_flat[support].mean())
     with torch.no_grad():
         for q in query:
             feat = support_features(pred0, y, support, q, hops, t)
-            feat = (feat - mu.reshape(-1)) / sd.reshape(-1)
-            out[q] = float(model(torch.tensor(feat, dtype=torch.float32).unsqueeze(0))[0])
+            feat = (feat - mu) / sd
+            base = torch.tensor([p0[q]], dtype=torch.float32)
+            loc = torch.tensor([local_mean], dtype=torch.float32)
+            out[q] = float(
+                model(torch.tensor(feat, dtype=torch.float32).unsqueeze(0), base, loc)[0]
+            )
     return out
