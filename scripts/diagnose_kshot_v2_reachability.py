@@ -153,19 +153,34 @@ def reachability_rows(dataset, regions, tasks_meta) -> pd.DataFrame:
 def tributary_rows(dataset, regions, tasks_meta, edge_features: Path | None) -> pd.DataFrame:
     t = dataset["y"].shape[1]
     hop, _ = hop_maps(dataset)
+    sites = [str(s) for s in dataset["site_no"]]
+    site_to_row = {s: i for i, s in enumerate(sites)}
     orders = {}
     if edge_features and edge_features.exists():
         ef = pd.read_csv(edge_features)
-        # edge features may be keyed by source/target or comid
-        if {"source", "target", "stream_order"}.issubset(ef.columns):
-            for a, b, o in zip(ef.source, ef.target, ef.stream_order):
-                orders[(int(a), int(b))] = float(o)
-                orders[(int(b), int(a))] = float(o)
-        elif {"source", "target", "stream_order_f"}.issubset(ef.columns):
-            col = "stream_order_f"
-            for a, b, o in zip(ef.source, ef.target, ef[col]):
-                orders[(int(a), int(b))] = float(o)
-                orders[(int(b), int(a))] = float(o)
+        order_col = next(
+            (c for c in ("target_streamorde", "stream_order", "streamorde") if c in ef.columns),
+            None,
+        )
+
+        def row_of(site: str):
+            s = str(site)
+            for key in (s, s.zfill(8), s.lstrip("0")):
+                if key in site_to_row:
+                    return site_to_row[key]
+            return None
+
+        if order_col and {"source", "target"}.issubset(ef.columns):
+            node_order = {}
+            for tgt, o in zip(ef.target.astype(str), ef[order_col]):
+                r = row_of(tgt)
+                if r is None:
+                    continue
+                try:
+                    node_order[r] = float(o)
+                except Exception:
+                    continue
+            orders = node_order  # row -> stream order
 
     rows = []
     for region, task_seed, payload, task in tasks_meta:
@@ -177,8 +192,8 @@ def tributary_rows(dataset, regions, tasks_meta, edge_features: Path | None) -> 
                     h = hop(sr, qr)
                     if h is None:
                         continue
-                    so = orders.get((sr, qr), np.nan)
-                    qo = orders.get((qr, sr), np.nan)
+                    so = orders.get(sr, np.nan) if isinstance(orders, dict) else np.nan
+                    qo = orders.get(qr, np.nan) if isinstance(orders, dict) else np.nan
                     if np.isfinite(so) and np.isfinite(qo):
                         rel = "trib_to_main" if so < qo else ("main_to_trib" if so > qo else "same_order")
                     else:
