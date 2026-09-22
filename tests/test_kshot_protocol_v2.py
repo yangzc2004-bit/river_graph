@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -107,6 +108,23 @@ def test_manifest_relative_paths_unique():
     assert len(task_keys) == 15, task_keys
     assert manifest.get("generator_script_sha256")
     assert manifest.get("dataset_sha256")
+
+
+def test_manifest_runtime_code_snapshot():
+    manifest = json.loads((PROTO / "manifest.json").read_text())
+    snap = manifest.get("runtime_code_snapshot")
+    assert snap, "manifest must record a runtime code snapshot"
+    for rel in (
+        "src/river_graph/models/gcn.py",
+        "src/river_graph/models/hydro.py",
+        "src/river_graph/models/support_encoder.py",
+        "src/river_graph/experiments/kshot.py",
+    ):
+        assert rel in snap, rel
+        path = ROOT / rel
+        assert path.is_file()
+        # recorded hash must match the file currently on disk
+        assert snap[rel] == hashlib.sha256(path.read_bytes()).hexdigest(), rel
 
 
 def test_base_model_config_frozen():

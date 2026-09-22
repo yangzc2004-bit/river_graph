@@ -78,6 +78,36 @@ def sha256_obj(obj) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+# Modules that execute during H2X / support-encoder runs. Hashing them gives a
+# runtime code snapshot that stays meaningful even when the worktree is dirty.
+RUNTIME_CODE_FILES = (
+    "src/river_graph/models/gcn.py",
+    "src/river_graph/models/hydro.py",
+    "src/river_graph/models/support_encoder.py",
+    "src/river_graph/experiments/kshot.py",
+    "src/river_graph/experiments/evaluate.py",
+    "src/river_graph/experiments/masks.py",
+    "src/river_graph/experiments/predictions.py",
+    "src/river_graph/experiments/provenance.py",
+    "scripts/run_kshot.py",
+    "scripts/run_kshot_support.py",
+    "scripts/run_kshot_task4.py",
+    "scripts/run_kshot_controls.py",
+    "scripts/run_kshot_unseen_analyte.py",
+    "scripts/freeze_kshot_protocol_v2.py",
+    "tests/test_h2x_smoke.py",
+)
+
+
+def runtime_code_snapshot(root: Path) -> dict[str, str]:
+    snap = {}
+    for rel in RUNTIME_CODE_FILES:
+        p = root / rel
+        if p.is_file():
+            snap[rel] = sha256_file(p)
+    return snap
+
+
 def huc_prefix(sites: list[str], nodes: pd.DataFrame, level: int = 6) -> pd.Series:
     meta = pd.DataFrame({"station": sites})
     meta = meta.merge(
@@ -489,12 +519,14 @@ def main() -> None:
 
     # ---------- manifest ----------
     script_path = Path(__file__).resolve()
+    repo_root = script_path.parents[1]
     manifest = {
         "created_at": protocol["created_at"],
         "code_commit": commit,
         "workspace_dirty": dirty,
         "generator_script": str(script_path),
         "generator_script_sha256": sha256_file(script_path),
+        "runtime_code_snapshot": runtime_code_snapshot(repo_root),
         "dataset_sha256": protocol["dataset_sha256"],
         "nodes_sha256": protocol["nodes_sha256"],
         "task_hashes": all_task_hash,
