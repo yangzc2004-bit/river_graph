@@ -84,6 +84,7 @@ RUNTIME_CODE_FILES = (
     "src/river_graph/models/gcn.py",
     "src/river_graph/models/hydro.py",
     "src/river_graph/models/support_encoder.py",
+    "src/river_graph/models/support_set_encoder.py",
     "src/river_graph/experiments/kshot.py",
     "src/river_graph/experiments/evaluate.py",
     "src/river_graph/experiments/masks.py",
@@ -94,8 +95,10 @@ RUNTIME_CODE_FILES = (
     "scripts/run_kshot_task4.py",
     "scripts/run_kshot_controls.py",
     "scripts/run_kshot_unseen_analyte.py",
+    "scripts/run_kshot_encoder_v2.py",
     "scripts/freeze_kshot_protocol_v2.py",
     "tests/test_h2x_smoke.py",
+    "tests/test_support_set_encoder.py",
 )
 
 

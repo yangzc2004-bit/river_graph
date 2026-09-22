@@ -50,6 +50,11 @@ uses the support set. K=0 must reproduce `base` exactly.
 | `regime_s` | 9-dim ecological block (regime cols 4..12) | standardised with train-basin stats |
 | `regime_diff` | `|regime_s - regime_q|` | elementwise, 9-dim |
 
+Pairwise fields (`hop`, `dir`, `regime_diff`, and the order/area differences
+used in §3) depend on `q`, so they enter through the attention bias of §3
+rather than the per-support content token. The content token is
+`[log1p_y, resid, streamorde, log-area, time_gap, regime_s]` (14 dims).
+
 HUC codes come from `graph_nodes*.huc_cd`, never from station-id prefixes.
 
 ### 2.2 Query token (one per query cell)
@@ -78,7 +83,8 @@ pool is the pre-registered ablation, not the main model).
 h_i  = MLP_sup(token_i)          # d = 64
 hq   = MLP_qry(query_token)      # d = 64
 bias = Linear([hop_emb, dir_emb, |streamorde_s - streamorde_q|,
-               log1p(1+totdasqkm_s) - log1p(1+totdasqkm_q)])   # scalar per pair
+               log1p(1+totdasqkm_s) - log1p(1+totdasqkm_q),
+               |regime_s - regime_q|])   # scalar per pair
 α_i  = softmax_i( (hq · h_i)/√d + bias_i )
 c    = Σ_i α_i h_i
 Δ_q  = MLP_out([hq, c])          # scalar; linear head initialised at 0
