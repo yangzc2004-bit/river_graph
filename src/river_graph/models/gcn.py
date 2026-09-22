@@ -69,7 +69,8 @@ class GCNDocModel:
                  patience: int = 20, seed: int = 0, architecture: str = "gcn",
                  share_weights: bool = False, edge_dropout: float = 0.0,
                  weight_decay: float = 0.0, env_groups: list[str] | None = None,
-                 env_encoder: bool = False):
+                 env_encoder: bool = False, edge_set: str = "river",
+                 edge_direction: str = "both"):
         self.variant = variant
         self.hidden = hidden
         self.layers = layers
@@ -84,6 +85,14 @@ class GCNDocModel:
         self.weight_decay = weight_decay
         self.env_groups = env_groups
         self.env_encoder = env_encoder
+        if edge_set not in ("river", "empty"):
+            raise ValueError("edge_set must be 'river' or 'empty'")
+        self.edge_set = edge_set
+        if edge_direction not in ("both", "upstream", "downstream"):
+            raise ValueError(
+                "edge_direction must be 'both', 'upstream', or 'downstream'"
+            )
+        self.edge_direction = edge_direction
 
     def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
         """Fixed features + pieces for the dynamic DOC-obs channel.
@@ -166,7 +175,8 @@ class GCNDocModel:
         xt[:, :, 9] = visible.float().permute(1, 0)
         return xt
 
-    def fit_predict(self, dataset: dict, split: dict[str, np.ndarray]) -> np.ndarray:
+    def fit(self, dataset: dict, split: dict[str, np.ndarray]) -> None:
+        """Train on ``split['train']`` and store the fitted bundle for predict()."""
         torch.manual_seed(self.seed)
         np.random.seed(self.seed)
         rng = np.random.default_rng(self.seed)
@@ -183,7 +193,8 @@ class GCNDocModel:
         elif self.architecture in ("transport", "transport_enc"):
             from river_graph.models.hydro import TransportGCNImputer
 
-            ei = dataset["edge_index"]  # raw directed; gates need real edges
+            ei = (dataset["edge_index"] if self.edge_set == "river"
+                  else torch.empty((2, 0), dtype=torch.long))
             edge_attr = dataset["edge_attr"]
             edge_attr = (edge_attr - edge_attr.mean(0)) / (edge_attr.std(0) + 1e-8)
             env_dim = (env_raw.shape[1]
@@ -191,7 +202,8 @@ class GCNDocModel:
                        else 0)
             model = TransportGCNImputer(xt.shape[-1], edge_attr.shape[1],
                                         self.hidden, self.layers, self.dropout,
-                                        env_dim=env_dim)
+                                        env_dim=env_dim,
+                                        edge_direction=self.edge_direction)
         else:
             ei = make_edge_index(self.variant, dataset["edge_index"], n)
             model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
@@ -275,24 +287,70 @@ class GCNDocModel:
         if best_state is not None:
             model.load_state_dict(best_state)
 
-        # inference: all train cells become visible context
+        self._bundle = {
+            "model": model,
+            "fwd": fwd,
+            "xt": xt,
+            "y": y,
+            "base_visible": base_visible,
+            "train_cells": train_cells,
+            "stats": stats,
+            "n": n,
+            "t": t,
+        }
+
+    def predict(
+        self,
+        extra_visible: np.ndarray | torch.Tensor | None = None,
+        extra_values: np.ndarray | torch.Tensor | None = None,
+    ) -> np.ndarray:
+        """Predict the full (N, T) grid in mg/L with optional extra DOC cells.
+
+        ``extra_visible`` is a flat index array of additional observed cells
+        to expose in the DOC channel at inference (e.g. K-shot support).
+        ``extra_values`` optionally overrides the mg/L values shown for those
+        cells (same length as ``extra_visible``), used by shuffle controls.
+        """
+        if not hasattr(self, "_bundle"):
+            raise RuntimeError("call fit() before predict()")
+        b = self._bundle
+        model, fwd = b["model"], b["fwd"]
+        xt, y = b["xt"], b["y"]
+        base_visible, train_cells = b["base_visible"], b["train_cells"]
+        n, t, stats = b["n"], b["t"], b["stats"]
+
         visible = base_visible.clone()
         visible.reshape(-1)[train_cells] = True
-        self._fill_doc_channel(xt, y, visible, stats)
+        y_feed = y
+        if extra_visible is not None:
+            extra = torch.as_tensor(np.asarray(extra_visible, dtype=np.int64))
+            if extra.numel():
+                extra = extra.reshape(-1)
+                if int(extra.min()) < 0 or int(extra.max()) >= n * t:
+                    raise ValueError("extra_visible out of range")
+                visible.reshape(-1)[extra] = True
+                if extra_values is not None:
+                    vals = torch.as_tensor(
+                        np.asarray(extra_values, dtype=np.float32)
+                    ).reshape(-1)
+                    if vals.numel() != extra.numel():
+                        raise ValueError("extra_values must match extra_visible")
+                    y_feed = y.clone()
+                    # values are in mg/L; channel uses log1p space like y
+                    y_feed.reshape(-1)[extra] = torch.log1p(vals.clamp(min=0))
+        self._fill_doc_channel(xt, y_feed, visible, stats)
         model.eval()
         preds = torch.empty(n, t)
         with torch.no_grad():
             for j in range(t):
                 preds[:, j] = fwd(xt[j])
-        # clamp to the observed train range: tree baselines (RF) cannot
-        # extrapolate beyond training targets by construction, so the GNN
-        # gets a similar physical bound. Use the 99.5th percentile, not the
-        # max — the max (445 mg/L) is from a 1970s-era localized high-DOC
-        # regime episode at one station (see experiments/analysis/extreme/),
-        # and letting pathological extrapolations clamp there still
-        # destroys mg/L R2.
         ti, tj = train_cells // t, train_cells % t
         lo = y[ti, tj].min()
         hi = torch.quantile(y[ti, tj], 0.995)
         preds = preds.clamp(min=lo, max=hi)
         return np.expm1(preds.numpy())
+
+    def fit_predict(self, dataset: dict, split: dict[str, np.ndarray],
+                    extra_visible: np.ndarray | torch.Tensor | None = None) -> np.ndarray:
+        self.fit(dataset, split)
+        return self.predict(extra_visible=extra_visible)
