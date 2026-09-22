@@ -128,16 +128,28 @@ class GatedDirectedConv(nn.Module):
         return out / deg.clamp(min=1.0)
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
-                edge_attr: torch.Tensor) -> torch.Tensor:
+                edge_attr: torch.Tensor,
+                edge_direction: str = "both") -> torch.Tensor:
+        if edge_direction not in ("both", "upstream", "downstream"):
+            raise ValueError(
+                "edge_direction must be 'both', 'upstream', or 'downstream'"
+            )
         n = x.shape[0]
         ei_up = edge_index              # src upstream -> dst i
         ei_down = edge_index.flip(0)    # src downstream -> dst i
         g_up = torch.sigmoid(self.gate_up(edge_attr))
         g_down = torch.sigmoid(self.gate_down(edge_attr))
+        zero = torch.zeros(n, self.up_lin.out_features, device=x.device)
+        up = self._agg(self.up_lin(x), ei_up, g_up, n) if edge_direction in (
+            "both", "upstream"
+        ) else zero
+        down = self._agg(self.down_lin(x), ei_down, g_down, n) if edge_direction in (
+            "both", "downstream"
+        ) else zero
         return (
             self.self_lin(x)
-            + self._agg(self.up_lin(x), ei_up, g_up, n)
-            + self._agg(self.down_lin(x), ei_down, g_down, n)
+            + up
+            + down
         )
 
 
@@ -151,8 +163,14 @@ class TransportGCNImputer(nn.Module):
 
     def __init__(self, in_channels: int, edge_dim: int, hidden: int = 64,
                  layers: int = 2, dropout: float = 0.1,
-                 env_dim: int = 0, env_emb: int = 32):
+                 env_dim: int = 0, env_emb: int = 32,
+                 edge_direction: str = "both"):
         super().__init__()
+        if edge_direction not in ("both", "upstream", "downstream"):
+            raise ValueError(
+                "edge_direction must be 'both', 'upstream', or 'downstream'"
+            )
+        self.edge_direction = edge_direction
         import itertools
 
         self.env_encoder = (
@@ -176,7 +194,7 @@ class TransportGCNImputer(nn.Module):
             x = torch.cat([x, emb], dim=-1)
         h = x
         for conv in self.convs:
-            h = F.relu(conv(h, edge_index, edge_attr))
+            h = F.relu(conv(h, edge_index, edge_attr, self.edge_direction))
             h = F.dropout(h, p=self.dropout, training=self.training)
         return self.head(h).squeeze(-1)
 
