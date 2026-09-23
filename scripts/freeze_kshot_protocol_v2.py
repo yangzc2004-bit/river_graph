@@ -28,8 +28,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-from river_graph.experiments.kshot import MIN_QUERY
-
 PRIMARY_HUC6 = ("103001", "510020", "102701", "101302", "101900")
 BACKUP_HUC6 = ("101000", "101301")
 SECONDARY_HUC8 = ("10300101", "10130201")
@@ -201,8 +199,7 @@ def build_tasks(
 
 def validate_tasks(tasks: list[dict], y_mask: np.ndarray, k_list, min_query: int) -> list[str]:
     problems = []
-    t = y_mask.shape[1]
-    flat_obs = set(int(i) for i in np.flatnonzero(y_mask.ravel()))
+    flat_obs = {int(i) for i in np.flatnonzero(y_mask.ravel())}
     for task in tasks:
         q = set(task["query_cells"])
         if len(q) < min_query:
@@ -295,7 +292,7 @@ def main() -> None:
                         ]
                         pairs_connected = len(hops) == n_st * (n_st - 1) // 2
                         mean_comp_hop = float(np.mean(hops)) if hops else float("nan")
-                    except Exception:
+                    except Exception:  # noqa: BLE001  # one bad component must not abort the audit
                         pairs_connected = False
                         mean_comp_hop = float("nan")
                 audit_rows.append(
@@ -437,7 +434,6 @@ def main() -> None:
     rej_md.append("")
     rej_md.append("## HUC6 backup / excluded")
     for code in BACKUP_HUC6:
-        r = region_defs.get(code)
         sub = audit[(audit.scale == "huc6") & (audit.code == code) & (audit.component_rank == 0)]
         if len(sub):
             rej_md.append(
@@ -464,7 +460,7 @@ def main() -> None:
                 ["git", "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL
             ).strip()
         )
-    except Exception:
+    except (subprocess.CalledProcessError, OSError):
         commit, dirty = "unknown", True
 
     protocol = {
@@ -538,6 +534,12 @@ def main() -> None:
             for p in sorted(out.rglob("*"))
             if p.is_file() and p.name != "manifest.json"
         },
+        # paper-facing claim language is part of the evidence chain
+        "paper_artifacts": {
+            str(p.relative_to(repo_root)): sha256_file(p)
+            for p in sorted((repo_root / "docs" / "paper").glob("*"))
+            if p.is_file()
+        } if (repo_root / "docs" / "paper").is_dir() else {},
     }
     (out / "manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

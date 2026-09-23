@@ -1,0 +1,117 @@
+{
+  "version": "primary_endpoints_v1",
+  "frozen_at": "2026-09-23",
+  "paper_question": "Can AI identify ecological blind spots in river DOC monitoring and restore the key ecological patterns with fewer new samples?",
+  "anti_switching_clause": "Primary endpoints, thresholds, and evaluation scenarios are frozen before the Phase-2 runs. They must not be replaced, redefined, or dropped because results are unfavourable. Any change requires a new version of this file with a written reason and a new frozen_at date; the previous version stays committed.",
+  "forbidden_terms": ["causal", "causes", "mechanistic", "mechanism", "universal", "proves that", "proves the mechanism"],
+  "allowed_claim_language": ["predictive", "descriptive", "associated with", "structured by", "predictable from", "consistent with"],
+  "dataset": {
+    "role": "primary cohort (ST-only)",
+    "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "nodes": "data/processed/graph_nodes_graphfix_st357.csv",
+    "nodes_sha256": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+    "site_type_rule": "site_tp_cd == 'ST'",
+    "stations": 357,
+    "edges": 324,
+    "months": 654,
+    "month_range": ["1972-04", "2026-09"],
+    "observed_doc_cells": 22571,
+    "observation_coverage": 0.0967,
+    "sensitivity_only": "mixed-type 571-station results (experiments/frozen_results/benchmark*.csv) are historical reference; no headline claim may rest on them"
+  },
+  "evaluation_scenarios": {
+    "E1": "random missing cells; e1_r{20,40,60}_seed{42,43,44}; equal-weight mean over the 3 masks per rate",
+    "E2a": "strict future forecasting; test = observed months after 2020-12; no DOC context in test months; single mask",
+    "E2b": "future reconstruction with a running network; 20% post-cutoff observed cells visible as context; single mask",
+    "E3": "spatial extrapolation; 20% of stations in the largest component fully held out; e3_spatial_seed{42,43,44}; equal-weight mean over the 3 masks",
+    "mask_dir": "experiments/masks_stcore_v1/",
+    "mask_note": "E3 connectivity is defined on the evaluation graph (dataset.edge_index); the superseded experiments/masks_graphfix_st357 E3 splits used a foreign edge list and must not be used for paper claims",
+    "note": "a mean of per-mask R2 is not the pooled R2; aggregation level must be stated with every number"
+  },
+  "training_seeds": {
+    "phase2_and_3": [42, 43, 44, 45, 46],
+    "note": "identical data, masks, early stopping and seed list for every compared model; seed spread is not per-cell predictive uncertainty"
+  },
+  "target_basins": {
+    "huc6": ["103001", "510020", "102701", "101302", "101900"],
+    "source": "experiments/kshot_protocol_v2/protocol.json (pilot protocol; its 10% gate is superseded by the Phase-5 gate below)"
+  },
+  "high_doc_definition": {
+    "thresholds": [0.95, 0.90],
+    "labels": ["top5", "top10"],
+    "rule": "threshold = p-quantile of observed DOC (mg/L) in the training split only; true hotspot: y >= threshold; predicted hotspot: y_pred >= the same mg/L threshold",
+    "phase5_sampling_hit_rate": "additionally report the fraction of drawn samples whose true DOC is >= threshold (acquisition hit rate)"
+  },
+  "endpoints": {
+    "doc_mae": {
+      "unit": "mg/L",
+      "definition": "mean absolute error on hidden evaluation cells (mask test split / fixed hidden query set)",
+      "co_primary": "MAE in log1p(mg/L) space, always reported alongside",
+      "aggregation": "mean over seeds; E1 and E3 additionally equal-weight over their 3 masks; E2a/E2b single mask",
+      "interval": "station-clustered bootstrap 95% CI on paired differences (Phase 5: task-month or station-month clustered)",
+      "gates": {
+        "phase2_h2x_vs_best_nongraph": ">=10% MAE reduction in at least 2 of {E2a, E2b, E3}",
+        "phase2_h2x_vs_h2e": "stable gain (paired difference < 0 in >=3 seeds) in at least one extrapolation scenario (E2a or E3)",
+        "phase2_e1_noninferiority": "E1 performance must not degrade by more than 5% versus the best baseline",
+        "phase2_seed_consistency": "gain direction consistent in at least 3 of 5 training seeds",
+        "phase5_vs_random": "at same budget K: >=20% MAE reduction in at least 4 of 5 target basins"
+      }
+    },
+    "high_doc_identification": {
+      "metrics": ["precision", "recall"],
+      "definition": "classification of hidden cells by the fixed mg/L threshold rule (see high_doc_definition)",
+      "reported_at": ["top5", "top10"],
+      "gates": {
+        "phase5_vs_random": "recall improvement >=20% at same budget in at least 4 of 5 target basins",
+        "reporting": "tail error contribution and tail coverage must be reported separately in every phase"
+      }
+    },
+    "uncertainty_coverage": {
+      "interval": "central 90% prediction interval from a legal ensemble (5 training seeds or better); uncalibrated seed variance alone is not an uncertainty product",
+      "gates": {
+        "phase3_overall": "overall coverage in [0.80, 0.95]",
+        "phase3_strata": "no major ecological stratum (n >= 50 hidden cells) outside [0.70, 0.98]",
+        "phase3_tail": "coverage of the high-DOC tail reported separately (top5/top10)",
+        "phase3_sanity": "uncertainty must vary sensibly with network_distance, ecological_novelty and support_count (monotone direction stated in advance: more distance / more novelty / less support -> more uncertainty)",
+        "phase3_isolation": "validation strictly against hidden real observations only"
+      }
+    },
+    "budget_error": {
+      "budgets_k": [0, 1, 3, 5],
+      "k10_role": "exploratory / appendix only",
+      "strategies": ["random", "spatially_uniform", "uncertainty_only", "ecological_rarity_only", "uncertainty_plus_representativeness", "network_coverage"],
+      "metrics": ["doc_mae", "high_doc_identification.recall", "high_doc_identification.precision", "ecological_stratum_mae", "uncertainty_coverage", "samples_to_target_error"],
+      "gates": {
+        "phase5_primary": "in >=4 of 5 target basins versus random sampling at equal budget: >=20% MAE reduction OR >=20% recall improvement OR >=20% fewer samples to the same error",
+        "phase5_no_harm": "no single basin may worsen by more than 5% while overall success is claimed",
+        "phase5_curve": "curves over K in {0,1,3,5} monotone or without clear anomalies",
+        "phase5_baselines": "at least one simple baseline stably beaten",
+        "phase5_leakage": "strategies never use query ground-truth DOC"
+      }
+    }
+  },
+  "bootstrap": {
+    "unit_phase2_4": "station (clustered resampling of stations with all their rows)",
+    "unit_phase5": "task-month or station-month clusters",
+    "level": "95% CI on paired differences; fixed-model sample-layer intervals are labelled as such and never presented as training-seed uncertainty"
+  },
+  "secondary_metrics": [
+    "RMSE (mg/L)",
+    "log1p-space MAE and RMSE",
+    "R2 (mean of per-mask R2 is not pooled R2)",
+    "PBIAS",
+    "per-HUC2 and per-river-role tables",
+    "ecological stratum MAE (land cover, climate, soil, stream order)"
+  ],
+  "external_validation_gate": {
+    "scope": "Phase 6",
+    "rules": [
+      "external region must still beat at least one simple baseline",
+      "internal-to-external MAE relative degradation <= 25%",
+      "prediction intervals remain roughly calibrated externally",
+      "no re-tuning before reporting external results",
+      "on failure: scope narrows to within-basin ecological monitoring design"
+    ]
+  }
+}

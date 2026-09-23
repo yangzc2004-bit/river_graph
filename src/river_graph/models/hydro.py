@@ -164,13 +164,22 @@ class TransportGCNImputer(nn.Module):
     def __init__(self, in_channels: int, edge_dim: int, hidden: int = 64,
                  layers: int = 2, dropout: float = 0.1,
                  env_dim: int = 0, env_emb: int = 32,
-                 edge_direction: str = "both"):
+                 edge_direction: str = "both", gate_mode: str = "static"):
         super().__init__()
         if edge_direction not in ("both", "upstream", "downstream"):
             raise ValueError(
                 "edge_direction must be 'both', 'upstream', or 'downstream'"
             )
         self.edge_direction = edge_direction
+        # The H3A protocol freezes the static transport trunk; a non-static
+        # gate mode is refused rather than silently ignored (same contract as
+        # make_h2x_trunk).
+        if gate_mode != "static":
+            raise ValueError(
+                "the static transport trunk is the only released gate mode; "
+                "refusing gate_mode=" + repr(gate_mode)
+            )
+        self.gate_mode = gate_mode
         import itertools
 
         self.env_encoder = (

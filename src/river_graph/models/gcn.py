@@ -150,8 +150,10 @@ class GCNDocModel:
             else:
                 keep = list(range(reg.shape[1]))
             reg = (reg - reg.mean(0)) / (reg.std(0) + 1e-8)
+            # subset FIRST so the positions below index kept columns;
             # split by ORIGINAL column index: hydro (<4) stays in x,
             # ecological context (>=4) goes to the encoder (M6)
+            reg = reg[:, keep]
             pos = {orig: k for k, orig in enumerate(keep)}
             hydro_cols = [pos[i] for i in keep if i < 4]
             env_cols = [pos[i] for i in keep if i >= 4]

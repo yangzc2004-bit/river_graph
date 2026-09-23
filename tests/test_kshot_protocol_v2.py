@@ -14,12 +14,25 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 PROTO = ROOT / "experiments" / "kshot_protocol_v2"
-DATASET = ROOT / "data" / "processed" / "mississippi_graph_graphfix_st357.pt"
-NODES = ROOT / "data" / "processed" / "graph_nodes_graphfix_st357.csv"
+_PROTO_JSON = (
+    json.loads((PROTO / "protocol.json").read_text(encoding="utf-8"))
+    if (PROTO / "protocol.json").exists()
+    else {}
+)
+# Data paths come from the frozen protocol itself so a re-freeze on another
+# cohort cannot leave these tests pointing at a stale hard-coded file.
+DATASET = ROOT / _PROTO_JSON.get(
+    "dataset", "data/processed/mississippi_graph_graphfix_st357.pt"
+)
+NODES = ROOT / _PROTO_JSON.get(
+    "nodes", "data/processed/graph_nodes_graphfix_st357.csv"
+)
 
 
 @pytest.fixture(scope="module")
 def ds():
+    if not DATASET.is_file():
+        pytest.skip(f"local dataset for frozen k-shot v2 missing: {DATASET}")
     return torch.load(DATASET, weights_only=False)
 
 
@@ -74,7 +87,7 @@ def test_task_component_is_largest_connected_subset(ds, regions):
 
 def test_tasks_full_ladder_nested_fixed_query(y_mask):
     k_list = [0, 1, 3, 5]
-    flat_obs = set(int(i) for i in np.flatnonzero(y_mask.ravel()))
+    flat_obs = {int(i) for i in np.flatnonzero(y_mask.ravel())}
     for path in (PROTO / "tasks").glob("*/*.json"):
         payload = json.loads(path.read_text())
         rows = set(payload["task_component_rows"])

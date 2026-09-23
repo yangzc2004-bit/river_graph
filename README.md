@@ -203,11 +203,13 @@ Verified vs. unverified:
   `experiments/analysis/evidence_inventory_20260912.md`.
 - Figures 2–4 in `docs/figures/imagegen_frozen_20260911/` are **illustrative**
   AI-generated images, not quantitative output, and must not be cited as
-  numbers or as real maps. The ecological-group ablation figure is additionally
-  affected by a known column-selection defect.
-- `env_groups` column selection in `src/river_graph/models/gcn.py` is known to be
-  wrong for subsets; the default full-feature H2X path is unaffected. Group
-  rankings cannot support mechanism conclusions.
+  numbers or as real maps. The ecological-group ablation figure was additionally
+  affected by the `env_groups` column-selection defect (fixed 2026-09-23) and
+  stays excluded from conclusions until re-run under the fix.
+- `env_groups` column selection in `src/river_graph/models/gcn.py` was fixed on
+  2026-09-23 (feature subsets were mis-indexed; the non-encoder path ignored
+  the subset). Group rankings produced before the fix remain invalid and must
+  be re-run before any claim.
 
 What this repository does **not** yet show:
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,6 +31,7 @@ import numpy as np
 import pandas as pd
 
 from river_graph.experiments.evaluate import load_dataset, load_mask, metrics
+from river_graph.experiments.provenance import config_hash
 
 PRED_DIR = Path("experiments/predictions")
 RESULTS_DIR = Path("experiments/results")
@@ -62,6 +64,11 @@ DATASET_BY_PREFIX = [
 
 TOL = 1e-4
 
+# Files whose problems are documented and must not fail the --verify gate:
+# this parquet was overwritten by a different model run in commit 2b67bf0; the
+# frozen table stays authoritative (experiments/analysis/evidence_inventory_20260912.md).
+KNOWN_ATTENTION = {"G0_gcn_none__e1_r20_seed42.parquet"}
+
 
 def sha256_file(path: Path, chunk: int = 1 << 20) -> str:
     h = hashlib.sha256()
@@ -80,24 +87,107 @@ def dataset_for_model(model: str) -> str:
     return "data/processed/mississippi_graph_v02.pt"
 
 
+def sidecar_identity(parquet: Path) -> dict:
+    """Check the provenance sidecar against its own config and current files.
+
+    ``config_hash`` is recomputed from the stored config fields; dataset and
+    mask content hashes are compared with the files on disk when those files
+    exist (absent gitignored inputs are reported as unchecked, not as errors).
+    """
+    mpath = parquet.with_suffix(".meta.json")
+    if not mpath.exists():
+        return {
+            "identity_status": "no_sidecar",
+            "identity_problems": ["no provenance sidecar"],
+            "config_hash_ok": None,
+            "input_hash_status": {},
+        }
+    meta = json.loads(mpath.read_text(encoding="utf-8"))
+    cfg = meta.get("config") or {}
+    problems: list[str] = []
+    stored_hash = meta.get("config_hash")
+    recomputed = config_hash(cfg)
+    config_ok = stored_hash == recomputed
+    if not config_ok:
+        problems.append(
+            f"config_hash mismatch: stored={str(stored_hash)[:12]} "
+            f"recomputed={recomputed[:12]}"
+        )
+    hash_status: dict[str, str] = {}
+    for label in ("dataset", "mask"):
+        ident = meta.get(label) or {}
+        want = ident.get("sha256")
+        path = Path(str(ident.get("path") or ""))
+        if not want:
+            hash_status[label] = "unrecorded"
+            problems.append(f"{label} sha256 unrecorded in sidecar")
+        elif not path.exists():
+            hash_status[label] = "file_absent_not_rechecked"
+        else:
+            now = sha256_file(path)
+            hash_status[label] = "match" if now == want else "changed"
+            if now != want:
+                problems.append(
+                    f"{label} content changed since the run: "
+                    f"stored={want[:12]} current={now[:12]}"
+                )
+    return {
+        "identity_status": "ok" if not problems else "stale",
+        "identity_problems": problems,
+        "config_hash_ok": config_ok,
+        "input_hash_status": hash_status,
+    }
+
+
 def verify_one(
     parquet: Path,
-    datasets: dict[str, dict],
+    datasets: dict,
     masks: dict[str, dict],
 ) -> dict:
     """Recompute test metrics straight from the stored predictions.
 
     Test cells are taken from the MASK (ground truth boundaries), then matched
     to parquet rows by (station, month). A file whose rows do not line up with
-    the mask is reported, never silently averaged.
+    the mask is reported, never silently averaged. When the run's dataset is
+    not on this machine the mask cannot be expanded to (station, month) keys,
+    so the check falls back to the parquet's own test rows and is labelled
+    ``parquet_rows_only`` — weaker, never silently treated as full verification.
     """
     df = pd.read_parquet(parquet)
     model = str(df["model"].iloc[0])
     mask_name = str(df["mask"].iloc[0])
     dpath = dataset_for_model(model)
     if dpath not in datasets:
-        datasets[dpath] = load_dataset(dpath)
+        datasets[dpath] = load_dataset(dpath) if Path(dpath).exists() else None
     ds = datasets[dpath]
+    stored_test = df[df["split"] == "test"]
+    identity = sidecar_identity(parquet)
+
+    if ds is None:
+        yt = stored_test["y_true"].to_numpy(dtype=float)
+        yp = stored_test["y_pred"].to_numpy(dtype=float)
+        m = metrics(yt, yp)
+        return {
+            "file": parquet.name,
+            "model": model,
+            "mask": mask_name,
+            "dataset": dpath,
+            "verify_mode": "parquet_rows_only",
+            "dataset_present": False,
+            "rows": len(df),
+            "split_counts": {str(k): int(v) for k, v in
+                             df["split"].value_counts().items()},
+            "test_stored_rows": len(stored_test),
+            "test_mask_cells": None,
+            "test_unmatched": None,
+            "test_cells_nonfinite_pred": int(np.isnan(yp).sum()),
+            "coverage": float(np.isfinite(yp).mean()) if len(yp) else 0.0,
+            "recomputed": {"mae": m["mae"], "r2": m["r2"], "rmse": m["rmse"],
+                           "n": m["n"]},
+            "sha256": sha256_file(parquet),
+            **identity,
+        }
+
     if mask_name not in masks:
         masks[mask_name] = load_mask(mask_name, MASKS_DIR)
     split = masks[mask_name]
@@ -120,12 +210,13 @@ def verify_one(
     unmatched = int((~present).sum())
 
     m = metrics(yt, yp)
-    stored_test = df[df["split"] == "test"]
     return {
         "file": parquet.name,
         "model": model,
         "mask": mask_name,
         "dataset": dpath,
+        "verify_mode": "mask_boundaries",
+        "dataset_present": True,
         "rows": len(df),
         "split_counts": {str(k): int(v) for k, v in
                          df["split"].value_counts().items()},
@@ -137,6 +228,7 @@ def verify_one(
         "recomputed": {"mae": m["mae"], "r2": m["r2"], "rmse": m["rmse"],
                        "n": m["n"]},
         "sha256": sha256_file(parquet),
+        **identity,
     }
 
 
@@ -173,6 +265,10 @@ def classify(rows: list[dict], frozen: pd.DataFrame, multiseed: pd.DataFrame) ->
             r["status"] = "not_in_frozen_table"
         elif abs(dmae) > TOL or abs(dr2) > TOL:
             r["status"] = "conflict"
+        elif r.get("verify_mode") == "parquet_rows_only":
+            # metrics agree, but only via the parquet's own rows: the mask
+            # boundary check was impossible on this machine
+            r["status"] = "verified_parquet_only"
         elif r["coverage"] < 1.0:
             r["status"] = "verified_partial_coverage"
         else:
@@ -225,6 +321,12 @@ def main() -> None:
             rows.append(verify_one(p, datasets, masks))
         classify(rows, frozen, multiseed)
 
+    paper_dir = Path("docs/paper")
+    paper_hashes = {
+        str(p.as_posix()): sha256_file(p)
+        for p in sorted(paper_dir.glob("*")) if p.is_file()
+    } if paper_dir.is_dir() else {}
+
     inv = {
         "audit_date": args.date,
         "counts": {
@@ -234,6 +336,7 @@ def main() -> None:
             "masks": len(list(MASKS_DIR.glob("*.npz"))),
             "result_jsons": len(list(RESULTS_DIR.glob("*.json"))),
         },
+        "paper_artifacts": paper_hashes,
         "predictions": rows if args.verify else [p.name for p in parquets],
         "metric_gaps": metric_gaps(),
         "frozen_rows_without_prediction": sorted(
@@ -246,6 +349,7 @@ def main() -> None:
     jpath.write_text(json.dumps(inv, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"inventory -> {jpath}")
 
+    unexpected: list[str] = []
     if args.verify:
         vdf = pd.DataFrame(rows)
         vpath = out_dir / f"artifact_verification_{args.date}.csv"
@@ -262,6 +366,18 @@ def main() -> None:
             print()
             print("attention rows:")
             print(bad[cols].to_string(index=False))
+        if "identity_status" in vdf.columns:
+            print()
+            print("identity status:")
+            print(vdf["identity_status"].value_counts().to_string())
+            stale = vdf[vdf["identity_status"] == "stale"]
+            if len(stale):
+                print()
+                print("identity problems (reported, never changes metric status):")
+                for _, r in stale.iterrows():
+                    print(f"  {r['file']}: {r['identity_problems']}")
+        fatal = bad[bad["status"].isin(["conflict", "unmatched_cells"])]
+        unexpected = sorted(set(fatal["file"]) - KNOWN_ATTENTION)
     print()
     print(f"prediction files        : {len(parquets)}")
     print(f"frozen table rows       : {len(frozen)}")
@@ -269,6 +385,12 @@ def main() -> None:
     print(f"frozen rows w/o preds   : {len(inv['frozen_rows_without_prediction'])}")
     print(f"metric-only pairs total : "
           f"{sum(len(g['missing_masks']) for g in inv['metric_gaps'])}")
+    if unexpected:
+        print()
+        print("UNEXPECTED attention rows (--verify gate failure):")
+        for name in unexpected:
+            print(f"  - {name}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
