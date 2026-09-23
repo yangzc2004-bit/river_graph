@@ -168,3 +168,141 @@ class MLP:
         out = np.full(n * t, np.nan)
         out[split["test"]] = pred
         return np.expm1(out.reshape(n, t))
+
+
+def ecological_tabular_features(
+    dataset: dict, split: dict[str, np.ndarray]
+) -> tuple[np.ndarray, list[str]]:
+    """(N*T, 23) ecological feature set for the Phase-2 tabular arms.
+
+    Frozen definition (docs/paper/phase2_ablation_spec.md §4): standardized
+    dynamic hydro (temp, temp availability, discharge, discharge availability),
+    month sin/cos, lat/lon, the 13 regime columns, and two graph-free
+    aggregates of the month-t visible-DOC field (self-excluded mean and count
+    across stations). A cell's own DOC is never a feature of its own row, and
+    no edge, neighbour identity or distance information is included.
+    """
+    y, x, months, latlon, n, t, _tm, obs_mask = _ctx(dataset, split)
+    x_mask = dataset["x_mask"].numpy()
+    regime = dataset["regime"].numpy()
+    if regime.shape[1] != 13:
+        raise ValueError(f"expected 13 regime columns, got {regime.shape[1]}")
+
+    month_num = months.astype("datetime64[M]").astype(int) % 12
+    sincos = np.stack(
+        [np.sin(2 * np.pi * month_num / 12), np.cos(2 * np.pi * month_num / 12)],
+        axis=1,
+    )  # (T, 2)
+    idx = np.arange(n * t)
+    i, j = idx // t, idx % t
+
+    # visible-DOC field in log1p mg/L (_ctx already log1p-transformed y)
+    doc_field = np.where(obs_mask, y, 0.0)  # (N, T)
+    month_sum = doc_field.sum(axis=0)  # (T,)
+    month_cnt = obs_mask.sum(axis=0).astype(float)  # (T,)
+    own_doc = doc_field[i, j]
+    own_vis = obs_mask[i, j].astype(float)
+    others_cnt = month_cnt[j] - own_vis
+    others_mean = np.where(
+        others_cnt > 0, (month_sum[j] - own_doc) / np.maximum(others_cnt, 1.0), 0.0
+    )
+
+    names = (
+        ["temp", "temp_avail", "discharge", "discharge_avail",
+         "month_sin", "month_cos", "lat", "lon"]
+        + [f"regime_{k}" for k in range(13)]
+        + ["month_visdoc_mean_excl_self", "month_visdoc_count_excl_self"]
+    )
+    feats = np.column_stack(
+        [
+            x[i, j, 0], x_mask[i, j, 0].astype(float),
+            x[i, j, 1], x_mask[i, j, 1].astype(float),
+            sincos[j], latlon[i],
+            regime[i],
+            others_mean, others_cnt,
+        ]
+    )
+    return feats, names
+
+
+class EcoRandomForest:
+    """Phase-2 ecological RF arm (spec §3-4): fit on train cells only."""
+
+    def __init__(self, n_estimators: int = 200, seed: int = 42):
+        self.n_estimators = n_estimators
+        self.seed = seed
+
+    def fit_predict(self, dataset: dict, split: dict[str, np.ndarray]) -> np.ndarray:
+        from sklearn.ensemble import RandomForestRegressor
+
+        y, _x, _m, _ll, n, t, _tm, _obs = _ctx(dataset, split)
+        feats, _names = ecological_tabular_features(dataset, split)
+        tr, te = split["train"], split["test"]
+        rf = RandomForestRegressor(
+            n_estimators=self.n_estimators, n_jobs=-1, random_state=self.seed
+        )
+        rf.fit(feats[tr], y.ravel()[tr])
+        out = np.full(n * t, np.nan)
+        out[te] = rf.predict(feats[te])
+        return np.expm1(out.reshape(n, t))
+
+
+class EcoMLP:
+    """Phase-2 ecological MLP arm (spec §3-4).
+
+    Same train/val logic as the GNN arms: fit rows are the train cells, and
+    early stopping watches the frozen val cells with the same patience rule
+    (min_delta=1e-6) — never a random carve of train.
+    """
+
+    def __init__(
+        self,
+        hidden: tuple[int, ...] = (128, 64),
+        max_epochs: int = 300,
+        patience: int = 20,
+        seed: int = 42,
+    ):
+        self.hidden = hidden
+        self.max_epochs = max_epochs
+        self.patience = patience
+        self.seed = seed
+
+    def fit_predict(self, dataset: dict, split: dict[str, np.ndarray]) -> np.ndarray:
+        from sklearn.neural_network import MLPRegressor
+        from sklearn.preprocessing import StandardScaler
+
+        y, _x, _m, _ll, n, t, _tm, _obs = _ctx(dataset, split)
+        feats, _names = ecological_tabular_features(dataset, split)
+        tr = np.asarray(split["train"])
+        va = np.asarray(split.get("val", []), dtype=np.int64)
+        te = np.asarray(split["test"])
+        y_flat = y.ravel()
+
+        scaler = StandardScaler().fit(feats[tr])
+        x_tr = scaler.transform(feats[tr])
+        mlp = MLPRegressor(
+            hidden_layer_sizes=self.hidden, random_state=self.seed
+        )
+        best_state, best_loss, bad = None, float("inf"), 0
+        for _epoch in range(self.max_epochs):
+            mlp.partial_fit(x_tr, y_flat[tr])  # one iteration
+            if len(va) == 0:
+                continue
+            x_va = scaler.transform(feats[va])
+            vloss = float(np.mean((mlp.predict(x_va) - y_flat[va]) ** 2))
+            if vloss < best_loss - 1e-6:
+                best_loss = vloss
+                best_state = (
+                    [c.copy() for c in mlp.coefs_],
+                    [b.copy() for b in mlp.intercepts_],
+                )
+                bad = 0
+            else:
+                bad += 1
+                if bad >= self.patience:
+                    break
+        if best_state is not None:
+            mlp.coefs_, mlp.intercepts_ = best_state
+        out = np.full(n * t, np.nan)
+        out[te] = mlp.predict(scaler.transform(feats[te]))
+        return np.expm1(out.reshape(n, t))

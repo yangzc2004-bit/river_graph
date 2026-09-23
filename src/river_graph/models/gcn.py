@@ -21,7 +21,7 @@ from torch import nn
 from torch_geometric.nn import GCNConv
 from torch_geometric.utils import to_undirected
 
-IN_CHANNELS = 10  # temp, flow, temp_m, flow_m, sin, cos, lat, lon, doc_obs, doc_obs_m
+IN_CHANNELS = 10  # temp, temp_mask, flow, flow_mask, sin, cos, lat, lon, doc_obs, doc_obs_m
 
 
 class GCNImputer(nn.Module):

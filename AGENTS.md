@@ -73,6 +73,14 @@ are absent.
   H2/H2E (`hydro.TransportGCNImputer`, edge-physics gates) → H2X
   (`gcn.py`, architecture `transport_enc`, env encoder). Frozen H2X base config
   is `BASE_MODEL_CONFIG` in `scripts/freeze_kshot_protocol_v2.py`.
+- Phase-2 ablation is frozen in `docs/paper/phase2_ablation_spec.md` +
+  `configs/phase2_ablation_stcore_v1.json` (contract tests:
+  `tests/test_phase2_controls.py`). Arms: H2 (`env_groups=["hydro"]`), H2E
+  (full regime raw, no encoder), H2X (encoder), `H2X_nomsg` (`edge_set="empty"`
+  — the **no-message control**: self path retained, only edge messages zeroed),
+  `EcoRandomForest`/`EcoMLP` (`baselines.py`, ecological feature set). Phase-2
+  outputs go to `experiments/phase2_ablation_stcore_v1/` only; preflight/pilot
+  results are never paper claims.
 - K-shot v2 protocol: 5 target HUC6 basins
   {103001, 510020, 102701, 101302, 101900}, K ∈ (0,1,3,5), nested same-month
   support with fixed query, task seeds 42/43/44; see
