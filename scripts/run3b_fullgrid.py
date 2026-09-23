@@ -144,17 +144,19 @@ def generate_mask(mask: str, dataset: dict) -> None:
     for tool in TOOLS:
         products[tool]["model_agreement"] = agreement.reshape(-1)
 
-    prov_base = product_hashes(DATASET, str(MASKS_DIR / f"{mask}.npz"))
     for tool in TOOLS:
-        prov = {
-            **prov_base,
-            "config": {"tool": tool, "seeds": list(SEEDS), "mask": mask,
-                       "scenario_family": fam,
-                       "calibration": "empirical validation calibration",
-                       "qhat": calib[tool]["qhat"],
-                       "s_floor": calib[tool]["s_floor"],
-                       "n_cal": calib[tool]["n_cal"]},
-        }
+        cfg = {"tool": tool, "seeds": list(SEEDS), "mask": mask,
+               "scenario_family": fam,
+               "calibration": "empirical validation calibration",
+               "qhat": calib[tool]["qhat"],
+               "s_floor": calib[tool]["s_floor"],
+               "n_cal": calib[tool]["n_cal"]}
+        prov = product_hashes(
+            DATASET, str(MASKS_DIR / f"{mask}.npz"),
+            seed_files=[str(seed_preds_path(tool, mask))],
+            config=cfg,
+        )
+        prov["config"] = cfg
         write_product(product_path(tool, mask), products[tool], prov)
         print(f"[product] {tool} {mask} qhat={calib[tool]['qhat']:.4f}",
               flush=True)

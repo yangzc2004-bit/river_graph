@@ -269,8 +269,20 @@ def monotonicity_check(
     }
 
 
-def product_hashes(dataset_path: str, mask_path: str) -> dict:
-    return {
+def product_hashes(
+    dataset_path: str,
+    mask_path: str,
+    seed_files: list[str] | None = None,
+    config: dict | None = None,
+) -> dict:
+    """Provenance blob bound into every product row.
+
+    ``seed_files`` and ``config`` extend the binding to the raw ensemble
+    inputs and the run configuration (config hash = sha256 of the canonical
+    JSON). Historical products written before these fields existed are
+    audited as gaps by scripts/audit3b_provenance.py — never re-stamped.
+    """
+    blob = {
         "dataset_sha256": sha256_file(dataset_path),
         "mask_sha256": sha256_file(mask_path),
         "phase3_spec_sha256": sha256_file(SPEC_PATH),
@@ -279,6 +291,14 @@ def product_hashes(dataset_path: str, mask_path: str) -> dict:
             fromlist=["runtime_code_snapshot_sha256"],
         ).runtime_code_snapshot_sha256(),
     }
+    if seed_files:
+        blob["seed_file_sha256s"] = {Path(p).name: sha256_file(p)
+                                     for p in seed_files}
+    if config is not None:
+        blob["config_hash"] = hashlib.sha256(
+            json.dumps(config, sort_keys=True, default=str).encode()
+        ).hexdigest()
+    return blob
 
 
 def write_product(path: Path, frame_rows: dict, provenance: dict) -> None:

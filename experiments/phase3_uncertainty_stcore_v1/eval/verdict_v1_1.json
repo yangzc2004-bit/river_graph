@@ -1,0 +1,51 @@
+{
+  "verdict": "phase3b_v1_1",
+  "generated_at": "2026-09-23T17:15:22.153802+00:00",
+  "rules": {
+    "overall": "equal-mask mean over 8 masks of per-mask test coverage",
+    "strata": "pooled hidden-test cells per land-cover-dominant stratum (POST-HOC defined, not optimized), n>=50",
+    "monotonicity": "frozen tertile rule; network_distance marked not_identifiable_by_design (degenerate binning)",
+    "invariance": "U(x)=qhat*s_eff: interval recalibration cannot change monotonicity or model_agreement"
+  },
+  "tools": {
+    "H2X": {
+      "overall_equal_mask_mean": 0.842974475778301,
+      "overall_gate_080_095": true,
+      "strata_pooled": {
+        "crop_hay": 0.813,
+        "forest": 0.862,
+        "urban": 0.868,
+        "wetland": 0.909
+      },
+      "strata_all_in_070_098": true,
+      "passes_calibration": true
+    },
+    "H2X_nomsg": {
+      "overall_equal_mask_mean": 0.7918140532397573,
+      "overall_gate_080_095": false,
+      "strata_pooled": {
+        "crop_hay": 0.775,
+        "forest": 0.806,
+        "urban": 0.778,
+        "wetland": 0.754
+      },
+      "strata_all_in_070_098": true,
+      "passes_calibration": false
+    },
+    "eco_RF": {
+      "overall_equal_mask_mean": 0.6059706209878553,
+      "overall_gate_080_095": false,
+      "strata_pooled": {
+        "crop_hay": 0.6,
+        "forest": 0.597,
+        "urban": 0.626,
+        "wetland": 0.509
+      },
+      "strata_all_in_070_098": false,
+      "passes_calibration": false
+    }
+  },
+  "tools_passing_calibration": 1,
+  "phase4_phase5": "PAUSED (fewer than 2 tools pass calibration)",
+  "original_verdict": "eval/phase3b_verdict.md (v1, kept unchanged)"
+}
