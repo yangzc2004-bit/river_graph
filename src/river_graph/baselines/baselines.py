@@ -171,7 +171,8 @@ class MLP:
 
 
 def ecological_tabular_features(
-    dataset: dict, split: dict[str, np.ndarray]
+    dataset: dict, split: dict[str, np.ndarray],
+    visibility: set[str] | None = None,
 ) -> tuple[np.ndarray, list[str]]:
     """(N*T, 23) ecological feature set for the Phase-2 tabular arms.
 
@@ -181,12 +182,29 @@ def ecological_tabular_features(
     aggregates of the month-t visible-DOC field (self-excluded mean and count
     across stations). A cell's own DOC is never a feature of its own row, and
     no edge, neighbour identity or distance information is included.
+
+    ``visibility`` selects which split cells' labels may enter the DOC
+    aggregates (keys of ``split`` among ``train``/``val``/``context``). This
+    stages label exposure: during fitting and early stopping use
+    ``{"train", "context"}`` so no validation label is visible; only the final
+    test-time view uses ``{"train", "val", "context"}`` per protocol. Passing
+    ``None`` gives the test-time view.
     """
-    y, x, months, latlon, n, t, _tm, obs_mask = _ctx(dataset, split)
+    y, x, months, latlon, n, t, _tm, _obs = _ctx(dataset, split)
     x_mask = dataset["x_mask"].numpy()
     regime = dataset["regime"].numpy()
     if regime.shape[1] != 13:
         raise ValueError(f"expected 13 regime columns, got {regime.shape[1]}")
+
+    vis = {"train", "val", "context"} if visibility is None else set(visibility)
+    bad = vis - {"train", "val", "context"}
+    if bad:
+        raise ValueError(f"unknown visibility keys: {sorted(bad)}")
+    obs_mask = np.zeros(n * t, dtype=bool)
+    for key in ("train", "val", "context"):
+        if key in vis and key in split and len(split[key]):
+            obs_mask[np.asarray(split[key], dtype=np.int64)] = True
+    obs_mask = obs_mask.reshape(n, t)
 
     month_num = months.astype("datetime64[M]").astype(int) % 12
     sincos = np.stack(
@@ -225,8 +243,28 @@ def ecological_tabular_features(
     return feats, names
 
 
+FIT_VISIBILITY = frozenset({"train", "context"})
+TEST_VISIBILITY = frozenset({"train", "val", "context"})
+
+
+def _staged_features(dataset: dict, split: dict[str, np.ndarray]):
+    """(fit-view, test-view) feature matrices; val labels hidden in fit-view."""
+    fit_feats, names = ecological_tabular_features(
+        dataset, split, visibility=FIT_VISIBILITY
+    )
+    test_feats, _ = ecological_tabular_features(
+        dataset, split, visibility=TEST_VISIBILITY
+    )
+    return fit_feats, test_feats, names
+
+
 class EcoRandomForest:
-    """Phase-2 ecological RF arm (spec §3-4): fit on train cells only."""
+    """Phase-2 ecological RF arm (spec §3-4): fit on train cells only.
+
+    Fit rows see only train+context labels in the DOC aggregates (validation
+    labels are hidden); test rows are predicted under the protocol's test-time
+    visibility (train+val+context).
+    """
 
     def __init__(self, n_estimators: int = 200, seed: int = 42):
         self.n_estimators = n_estimators
@@ -236,14 +274,16 @@ class EcoRandomForest:
         from sklearn.ensemble import RandomForestRegressor
 
         y, _x, _m, _ll, n, t, _tm, _obs = _ctx(dataset, split)
-        feats, _names = ecological_tabular_features(dataset, split)
-        tr, te = split["train"], split["test"]
+        fit_feats, test_feats, names = _staged_features(dataset, split)
+        self.feature_names_ = names
+        tr, te = np.asarray(split["train"]), np.asarray(split["test"])
         rf = RandomForestRegressor(
             n_estimators=self.n_estimators, n_jobs=-1, random_state=self.seed
         )
-        rf.fit(feats[tr], y.ravel()[tr])
+        rf.fit(fit_feats[tr], y.ravel()[tr])
+        self.early_stop_ = None  # RF has no early stopping
         out = np.full(n * t, np.nan)
-        out[te] = rf.predict(feats[te])
+        out[te] = rf.predict(test_feats[te])
         return np.expm1(out.reshape(n, t))
 
 
@@ -252,7 +292,9 @@ class EcoMLP:
 
     Same train/val logic as the GNN arms: fit rows are the train cells, and
     early stopping watches the frozen val cells with the same patience rule
-    (min_delta=1e-6) — never a random carve of train.
+    (min_delta=1e-6) — never a random carve of train. Validation labels are
+    hidden from every input during fitting and early stopping (fit-view
+    features); only the final test-time prediction uses the test-view.
     """
 
     def __init__(
@@ -272,26 +314,32 @@ class EcoMLP:
         from sklearn.preprocessing import StandardScaler
 
         y, _x, _m, _ll, n, t, _tm, _obs = _ctx(dataset, split)
-        feats, _names = ecological_tabular_features(dataset, split)
+        fit_feats, test_feats, names = _staged_features(dataset, split)
+        self.feature_names_ = names
         tr = np.asarray(split["train"])
         va = np.asarray(split.get("val", []), dtype=np.int64)
         te = np.asarray(split["test"])
         y_flat = y.ravel()
 
-        scaler = StandardScaler().fit(feats[tr])
-        x_tr = scaler.transform(feats[tr])
+        scaler = StandardScaler().fit(fit_feats[tr])
+        x_tr = scaler.transform(fit_feats[tr])
+        x_va = scaler.transform(fit_feats[va]) if len(va) else None
         mlp = MLPRegressor(
             hidden_layer_sizes=self.hidden, random_state=self.seed
         )
-        best_state, best_loss, bad = None, float("inf"), 0
-        for _epoch in range(self.max_epochs):
+        best_state, best_loss, bad, best_epoch = None, float("inf"), 0, -1
+        val_losses: list[float] = []
+        epochs_run = 0
+        for epoch in range(self.max_epochs):
             mlp.partial_fit(x_tr, y_flat[tr])  # one iteration
-            if len(va) == 0:
+            epochs_run = epoch + 1
+            if x_va is None:
                 continue
-            x_va = scaler.transform(feats[va])
             vloss = float(np.mean((mlp.predict(x_va) - y_flat[va]) ** 2))
+            val_losses.append(vloss)
             if vloss < best_loss - 1e-6:
                 best_loss = vloss
+                best_epoch = epoch
                 best_state = (
                     [c.copy() for c in mlp.coefs_],
                     [b.copy() for b in mlp.intercepts_],
@@ -303,6 +351,14 @@ class EcoMLP:
                     break
         if best_state is not None:
             mlp.coefs_, mlp.intercepts_ = best_state
+        self.early_stop_ = {
+            "epochs_run": epochs_run,
+            "best_epoch": best_epoch,
+            "best_val_loss": best_loss if np.isfinite(best_loss) else None,
+            "val_losses": val_losses,
+            "visibility_fit": sorted(FIT_VISIBILITY),
+            "visibility_test": sorted(TEST_VISIBILITY),
+        }
         out = np.full(n * t, np.nan)
-        out[te] = mlp.predict(scaler.transform(feats[te]))
+        out[te] = mlp.predict(scaler.transform(test_feats[te]))
         return np.expm1(out.reshape(n, t))

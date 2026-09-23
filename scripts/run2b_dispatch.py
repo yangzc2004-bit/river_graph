@@ -61,6 +61,50 @@ def expected_sidecar(arm: str, seed: int, mask: str, smoke: bool = False) -> Pat
             f"{prefix}_river_s{seed}__{mask}.meta.json")
 
 
+def sidecar_is_valid(meta_path: Path, pol: dict) -> bool:
+    """Cache-hit validation: a skip requires a verifiable artifact.
+
+    File existence alone is not cache validity. A skippable unit must have its
+    parquet + sidecar pair, a config hash that recomputes under the sidecar's
+    own schema, a run identity that re-derives from its stored fields,
+    dataset/mask content hashes matching the frozen policy, and finite metrics.
+    """
+    from river_graph.experiments.provenance import (
+        config_hash as _config_hash,
+    )
+    from river_graph.experiments.provenance import (
+        run_identity_sha256 as _run_id,
+    )
+
+    parquet = Path(str(meta_path).replace(".meta.json", ".parquet"))
+    if not meta_path.is_file() or not parquet.is_file():
+        return False
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    cfg = meta.get("config") or {}
+    version = int(meta.get("config_hash_version") or 1)
+    if _config_hash(cfg, version=version) != meta.get("config_hash"):
+        return False
+    if _run_id(meta.get("config_hash") or "",
+               meta.get("run_started_at") or "",
+               meta.get("runtime_code_snapshot_sha256") or "",
+               ) != meta.get("run_identity_sha256"):
+        return False
+    if (meta.get("dataset") or {}).get("sha256") != pol["pol2c"]["dataset_sha256"]:
+        return False
+    want_mask = pol["pol2c"]["mask_sha256s"].get(str(meta.get("mask_name")))
+    if not want_mask or (meta.get("mask") or {}).get("sha256") != want_mask:
+        return False
+    mae = (meta.get("metrics") or {}).get("mae")
+    return mae is not None and np.isfinite(mae)
+
+
+def cached_ok(meta_path: Path, pol: dict) -> bool:
+    return meta_path.is_file() and sidecar_is_valid(meta_path, pol)
+
+
 def tabular_units(seeds: list[int] | None = None):
     seeds = seeds or SEEDS
     for model in ("eco_RF", "eco_MLP"):
@@ -105,6 +149,10 @@ def run_tabular(pol: dict, model: str, seed: int, mask: str,
         "lr": 0.0, "weight_decay": 0.0, "edge_dropout": 0.0,
         "share_weights": False, "env_groups": None, "env_encoder": False,
         "edge_set": "empty", "edge_direction": "both",
+        "hidden": 128 if model == "eco_MLP" else 0, "layers": 2, "dropout": 0.0,
+        "max_epochs": 0 if model == "eco_RF" else max_epochs,
+        "patience": 0 if model == "eco_RF" else 20,
+        "env_emb": 0,
     }
     meta = build_meta(
         model_name=mname, mask_name=mask,
@@ -119,6 +167,8 @@ def run_tabular(pol: dict, model: str, seed: int, mask: str,
         meta["config_hash"], started, snap
     )
     meta["train_budget"] = {"max_epochs": max_epochs, "patience": 20, "smoke": smoke}
+    meta["early_stop"] = getattr(clf, "early_stop_", None)
+    meta["feature_names"] = getattr(clf, "feature_names_", None)
     out, _mp = save_predictions(
         pred, ds, split, mname, mask, Path(pol["pol2c"]["dataset_path"]).stem,
         out_dir=out_root / "predictions", meta=meta,
@@ -162,6 +212,9 @@ def main() -> None:
     ap.add_argument("--batch", type=int, choices=[1, 2, 3, 4, 5])
     ap.add_argument("--count", action="store_true")
     ap.add_argument("--smoke-all", action="store_true")
+    ap.add_argument("--tabular-only", action="store_true",
+                    help="2B-R3: run only the eco RF/MLP arms (staged "
+                         "visibility), keeping cached-and-valid units")
     args = ap.parse_args()
     pol = load_and_check_policies()
 
@@ -208,6 +261,23 @@ def main() -> None:
         print(f"smoke report -> {path}")
         return
 
+    if args.tabular_only:
+        started = datetime.now(timezone.utc).isoformat()
+        t0 = time.time()
+        units = []
+        for model, seed, mask in tabular_units():
+            meta_p = (OUT_DIR / "predictions" /
+                      f"P2X_{model}_s{seed}__{mask}.meta.json")
+            if cached_ok(meta_p, pol):
+                print(f"[cached] {model} s{seed} {mask}", flush=True)
+                continue
+            units.append(run_tabular(pol, model, seed, mask))
+            print(f"[ok] {model} s{seed} {mask}", flush=True)
+        write_record("R3_tabular", units,
+                     2 * len(SEEDS) * len(MASKS), started,
+                     {"duration_sec": round(time.time() - t0, 1)})
+        return
+
     started = datetime.now(timezone.utc).isoformat()
     t0 = time.time()
     units: list[dict] = []
@@ -215,7 +285,7 @@ def main() -> None:
         masks = BATCHES[args.batch]
         planned = 4 * len(SEEDS) * len(masks)
         for arm, seed, mask in gnn_units(masks):
-            if expected_sidecar(arm, seed, mask).is_file():
+            if cached_ok(expected_sidecar(arm, seed, mask), pol):
                 print(f"[cached] {arm} s{seed} {mask}", flush=True)
                 continue
             units.append(run_unit(pol, arm, seed, mask, smoke=False))
@@ -223,8 +293,9 @@ def main() -> None:
         if args.batch == 4:
             planned += 2 * len(SEEDS) * len(MASKS)
             for model, seed, mask in tabular_units():
-                if (OUT_DIR / "predictions" /
-                        f"P2X_{model}_s{seed}__{mask}.meta.json").is_file():
+                meta_p = (OUT_DIR / "predictions" /
+                          f"P2X_{model}_s{seed}__{mask}.meta.json")
+                if cached_ok(meta_p, pol):
                     print(f"[cached] {model} s{seed} {mask}", flush=True)
                     continue
                 units.append(run_tabular(pol, model, seed, mask))
@@ -233,16 +304,17 @@ def main() -> None:
                      {"duration_sec": round(time.time() - t0, 1)})
         return
 
-    # batch 5: resume exactly the missing cells of the full 2B matrix
+    # batch 5: resume exactly the missing or invalid cells of the 2B matrix
     planned = 4 * len(SEEDS) * len(MASKS) + 2 * len(SEEDS) * len(MASKS)
     for arm, seed, mask in gnn_units(MASKS):
-        if expected_sidecar(arm, seed, mask).is_file():
+        if cached_ok(expected_sidecar(arm, seed, mask), pol):
             continue
         units.append(run_unit(pol, arm, seed, mask, smoke=False))
         print(f"[ok] {arm} s{seed} {mask}", flush=True)
     for model, seed, mask in tabular_units():
-        if (OUT_DIR / "predictions" /
-                f"P2X_{model}_s{seed}__{mask}.meta.json").is_file():
+        meta_p = (OUT_DIR / "predictions" /
+                  f"P2X_{model}_s{seed}__{mask}.meta.json")
+        if cached_ok(meta_p, pol):
             continue
         units.append(run_tabular(pol, model, seed, mask))
         print(f"[ok] {model} s{seed} {mask}", flush=True)

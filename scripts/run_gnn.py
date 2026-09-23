@@ -103,6 +103,10 @@ def run_params(args: argparse.Namespace, model_name: str) -> dict:
         "env_encoder": args.arch == "transport_enc",
         "edge_set": getattr(args, "edge_set", "river"),
         "edge_direction": getattr(args, "edge_direction", "both"),
+        "hidden": 64, "layers": 2, "dropout": 0.1,
+        "max_epochs": getattr(args, "train_kw", {}).get("max_epochs", 200),
+        "patience": getattr(args, "train_kw", {}).get("patience", 20),
+        "env_emb": 32 if args.arch == "transport_enc" else 0,
     }
 
 

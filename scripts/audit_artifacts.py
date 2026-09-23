@@ -109,7 +109,9 @@ def sidecar_identity(parquet: Path) -> dict:
     cfg = meta.get("config") or {}
     problems: list[str] = []
     stored_hash = meta.get("config_hash")
-    recomputed = config_hash(cfg)
+    recomputed = config_hash(
+        cfg, version=int(meta.get("config_hash_version") or 1)
+    )
     config_ok = stored_hash == recomputed
     if not config_ok:
         problems.append(

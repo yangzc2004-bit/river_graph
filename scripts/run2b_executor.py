@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,7 +37,10 @@ RUNPOL_PATH = (
 )
 OUT_DIR = ROOT / "experiments" / "phase2_ablation_stcore_v1"
 RECORDS = OUT_DIR / "batch_records"
-SNAPSHOT_PIN = RECORDS / "runtime_snapshot.pin"
+# Each matrix generation pins its own runtime snapshot; the historical 2B pin
+# stays at runtime_snapshot.pin. R3 (post-2B-R2 fixes) defaults to 2b-r3.
+MATRIX_ID = os.environ.get("PHASE2_MATRIX_ID", "2b-r3")
+SNAPSHOT_PIN = RECORDS / f"runtime_snapshot_{MATRIX_ID}.pin"
 
 ARMS = {
     "H2": {"arch": "transport", "env_groups": ["hydro"], "edge_set": "river"},

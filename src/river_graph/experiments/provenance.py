@@ -28,7 +28,13 @@ from typing import Any
 # Including them is what makes a modified dataset or a regenerated mask a
 # different configuration: comparing only paths and names would let a run reuse
 # results that were computed on other data.
-CONFIG_FIELDS = (
+#
+# V1 (historical sidecars) omitted several result-affecting knobs; changing one
+# of those used to leave ``config_hash`` unchanged. V2 adds them so "key
+# parameter changed" necessarily changes identity. Sidecars carry
+# ``config_hash_version`` (absent = V1) and are verified against their own
+# schema; new runs always write V2.
+CONFIG_FIELDS_V1 = (
     "script",
     "model_name",
     "tag",
@@ -46,6 +52,18 @@ CONFIG_FIELDS = (
     "mask_path",
     "mask_sha256",
 )
+CONFIG_FIELDS_V2 = CONFIG_FIELDS_V1 + (
+    "edge_set",
+    "edge_direction",
+    "hidden",
+    "layers",
+    "dropout",
+    "max_epochs",
+    "patience",
+    "env_emb",
+)
+CONFIG_FIELDS = CONFIG_FIELDS_V2
+CONFIG_HASH_VERSION = 2
 
 
 def sha256_file(path: str | Path, chunk: int = 1 << 20) -> str:
@@ -57,13 +75,29 @@ def sha256_file(path: str | Path, chunk: int = 1 << 20) -> str:
     return digest.hexdigest()
 
 
+# Everything that can change produced numbers but is not a run parameter:
+# library code, the dispatch/executor/analysis scripts and the frozen config
+# files. A change here changes ``runtime_code_snapshot_sha256`` and therefore
+# ``run_identity_sha256``.
+_RUNTIME_EXTRA = (
+    "scripts/run_gnn.py",
+    "scripts/run2b_executor.py",
+    "scripts/run2b_dispatch.py",
+    "scripts/analyze_phase2b.py",
+    "configs/phase2_ablation_stcore_v1.json",
+    "configs/phase2_2c_policy.json",
+    "experiments/phase2_ablation_stcore_v1/h2x_policy.json",
+)
+
+
 def runtime_code_snapshot() -> dict[str, str]:
-    """Per-file sha256 of every module under ``src/river_graph``."""
+    """Per-file sha256 of the runtime code, scripts and frozen configs."""
     root = Path("src/river_graph")
+    paths = [p for p in sorted(root.rglob("*.py")) if p.is_file()]
+    paths += [Path(p) for p in _RUNTIME_EXTRA if Path(p).is_file()]
     return {
         str(p.as_posix()): sha256_file(p)
-        for p in sorted(root.rglob("*.py"))
-        if p.is_file()
+        for p in paths
     }
 
 
@@ -102,9 +136,18 @@ def file_identity(path: str | Path) -> dict[str, Any]:
     }
 
 
-def config_hash(params: dict[str, Any]) -> str:
-    """Stable hash over the parameters that determine the produced numbers."""
-    payload = {key: params.get(key) for key in CONFIG_FIELDS}
+def config_hash(params: dict[str, Any], version: int | None = None) -> str:
+    """Stable hash over the parameters that determine the produced numbers.
+
+    ``version`` selects the field schema (1 = historical, 2 = complete). When
+    omitted it is taken from ``params['config_hash_version']``, defaulting to
+    the current schema. The schema version is NOT mixed into the hashed blob,
+    so V1 sidecars recompute under V1 exactly as they were written.
+    """
+    if version is None:
+        version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
+    fields = CONFIG_FIELDS_V2 if version >= 2 else CONFIG_FIELDS_V1
+    payload = {key: params.get(key) for key in fields}
     if isinstance(payload.get("env_groups"), list):
         payload["env_groups"] = sorted(payload["env_groups"])
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -141,7 +184,8 @@ def build_meta(
         "created_at": datetime.now(timezone.utc).isoformat(),
         "caller": caller or params.get("script"),
         "python": platform.python_version(),
-        "config": {key: full_config.get(key) for key in CONFIG_FIELDS},
+        "config_hash_version": CONFIG_HASH_VERSION,
+        "config": {key: full_config.get(key) for key in CONFIG_FIELDS_V2},
         "dataset": dataset_identity,
         "mask": mask_identity,
         "results_path": str(results_path) if results_path else None,
@@ -152,7 +196,8 @@ def build_meta(
             "a full-grid missing-value imputation product"
         ),
     }
-    payload["config_hash"] = config_hash(full_config)
+    payload["config_hash"] = config_hash(full_config,
+                                         version=CONFIG_HASH_VERSION)
     return payload
 
 
@@ -173,13 +218,16 @@ def identity_problems(meta: dict[str, Any] | None,
     """List the identity fields where a stored sidecar disagrees with now.
 
     An empty list means they match. Used to refuse reusing a stored prediction
-    that was produced from different inputs or settings.
+    that was produced from different inputs or settings. Each sidecar is
+    compared under its own ``config_hash_version`` schema (absent = V1).
     """
     if not meta:
         return ["no provenance sidecar"]
     stored = meta.get("config", {}) or {}
+    version = int(meta.get("config_hash_version") or 1)
+    fields = CONFIG_FIELDS_V2 if version >= 2 else CONFIG_FIELDS_V1
     problems = []
-    for key in CONFIG_FIELDS:
+    for key in fields:
         want = expected.get(key)
         got = stored.get(key)
         if key in ("dataset_path", "mask_path"):

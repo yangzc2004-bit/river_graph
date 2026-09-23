@@ -1,83 +1,153 @@
-# Phase-2B analysis (directional pilot, scenario families never pooled)
+# Phase-2B freeze report (directional pilot) — corrected 2B-R1
 
-E2a (strict future, no post-cutoff DOC context) and E2b (running network) are separate estimands (spec §8.1). E1 is the random-missing family; E3 is spatial extrapolation. All values: mean over 3 training seeds x the family's key masks.
+Frozen at 2026-09-23T11:24:15.766708+00:00 by `scripts/analyze_phase2b.py` (one-command recompute). **2B is a pilot: these numbers are not paper claims** (spec §7).
 
-## Paired ΔMAE (negative = arm_a better)
+## Corrections applied (pilot already seen)
 
-| family   | arm_a   | arm_b     |   mae_a |   mae_b |   rel_reduction_pct |   paired_d_mae |   ci95_lo |   ci95_hi |   seed_signs_a_better |   seed_signs_total |   n_rows |
-|:---------|:--------|:----------|--------:|--------:|--------------------:|---------------:|----------:|----------:|----------------------:|-------------------:|---------:|
-| E1       | H2X     | H2E       |  1.5138 |  1.5185 |              0.3114 |        -0.0047 |   -0.0167 |    0.0069 |                     6 |                  9 |    40626 |
-| E1       | H2X     | H2X_nomsg |  1.5138 |  1.5879 |              4.6681 |        -0.0741 |   -0.1011 |   -0.0510 |                     9 |                  9 |    40626 |
-| E1       | H2X     | eco_RF    |  1.5138 |  1.3986 |             -8.2328 |         0.1151 |    0.0824 |    0.1509 |                     0 |                  9 |    40626 |
-| E1       | H2X     | eco_MLP   |  1.5138 |  1.5280 |              0.9287 |        -0.0142 |   -0.0442 |    0.0127 |                     6 |                  9 |    40626 |
-| E2a      | H2X     | H2E       |  0.8339 |  0.8612 |              3.1779 |        -0.0274 |   -0.0564 |    0.0061 |                     2 |                  3 |     6669 |
-| E2a      | H2X     | H2X_nomsg |  0.8339 |  0.8194 |             -1.7613 |         0.0144 |   -0.0175 |    0.0483 |                     2 |                  3 |     6669 |
-| E2a      | H2X     | eco_RF    |  0.8339 |  1.1877 |             29.7921 |        -0.3538 |   -0.5514 |   -0.1796 |                     3 |                  3 |     6669 |
-| E2a      | H2X     | eco_MLP   |  0.8339 |  2.0618 |             59.5563 |        -1.2279 |   -1.5268 |   -0.9629 |                     3 |                  3 |     6669 |
-| E2b      | H2X     | H2E       |  0.8216 |  0.8456 |              2.8388 |        -0.0240 |   -0.0521 |    0.0065 |                     2 |                  3 |     5334 |
-| E2b      | H2X     | H2X_nomsg |  0.8216 |  0.8176 |             -0.4828 |         0.0039 |   -0.0283 |    0.0369 |                     2 |                  3 |     5334 |
-| E2b      | H2X     | eco_RF    |  0.8216 |  1.3041 |             37.0001 |        -0.4825 |   -0.6344 |   -0.3293 |                     3 |                  3 |     5334 |
-| E2b      | H2X     | eco_MLP   |  0.8216 |  1.2521 |             34.3822 |        -0.4305 |   -0.5289 |   -0.3431 |                     3 |                  3 |     5334 |
-| E3       | H2X     | H2E       |  2.3507 |  2.3819 |              1.3109 |        -0.0318 |   -0.1291 |    0.0787 |                     6 |                  9 |    22599 |
-| E3       | H2X     | H2X_nomsg |  2.3507 |  2.2695 |             -3.5779 |         0.0805 |   -0.0313 |    0.1873 |                     1 |                  9 |    22599 |
-| E3       | H2X     | eco_RF    |  2.3507 |  2.2693 |             -3.5860 |         0.0803 |   -0.0653 |    0.2109 |                     3 |                  9 |    22599 |
-| E3       | H2X     | eco_MLP   |  2.3507 |  2.9638 |             20.6856 |        -0.6564 |   -2.3429 |    0.1560 |                     3 |                  9 |    22599 |
+- Comparison sets are separated: `tabular` (H2X vs eco_RF/eco_MLP) supports only "better than the current tabular implementations"; `message_ablation` (H2X vs H2X_nomsg, matched inputs) is the evidence about edge messages. The no-message control stays in the gate comparator set — renaming cannot remove it.
+- Main table and bootstrap now estimate the same quantity (equal-mask within seed, then mean over seeds).
+- Seed direction counts use training seeds (k of N), not seed×mask.
+- CI covering 0 = insufficient evidence, never equivalence. `mae_sd_seed` is training-seed spread; `mae_sd_mask` is mask spread.
+- High-DOC rows carry denominators; small samples say "undetected, estimate unstable". Seeds re-predict the same cells.
 
-## High-DOC top 5%/10% (per family means)
+## Mean MAE (equal-mask within seed, then mean over seeds)
 
-| arm       | family   |     q |   precision |   recall |   tail_mae |   tail_sqerr_share |
-|:----------|:---------|------:|------------:|---------:|-----------:|-------------------:|
-| H2        | E1       | 0.900 |       0.776 |    0.601 |      7.046 |              0.899 |
-| H2        | E1       | 0.950 |       0.693 |    0.447 |     10.146 |              0.850 |
-| H2        | E2a      | 0.900 |       0.611 |    0.222 |      6.757 |              0.218 |
-| H2        | E2a      | 0.950 |       0.111 |    0.167 |     13.115 |              0.111 |
-| H2        | E2b      | 0.900 |       0.750 |    0.381 |      7.845 |              0.217 |
-| H2        | E2b      | 0.950 |       0.500 |    0.167 |     13.031 |              0.141 |
-| H2        | E3       | 0.900 |       0.819 |    0.682 |      6.769 |              0.804 |
-| H2        | E3       | 0.950 |       0.673 |    0.594 |      7.939 |              0.713 |
-| H2E       | E1       | 0.900 |       0.768 |    0.610 |      7.027 |              0.898 |
-| H2E       | E1       | 0.950 |       0.678 |    0.487 |      9.971 |              0.847 |
-| H2E       | E2a      | 0.900 |       0.667 |    0.333 |      6.769 |              0.213 |
-| H2E       | E2a      | 0.950 |       0.000 |    0.000 |     13.807 |              0.116 |
-| H2E       | E2b      | 0.900 |       0.750 |    0.429 |      7.209 |              0.204 |
-| H2E       | E2b      | 0.950 |       0.000 |    0.000 |     13.768 |              0.150 |
-| H2E       | E3       | 0.900 |       0.831 |    0.720 |      6.510 |              0.806 |
-| H2E       | E3       | 0.950 |       0.667 |    0.649 |      7.509 |              0.707 |
-| H2X       | E1       | 0.900 |       0.773 |    0.610 |      7.038 |              0.902 |
-| H2X       | E1       | 0.950 |       0.670 |    0.481 |     10.019 |              0.850 |
-| H2X       | E2a      | 0.900 |       0.672 |    0.278 |      7.004 |              0.234 |
-| H2X       | E2a      | 0.950 |     nan     |    0.000 |     15.387 |              0.136 |
-| H2X       | E2b      | 0.900 |       0.722 |    0.381 |      7.771 |              0.231 |
-| H2X       | E2b      | 0.950 |     nan     |    0.000 |     15.378 |              0.173 |
-| H2X       | E3       | 0.900 |       0.827 |    0.719 |      6.446 |              0.820 |
-| H2X       | E3       | 0.950 |       0.681 |    0.647 |      7.542 |              0.729 |
-| H2X_nomsg | E1       | 0.900 |       0.753 |    0.615 |      7.258 |              0.894 |
-| H2X_nomsg | E1       | 0.950 |       0.639 |    0.471 |     10.295 |              0.842 |
-| H2X_nomsg | E2a      | 0.900 |       0.667 |    0.333 |      7.060 |              0.233 |
-| H2X_nomsg | E2a      | 0.950 |       0.000 |    0.000 |     14.321 |              0.128 |
-| H2X_nomsg | E2b      | 0.900 |       0.750 |    0.429 |      7.705 |              0.223 |
-| H2X_nomsg | E2b      | 0.950 |       0.000 |    0.000 |     14.321 |              0.163 |
-| H2X_nomsg | E3       | 0.900 |       0.825 |    0.733 |      6.537 |              0.851 |
-| H2X_nomsg | E3       | 0.950 |       0.686 |    0.624 |      7.821 |              0.771 |
-| eco_MLP   | E1       | 0.900 |       0.752 |    0.644 |      6.692 |              0.876 |
-| eco_MLP   | E1       | 0.950 |       0.666 |    0.517 |      9.506 |              0.824 |
-| eco_MLP   | E2a      | 0.900 |       0.193 |    0.389 |      7.466 |              0.074 |
-| eco_MLP   | E2a      | 0.950 |       0.073 |    0.333 |     13.283 |              0.036 |
-| eco_MLP   | E2b      | 0.900 |       0.379 |    0.381 |      6.588 |              0.089 |
-| eco_MLP   | E2b      | 0.950 |       0.000 |    0.000 |     12.287 |              0.064 |
-| eco_MLP   | E3       | 0.900 |       0.788 |    0.741 |      6.550 |              0.679 |
-| eco_MLP   | E3       | 0.950 |       0.675 |    0.562 |      7.884 |              0.612 |
-| eco_RF    | E1       | 0.900 |       0.776 |    0.633 |      6.180 |              0.876 |
-| eco_RF    | E1       | 0.950 |       0.725 |    0.540 |      8.942 |              0.832 |
-| eco_RF    | E2a      | 0.900 |       0.182 |    0.250 |      6.619 |              0.120 |
-| eco_RF    | E2a      | 0.950 |       0.000 |    0.000 |     16.240 |              0.079 |
-| eco_RF    | E2b      | 0.900 |       0.174 |    0.286 |      6.323 |              0.075 |
-| eco_RF    | E2b      | 0.950 |       0.000 |    0.000 |     13.517 |              0.060 |
-| eco_RF    | E3       | 0.900 |       0.834 |    0.723 |      6.450 |              0.848 |
-| eco_RF    | E3       | 0.950 |       0.686 |    0.504 |      8.040 |              0.785 |
+| arm       | family   |   n_seed |   n_mask |   mae_mean |   mae_sd_seed |   mae_sd_mask |   r2_mean |   n_test_mean |
+|:----------|:---------|---------:|---------:|-----------:|--------------:|--------------:|----------:|--------------:|
+| H2        | E1       |        3 |        3 |      1.526 |         0.003 |         0.048 |     0.409 |      4514.000 |
+| H2        | E2a      |        3 |        1 |      0.859 |         0.014 |         0.000 |     0.555 |      2223.000 |
+| H2        | E2b      |        3 |        1 |      0.850 |         0.010 |         0.000 |     0.556 |      1778.000 |
+| H2        | E3       |        3 |        3 |      2.505 |         0.018 |         0.201 |     0.446 |      2511.000 |
+| H2E       | E1       |        3 |        3 |      1.519 |         0.009 |         0.044 |     0.398 |      4514.000 |
+| H2E       | E2a      |        3 |        1 |      0.861 |         0.062 |         0.000 |     0.542 |      2223.000 |
+| H2E       | E2b      |        3 |        1 |      0.846 |         0.061 |         0.000 |     0.549 |      1778.000 |
+| H2E       | E3       |        3 |        3 |      2.382 |         0.017 |         0.148 |     0.457 |      2511.000 |
+| H2X       | E1       |        3 |        3 |      1.514 |         0.011 |         0.055 |     0.400 |      4514.000 |
+| H2X       | E2a      |        3 |        1 |      0.834 |         0.046 |         0.000 |     0.549 |      2223.000 |
+| H2X       | E2b      |        3 |        1 |      0.822 |         0.038 |         0.000 |     0.552 |      1778.000 |
+| H2X       | E3       |        3 |        3 |      2.351 |         0.018 |         0.196 |     0.469 |      2511.000 |
+| H2X_nomsg | E1       |        3 |        3 |      1.588 |         0.009 |         0.052 |     0.378 |      4514.000 |
+| H2X_nomsg | E2a      |        3 |        1 |      0.819 |         0.025 |         0.000 |     0.568 |      2223.000 |
+| H2X_nomsg | E2b      |        3 |        1 |      0.818 |         0.024 |         0.000 |     0.568 |      1778.000 |
+| H2X_nomsg | E3       |        3 |        3 |      2.269 |         0.016 |         0.181 |     0.469 |      2511.000 |
+| eco_RF    | E1       |        3 |        3 |      1.399 |         0.002 |         0.065 |     0.494 |      4514.000 |
+| eco_RF    | E2a      |        3 |        1 |      1.188 |         0.013 |         0.000 |     0.147 |      2223.000 |
+| eco_RF    | E2b      |        3 |        1 |      1.304 |         0.024 |         0.000 |     0.047 |      1778.000 |
+| eco_RF    | E3       |        3 |        3 |      2.269 |         0.006 |         0.397 |     0.479 |      2511.000 |
+| eco_MLP   | E1       |        3 |        3 |      1.528 |         0.012 |         0.035 |     0.422 |      4514.000 |
+| eco_MLP   | E2a      |        3 |        1 |      2.062 |         0.691 |         0.000 |    -1.181 |      2223.000 |
+| eco_MLP   | E2b      |        3 |        1 |      1.252 |         0.040 |         0.000 |     0.239 |      1778.000 |
+| eco_MLP   | E3       |        3 |        3 |      2.964 |         0.487 |         1.065 |    -1.144 |      2511.000 |
 
-## Reading
+## Paired comparisons (same estimand; station-clustered bootstrap, 2000 draws)
 
-- Paired deltas with CI95 crossing 0 are treated as ties in the pilot reading; seed-sign counts show direction consistency only.
-- Tail: `tail_sqerr_share` is the share of squared error carried by truly-high cells; `tail_mae` is MAE restricted to them.
-- These are descriptive/predictive statements only (no causal or mechanistic wording per the paper charter).
+| set              | family   | arm_a   | arm_b     |   mae_a |   mae_b |   rel_reduction_pct |   paired_d_mae |   ci95_lo |   ci95_hi | ci_excludes_0   | evidence              |   seeds_a_better |   n_seeds |
+|:-----------------|:---------|:--------|:----------|--------:|--------:|--------------------:|---------------:|----------:|----------:|:----------------|:----------------------|-----------------:|----------:|
+| tabular          | E1       | H2X     | eco_RF    |  1.5138 |  1.3986 |             -8.2328 |         0.1151 |    0.0824 |    0.1507 | True            | B better              |                0 |         3 |
+| tabular          | E1       | H2X     | eco_MLP   |  1.5138 |  1.5280 |              0.9287 |        -0.0142 |   -0.0441 |    0.0130 | False           | insufficient evidence |                2 |         3 |
+| message_ablation | E1       | H2X     | H2X_nomsg |  1.5138 |  1.5879 |              4.6681 |        -0.0741 |   -0.1011 |   -0.0510 | True            | A better              |                3 |         3 |
+| encoder          | E1       | H2X     | H2E       |  1.5138 |  1.5185 |              0.3114 |        -0.0047 |   -0.0167 |    0.0069 | False           | insufficient evidence |                2 |         3 |
+| tabular          | E2a      | H2X     | eco_RF    |  0.8339 |  1.1877 |             29.7921 |        -0.3538 |   -0.5514 |   -0.1796 | True            | A better              |                3 |         3 |
+| tabular          | E2a      | H2X     | eco_MLP   |  0.8339 |  2.0618 |             59.5563 |        -1.2279 |   -1.5268 |   -0.9629 | True            | A better              |                3 |         3 |
+| message_ablation | E2a      | H2X     | H2X_nomsg |  0.8339 |  0.8194 |             -1.7613 |         0.0144 |   -0.0175 |    0.0483 | False           | insufficient evidence |                2 |         3 |
+| encoder          | E2a      | H2X     | H2E       |  0.8339 |  0.8612 |              3.1779 |        -0.0274 |   -0.0564 |    0.0061 | False           | insufficient evidence |                2 |         3 |
+| tabular          | E2b      | H2X     | eco_RF    |  0.8216 |  1.3041 |             37.0001 |        -0.4825 |   -0.6344 |   -0.3293 | True            | A better              |                3 |         3 |
+| tabular          | E2b      | H2X     | eco_MLP   |  0.8216 |  1.2521 |             34.3822 |        -0.4305 |   -0.5289 |   -0.3431 | True            | A better              |                3 |         3 |
+| message_ablation | E2b      | H2X     | H2X_nomsg |  0.8216 |  0.8176 |             -0.4828 |         0.0039 |   -0.0283 |    0.0369 | False           | insufficient evidence |                2 |         3 |
+| encoder          | E2b      | H2X     | H2E       |  0.8216 |  0.8456 |              2.8388 |        -0.0240 |   -0.0521 |    0.0065 | False           | insufficient evidence |                2 |         3 |
+| tabular          | E3       | H2X     | eco_RF    |  2.3507 |  2.2693 |             -3.5860 |         0.0814 |   -0.0540 |    0.1994 | False           | insufficient evidence |                0 |         3 |
+| tabular          | E3       | H2X     | eco_MLP   |  2.3507 |  2.9638 |             20.6856 |        -0.6131 |   -2.1733 |    0.1557 | False           | insufficient evidence |                2 |         3 |
+| message_ablation | E3       | H2X     | H2X_nomsg |  2.3507 |  2.2695 |             -3.5779 |         0.0812 |   -0.0329 |    0.1894 | False           | insufficient evidence |                0 |         3 |
+| encoder          | E3       | H2X     | H2E       |  2.3507 |  2.3819 |              1.3109 |        -0.0312 |   -0.1304 |    0.0863 | False           | insufficient evidence |                3 |         3 |
+
+## High-DOC (pooled detection with unique-cell denominators)
+
+| arm       | family   |     q |   n_true_high_unique_cells |   n_seed_repeats |   recall_pooled |   precision_pooled |   tail_mae_mean |   tail_sqerr_share_mean | small_sample_flag   |
+|:----------|:---------|------:|---------------------------:|-----------------:|----------------:|-------------------:|----------------:|------------------------:|:--------------------|
+| H2        | E1       | 0.900 |                       1314 |                3 |           0.601 |              0.776 |           7.046 |                   0.899 | False               |
+| H2        | E1       | 0.950 |                        692 |                3 |           0.447 |              0.691 |          10.146 |                   0.850 | False               |
+| H2        | E2a      | 0.900 |                         12 |                3 |           0.222 |              0.615 |           6.757 |                   0.218 | False               |
+| H2        | E2a      | 0.950 |                          2 |                3 |           0.167 |              0.200 |          13.115 |                   0.111 | True                |
+| H2        | E2b      | 0.900 |                          7 |                3 |           0.381 |              0.727 |           7.845 |                   0.217 | True                |
+| H2        | E2b      | 0.950 |                          2 |                3 |           0.167 |              0.500 |          13.031 |                   0.141 | True                |
+| H2        | E3       | 0.900 |                       1384 |                3 |           0.684 |              0.815 |           6.769 |                   0.804 | False               |
+| H2        | E3       | 0.950 |                        903 |                3 |           0.595 |              0.668 |           7.939 |                   0.713 | False               |
+| H2E       | E1       | 0.900 |                       1314 |                3 |           0.610 |              0.767 |           7.027 |                   0.898 | False               |
+| H2E       | E1       | 0.950 |                        692 |                3 |           0.488 |              0.671 |           9.971 |                   0.847 | False               |
+| H2E       | E2a      | 0.900 |                         12 |                3 |           0.333 |              0.667 |           6.769 |                   0.213 | False               |
+| H2E       | E2a      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          13.807 |                   0.116 | True                |
+| H2E       | E2b      | 0.900 |                          7 |                3 |           0.429 |              0.750 |           7.209 |                   0.204 | True                |
+| H2E       | E2b      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          13.768 |                   0.150 | True                |
+| H2E       | E3       | 0.900 |                       1384 |                3 |           0.729 |              0.828 |           6.510 |                   0.806 | False               |
+| H2E       | E3       | 0.950 |                        903 |                3 |           0.663 |              0.664 |           7.509 |                   0.707 | False               |
+| H2X       | E1       | 0.900 |                       1314 |                3 |           0.610 |              0.772 |           7.038 |                   0.902 | False               |
+| H2X       | E1       | 0.950 |                        692 |                3 |           0.482 |              0.667 |          10.019 |                   0.850 | False               |
+| H2X       | E2a      | 0.900 |                         12 |                3 |           0.278 |              0.667 |           7.004 |                   0.234 | False               |
+| H2X       | E2a      | 0.950 |                          2 |                3 |           0.000 |            nan     |          15.387 |                   0.136 | True                |
+| H2X       | E2b      | 0.900 |                          7 |                3 |           0.381 |              0.727 |           7.771 |                   0.231 | True                |
+| H2X       | E2b      | 0.950 |                          2 |                3 |           0.000 |            nan     |          15.378 |                   0.173 | True                |
+| H2X       | E3       | 0.900 |                       1384 |                3 |           0.726 |              0.821 |           6.446 |                   0.820 | False               |
+| H2X       | E3       | 0.950 |                        903 |                3 |           0.648 |              0.676 |           7.542 |                   0.729 | False               |
+| H2X_nomsg | E1       | 0.900 |                       1314 |                3 |           0.615 |              0.752 |           7.258 |                   0.894 | False               |
+| H2X_nomsg | E1       | 0.950 |                        692 |                3 |           0.473 |              0.628 |          10.295 |                   0.842 | False               |
+| H2X_nomsg | E2a      | 0.900 |                         12 |                3 |           0.333 |              0.667 |           7.060 |                   0.233 | False               |
+| H2X_nomsg | E2a      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          14.321 |                   0.128 | True                |
+| H2X_nomsg | E2b      | 0.900 |                          7 |                3 |           0.429 |              0.750 |           7.705 |                   0.223 | True                |
+| H2X_nomsg | E2b      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          14.321 |                   0.163 | True                |
+| H2X_nomsg | E3       | 0.900 |                       1384 |                3 |           0.738 |              0.822 |           6.537 |                   0.851 | False               |
+| H2X_nomsg | E3       | 0.950 |                        903 |                3 |           0.628 |              0.680 |           7.821 |                   0.771 | False               |
+| eco_MLP   | E1       | 0.900 |                       1314 |                3 |           0.644 |              0.752 |           6.692 |                   0.876 | False               |
+| eco_MLP   | E1       | 0.950 |                        692 |                3 |           0.517 |              0.664 |           9.506 |                   0.824 | False               |
+| eco_MLP   | E2a      | 0.900 |                         12 |                3 |           0.389 |              0.051 |           7.466 |                   0.074 | False               |
+| eco_MLP   | E2a      | 0.950 |                          2 |                3 |           0.333 |              0.025 |          13.283 |                   0.036 | True                |
+| eco_MLP   | E2b      | 0.900 |                          7 |                3 |           0.381 |              0.381 |           6.588 |                   0.089 | True                |
+| eco_MLP   | E2b      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          12.287 |                   0.064 | True                |
+| eco_MLP   | E3       | 0.900 |                       1384 |                3 |           0.748 |              0.769 |           6.550 |                   0.679 | False               |
+| eco_MLP   | E3       | 0.950 |                        903 |                3 |           0.573 |              0.633 |           7.884 |                   0.612 | False               |
+| eco_RF    | E1       | 0.900 |                       1314 |                3 |           0.633 |              0.776 |           6.180 |                   0.876 | False               |
+| eco_RF    | E1       | 0.950 |                        692 |                3 |           0.541 |              0.726 |           8.942 |                   0.832 | False               |
+| eco_RF    | E2a      | 0.900 |                         12 |                3 |           0.250 |              0.173 |           6.619 |                   0.120 | False               |
+| eco_RF    | E2a      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          16.240 |                   0.079 | True                |
+| eco_RF    | E2b      | 0.900 |                          7 |                3 |           0.286 |              0.167 |           6.323 |                   0.075 | True                |
+| eco_RF    | E2b      | 0.950 |                          2 |                3 |           0.000 |              0.000 |          13.517 |                   0.060 | True                |
+| eco_RF    | E3       | 0.900 |                       1384 |                3 |           0.731 |              0.826 |           6.450 |                   0.848 | False               |
+| eco_RF    | E3       | 0.950 |                        903 |                3 |           0.512 |              0.673 |           8.040 |                   0.785 | False               |
+
+## Input-visibility shift (tabular features, fit stage vs test stage)
+
+| mask              | family   | stage   |   train_rows_median_visdoc |   train_rows_mean_visdoc |   test_rows_median_visdoc |   test_rows_mean_visdoc |
+|:------------------|:---------|:--------|---------------------------:|-------------------------:|--------------------------:|------------------------:|
+| e1_r20_seed42     | E1       | fit     |                      31.00 |                    31.75 |                     31.00 |                   31.49 |
+| e1_r20_seed42     | E1       | test    |                      35.00 |                    35.31 |                     34.00 |                   35.01 |
+| e1_r20_seed43     | E1       | fit     |                      31.00 |                    31.73 |                     31.00 |                   31.77 |
+| e1_r20_seed43     | E1       | test    |                      34.00 |                    35.23 |                     34.00 |                   35.32 |
+| e1_r20_seed44     | E1       | fit     |                      31.00 |                    31.75 |                     31.00 |                   31.71 |
+| e1_r20_seed44     | E1       | test    |                      35.00 |                    35.29 |                     34.00 |                   35.18 |
+| e1_r40_seed42     | E1       | fit     |                      23.00 |                    23.82 |                     23.00 |                   23.79 |
+| e1_r40_seed42     | E1       | test    |                      26.00 |                    26.45 |                     25.50 |                   26.35 |
+| e1_r40_seed43     | E1       | fit     |                      23.00 |                    23.82 |                     24.00 |                   23.81 |
+| e1_r40_seed43     | E1       | test    |                      26.00 |                    26.47 |                     26.00 |                   26.44 |
+| e1_r40_seed44     | E1       | fit     |                      24.00 |                    23.86 |                     23.00 |                   23.81 |
+| e1_r40_seed44     | E1       | test    |                      26.00 |                    26.49 |                     26.00 |                   26.46 |
+| e1_r60_seed42     | E1       | fit     |                      15.00 |                    15.86 |                     15.00 |                   15.82 |
+| e1_r60_seed42     | E1       | test    |                      17.00 |                    17.64 |                     17.00 |                   17.61 |
+| e1_r60_seed43     | E1       | fit     |                      16.00 |                    15.90 |                     15.00 |                   15.87 |
+| e1_r60_seed43     | E1       | test    |                      17.00 |                    17.69 |                     18.00 |                   17.63 |
+| e1_r60_seed44     | E1       | fit     |                      16.00 |                    15.83 |                     16.00 |                   15.86 |
+| e1_r60_seed44     | E1       | test    |                      17.00 |                    17.59 |                     17.00 |                   17.61 |
+| e2a_strict        | E2a      | fit     |                      43.00 |                    44.99 |                      0.00 |                    0.00 |
+| e2a_strict        | E2a      | test    |                      43.00 |                    44.99 |                      0.00 |                    0.00 |
+| e2b_partial       | E2b      | fit     |                      43.00 |                    44.99 |                      7.00 |                    6.99 |
+| e2b_partial       | E2b      | test    |                      43.00 |                    44.99 |                      7.00 |                    6.99 |
+| e3_spatial_seed42 | E3       | fit     |                      35.00 |                    35.18 |                     36.00 |                   35.30 |
+| e3_spatial_seed42 | E3       | test    |                      39.00 |                    39.09 |                     40.00 |                   39.16 |
+| e3_spatial_seed43 | E3       | fit     |                      35.00 |                    35.34 |                     35.00 |                   35.91 |
+| e3_spatial_seed43 | E3       | test    |                      38.00 |                    39.32 |                     39.00 |                   39.98 |
+| e3_spatial_seed44 | E3       | fit     |                      34.00 |                    34.67 |                     36.00 |                   36.13 |
+| e3_spatial_seed44 | E3       | test    |                      38.00 |                    38.54 |                     40.00 |                   40.10 |
+
+## What each comparison set can support
+
+- tabular set: "H2X predicts better than these RF/MLP implementations" — it says nothing about topology.
+- message_ablation set: matched-inputs evidence about edge messages. If no-message matches H2X, edge messages are not shown necessary.
+- encoder set (H2X vs H2E): incremental value of the encoder beyond raw ecological context.
