@@ -67,7 +67,7 @@ def hop_lookup(dataset: dict):
 
 def cells_frame(tasks, y, preds_by_key, method, seed) -> pd.DataFrame:
     """preds_by_key: {(k, task_key): y_pred full grid or dict flat->pred}."""
-    n, t = y.shape
+    _n, t = y.shape
     rows = []
     for task in tasks:
         task_key = (task.month_index, task.query)
@@ -168,7 +168,6 @@ def main() -> None:
         )
         if problems:
             raise SystemExit(f"protocol validation failed for {region}: {problems}")
-        region_rows = [int(i) for i in rows]
         print(f"[{region}] tasks={len(tasks)}", flush=True)
 
         for seed in args.seeds:
@@ -267,7 +266,7 @@ def main() -> None:
                             continue
                         local = {}
                         for q in task.query:
-                            qrow, qcol = q // t, q % t
+                            qrow, _qcol = q // t, q % t
                             if method == "local_mean":
                                 local[q] = float(np.mean(y_flat[list(support)]))
                             elif method == "nearest":

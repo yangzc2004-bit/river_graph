@@ -16,7 +16,6 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 import pandas as pd
-import torch
 
 from river_graph.experiments.evaluate import load_dataset, metrics
 from river_graph.experiments.kshot import (

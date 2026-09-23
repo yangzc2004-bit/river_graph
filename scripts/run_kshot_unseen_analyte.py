@@ -173,21 +173,14 @@ def main() -> None:
                     k = int(k)
                     support = list(support)
                     query = list(task.query)
-                    if k == 0:
-                        method_pred = {
-                            "climatology": lambda q: clim,
-                            "local_mean": lambda q: clim,
-                            "mean_bias": lambda q: clim,
-                            "analytic_blend": lambda q: clim,
-                        }
-                    else:
+                    if k != 0:
                         bias = float(np.mean(y_flat[support] - pred0.ravel()[support]))
                         mean_bias = pred0 + bias
                         lm = float(np.mean(y_flat[support]))
                         local_mean = np.full_like(pred0, lm)
                         ab = analytic_blend(pred0, y, support, query, hops, t)
 
-                        def pick(name, q):
+                        def pick(name, q, clim=clim, local_mean=local_mean, mean_bias=mean_bias):
                             if name == "climatology":
                                 return clim
                             if name == "local_mean":
@@ -196,12 +189,6 @@ def main() -> None:
                                 return mean_bias
                             return None
 
-                        method_pred = {
-                            "climatology": pick,
-                            "local_mean": pick,
-                            "mean_bias": pick,
-                            "analytic_blend": None,
-                        }
                     for q in query:
                         qrow, qcol = q // t, q % t
                         base_row = {

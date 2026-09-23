@@ -27,6 +27,7 @@ import json
 import os
 import pickle
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import networkx as nx
@@ -237,6 +238,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", type=int, default=None, help="limit to N sites")
     ap.add_argument(
+        "--cached-only",
+        action="store_true",
+        help="use only stations with a complete cached WQP result file",
+    )
+    ap.add_argument(
         "--version",
         required=True,
         help="output version tag; must be a name that has never been published",
@@ -263,7 +269,15 @@ def main() -> None:
         graph = pickle.load(fh)
     nodes, edges = graph["nodes"], graph["edges"]
     sites = select_sites(nodes, edges, args.smoke)
+    if args.cached_only:
+        cached_sites = {p.stem for p in (RAW / "wqp_results").glob("*.csv")}
+        sites = [site for site in sites if site in cached_sites]
+        print(f"cached-only mode: {len(sites)} stations have WQP files")
     nodes = nodes[nodes["site_no"].isin(sites)].reset_index(drop=True)
+    if args.cached_only:
+        edges = edges[
+            edges["source"].isin(sites) & edges["target"].isin(sites)
+        ].reset_index(drop=True)
     print(f"sites: {len(sites)}")
 
     # --- fetch observations (resumable, per-station cache) ---
@@ -273,18 +287,35 @@ def main() -> None:
         for site, count in catalog.items()
     }
     cache = RAW / "wqp_results"
-    results = []
+    results_by_site = {}
     failed = []
-    for i, site_no in enumerate(sites):
-        path = fetch_station_results(
-            site_no, cache, min_doc_samples=expected.get(site_no)
-        )
-        if path is None:
-            failed.append(site_no)
-            continue
-        results.append(load_station_results(path))
-        if (i + 1) % 25 == 0:
-            print(f"  fetched {i + 1}/{len(sites)}")
+
+    def fetch_one(site_no: str):
+        try:
+            path = fetch_station_results(
+                site_no, cache, min_doc_samples=expected.get(site_no)
+            )
+            if path is None:
+                return site_no, None
+            return site_no, load_station_results(path)
+        except Exception as exc:  # noqa: BLE001 - one bad provider file must not stop all sites
+            print(f"  {site_no}: load failed: {exc}")
+            return site_no, None
+
+    # Requests are independent and each station has its own cache file. A
+    # small pool shortens the rebuild without changing the station-level retry
+    # or completeness rules.
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        futures = [pool.submit(fetch_one, site_no) for site_no in sites]
+        for i, future in enumerate(as_completed(futures), start=1):
+            site_no, frame = future.result()
+            if frame is None:
+                failed.append(site_no)
+            else:
+                results_by_site[site_no] = frame
+            if i % 25 == 0:
+                print(f"  fetched {i}/{len(sites)}")
+    results = [results_by_site[s] for s in sites if s in results_by_site]
     if failed:
         print(f"WQP failed for {len(failed)} sites (rerun to retry): {failed[:10]}")
 
@@ -315,7 +346,9 @@ def main() -> None:
     print(monthly_doc.groupby("site_no").size().describe().round(1))
 
     # --- discharge: NWIS daily values through the SAME quality rules ---
-    fetch_daily_discharge(sites, RAW / "nwis_dv")
+    # Keep response payloads small enough for the public NWIS service and
+    # make interrupted runs resumable at the cache-batch level.
+    fetch_daily_discharge(sites, RAW / "nwis_dv", batch_size=5)
     dv = load_daily_discharge(RAW / "nwis_dv")
     dv = dv[dv["site_no"].isin(sites)]
     monthly_flow, discharge_audited = prepare_discharge(dv)

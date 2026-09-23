@@ -133,7 +133,6 @@ def main() -> None:
         )
         if problems:
             raise SystemExit(f"protocol validation failed for {region}: {problems}")
-        region_set = set(int(i) for i in rows)
         train_rows = sorted({int(f) // t for f in split["train"]})
         print(f"[{region}] tasks={len(tasks)} train_rows={len(train_rows)}", flush=True)
 

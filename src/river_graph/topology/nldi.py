@@ -53,17 +53,33 @@ def _fetch_json(url: str, cache_path: Path) -> dict | None:
     return data
 
 
-def get_station_comid(site_no: str, cache_dir: str | Path) -> str | None:
-    """NHDPlus COMID of the reach a NWIS site is indexed to (None if unlinked)."""
+def get_station_hydrolocation(site_no: str, cache_dir: str | Path) -> dict:
+    """Return the NLDI hydrolocation properties for a NWIS site.
+
+    In addition to the COMID, NLDI provides ``measure`` for indexed NWIS
+    sites.  The measure lets the graph builder order multiple stations that
+    fall on the same NHDPlus reach; a COMID alone does not contain that
+    within-reach ordering information.
+    """
     url = f"{NLDI_BASE}/nwissite/USGS-{site_no}"
     data = _fetch_json(url, Path(cache_dir) / f"{site_no}.json")
     if not data or data.get("_not_found"):
-        return None
+        return {"comid": None, "measure": None}
     features = data.get("features") or []
     if not features:
-        return None
-    comid = features[0]["properties"].get("comid")
-    return str(comid) if comid is not None else None
+        return {"comid": None, "measure": None}
+    props = features[0].get("properties") or {}
+    comid = props.get("comid")
+    measure = props.get("measure")
+    return {
+        "comid": str(comid) if comid is not None else None,
+        "measure": measure,
+    }
+
+
+def get_station_comid(site_no: str, cache_dir: str | Path) -> str | None:
+    """NHDPlus COMID of the reach a NWIS site is indexed to."""
+    return get_station_hydrolocation(site_no, cache_dir)["comid"]
 
 
 def snap_point_to_comid(lat: float, lon: float, cache_dir: str | Path) -> str | None:
@@ -87,7 +103,12 @@ def match_stations(
     cache_dir: str | Path,
     coords: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Match stations to COMIDs. Returns DataFrame(site_no, comid).
+    """Match stations to COMIDs and within-reach measures.
+
+    Returns a DataFrame with ``site_no``, ``comid`` and ``measure``.  The
+    measure is available for directly indexed NWIS sites.  Coordinate-snapped
+    sites retain a missing measure because the position endpoint identifies a
+    reach but does not provide the NWIS hydrolocation measure.
 
     Tries the NLDI nwissite index first; stations it does not index fall
     back to snapping their coordinates to the nearest reach (requires
@@ -101,14 +122,17 @@ def match_stations(
     n = len(site_numbers)
     for i, site_no in enumerate(site_numbers):
         try:
-            comid = get_station_comid(site_no, cache_dir)
+            location = get_station_hydrolocation(site_no, cache_dir)
+            comid = location["comid"]
+            measure = location["measure"]
             if comid is None and coord_map is not None and site_no in coord_map.index:
                 lat, lon = coord_map.loc[site_no].astype(float)
                 comid = snap_point_to_comid(lat, lon, Path(cache_dir).parent / "snap")
+                measure = None
         except Exception as e:  # noqa: BLE001 - transient network errors
             print(f"  match failed for {site_no}: {e}")
             continue  # not cached; retried next run
-        rows.append({"site_no": site_no, "comid": comid})
+        rows.append({"site_no": site_no, "comid": comid, "measure": measure})
         if (i + 1) % 50 == 0:
             print(f"  matched {i + 1}/{n}")
     return pd.DataFrame(rows)

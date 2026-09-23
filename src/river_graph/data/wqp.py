@@ -13,10 +13,12 @@ Schema notes (WQP 3.0 narrow profile):
 
 from __future__ import annotations
 
+import io
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -44,12 +46,21 @@ NARROW_COLS = {
 }
 
 
-def _query_url(site_no: str) -> str:
+def _query_url(
+    site_no: str,
+    start_date_lo: str | None = None,
+    start_date_hi: str | None = None,
+    characteristics: list[str] | None = None,
+) -> str:
     params = [
         ("siteid", f"USGS-{site_no}"),
         ("dataProfile", "narrow"),
         ("mimeType", "csv"),
-    ] + [("characteristicName", c) for c in CHARACTERISTICS]
+    ] + [("characteristicName", c) for c in (characteristics or CHARACTERISTICS)]
+    if start_date_lo is not None:
+        params.append(("startDateLo", start_date_lo))
+    if start_date_hi is not None:
+        params.append(("startDateHi", start_date_hi))
     return f"{WQP_RESULT_URL}?{urllib.parse.urlencode(params)}"
 
 
@@ -101,6 +112,66 @@ def cached_doc_sample_count(path: str | Path) -> int:
     return len(extract_doc_obs(frame))
 
 
+def _date_windows(years: int = 10) -> list[tuple[str, str]]:
+    """Ten-year WQP windows used when an all-history request is truncated."""
+    last_year = datetime.now(timezone.utc).year + 1
+    out = []
+    # The NWIS inventory for this project starts in 1958.  Avoiding empty
+    # pre-1950 requests also avoids a known WQP timeout path.
+    for start in range(1950, last_year + 1, years):
+        end = min(start + years - 1, last_year)
+        out.append((f"01-01-{start:04d}", f"12-31-{end:04d}"))
+    return out
+
+
+def _fetch_complete_window(
+    site_no: str, lo: str, hi: str, characteristic: str
+) -> bytes | None:
+    """Fetch one bounded WQP result window, returning only complete CSV bytes."""
+    req = urllib.request.Request(
+        _query_url(site_no, lo, hi, [characteristic]),
+        headers={"User-Agent": USER_AGENT, "Accept-Encoding": "identity"},
+    )
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                raw = resp.read()
+                declared = resp.headers.get("Content-Length")
+            if _payload_looks_complete(raw, declared):
+                return raw
+            print(f"  {site_no}: incomplete window {lo}..{hi}, retry {attempt + 1}")
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429:
+                print(f"  {site_no}: WQP rate limited; cooling down 60s")
+                time.sleep(60)
+                continue
+            print(f"  {site_no}: window {lo}..{hi}: HTTP {exc.code}, "
+                  f"retry {attempt + 1}")
+        except Exception as exc:  # noqa: BLE001 - provider failures vary
+            print(f"  {site_no}: window {lo}..{hi}: {exc}, retry {attempt + 1}")
+        time.sleep(10 * (attempt + 1))
+    return None
+
+
+def _fetch_segmented_station(site_no: str, out: Path, min_doc_samples: int) -> Path | None:
+    """Recover a long station by combining bounded WQP result windows."""
+    frames = []
+    for characteristic in CHARACTERISTICS:
+        for lo, hi in _date_windows():
+            raw = _fetch_complete_window(site_no, lo, hi, characteristic)
+            if raw is None:
+                continue
+            frames.append(pd.read_csv(io.BytesIO(raw), dtype=str, low_memory=False))
+    if not frames:
+        return None
+    merged = pd.concat(frames, ignore_index=True).drop_duplicates()
+    merged.to_csv(out, index=False)
+    have = cached_doc_sample_count(out)
+    print(f"  {site_no}: segmented recovery has {have} DOC samples "
+          f"(catalog expects {min_doc_samples})")
+    return out if have >= min_doc_samples else None
+
+
 def fetch_station_results(
     site_no: str,
     cache_dir: str | Path,
@@ -135,14 +206,18 @@ def fetch_station_results(
         out.unlink()
     req = urllib.request.Request(_query_url(site_no), headers={"User-Agent": USER_AGENT})
     best: bytes | None = None
+    incomplete_or_short = False
     for attempt in range(max_attempts):
         try:
-            with urllib.request.urlopen(req, timeout=300) as resp:
+            with urllib.request.urlopen(req, timeout=90) as resp:
                 declared = resp.headers.get("Content-Length")
                 raw = resp.read()
             if not _payload_looks_complete(raw, declared):
+                incomplete_or_short = True
                 print(f"  {site_no}: incomplete response "
                       f"({len(raw)} of {declared} bytes), retry {attempt + 1}")
+                if attempt >= 1:
+                    break
                 time.sleep(min(20 * (attempt + 1), 120))
                 continue
             out.write_bytes(raw)
@@ -151,19 +226,36 @@ def fetch_station_results(
             have = cached_doc_sample_count(out)
             if have >= int(min_doc_samples):
                 return out
+            incomplete_or_short = True
             print(f"  {site_no}: response holds {have} DOC samples, catalog says "
                   f"{min_doc_samples}, retry {attempt + 1}")
             if best is None or len(raw) > len(best):
                 best = raw
             out.unlink()
+            if attempt >= 1:
+                break
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 out.write_text("Org_Identifier\n", encoding="utf-8")  # definitive empty
                 return out
+            if e.code == 429:
+                print(f"  {site_no}: WQP rate limited; cooling down 60s")
+                time.sleep(60)
+                continue
+            incomplete_or_short = True
             print(f"  {site_no}: HTTP {e.code}, retry {attempt + 1}")
+            if attempt >= 1:
+                break
         except Exception as e:  # noqa: BLE001 - timeouts, SSL resets, ...
+            incomplete_or_short = True
             print(f"  {site_no}: {e}, retry {attempt + 1}")
+            if attempt >= 1:
+                break
         time.sleep(min(20 * (attempt + 1), 120))
+    if incomplete_or_short and min_doc_samples is not None:
+        recovered = _fetch_segmented_station(site_no, out, int(min_doc_samples))
+        if recovered is not None:
+            return recovered
     if best is not None:
         # keep the longest response seen rather than losing the station, and
         # say so: the caller can decide whether to use a short station

@@ -11,8 +11,8 @@ experiments/masks.py.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -68,7 +68,7 @@ def make_region_split(
     at inference time from the held-out region cells.
     """
     n, t = y_mask.shape
-    region = set(int(i) for i in region_rows)
+    region = {int(i) for i in region_rows}
     if not region:
         raise ValueError("region_rows is empty")
     if max(region) >= n:
@@ -113,7 +113,7 @@ def make_support_query_tasks(
     support never appear as query for that task.
     """
     rows = [int(i) for i in region_rows]
-    n, t = y_mask.shape
+    _n, t = y_mask.shape
     if not rows:
         return []
     if len(months) != t:
@@ -193,10 +193,10 @@ def validate_split(split: dict[str, np.ndarray], y_mask: np.ndarray) -> list[str
     """Return a list of protocol violations (empty means OK)."""
     problems: list[str] = []
     n, t = y_mask.shape
-    train = set(int(x) for x in split.get("train", []))
-    val = set(int(x) for x in split.get("val", []))
-    test = set(int(x) for x in split.get("test", []))
-    region = set(int(x) for x in split.get("region_rows", []))
+    train = {int(x) for x in split.get("train", [])}
+    val = {int(x) for x in split.get("val", [])}
+    test = {int(x) for x in split.get("test", [])}
+    region = {int(x) for x in split.get("region_rows", [])}
 
     if train & val:
         problems.append(f"train/val overlap: {len(train & val)}")
@@ -237,8 +237,8 @@ def validate_tasks(
 ) -> list[str]:
     """Return protocol violations for support/query construction (empty = OK)."""
     problems: list[str] = []
-    n, t = y_mask.shape
-    flat_obs = set(int(i) for i in np.flatnonzero(y_mask.ravel()))
+    _n, t = y_mask.shape
+    flat_obs = {int(i) for i in np.flatnonzero(y_mask.ravel())}
     for task in tasks:
         query = set(task.query)
         if len(query) < min_query and task.month_index >= 0:
@@ -269,6 +269,6 @@ def validate_tasks(
                 problems.append(f"{task.month}: K={k} support has unobserved cells")
             prev = task.support_by_k[k]
         # query fixed across K by construction (single query tuple)
-        if 0 in task.support_by_k and task.support_by_k[0]:
+        if task.support_by_k.get(0):
             problems.append(f"{task.month}: K=0 must have empty support")
     return problems

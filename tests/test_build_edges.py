@@ -62,3 +62,37 @@ def test_shared_reach_links_to_other_station():
     # two stations snapped to the same reach: walking from A finds B
     comid_to_sites = {"100": ["A", "B"]}
     assert first_station_downstream(["100"], comid_to_sites, "A") == "B"
+
+
+def test_build_edges_orders_same_reach_by_measure_and_continues_downstream():
+    stations = pd.DataFrame(
+        {
+            "site_no": ["A", "B", "C"],
+            "comid": ["100", "100", "200"],
+            # NLDI measure decreases downstream.
+            "measure": [90.0, 20.0, 10.0],
+        }
+    )
+    flowlines = {"A": ["100", "200"], "B": ["100", "200"], "C": ["200"]}
+    edges = build_edges(stations, flowlines)
+    assert set(map(tuple, edges[["source", "target"]].values)) == {
+        ("A", "B"),
+        ("B", "C"),
+    }
+
+
+def test_build_edges_does_not_invent_order_for_same_reach():
+    stations = pd.DataFrame(
+        {
+            "site_no": ["A", "B", "C"],
+            "comid": ["100", "100", "200"],
+            # Missing measures mean A/B cannot be ordered safely.
+            "measure": [None, None, 10.0],
+        }
+    )
+    flowlines = {"A": ["100", "200"], "B": ["100", "200"], "C": ["200"]}
+    edges = build_edges(stations, flowlines)
+    assert set(map(tuple, edges[["source", "target"]].values)) == {
+        ("A", "C"),
+        ("B", "C"),
+    }

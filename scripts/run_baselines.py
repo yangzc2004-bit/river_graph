@@ -19,10 +19,14 @@ RESULTS = Path("experiments/results")
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default=None, help="mask-name prefix filter")
+    ap.add_argument("--dataset", default="data/processed/mississippi_graph_v02.pt")
+    ap.add_argument("--masks-dir", default="experiments/masks")
+    ap.add_argument("--results-dir", default="experiments/results")
     args = ap.parse_args()
 
-    dataset = load_dataset()
-    mask_dir = Path("experiments/masks")
+    dataset = load_dataset(args.dataset)
+    mask_dir = Path(args.masks_dir)
+    results_dir = Path(args.results_dir)
     names = sorted(p.stem for p in mask_dir.glob("*.npz"))
     if args.only:
         names = [n for n in names if n.startswith(args.only)]
@@ -34,11 +38,11 @@ def main() -> None:
         "B2_random_forest": RandomForest(),
         "B3_mlp": MLP(),
     }
-    RESULTS.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     for mname, model in models.items():
         # one mask at a time, merging after each: crash-safe, resumable
         for mask_name in names:
-            jpath = RESULTS / f"{mname}.json"
+            jpath = results_dir / f"{mname}.json"
             merged = json.loads(jpath.read_text()) if jpath.exists() else {}
             if mask_name in merged:
                 continue
@@ -50,11 +54,11 @@ def main() -> None:
                   f"MAE={m['mae']:.3f} R2={m['r2']:.3f} (n={m['n']})", flush=True)
     # rebuild the flat CSV from all per-model JSONs
     rows = []
-    for jpath in sorted(RESULTS.glob("B[0-9]_*.json")):
+    for jpath in sorted(results_dir.glob("B[0-9]_*.json")):
         for mask_name, m in json.loads(jpath.read_text()).items():
             rows.append({"model": jpath.stem, "mask": mask_name, **m})
-    pd.DataFrame(rows).to_csv(RESULTS / "baselines.csv", index=False)
-    print(f"saved {RESULTS / 'baselines.csv'}")
+    pd.DataFrame(rows).to_csv(results_dir / "baselines.csv", index=False)
+    print(f"saved {results_dir / 'baselines.csv'}")
 
 
 if __name__ == "__main__":

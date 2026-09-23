@@ -62,3 +62,9 @@ def test_sample_and_fit_encoder():
     query = [i for i in range(n * t) if y_mask.ravel()[i]][3:5]
     out = encode_predict(model, pred0, y, support, query, hops, t)
     assert set(out) == set(query)
+    y_flat = y.ravel()
+    local = float(y_flat[support].mean())
+    p0 = pred0.ravel()
+    for q, val in out.items():
+        lo, hi = sorted([float(p0[q]), local])
+        assert lo - 1e-4 <= val <= hi + 1e-4

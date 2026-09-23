@@ -35,7 +35,7 @@ from river_graph.experiments.kshot import (
     region_station_index,
 )
 from river_graph.models.gcn import GCNDocModel
-from river_graph.models.support_encoder import analytic_blend, residual_idw
+from river_graph.models.support_encoder import analytic_blend
 
 
 def hop_lookup(dataset: dict):
@@ -117,7 +117,6 @@ def main() -> None:
     nodes = pd.read_csv(args.nodes, dtype={"site_no": str})
     hops = hop_lookup(dataset)
     t = y.shape[1]
-    n = y.shape[0]
 
     rows = region_station_index(sites, nodes, args.region)
     region_rows = [int(i) for i in rows]
@@ -130,8 +129,6 @@ def main() -> None:
         raise SystemExit("no feasible survey month")
     j = task.month_index
     support = list(task.support_by_k[k_used])
-    # truth for scoring: observed region cells this month not in support
-    query_observed = [i * t + j for i in region_rows if y_mask[i, j] and (i * t + j) not in set(support)]
     all_region_cells = [i * t + j for i in region_rows]
 
     train_rows = sorted({int(f) // t for f in split["train"]})

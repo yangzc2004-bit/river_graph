@@ -30,7 +30,7 @@ def load_wqp(wqp_dir: Path) -> pd.DataFrame:
     for f in sorted(wqp_dir.glob("*.csv")):
         try:
             df = pd.read_csv(f, low_memory=False)
-        except Exception:
+        except Exception:  # noqa: BLE001, S112  # one bad WQP CSV must not stop the batch load
             continue
         if df.empty:
             continue

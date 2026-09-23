@@ -60,7 +60,6 @@ def reachability_rows(dataset, regions, tasks_meta) -> pd.DataFrame:
         pred.setdefault(int(b), set()).add(int(a))
 
     hide_by_region = {r["code"]: set(r["hide_rows"]) for r in regions["primary"]}
-    comp_by_region = {r["code"]: set(r["task_component_rows"]) for r in regions["primary"]}
     len_hide = {}
     for code, hide in hide_by_region.items():
         g = nx.Graph()
@@ -76,7 +75,6 @@ def reachability_rows(dataset, regions, tasks_meta) -> pd.DataFrame:
 
     rows = []
     for region, task_seed, payload, task in tasks_meta:
-        comp = comp_by_region[region]
         hide = hide_by_region[region]
         lh = len_hide[region]
         for k in K_LIST:
@@ -142,7 +140,7 @@ def reachability_rows(dataset, regions, tasks_meta) -> pd.DataFrame:
                         "min_hop_within_huc6_paths": min_h,
                         "n_support_within_2hop": n2,
                         "frac_support_within_2hop": n2 / max(len(s_rows), 1),
-                        "outside_2hop": bool(min_f == min_f and min_f > 2),
+                        "outside_2hop": bool(not np.isnan(min_f) and min_f > 2),
                         "path_leaves_region": leaves,
                         "direction_mode": max(set(dirs), key=dirs.count) if dirs else "",
                     }

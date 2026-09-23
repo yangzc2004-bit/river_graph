@@ -99,6 +99,8 @@ def run_params(args: argparse.Namespace, model_name: str) -> dict:
         "share_weights": args.share_weights,
         "env_groups": args.env_groups,
         "env_encoder": args.arch == "transport_enc",
+        "edge_set": getattr(args, "edge_set", "river"),
+        "edge_direction": getattr(args, "edge_direction", "both"),
     }
 
 
@@ -347,6 +349,8 @@ def run(
                     env_encoder=args.arch == "transport_enc",
                     share_weights=args.share_weights,
                     edge_dropout=args.edge_dropout, weight_decay=args.wd,
+                    edge_set=getattr(args, "edge_set", "river"),
+                    edge_direction=getattr(args, "edge_direction", "both"),
                 )
             pred = model.fit_predict(dataset, split)
             y = dataset["y"].numpy()
@@ -390,7 +394,11 @@ def rebuild_flat_csv(results_dir: Path = RESULTS) -> None:
     """Rebuild the flat CSV from all per-model JSONs (never overwrite blindly:
     it is derived from the JSONs, which remain the source of truth)."""
     rows = []
-    for jpath in sorted(results_dir.glob("G*_*.json")) + sorted(results_dir.glob("H*_*.json")):
+    for jpath in (
+        sorted(results_dir.glob("G*_*.json"))
+        + sorted(results_dir.glob("H*_*.json"))
+        + sorted(results_dir.glob("ST_*.json"))
+    ):
         for mask_name, m in json.loads(jpath.read_text(encoding="utf-8")).items():
             rows.append({"model": jpath.stem, "mask": mask_name, **m})
     out = results_dir / "gnn.csv"
@@ -440,9 +448,21 @@ def main() -> None:
                     help="encoder: plain GCN (G0), directed (H1), "
                          "transport-gated (H2), transport + ecological "
                          "context encoder (M6)")
+    ap.add_argument("--edge-set", default="river", choices=["river", "empty"],
+                    help="transport edge set; empty is the trained no-message "
+                         "intervention")
+    ap.add_argument("--edge-direction", default="both",
+                    choices=["both", "upstream", "downstream"],
+                    help="transport message direction ablation")
     ap.add_argument("--dataset", default="data/processed/mississippi_graph_v02.pt",
                     help="dataset .pt (v03 adds edge_attr/regime, v04 adds "
                          "StreamCat ecological context)")
+    ap.add_argument("--masks-dir", default="experiments/masks",
+                    help="directory containing masks for this dataset grid")
+    ap.add_argument("--results-dir", default="experiments/results",
+                    help="directory for metrics and run summaries")
+    ap.add_argument("--pred-dir", default="experiments/predictions",
+                    help="directory for per-cell prediction parquet files")
     ap.add_argument("--tag", default=None,
                     help="result-name prefix override, e.g. H2E for v04 runs")
     ap.add_argument("--model-name", default=None,
@@ -491,8 +511,10 @@ def main() -> None:
                   "Regenerate with --rebuild-predictions (that trains).")
         raise SystemExit(1 if report.missing_predictions else 0)
 
-    report = run(args, results_dir=RESULTS, masks_dir=MASKS_DIR,
-                 pred_dir=PRED_DIR)
+    report = run(args,
+                 results_dir=Path(getattr(args, "results_dir", RESULTS)),
+                 masks_dir=Path(getattr(args, "masks_dir", MASKS_DIR)),
+                 pred_dir=getattr(args, "pred_dir", None))
     print()
     print(f"run summary: {report.summary()}")
     exit_code = 0
