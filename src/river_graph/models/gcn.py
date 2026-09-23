@@ -305,6 +305,7 @@ class GCNDocModel:
         self,
         extra_visible: np.ndarray | torch.Tensor | None = None,
         extra_values: np.ndarray | torch.Tensor | None = None,
+        only_visible: np.ndarray | torch.Tensor | None = None,
     ) -> np.ndarray:
         """Predict the full (N, T) grid in mg/L with optional extra DOC cells.
 
@@ -312,6 +313,11 @@ class GCNDocModel:
         to expose in the DOC channel at inference (e.g. K-shot support).
         ``extra_values`` optionally overrides the mg/L values shown for those
         cells (same length as ``extra_visible``), used by shuffle controls.
+
+        ``only_visible`` (Phase-3 scenario visibility) replaces the default
+        inference set entirely: when given, EXACTLY these flat-index cells are
+        visible in the DOC channel — used to enforce e.g. "train only" or
+        "train + context" without touching val/test labels.
         """
         if not hasattr(self, "_bundle"):
             raise RuntimeError("call fit() before predict()")
@@ -321,8 +327,14 @@ class GCNDocModel:
         base_visible, train_cells = b["base_visible"], b["train_cells"]
         n, t, stats = b["n"], b["t"], b["stats"]
 
-        visible = base_visible.clone()
-        visible.reshape(-1)[train_cells] = True
+        if only_visible is not None:
+            visible = torch.zeros(n, t, dtype=torch.bool)
+            only = torch.as_tensor(np.asarray(only_visible, dtype=np.int64))
+            if only.numel():
+                visible.reshape(-1)[only.reshape(-1)] = True
+        else:
+            visible = base_visible.clone()
+            visible.reshape(-1)[train_cells] = True
         y_feed = y
         if extra_visible is not None:
             extra = torch.as_tensor(np.asarray(extra_visible, dtype=np.int64))

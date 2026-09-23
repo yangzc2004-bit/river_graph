@@ -291,6 +291,38 @@ class EcoRandomForest:
         out[te] = rf.predict(test_feats[te])
         return np.expm1(out.reshape(n, t))
 
+    def fit_predict_full(
+        self,
+        dataset: dict,
+        split: dict[str, np.ndarray],
+        predict_visibility: set[str] | frozenset[str],
+    ) -> np.ndarray:
+        """Phase-3 full-grid prediction under scenario visibility.
+
+        Fitting keeps the staged rule (fit-view features, train rows only,
+        no validation labels anywhere). Prediction covers ALL N*T cells and
+        builds features with ``predict_visibility`` (the scenario's §1
+        visibility, e.g. ``{"train"}`` or ``{"train", "context"}``).
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        y, _x, _m, _ll, n, t, _tm, _obs = _ctx(dataset, split)
+        fit_feats, _ = ecological_tabular_features(
+            dataset, split, visibility=FIT_VISIBILITY
+        )
+        pred_feats, names = ecological_tabular_features(
+            dataset, split, visibility=predict_visibility
+        )
+        self.feature_names_ = names
+        tr = np.asarray(split["train"])
+        rf = RandomForestRegressor(
+            n_estimators=self.n_estimators, n_jobs=-1, random_state=self.seed
+        )
+        rf.fit(fit_feats[tr], y.ravel()[tr])
+        self.early_stop_ = None
+        out = rf.predict(pred_feats)
+        return np.expm1(out.reshape(n, t))
+
 
 class EcoMLP:
     """Phase-2 ecological MLP arm (spec §3-4).
