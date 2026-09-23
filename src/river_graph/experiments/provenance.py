@@ -57,6 +57,36 @@ def sha256_file(path: str | Path, chunk: int = 1 << 20) -> str:
     return digest.hexdigest()
 
 
+def runtime_code_snapshot() -> dict[str, str]:
+    """Per-file sha256 of every module under ``src/river_graph``."""
+    root = Path("src/river_graph")
+    return {
+        str(p.as_posix()): sha256_file(p)
+        for p in sorted(root.rglob("*.py"))
+        if p.is_file()
+    }
+
+
+def runtime_code_snapshot_sha256() -> str:
+    """Single hash over the runtime code snapshot (order-stable)."""
+    blob = json.dumps(runtime_code_snapshot(), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def run_identity_sha256(config_hash: str, started_at: str,
+                        runtime_sha: str | None = None) -> str:
+    """Identity of ONE training execution.
+
+    Distinct from ``config_hash`` (which identifies the configuration and
+    inputs): two runs of the same config share ``config_hash`` but get
+    different ``run_identity_sha256`` values, so an audit can tell a retrained
+    copy from a reused artifact.
+    """
+    runtime_sha = runtime_sha or runtime_code_snapshot_sha256()
+    blob = f"{config_hash}|{started_at}|{runtime_sha}"
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
 def file_identity(path: str | Path) -> dict[str, Any]:
     """Path + size + mtime + content hash for one file."""
     p = Path(path)

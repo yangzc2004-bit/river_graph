@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -101,6 +102,8 @@ def sidecar_identity(parquet: Path) -> dict:
             "identity_problems": ["no provenance sidecar"],
             "config_hash_ok": None,
             "input_hash_status": {},
+            "run_identity_sha256": "",
+            "runtime_code_snapshot_sha256": "",
         }
     meta = json.loads(mpath.read_text(encoding="utf-8"))
     cfg = meta.get("config") or {}
@@ -136,6 +139,8 @@ def sidecar_identity(parquet: Path) -> dict:
         "identity_problems": problems,
         "config_hash_ok": config_ok,
         "input_hash_status": hash_status,
+        "run_identity_sha256": meta.get("run_identity_sha256") or "",
+        "runtime_code_snapshot_sha256": meta.get("runtime_code_snapshot_sha256") or "",
     }
 
 
@@ -275,6 +280,63 @@ def classify(rows: list[dict], frozen: pd.DataFrame, multiseed: pd.DataFrame) ->
             r["status"] = "verified"
 
 
+def flag_anomalies(rows: list[dict]) -> None:
+    """Flag retrained duplicates and names whose arm/seed disagree with the sidecar.
+
+    Same ``config_hash`` with different ``run_identity_sha256`` values means the
+    configuration was retrained (a fresh copy, not a reused artifact). A
+    ``P2X_<arm>[_river][_s<seed>]__<mask>`` file name whose arm or seed
+    disagrees with its sidecar config is marked ``suspicious_name``.
+    """
+    p2x = re.compile(
+        r"^P2X_(?P<arm>H2X_nomsg|eco_RF|eco_MLP|H2X|H2E|H2)"
+        r"(?:_river)?(?:_s(?P<seed>\d+))?__"
+    )
+    expect_arch = {
+        "H2": "transport", "H2E": "transport",
+        "H2X": "transport_enc", "H2X_nomsg": "transport_enc",
+    }
+    expect_edge = {"H2X": "river", "H2X_nomsg": "empty"}
+    for r in rows:
+        r["run_flags"] = []
+        mpath = PRED_DIR / Path(r["file"]).with_suffix(".meta.json").name
+        meta = (
+            json.loads(mpath.read_text(encoding="utf-8"))
+            if mpath.exists() else {}
+        )
+        r["config_hash"] = meta.get("config_hash") or ""
+        m = p2x.match(r["file"])
+        if not m:
+            continue
+        cfg = meta.get("config") or {}
+        arm = m.group("arm")
+        want_seed = int(m.group("seed")) if m.group("seed") else 0
+        got_seed = cfg.get("seed")
+        if got_seed is not None and int(got_seed) != want_seed:
+            r["run_flags"].append(
+                f"suspicious_name:seed name={want_seed} sidecar={got_seed}"
+            )
+        arch = cfg.get("architecture")
+        if arm in expect_arch and arch and arch != expect_arch[arm]:
+            r["run_flags"].append(
+                f"suspicious_name:arm name={arm} architecture={arch}"
+            )
+        edge = cfg.get("edge_set")
+        if arm in expect_edge and edge and edge != expect_edge[arm]:
+            r["run_flags"].append(
+                f"suspicious_name:edge_set name={arm} edge_set={edge}"
+            )
+    by_hash: dict[str, list[dict]] = {}
+    for r in rows:
+        if r.get("config_hash"):
+            by_hash.setdefault(r["config_hash"], []).append(r)
+    for group in by_hash.values():
+        ids = {g.get("run_identity_sha256") for g in group}
+        if len(group) > 1 and len(ids) > 1:
+            for g in group:
+                g["run_flags"].append("retrained_duplicate")
+
+
 def metric_gaps() -> list[dict]:
     """(model, mask) pairs that have a metric JSON entry but no prediction."""
     gaps = []
@@ -299,18 +361,35 @@ def today() -> str:
 
 
 def main() -> None:
+    global PRED_DIR, RESULTS_DIR, MASKS_DIR, FROZEN
     ap = argparse.ArgumentParser()
     ap.add_argument("--verify", action="store_true",
                     help="recompute test metrics and compare with frozen table")
     ap.add_argument("--out", default="experiments/analysis")
     ap.add_argument("--date", default=today())
+    ap.add_argument("--pred-dir", default=str(PRED_DIR),
+                    help="predictions directory (e.g. experiments/phase2_ablation_stcore_v1/predictions)")
+    ap.add_argument("--results-dir", default=str(RESULTS_DIR))
+    ap.add_argument("--masks-dir", default=str(MASKS_DIR))
+    ap.add_argument("--frozen-dir", default=str(FROZEN),
+                    help="directory with benchmark.csv / benchmark_multiseed.csv; "
+                         "missing tables are tolerated (pre-freeze audits)")
     args = ap.parse_args()
+
+    PRED_DIR = Path(args.pred_dir)
+    RESULTS_DIR = Path(args.results_dir)
+    MASKS_DIR = Path(args.masks_dir)
+    FROZEN = Path(args.frozen_dir)
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    frozen = pd.read_csv(FROZEN / "benchmark.csv")
-    multiseed = pd.read_csv(FROZEN / "benchmark_multiseed.csv")
+    bench_path = FROZEN / "benchmark.csv"
+    multi_path = FROZEN / "benchmark_multiseed.csv"
+    frozen = (pd.read_csv(bench_path) if bench_path.exists()
+              else pd.DataFrame(columns=["model", "mask", "mae", "r2"]))
+    multiseed = (pd.read_csv(multi_path) if multi_path.exists()
+                 else pd.DataFrame(columns=["model", "mask", "mae", "r2"]))
     parquets = sorted(PRED_DIR.glob("*.parquet"))
 
     rows: list[dict] = []
@@ -320,6 +399,7 @@ def main() -> None:
         for p in parquets:
             rows.append(verify_one(p, datasets, masks))
         classify(rows, frozen, multiseed)
+        flag_anomalies(rows)
 
     paper_dir = Path("docs/paper")
     paper_hashes = {
@@ -376,6 +456,12 @@ def main() -> None:
                 print("identity problems (reported, never changes metric status):")
                 for _, r in stale.iterrows():
                     print(f"  {r['file']}: {r['identity_problems']}")
+        flagged = [r for r in rows if r.get("run_flags")]
+        if flagged:
+            print()
+            print("run flags (retrained duplicates / suspicious names):")
+            for r in flagged:
+                print(f"  {r['file']}: {r['run_flags']}")
         fatal = bad[bad["status"].isin(["conflict", "unmatched_cells"])]
         unexpected = sorted(set(fatal["file"]) - KNOWN_ATTENTION)
     print()

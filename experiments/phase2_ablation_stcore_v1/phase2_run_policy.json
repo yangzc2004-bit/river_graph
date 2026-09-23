@@ -1,0 +1,27 @@
+{
+  "version": "phase2_run_policy_v1",
+  "frozen_at": "2026-09-24",
+  "role": "Run-boundary policy for Phase-2B/2C execution. Checked fail-closed by scripts/run2b_executor.py before any dispatch.",
+  "driver": "scripts/run_gnn.py",
+  "executor": "scripts/run2b_executor.py",
+  "dispatch": "scripts/run2b_dispatch.py",
+  "arms_scope": ["H2", "H2E", "H2X", "H2X_nomsg"],
+  "tabular_scope": ["eco_RF", "eco_MLP"],
+  "policy_config": "configs/phase2_ablation_stcore_v1.json",
+  "h2x_policy": "experiments/phase2_ablation_stcore_v1/h2x_policy.json",
+  "endpoints_ref": "docs/paper/primary_endpoints.json",
+  "spec_ref": "docs/paper/phase2_ablation_spec.md",
+  "scenario_policy_ref": "configs/phase2_ablation_stcore_v1.json#scenario_policy",
+  "output_dir": "experiments/phase2_ablation_stcore_v1",
+  "predictions_dir": "experiments/phase2_ablation_stcore_v1/predictions",
+  "results_dir": "experiments/phase2_ablation_stcore_v1/results",
+  "masks_dir": "experiments/masks_stcore_v1",
+  "never_write": [
+    "experiments/results/",
+    "experiments/predictions/",
+    "experiments/frozen_results/"
+  ],
+  "run_identity_required": ["config_hash", "run_identity_sha256", "runtime_code_snapshot_sha256"],
+  "naming": "P2X_<arm>_s<seed>__<mask>",
+  "note": "Recreated 2026-09-24 after the previous policy file was lost in an external session rollback; this file is canonical from this date and is bound by hash in every batch record."
+}

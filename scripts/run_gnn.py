@@ -53,6 +53,8 @@ from river_graph.experiments.provenance import (
     describe,
     file_identity,
     identity_problems,
+    run_identity_sha256,
+    runtime_code_snapshot_sha256,
 )
 from river_graph.models.gcn import GCNDocModel
 
@@ -351,7 +353,10 @@ def run(
                     edge_dropout=args.edge_dropout, weight_decay=args.wd,
                     edge_set=getattr(args, "edge_set", "river"),
                     edge_direction=getattr(args, "edge_direction", "both"),
+                    **getattr(args, "train_kw", {}),
                 )
+            run_started = datetime.now(timezone.utc).isoformat()
+            runtime_sha = runtime_code_snapshot_sha256()
             pred = model.fit_predict(dataset, split)
             y = dataset["y"].numpy()
             m = metrics(y.ravel()[split["test"]], pred.ravel()[split["test"]])
@@ -369,6 +374,19 @@ def run(
                 meta_payload["metrics"] = m
                 meta_payload["prediction_file"] = \
                     prediction_path(mname, mask_name, store).name
+                # Run identity (not part of config_hash): two trainings of the
+                # same config share a config_hash but must be distinguishable.
+                meta_payload["run_started_at"] = run_started
+                meta_payload["runtime_code_snapshot_sha256"] = runtime_sha
+                meta_payload["run_identity_sha256"] = run_identity_sha256(
+                    meta_payload["config_hash"], run_started, runtime_sha
+                )
+                meta_payload["train_budget"] = {
+                    "max_epochs": getattr(args, "train_kw", {}).get(
+                        "max_epochs", 200
+                    ),
+                    "patience": getattr(args, "train_kw", {}).get("patience", 20),
+                }
                 try:
                     out, _mpath = save_predictions(
                         pred, dataset, split, mname, mask_name,

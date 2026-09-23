@@ -147,8 +147,34 @@
       "masks": "key_masks",
       "configs": 240,
       "claims_allowed": true,
-      "gates_ref": "docs/paper/primary_endpoints.json (unchanged)"
+      "gates_ref": "docs/paper/primary_endpoints.json (unchanged)",
+      "policy_ref": "configs/phase2_2c_policy.json"
     }
+  },
+  "scenario_policy": {
+    "families": {
+      "e2a_strict": {
+        "estimand": "strict future forecasting without post-cutoff DOC context",
+        "info_set": "no DOC context in test months"
+      },
+      "e2b_partial": {
+        "estimand": "future reconstruction with a running network",
+        "info_set": "20% post-cutoff observed cells visible as context"
+      },
+      "e3_spatial": {
+        "estimand": "spatial extrapolation to held-out stations in the largest component",
+        "info_set": "all DOC of held-out stations hidden"
+      }
+    },
+    "no_equivalence_boundary": "e2a and e2b are separate estimands and must never be pooled or treated as interchangeable evidence; passage on one never licenses a claim on the other",
+    "gate_union": "primary gate passes on the union of scenario-family passages (>=10% in at least 2 of {E2a, E2b, E3}) with per-scenario no-harm margins (E1 global 5%, each of E2a/E2b/E3 5%)",
+    "pilot_reconciliation": "the discarded Phase-2B pilot criterion (15% and two-of-three) is non-operative; operative gates are endpoints v1 plus configs/phase2_2c_policy.json"
+  },
+  "policy_binding": {
+    "policy_2c": "configs/phase2_2c_policy.json",
+    "h2x_policy": "experiments/phase2_ablation_stcore_v1/h2x_policy.json",
+    "h2x_policy_sha256": "190c26a6ed1cbc66df4ff797aa089cc38efecc4a048995994c8af361e50bcdbf",
+    "run_policy": "experiments/phase2_ablation_stcore_v1/phase2_run_policy.json"
   },
   "output": {
     "dir": "experiments/phase2_ablation_stcore_v1/",

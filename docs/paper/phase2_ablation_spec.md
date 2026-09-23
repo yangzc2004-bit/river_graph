@@ -184,3 +184,44 @@ Interpretation table (fixed before results):
 | eco_RF/MLP > H2X | pivot: ecology-aware missing-data / monitoring-design paper, models become baselines |
 | no-message ≈ H2X | river topology has not been shown necessary; do not sell topology as the core contribution |
 | no-message clearly worse than H2X | edge messages carry predictive value beyond the self path |
+
+## 8. Scenario policy and 2C gates (frozen 2026-09-24)
+
+### 8.1 E2a/E2b scenario family split and the no-equivalence boundary
+
+E2a (`e2a_strict`) and E2b (`e2b_partial`) are **separate estimands** with
+different information sets: E2b exposes 20% of post-cutoff observed cells as
+`context` (a running network), E2a exposes none. They are never pooled into a
+single "E2" number, and passage on one never licenses a claim on the other.
+E3 is its own estimand (spatial extrapolation to held-out stations).
+
+### 8.2 2C gates (operative)
+
+- Primary: H2X beats the best no-graph model by **≥10% MAE reduction in at
+  least 2 of {E2a, E2b, E3}** — the union of scenario-family passages
+  (endpoints v1 wording, unchanged).
+- Per-scenario no-harm margins: H2X may not be worse than the best baseline by
+  more than **5%** on any of E1 (global), E2a, E2b, E3 individually.
+- Direction consistency in **≥3 of 5** training seeds (42–46).
+- Station-clustered paired bootstrap on every main comparison; high-DOC
+  top 5%/10% precision, recall and tail error reported separately per scenario
+  family.
+
+### 8.3 2B pilot reconciliation
+
+A discarded 2B pilot criterion (≥15%, two-of-three) circled while 2B was in
+flight. It is recorded as **non-operative**: operative gates are the
+endpoints-v1 ≥10% union rule (§8.2) plus the per-scenario no-harm margins.
+Primary endpoints never changed (`primary_endpoints.json` v1).
+
+### 8.4 2C non-inferential margins and dominance preference
+
+The no-harm margins and the ordering preference **H2X ≥ H2E ≥ H2X_nomsg** are
+preference/margin rules frozen before results. A dominance violation downgrades
+the reading ("encoder/topology not necessary") and is never reported as a
+positive topology claim; margins are non-inferential and carry no
+significance language. On a gate tie, the primary treatment H2X is nominated.
+
+Machine-readable twin: `configs/phase2_2c_policy.json` (bound by hash with
+`experiments/phase2_ablation_stcore_v1/h2x_policy.json` and the endpoints
+file); contract tests: `tests/test_phase2_2c_policy.py`.
