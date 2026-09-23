@@ -171,8 +171,9 @@ class MLP:
 
 
 def ecological_tabular_features(
-    dataset: dict, split: dict[str, np.ndarray],
-    visibility: set[str] | None = None,
+    dataset: dict,
+    split: dict[str, np.ndarray],
+    visibility: set[str] | frozenset[str],
 ) -> tuple[np.ndarray, list[str]]:
     """(N*T, 23) ecological feature set for the Phase-2 tabular arms.
 
@@ -183,20 +184,24 @@ def ecological_tabular_features(
     across stations). A cell's own DOC is never a feature of its own row, and
     no edge, neighbour identity or distance information is included.
 
-    ``visibility`` selects which split cells' labels may enter the DOC
-    aggregates (keys of ``split`` among ``train``/``val``/``context``). This
-    stages label exposure: during fitting and early stopping use
-    ``{"train", "context"}`` so no validation label is visible; only the final
-    test-time view uses ``{"train", "val", "context"}`` per protocol. Passing
-    ``None`` gives the test-time view.
+    ``visibility`` is REQUIRED and states which split cells' labels may enter
+    the DOC aggregates (keys among ``train``/``val``/``context``). Callers
+    must pass it explicitly so label staging cannot be misused by default:
+    fitting and early stopping use ``FIT_VISIBILITY`` (no validation labels);
+    only the final test-time view uses ``TEST_VISIBILITY``.
     """
+    if visibility is None:
+        raise ValueError(
+            "visibility must be given explicitly (e.g. FIT_VISIBILITY or "
+            "TEST_VISIBILITY): it decides whether validation labels are seen"
+        )
     y, x, months, latlon, n, t, _tm, _obs = _ctx(dataset, split)
     x_mask = dataset["x_mask"].numpy()
     regime = dataset["regime"].numpy()
     if regime.shape[1] != 13:
         raise ValueError(f"expected 13 regime columns, got {regime.shape[1]}")
 
-    vis = {"train", "val", "context"} if visibility is None else set(visibility)
+    vis = set(visibility)
     bad = vis - {"train", "val", "context"}
     if bad:
         raise ValueError(f"unknown visibility keys: {sorted(bad)}")

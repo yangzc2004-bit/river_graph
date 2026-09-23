@@ -81,11 +81,20 @@ def test_test_view_features_do_expose_validation_labels():
     )
 
 
-def test_default_view_is_the_test_view():
+def test_visibility_must_be_explicit():
     ds, split = _toy_dataset(), _toy_split()
-    d, _ = ecological_tabular_features(ds, split)
-    t, _ = ecological_tabular_features(ds, split, visibility=TEST_VISIBILITY)
-    assert np.allclose(d, t)
+    try:
+        ecological_tabular_features(ds, split)  # type: ignore[call-arg]
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("omitting visibility must fail")
+    try:
+        ecological_tabular_features(ds, split, visibility=None)
+    except ValueError as exc:
+        assert "visibility" in str(exc)
+    else:
+        raise AssertionError("visibility=None must raise")
 
 
 def test_unknown_visibility_keys_are_refused():

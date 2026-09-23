@@ -215,6 +215,10 @@ def main() -> None:
     ap.add_argument("--tabular-only", action="store_true",
                     help="2B-R3: run only the eco RF/MLP arms (staged "
                          "visibility), keeping cached-and-valid units")
+    ap.add_argument("--ensemble-readiness", action="store_true",
+                    help="Phase 3 uncertainty ensemble completion "
+                         "(H2X, H2X_nomsg, eco_RF x seeds 45,46 x 8 masks); "
+                         "not a post hoc Phase 2 claim test")
     args = ap.parse_args()
     pol = load_and_check_policies()
 
@@ -259,6 +263,43 @@ def main() -> None:
         path = OUT_DIR / "smoke_report.json"
         path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"smoke report -> {path}")
+        return
+
+    if args.ensemble_readiness:
+        # Phase 3 uncertainty ensemble completion (frozen route decision):
+        # "not a post hoc Phase 2 claim test."
+        started = datetime.now(timezone.utc).isoformat()
+        t0 = time.time()
+        units: list[dict] = []
+        en_gnn = ["H2X", "H2X_nomsg"]
+        en_tab = ["eco_RF"]
+        en_seeds = [45, 46]
+        planned = (len(en_gnn) + len(en_tab)) * len(en_seeds) * len(MASKS)
+        for arm in en_gnn:
+            for seed in en_seeds:
+                for mask in MASKS:
+                    if cached_ok(expected_sidecar(arm, seed, mask), pol):
+                        print(f"[cached] {arm} s{seed} {mask}", flush=True)
+                        continue
+                    units.append(run_unit(pol, arm, seed, mask, smoke=False))
+                    print(f"[ok] {arm} s{seed} {mask}", flush=True)
+        for model in en_tab:
+            for seed in en_seeds:
+                for mask in MASKS:
+                    meta_p = (OUT_DIR / "predictions" /
+                              f"P2X_{model}_s{seed}__{mask}.meta.json")
+                    if cached_ok(meta_p, pol):
+                        print(f"[cached] {model} s{seed} {mask}", flush=True)
+                        continue
+                    units.append(run_tabular(pol, model, seed, mask))
+                    print(f"[ok] {model} s{seed} {mask}", flush=True)
+        write_record("P3_ensemble", units, planned, started, {
+            "duration_sec": round(time.time() - t0, 1),
+            "role": ("Phase 3 uncertainty ensemble completion; "
+                     "not a post hoc Phase 2 claim test."),
+            "route_decision": ("experiments/phase2_ablation_stcore_v1/"
+                               "frozen/phase2_route_decision.md"),
+        })
         return
 
     if args.tabular_only:

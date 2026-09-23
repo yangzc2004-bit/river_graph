@@ -217,7 +217,8 @@ def test_gcn_model_sends_empty_edge_tensor_when_edge_set_empty(monkeypatch):
 
 def test_ecological_features_shape_names_and_self_exclusion():
     ds, split = _toy_dataset(), _toy_split()
-    feats, names = ecological_tabular_features(ds, split)
+    view = {"train", "val", "context"}
+    feats, names = ecological_tabular_features(ds, split, visibility=view)
     assert feats.shape == (N * T, 23)
     assert names[:2] == ["temp", "temp_avail"]
     assert names[-2:] == ["month_visdoc_mean_excl_self", "month_visdoc_count_excl_self"]
@@ -225,7 +226,7 @@ def test_ecological_features_shape_names_and_self_exclusion():
     # a cell's own DOC must never appear in its own feature row
     ds2 = {**ds, "y": ds["y"].clone()}
     ds2["y"][1, 2] = 999.0  # hijack one observed cell (flat idx 6 = row 1, t 2)
-    feats2, _ = ecological_tabular_features(ds2, split)
+    feats2, _ = ecological_tabular_features(ds2, split, visibility=view)
     row = 1 * T + 2
     assert np.allclose(feats[row], feats2[row])
     # ...but other rows of the same month do see it through the aggregate
