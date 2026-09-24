@@ -1,0 +1,50 @@
+{
+  "version": "primary_endpoints_transfer_v1",
+  "frozen_at": "2026-09-24",
+  "paper_question": "When monitoring is sparse, can a shared ecology-time representation use a few observations of a target analyte to reconstruct its missing values in a new river basin?",
+  "anti_switching_clause": "These endpoints and gates are frozen before new transfer training. Any change requires a new version with a written reason; this file remains immutable.",
+  "forbidden_terms": ["causal", "causes", "mechanistic", "mechanism", "universal", "proves that", "proves the mechanism"],
+  "analytes": ["doc", "ph", "spec_conductance"],
+  "k_values": [0, 1, 3, 5],
+  "primary_cohort": {
+    "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "nodes": "data/processed/graph_nodes_graphfix_st357.csv",
+    "huc6_targets": ["103001", "510020", "102701", "101302", "101900"],
+    "role": "ST357 internal leave-one-HUC6-out"
+  },
+  "external_selection": {
+    "rule": "select by data availability only before model results are inspected",
+    "minimum_stations": 50,
+    "minimum_months": 36,
+    "minimum_station_months_per_analyte": 10000,
+    "minimum_largest_component_fraction": 0.8,
+    "role": "second complete case; no tuning or endpoint changes"
+  },
+  "endpoints": {
+    "primary": [
+      "relative MAE reduction at K=5 versus the best simple baseline",
+      "paired Delta MAE with task-month cluster bootstrap 95% CI",
+      "K curve at K={0,1,3,5}",
+      "support value-shuffle and site-shuffle gaps"
+    ],
+    "secondary": ["log-space error", "Q90 tail error", "coverage", "interval width"],
+    "stage3_gate": {
+      "relative_mae_reduction": ">=10% for >=2/3 analytes",
+      "basin_consistency": ">=3/5 HUC6 targets",
+      "k_curve": "K=5 no worse than K=0 and K=1",
+      "support_integrity": "true support beats value-shuffle and site-shuffle",
+      "no_harm": "no primary analyte/basin cell worsens by >5% while pooled success is claimed"
+    },
+    "external_gate": {
+      "replication": "DOC and at least one secondary analyte have the same direction",
+      "significance": "at least one replicated analyte has a cluster-bootstrap CI excluding zero",
+      "no_retuning": true
+    },
+    "uncertainty": {
+      "calibration": "val-only empirical validation calibration",
+      "coverage_and_width_must_be_joint": true,
+      "width_inflation_over_2x": "operational limitation"
+    }
+  },
+  "fallback": "If the transfer gate fails, retain the current DOC reconstruction and empirical uncertainty route as the manuscript mainline."
+}
