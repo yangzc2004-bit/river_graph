@@ -225,6 +225,96 @@ def isolated_view(labels, observed, source_train, source_val, *, target: int,
     }
 
 
+def make_cross_basin_split(
+    observed: np.ndarray, target_rows, seed: int, val_fraction: float = 0.1
+) -> dict[str, np.ndarray]:
+    """Split source-basin labels while hiding every analyte in target rows.
+
+    Unlike :func:`isolated_view`, this route deliberately leaves the target
+    analyte visible in source basins.  That makes its K=0 native-unit head
+    identifiable while preserving a completely unseen target HUC6.
+    """
+    obs = array(observed).astype(bool)
+    if obs.ndim != 3:
+        raise ValueError("observed must have shape (analyte, station, month)")
+    rows = np.asarray(target_rows, dtype=int)
+    if not len(rows) or rows.min() < 0 or rows.max() >= obs.shape[1]:
+        raise ValueError("invalid target rows")
+    if not 0 < val_fraction < 1:
+        raise ValueError("val_fraction must lie in (0, 1)")
+    source = obs.copy()
+    source[:, rows, :] = False
+    train = np.zeros_like(obs)
+    val = np.zeros_like(obs)
+    for analyte in range(obs.shape[0]):
+        cells = np.flatnonzero(source[analyte].ravel())
+        if len(cells) < 2:
+            raise ValueError(f"analyte {analyte} has fewer than two source cells")
+        rng = np.random.default_rng(seed + 1009 * analyte)
+        perm = rng.permutation(cells)
+        n_val = max(1, round(len(perm) * val_fraction))
+        val[analyte].ravel()[perm[:n_val]] = True
+        train[analyte].ravel()[perm[n_val:]] = True
+    return {
+        "observed": obs,
+        "train": train,
+        "val": val,
+        "test": obs & ~source,
+        "target_rows": rows.copy(),
+    }
+
+
+def cross_basin_view(labels, observed, source_train, source_val, *, target: int,
+                     target_rows, support=(), query=()) -> dict:
+    """Materialize a cross-basin view with a legal target-analyte K=0 head."""
+    y = array(labels)
+    masks = [array(m).astype(bool) for m in (observed, source_train, source_val)]
+    if y.ndim != 3 or any(m.shape != y.shape for m in masks):
+        raise ValueError("aligned label role masks required")
+    obs, train, val = masks
+    if not 0 <= target < y.shape[0]:
+        raise ValueError("target analyte out of bounds")
+    rows = np.asarray(target_rows, dtype=int)
+    if not len(rows) or rows.min() < 0 or rows.max() >= y.shape[1]:
+        raise ValueError("invalid target basin rows")
+    if (train & val).any() or ((train | val) & ~obs).any():
+        raise ValueError("overlapping or unobserved source roles")
+    if train[:, rows, :].any() or val[:, rows, :].any():
+        raise ValueError("target basin labels cannot enter source fit or selection")
+    support = np.asarray(support, dtype=int)
+    query = np.asarray(query, dtype=int)
+    for cells in (support, query):
+        if len(cells) != len(set(cells.tolist())):
+            raise ValueError("duplicate support/query cells")
+        if len(cells) and (cells.min() < 0 or cells.max() >= y.shape[1] * y.shape[2]):
+            raise ValueError("support/query outside target grid")
+        if len(cells) and not np.isin(cells // y.shape[2], rows).all():
+            raise ValueError("support/query outside target basin")
+        if len(cells) and not obs[target].ravel()[cells].all():
+            raise ValueError("unobserved support/query")
+    if np.intersect1d(support, query).size:
+        raise ValueError("support/query overlap")
+    stats = {}
+    for analyte in range(y.shape[0]):
+        values = y[analyte][train[analyte]]
+        if not len(values) or not np.isfinite(values).all():
+            raise ValueError("source training labels absent/nonfinite")
+        stats[str(analyte)] = {"mean": float(values.mean()), "std": max(float(values.std()), 1e-8)}
+    visible_support = np.zeros_like(y[target])
+    visible_support.ravel()[support] = y[target].ravel()[support]
+    return {
+        "fit_labels": np.where(train, y, 0),
+        "fit_mask": train.copy(),
+        "selection_labels": np.where(val, y, 0),
+        "selection_mask": val.copy(),
+        "source_statistics": stats,
+        "support_labels": visible_support,
+        "support_cells": support.copy(),
+        "query_cells": query.copy(),
+        "target_analyte_source_mask": train[target].copy(),
+    }
+
+
 def external_checks(summaries: dict, *, limits: dict) -> dict:
     """Numeric availability gates; final approval ALSO requires metadata and provenance."""
     return {

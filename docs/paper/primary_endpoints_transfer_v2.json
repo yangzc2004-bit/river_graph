@@ -1,0 +1,88 @@
+{
+  "version": "primary_endpoints_transfer_v2_cross_basin",
+  "frozen_at": "2026-09-24",
+  "route": "cross_basin_multi_analyte",
+  "status": "versioned_route_after_observed_stage2a",
+  "paper_question": "When a target analyte is observed in source HUC6 basins but a target HUC6 basin is sparse, can shared ecology-time information reconstruct the analyte and how much do K local observations add?",
+  "reason_for_new_version": "The target-unseen-analyte K=0 route has no legal native-unit output scale. This route keeps the target analyte visible in source HUC6 basins and holds out the target HUC6 basin.",
+  "prior_exposure": "Stage-2A same-analyte outputs were observed before protocol correction. They remain descriptive diagnostics and do not count as v2 transfer evidence.",
+  "anti_switching_clause": "These endpoints are frozen before v2 transfer training. Any change requires a new version with a written reason; v1 remains immutable.",
+  "forbidden_terms": [
+    "causal",
+    "causes",
+    "mechanistic",
+    "mechanism",
+    "universal",
+    "proves that",
+    "proves the mechanism"
+  ],
+  "analytes": ["doc", "ph", "spec_conductance"],
+  "k_values": [0, 1, 3, 5],
+  "primary_task": {
+    "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "nodes": "data/processed/graph_nodes_graphfix_st357.csv",
+    "edges": "data/processed/graph_edges_graphfix_st357.csv",
+    "target_huc6": ["103001", "510020", "102701", "101302", "101900"],
+    "canonical_alias": {"510020": "051002"},
+    "role": "same_month_spatial_leave_one_huc6_out",
+    "query_component": "frozen largest component rows from the task manifest",
+    "source_role": "all other HUC6 basins"
+  },
+  "visibility": {
+    "source_target_analyte_labels": "visible for source fit, source validation, native-unit output scaling, and source-only model selection",
+    "target_huc6_outcome_labels": "hidden from fit, early stopping, normalization, threshold selection, and model selection",
+    "target_support": "only K target-analyte support cells are visible during adaptation",
+    "target_query": "evaluation only",
+    "target_covariates": "frozen ecological, hydroclimatic, temporal, and graph inputs are allowed; target-HUC6 outcome labels for other analytes remain hidden"
+  },
+  "external_selection": {
+    "status": "future_pending",
+    "rule": "availability and provenance only before model results are inspected",
+    "minimum_stations": 50,
+    "minimum_months": 36,
+    "minimum_station_months_per_analyte": 10000,
+    "minimum_largest_component_fraction": 0.8,
+    "role": "future independent replication; no tuning or endpoint changes"
+  },
+  "endpoints": {
+    "primary": [
+      "paired Delta-MAE at K=5 versus the source-only-selected strongest simple baseline",
+      "relative MAE reduction for the same comparison",
+      "K curve at K={0,1,3,5}",
+      "support value-shuffle and support site-shuffle gaps"
+    ],
+    "secondary": [
+      "log-space diagnostic error",
+      "source-derived Q90 tail error",
+      "high-value recall",
+      "coverage",
+      "median interval width"
+    ],
+    "aggregation": {
+      "within_month": "mean query-cell error",
+      "within_huc6": "equal calendar-month means",
+      "within_analyte": "equal target-HUC6 means",
+      "cross_analyte_raw_mae": "not pooled because native units differ",
+      "bootstrap": "calendar month clusters with HUC6 fixed strata and paired methods/K values"
+    },
+    "feasibility_gate": {
+      "relative_mae_reduction": ">=10% for >=2/3 analytes",
+      "basin_consistency": "same direction in >=3/5 target HUC6 tasks",
+      "k_curve": "K=5 no worse than K=0 and K=1 for the primary aggregate",
+      "support_integrity": "true support beats both value-shuffle and site-shuffle",
+      "no_harm": "no primary analyte/HUC6 cell worsens by >5% while pooled success is claimed"
+    },
+    "confirmation": {
+      "full_curve_seeds": 3,
+      "k0_vs_k5_seeds": 5,
+      "external": "DOC and at least one secondary analyte same direction with at least one replicated analyte CI excluding zero; no retuning"
+    },
+    "uncertainty": {
+      "calibration": "val-only empirical validation calibration",
+      "coverage_and_width_must_be_joint": true,
+      "width_inflation_over_2x": "operational limitation",
+      "ranking_unlock": "requires at least two independent tools or indicators; otherwise no blind-spot or active-sampling claim"
+    }
+  },
+  "fallback": "If the v2 internal transfer gate fails, retain the current DOC reconstruction and empirical uncertainty route as the manuscript mainline and report transfer as a bounded negative or exploratory result."
+}
