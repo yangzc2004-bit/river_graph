@@ -199,6 +199,8 @@ def main() -> None:
                             "station": str(ds["site_no"][int(q) // y.shape[1]]),
                             "model_name": method,
                             "y_pred": float(preds[method][int(q)]),
+                            "uncertainty": np.nan,
+                            "uncertainty_status": "not_applicable_no_interval",
                             "source_q90_threshold": source_q90,
                             "support_count": int(task["support_count"]),
                             "support_hash": object_hash(support.tolist()),
