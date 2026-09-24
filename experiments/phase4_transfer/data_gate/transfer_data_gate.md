@@ -1,6 +1,6 @@
 # Phase 4 transfer data gate
 
-Generated: `2026-09-24T09:46:26.741753+00:00`
+Generated: `2026-09-24T15:00:15.304975+00:00`
 Stage-1 status: **external_pending**
 
 The audit uses only dataset availability, metadata, graph identity, and frozen QC facts.

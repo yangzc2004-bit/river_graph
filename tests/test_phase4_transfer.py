@@ -12,6 +12,7 @@ from river_graph.experiments.transfer import (
     load_bundle,
     validate_dataset,
 )
+from river_graph.experiments.transfer_data import external_raw_inventory
 
 
 def toy_dataset(n=8, t=12):
@@ -114,3 +115,25 @@ def test_isolated_view_rejects_target_label_leakage():
 def test_legacy_huc_alias_is_canonicalized_from_authoritative_metadata():
     assert canonical_huc8("510020") == "051002"
     assert canonical_huc8("101302010107") == "10130201"
+
+
+def test_external_raw_inventory_rejects_incomplete_result(tmp_path):
+    stations = """Location_Identifier,Location_HUCEightDigitCode,Location_Type,Location_LatitudeStandardized,Location_LongitudeStandardized\nUSGS-s1,02040104,Stream,41,-74\n"""
+    station_dir = tmp_path / "stations"
+    result_dir = tmp_path / "results"
+    station_dir.mkdir(); result_dir.mkdir()
+    for analyte in ("doc", "ph", "spec_conductance"):
+        (station_dir / f"{analyte}_stations.csv").write_text(stations)
+    header = "Org_Identifier,Location_Identifier,Activity_StartDate,Result_Characteristic,Result_SampleFraction,Result_Measure,Result_MeasureUnit,Result_ResultDetectionCondition,USGSpcode\n"
+    for analyte in ("doc", "ph", "spec_conductance"):
+        (result_dir / f"{analyte}_results.csv").write_text(header + "ERROR: INCOMPLETE DATA\n")
+    report = external_raw_inventory(
+        "02040104",
+        {a: station_dir / f"{a}_stations.csv" for a in ("doc", "ph", "spec_conductance")},
+        {a: result_dir / f"{a}_results.csv" for a in ("doc", "ph", "spec_conductance")},
+        {"minimum_stations": 1, "minimum_months": 1, "minimum_station_months_per_analyte": 1},
+    )
+    assert report["eligible"] is False
+    assert report["stage1_passed"] is False
+    assert all(not row["result_complete"] for row in report["analytes"].values())
+    assert all(row["station_months"] is None for row in report["analytes"].values())

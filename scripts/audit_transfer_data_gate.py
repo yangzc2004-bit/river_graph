@@ -38,7 +38,7 @@ def read_candidates(path: str | None) -> list[dict]:
 def assess_external(candidate: dict, limits: dict) -> dict:
     paths = candidate.get("analytes", {})
     missing = [a for a in ANALYTES if a not in paths]
-    result = {"name": candidate.get("name", "unnamed"), "eligible": False,
+    result = {"name": candidate.get("name", "unnamed"), "huc8": candidate.get("huc8"), "eligible": False,
               "errors": [f"missing analyte path: {a}" for a in missing]}
     if missing:
         return result
@@ -141,6 +141,7 @@ def main() -> int:
         local = {"eligible": False, "errors": [str(exc)], "summaries": {}}
         raw_manifest_records = []
     candidates = [assess_external(c, limits) for c in read_candidates(args.candidate_manifest)]
+    candidates = sorted(candidates, key=lambda c: (c.get("huc8") or "", c["name"]))
     selected = next((c["name"] for c in candidates if c["eligible"]), None)
     status = "local_data_failed" if not local["eligible"] else (
         "pass" if selected else ("external_no_eligible_candidate" if candidates else "external_pending")
@@ -154,7 +155,7 @@ def main() -> int:
         "candidates": candidates,
         "selected_external": selected,
         "training_authorized": False,
-        "selection_rule": "availability-only before model results are inspected",
+        "selection_rule": "availability-only before model results are inspected; canonical HUC8 then name tie-break",
     }
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)

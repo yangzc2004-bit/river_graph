@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 from pathlib import Path
 
@@ -9,6 +11,11 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
+from river_graph.data.wqp import (
+    extract_covariate_obs,
+    extract_doc_obs,
+    load_station_results,
+)
 from river_graph.experiments.masks import (
     make_e1,
     make_e2_partial,
@@ -31,6 +38,143 @@ RAW_COLUMNS = {
     "Result_MeasureUnit": "unit", "Result_SampleFraction": "fraction",
     "Result_ResultDetectionCondition": "detection", "USGSpcode": "pcode",
 }
+
+
+def _external_station_ids(path: Path, huc8: str) -> set[str]:
+    """Return valid stream station IDs from one WQP station inventory.
+
+    The WQP station endpoint can return diversions and other non-stream
+    locations even when a stream filter is supplied.  We therefore apply the
+    location type and coordinate checks again before a station can enter the
+    external graph inventory.
+    """
+    try:
+        frame = pd.read_csv(path, dtype=str, low_memory=False)
+    except (OSError, pd.errors.ParserError) as exc:
+        raise ValueError(f"{path}: incomplete or malformed station CSV") from exc
+    if "Location_Identifier" not in frame.columns:
+        raise ValueError(f"{path}: station identifier header missing")
+    required = {
+        "Location_Identifier", "Location_HUCEightDigitCode", "Location_Type",
+        "Location_LatitudeStandardized", "Location_LongitudeStandardized",
+    }
+    missing = required.difference(frame.columns)
+    if missing:
+        raise ValueError(f"{path}: missing station columns {sorted(missing)}")
+    frame = frame[
+        frame["Location_HUCEightDigitCode"].eq(huc8)
+        & frame["Location_Type"].eq("Stream")
+    ].copy()
+    lat = pd.to_numeric(frame["Location_LatitudeStandardized"], errors="coerce")
+    lon = pd.to_numeric(frame["Location_LongitudeStandardized"], errors="coerce")
+    frame = frame[lat.between(-90, 90) & lon.between(-180, 180)]
+    return set(frame["Location_Identifier"].str.removeprefix("USGS-").dropna())
+
+
+def _wqp_complete(path: Path) -> bool:
+    """Structural check only; a valid CSV cannot prove provider completeness."""
+    try:
+        text = path.read_bytes().decode("utf-8-sig")
+    except (OSError, UnicodeDecodeError):
+        return False
+    if not text.startswith("Org_Identifier,") or not text.endswith("\n"):
+        return False
+    if "INCOMPLETE DATA" in text.upper():
+        return False
+    try:
+        rows = csv.reader(io.StringIO(text), strict=True)
+        header = next(rows)
+        required = {
+            "Location_Identifier", "Activity_StartDate", "Result_Characteristic",
+            "Result_Measure", "Result_MeasureUnit", "Result_ResultDetectionCondition",
+        }
+        return required.issubset(header) and all(len(row) == len(header) for row in rows)
+    except (csv.Error, StopIteration):
+        return False
+
+
+def external_raw_inventory(
+    huc8: str,
+    station_paths: dict[str, Path],
+    result_paths: dict[str, Path],
+    limits: dict[str, float | int],
+) -> dict:
+    """Audit raw WQP evidence for one external candidate, without training.
+
+    This is deliberately a screening artifact.  It never creates a graph or
+    selects a basin from prediction results.  A result file with WQP's
+    ``INCOMPLETE DATA`` marker is ineligible even if its partial rows happen
+    to exceed a threshold.
+    """
+    missing = set(ANALYTES).difference(station_paths) | set(ANALYTES).difference(result_paths)
+    if missing:
+        raise ValueError(f"missing analyte paths: {sorted(missing)}")
+    station_sets = {
+        a: _external_station_ids(Path(station_paths[a]), huc8) for a in ANALYTES
+    }
+    common = sorted(set.intersection(*station_sets.values()))
+    analyte_rows: dict[str, dict] = {}
+    for analyte in ANALYTES:
+        path = Path(result_paths[analyte])
+        complete = path.exists() and _wqp_complete(path)
+        summary = {
+            "result_path": str(path), "result_sha256": file_hash(path) if path.exists() else None,
+            "result_complete": complete, "metadata_stations": len(station_sets[analyte]),
+            "common_metadata_stations": len(common), "active_stations": None,
+            "common_active_stations": None, "common_station_months": None,
+            "station_months": None, "months": None, "min_month": None, "max_month": None,
+            "accepted_rows": None, "eligible": False,
+            "completeness_scope": "structural_only_provider_total_unverified",
+        }
+        if complete:
+            tidy = load_station_results(path)
+            if analyte == "doc":
+                obs = extract_doc_obs(tidy)
+            else:
+                obs = extract_covariate_obs(tidy, analyte)
+            # The frozen data gate permits analyte-specific active masks on a
+            # shared graph. Counts use each analyte's valid stream inventory;
+            # the all-three intersection is reported as a mapping diagnostic.
+            obs = obs[obs["site_no"].isin(station_sets[analyte])].copy()
+            obs["month"] = obs["date"].dt.to_period("M")
+            obs = obs.dropna(subset=["month"])
+            cells = obs.drop_duplicates(["site_no", "month"])
+            common_cells = cells[cells["site_no"].isin(common)]
+            summary.update({
+                "active_stations": int(cells["site_no"].nunique()),
+                "common_active_stations": int(common_cells["site_no"].nunique()),
+                "station_months": len(cells), "months": int(cells["month"].nunique()),
+                "common_station_months": len(common_cells),
+                "min_month": str(cells["month"].min()) if len(cells) else None,
+                "max_month": str(cells["month"].max()) if len(cells) else None,
+                "accepted_rows": len(obs),
+            })
+        summary["eligible"] = bool(
+            summary["result_complete"]
+            and summary["active_stations"] >= limits["minimum_stations"]
+            and summary["months"] >= limits["minimum_months"]
+            and summary["station_months"] >= limits["minimum_station_months_per_analyte"]
+        )
+        analyte_rows[analyte] = summary
+    eligible = all(row["eligible"] for row in analyte_rows.values())
+    return {
+        "huc8": huc8, "station_type": "Stream", "common_metadata_stations": len(common),
+        "common_station_ids_sha256": object_hash(common), "station_sets": {
+            a: {"count": len(s), "sha256": object_hash(sorted(s)),
+                "path": str(station_paths[a]), "file_sha256": file_hash(station_paths[a])}
+            for a, s in station_sets.items()
+        }, "analytes": analyte_rows, "eligible": eligible,
+        "limits": limits, "selection_role": "availability_screen_only",
+        "completeness_scope": "structural_only_provider_total_unverified",
+        "stage1_passed": False,
+        "pending_checks": ["graph_connectivity", "feature_pipeline", "temporal_roles",
+                           "provider_completeness", "contemporaneous_provenance"],
+        "identity_status": "retrospective_raw_file_binding_not_download_provenance",
+        "qc_code": {str(p): file_hash(p) for p in [
+            Path(__file__), Path("src/river_graph/data/wqp.py"),
+            Path("src/river_graph/data/quality.py")
+        ]},
+    }
 
 
 def qc_replay(raw_dir: Path, datasets: dict) -> tuple[dict, pd.DataFrame]:

@@ -2,7 +2,10 @@
 
 ## Decision
 
-**Local ST357 data gate: passed. External case gate: pending. No training authorized.**
+**Local ST357 availability and QC checks: passed. External validation:
+pending and unverified. The two screened HUC8 candidates did not pass. The
+authorized internal fallback permits bounded ST357 baseline diagnostics;
+the overall Stage 2 gate has not been evaluated.**
 
 ## Evidence
 
@@ -55,15 +58,39 @@ and hit the 20 MB safety cap for specific conductance. These are screening
 records only; they do not establish concentration counts, graph connectivity,
 or eligibility. No external basin has been selected.
 
-The external gate remains pending until a candidate manifest contains three
-QC-frozen datasets, node metadata and edge metadata satisfying the frozen
-availability thresholds. The candidate must be selected by those availability
-facts before any prediction result is inspected.
+The external gate was screened using raw WQP availability evidence. No model
+prediction was made for either external candidate. The two candidate screens are recorded in
+`data_gate/candidate_02040104_raw_inventory.json` and
+`data_gate/candidate_02030103_raw_inventory.json`:
+
+| HUC8 | valid Stream stations in all three inventories | DOC station-months | result evidence |
+|---|---:|---:|---|
+| 02040104 | 114 | 7,064 | DOC complete; pH/EC bulk responses incomplete |
+| 02030103 | 171 | 3,242 | DOC complete; pH/EC bulk responses incomplete |
+
+Both candidates fail the frozen 10,000 station-month requirement for DOC
+under the analyte-specific active-mask rule on the union of valid Stream
+stations. The table's intersection counts are separate diagnostics, not the
+denominators used to restrict DOC counts. The incomplete pH/EC files are not
+counted as zero; their availability remains unknown. No graph was built for
+either candidate. These two failed screens do not establish that all external
+basins are ineligible. A complete independent external case remains pending.
 
 ## Route consequence
 
-Do not launch Stage 2 baselines or any new training yet. The next authorized
-work is to obtain or construct an external candidate manifest and to decide
-whether the transfer protocol should add an explicitly time-aware support
-condition. If no external case can pass, the manuscript falls back to the
-ST357 DOC reconstruction and empirical uncertainty route.
+The Stage-1 route decision is in `stage1_route_decision.md`. The internal
+ST357 multi-HUC6 fallback can proceed without claiming external replication.
+Internal held-out-HUC6 results, if valid, must remain clearly distinguished
+from validation in an independent external basin.
+
+The immediate work is the limited Stage 2A same-analyte support diagnostic.
+It uses privileged target-analyte source labels outside the whole target
+HUC6, with support/query tasks only on its frozen largest component. It is
+not a leave-one-analyte transfer result. Exploratory query results have
+already been seen and the first two implementations require the documented
+withdrawals/corrections in `stage2a_baseline_correction.md`.
+
+The overall Stage 2 gate remains **not evaluated** until all required
+baselines, controls, missingness regimes, and information comparisons are
+complete. The target-unseen K=0 output scale and source-only selection
+protocol also remain unresolved. Stage 3 transfer training is not authorized.
