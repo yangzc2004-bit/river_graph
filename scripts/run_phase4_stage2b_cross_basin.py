@@ -183,8 +183,8 @@ def main() -> None:
             support_grid.ravel()[support] = y.ravel()[support]
             preds = all_baseline_predictions(base, eco_base, support_grid, support, query, hops)
             for q in query:
-                # y_true is copied only for final scoring after prediction is
-                # fully determined. It is never passed to a baseline method.
+                # The prediction product is label-free. The evaluator opens
+                # query labels once, after this artifact is frozen.
                 for method in METHODS:
                     prediction_rows.append(
                         {
@@ -199,7 +199,6 @@ def main() -> None:
                             "station": str(ds["site_no"][int(q) // y.shape[1]]),
                             "model_name": method,
                             "y_pred": float(preds[method][int(q)]),
-                            "y_true": float(y.ravel()[q]),
                             "source_q90_threshold": source_q90,
                             "support_count": int(task["support_count"]),
                             "support_hash": object_hash(support.tolist()),

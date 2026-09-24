@@ -15,7 +15,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from river_graph.experiments.transfer import file_hash, object_hash
+from river_graph.experiments.transfer import (
+    ANALYTES,
+    DATASETS,
+    array,
+    file_hash,
+    load_bundle,
+    object_hash,
+)
 
 SUPPORT_METHODS = ("local_mean", "mean_bias", "analytic_blend")
 
@@ -87,6 +94,21 @@ def main() -> None:
         raise SystemExit("missing source-derived Q90 threshold")
     predictions["analyte"] = predictions["analyte"].astype(str)
     predictions["basin"] = predictions["basin"].map(_canonical_basin)
+    # Open hidden query labels only in this final scoring command. The runner's
+    # prediction product intentionally contains no y_true column.
+    datasets, summaries, _nodes = load_bundle(
+        DATASETS,
+        "data/processed/graph_nodes_graphfix_st357.csv",
+        "data/processed/graph_edges_graphfix_st357.csv",
+    )
+    for analyte in ANALYTES:
+        if summaries[analyte]["sha256"] != manifest["datasets"][analyte]["sha256"]:
+            raise SystemExit(f"dataset hash mismatch for {analyte}")
+    labels = {analyte: array(datasets[analyte]["y"]) for analyte in ANALYTES}
+    predictions["y_true"] = [
+        float(labels[row.analyte].ravel()[int(row.flat)])
+        for row in predictions.itertuples(index=False)
+    ]
     selected_path = root / "selected_baselines.csv"
     if file_hash(selected_path) != manifest["selected_baselines_sha256"]:
         raise SystemExit("selected baseline hash does not match manifest")
@@ -153,6 +175,36 @@ def main() -> None:
         )
     primary = pd.DataFrame(primary_rows)
     primary.to_csv(root / "primary_k5_metrics.csv", index=False)
+    pooled_rows = []
+    for (analyte, method), group in adaptations[adaptations.k.eq(5)].groupby(
+        ["analyte", "model_name"]
+    ):
+        estimate, lo, hi = _bootstrap_months(
+            group, value="delta_mae", reps=args.reps, seed=1000 + len(pooled_rows)
+        )
+        baseline_mae = float(group["baseline_mae"].mean())
+        pooled_rows.append(
+            {
+                "analyte": analyte,
+                "method": method,
+                "n_basins": int(group["basin"].nunique()),
+                "n_task_month": len(group),
+                "baseline_mae": baseline_mae,
+                "adapted_mae": float(group.mae.mean()),
+                "delta_mae": estimate,
+                "ci95_lo": lo,
+                "ci95_hi": hi,
+                "relative_reduction_pct": float(-estimate / baseline_mae * 100) if baseline_mae else None,
+                "direction_improves": bool(estimate < 0),
+                "ci_excludes_zero": bool(hi < 0),
+            }
+        )
+    pooled_primary = pd.DataFrame(pooled_rows)
+    pooled_primary.to_csv(root / "pooled_primary_k5_metrics.csv", index=False)
+    signal = pooled_primary.groupby("method").apply(
+        lambda frame: int(frame["direction_improves"].sum()), include_groups=False
+    )
+    nonlearning_signal_pass = bool(signal.max() >= 2) if len(signal) else False
 
     # Source-derived tail diagnostic. The threshold is never chosen from the
     # query values; n<20 is explicitly unstable as required by the protocol.
@@ -169,12 +221,18 @@ def main() -> None:
         "version": "phase4_stage2b_cross_basin_evaluation_v1",
         "role": "nonlearning_baseline_diagnostic_only",
         "methods": list(manifest["methods"]),
-        "primary_comparison": "K=5 support baseline versus source-validation-selected source-only climatology",
+        "primary_comparison": "K=5 support baseline versus source-validation-selected strongest source-only baseline",
         "cluster": "calendar month after task-level query averaging; equal HUC6 weights",
         "tail_threshold": "source-train Q90 per analyte/basin/seed; query truth only scores membership",
         "training_started": False,
         "stage2_unlocked": False,
         "stage3_unlocked": False,
+        "nonlearning_support_signal_gate": {
+            "status": "pass_diagnostic_only" if nonlearning_signal_pass else "not_passed",
+            "criterion": "at least two analytes show directional K=5 improvement for a support baseline",
+            "direction_improves_by_method": {str(k): int(v) for k, v in signal.items()},
+            "does_not_unlock_stage2_or_stage3": True,
+        },
         "baseline_signal_gate": "descriptive_only_until_EcoRF_H2X_and_matched_controls_are_complete",
         "missing_required_arms": ["EcoRF", "single_analyte_H2X", "no_graph", "no_ecology", "missingness_decomposition"],
         "primary_rows": len(primary),

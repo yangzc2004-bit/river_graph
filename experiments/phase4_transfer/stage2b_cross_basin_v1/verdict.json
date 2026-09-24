@@ -8,12 +8,22 @@
     "mean_bias",
     "analytic_blend"
   ],
-  "primary_comparison": "K=5 support baseline versus source-validation-selected source-only climatology",
+  "primary_comparison": "K=5 support baseline versus source-validation-selected strongest source-only baseline",
   "cluster": "calendar month after task-level query averaging; equal HUC6 weights",
   "tail_threshold": "source-train Q90 per analyte/basin/seed; query truth only scores membership",
   "training_started": false,
   "stage2_unlocked": false,
   "stage3_unlocked": false,
+  "nonlearning_support_signal_gate": {
+    "status": "pass_diagnostic_only",
+    "criterion": "at least two analytes show directional K=5 improvement for a support baseline",
+    "direction_improves_by_method": {
+      "analytic_blend": 3,
+      "local_mean": 3,
+      "mean_bias": 3
+    },
+    "does_not_unlock_stage2_or_stage3": true
+  },
   "baseline_signal_gate": "descriptive_only_until_EcoRF_H2X_and_matched_controls_are_complete",
   "missing_required_arms": [
     "EcoRF",
@@ -23,6 +33,6 @@
     "missingness_decomposition"
   ],
   "primary_rows": 45,
-  "evaluator_sha256": "86237637fb7f788714cc7a087e73d076b172f54fbda5afe0008d32f6459d0d91",
-  "manifest_hash": "9b1860e4de5b829079a1a4091739d104d62a09b711e1a1a8a4afb0193ae4de97"
+  "evaluator_sha256": "f0ad9a556bed4dd2343d61ec0f43be97c48cc3ac661efdc5a4eb18b7147ce89a",
+  "manifest_hash": "a03f6baaf20ee14ce02fc8203b328b69e719a9041ef5ba1659b7c923d78f5f89"
 }
