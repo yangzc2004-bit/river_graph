@@ -194,15 +194,16 @@ def _score(root: Path, predictions: pd.DataFrame, *, reps: int) -> dict:
     metrics.to_csv(root / "shuffle_metrics.csv", index=False)
     pd.DataFrame(ident_rows).to_csv(root / "identifiability.csv", index=False)
     pooled = []
-    for mode, group in metrics.groupby("support_mode"):
+    for (mode, analyte), group in metrics.groupby(["support_mode", "analyte"]):
         stable = group[~group["unstable_n_lt20"]].copy()
         if stable.empty:
             continue
-        # Equal weight across analyte × basin cells, after each cell has its
-        # own month-clustered estimate.
+        # Native-unit deltas are only averaged within an analyte.  DOC, pH,
+        # and conductance are never combined into one numeric mean.
         estimate = float(stable["delta_mae_true_minus_shuffle"].mean())
         pooled.append({
             "support_mode": mode,
+            "analyte": analyte,
             "mean_cell_delta_mae": estimate,
             "cells_true_better": int(stable["true_better"].sum()),
             "cells_ci_excludes_zero": int(stable["ci_excludes_zero"].sum()),

@@ -24,10 +24,17 @@ The reported delta is `MAE(true support) - MAE(shuffle)`, so negative values
 favor the declared support. Cell estimates are equal-weighted in the pooled
 summary; intervals are calendar-month-clustered within HUC6.
 
-| Control | Stable analyte × HUC6 cells | True better | Cell CIs excluding zero | Mean cell delta |
-|---|---:|---:|---:|---:|
-| Value-shuffle | 15 | 13 | 8 | -2.49 native units |
-| Site-shuffle | 6 | 6 | 4 | -12.25 native units |
+Native-unit deltas are summarized within analyte; DOC, pH, and conductance
+are never combined into one numeric mean.
+
+| Control | Analyte | Stable cells | True better | Cell CIs excluding zero | Mean cell delta |
+|---|---|---:|---:|---:|---:|
+| Value-shuffle | DOC | 5 | 4 | 4 | -0.099 mg/L |
+| Value-shuffle | pH | 5 | 5 | 3 | -0.0065 pH units |
+| Value-shuffle | Specific conductance | 5 | 4 | 1 | -7.36 uS/cm |
+| Site-shuffle | DOC | 2 | 2 | 1 | -0.469 mg/L |
+| Site-shuffle | pH | 2 | 2 | 1 | -0.0091 pH units |
+| Site-shuffle | Specific conductance | 2 | 2 | 2 | -36.26 uS/cm |
 
 The site-shuffle summary excludes two cells with fewer than 20 identifiable
 task-months, which remain in `shuffle_metrics.csv` with an `unstable_n_lt20`
@@ -46,4 +53,3 @@ general few-shot transfer claim, erase basin-level harm, or justify a new
 architecture, confirmation matrix, external replication, blind-spot claim, or
 active-sampling claim. `stage2_unlocked=false` and `stage3_unlocked=false`
 remain in force.
-
