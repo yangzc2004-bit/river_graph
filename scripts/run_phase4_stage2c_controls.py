@@ -151,6 +151,7 @@ def build_plan(context: dict, task_path: Path, spec_path: Path, runtime_hash: st
                 "route_spec_sha256": task_manifest["spec_sha256"],
                 "stage2c_spec": str(spec_path),
                 "stage2c_spec_sha256": file_hash(spec_path),
+                "runner_sha256": file_hash(Path(__file__)),
                 "dataset_path": DATASETS[analyte],
                 "dataset_sha256": context["summaries"][analyte]["sha256"],
                 "nodes_sha256": file_hash(NODES),
@@ -204,6 +205,7 @@ def build_plan(context: dict, task_path: Path, spec_path: Path, runtime_hash: st
         "roles_hash": task_manifest["roles_hash"],
         "stage2c_spec": str(spec_path),
         "stage2c_spec_sha256": file_hash(spec_path),
+        "runner_sha256": file_hash(Path(__file__)),
         "training_started": False,
         "query_labels_used_for_prediction": False,
         "runtime_snapshot_hash": runtime_hash,
@@ -223,15 +225,57 @@ def _ecorf_predict(dataset: dict, split: dict, seed: int) -> np.ndarray:
     return np.expm1(model.predict(features).reshape(array(dataset["y"]).shape))
 
 
-def _execute(context: dict, plan: dict, out: Path) -> None:
+def _collect_progress(plan: dict, out: Path) -> tuple[list[dict], list[dict]]:
+    """Collect completed unit records and source-only selection rows."""
+    pred_dir = out / "predictions"
+    selection_dir = out / "selection"
+    completed, selections = [], []
+    for unit in plan["units"]:
+        pred_path = pred_dir / f"{unit['unit']}.parquet"
+        selection_path = selection_dir / f"{unit['unit']}.json"
+        if not pred_path.is_file() or not selection_path.is_file():
+            continue
+        selection = json.loads(selection_path.read_text(encoding="utf-8"))
+        selections.append(selection)
+        completed.append({
+            **unit,
+            "prediction_sha256": file_hash(pred_path),
+            "n_rows": len(pd.read_parquet(pred_path)),
+        })
+    selections.sort(key=lambda row: row["unit"])
+    completed.sort(key=lambda row: row["unit"])
+    return completed, selections
+
+
+def _write_progress(plan: dict, out: Path) -> None:
+    completed, selections = _collect_progress(plan, out)
+    (out / "completed_units.json").write_text(
+        json.dumps(completed, indent=2) + "\n", encoding="utf-8"
+    )
+    pd.DataFrame(selections).to_csv(out / "source_selection.csv", index=False)
+
+
+def _execute(context: dict, plan: dict, out: Path, units: list[dict] | None = None) -> None:
     """Execute reviewed units; caller must have supplied the plan hash."""
 
     from river_graph.models.gcn import GCNDocModel
 
     pred_dir = out / "predictions"
+    selection_dir = out / "selection"
     pred_dir.mkdir(parents=True, exist_ok=True)
-    selection_rows, completed = [], []
-    for unit in plan["units"]:
+    selection_dir.mkdir(parents=True, exist_ok=True)
+    for unit in units or plan["units"]:
+        pred_path = pred_dir / f"{unit['unit']}.parquet"
+        selection_path = selection_dir / f"{unit['unit']}.json"
+        if pred_path.is_file() and selection_path.is_file():
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            pred = pd.read_parquet(pred_path, columns=["config_hash"])
+            if (
+                selection.get("config_hash") == unit["config_hash"]
+                and pred["config_hash"].nunique() == 1
+                and str(pred["config_hash"].iat[0]) == unit["config_hash"]
+            ):
+                continue
         arm, analyte, basin, seed = unit["arm"], unit["analyte"], unit["basin"], int(unit["seed"])
         role_key = (basin, seed)
         split_full = context["splits"][role_key]
@@ -263,18 +307,16 @@ def _execute(context: dict, plan: dict, out: Path) -> None:
         # open target query labels or alter the arm/model.
         y = array(dataset["y"]).astype(float)
         val = split["val"]
-        selection_rows.append(
-            {
-                "unit": unit["unit"],
-                "arm": arm,
-                "analyte": analyte,
-                "basin": basin,
-                "seed": seed,
-                "source_val_n": len(val),
-                "source_val_mae": float(np.mean(np.abs(pred0.ravel()[val] - y.ravel()[val]))),
-                "config_hash": unit["config_hash"],
-            }
-        )
+        selection_row = {
+            "unit": unit["unit"],
+            "arm": arm,
+            "analyte": analyte,
+            "basin": basin,
+            "seed": seed,
+            "source_val_n": len(val),
+            "source_val_mae": float(np.mean(np.abs(pred0.ravel()[val] - y.ravel()[val]))),
+            "config_hash": unit["config_hash"],
+        }
         rows_out = []
         for task in sorted(context["tasks_by_unit"][(basin, seed, analyte)], key=lambda row: (row["task_index"], row["k"])):
             k = int(task["k"])
@@ -311,11 +353,11 @@ def _execute(context: dict, plan: dict, out: Path) -> None:
                         "config_hash": unit["config_hash"],
                     }
                 )
-        path = pred_dir / f"{unit['unit']}.parquet"
-        pd.DataFrame(rows_out).to_parquet(path, index=False)
-        completed.append({**unit, "prediction_sha256": file_hash(path), "n_rows": len(rows_out)})
-    pd.DataFrame(selection_rows).to_csv(out / "source_selection.csv", index=False)
-    (out / "completed_units.json").write_text(json.dumps(completed, indent=2) + "\n", encoding="utf-8")
+        pd.DataFrame(rows_out).to_parquet(pred_path, index=False)
+        selection_path.write_text(
+            json.dumps(selection_row, indent=2) + "\n", encoding="utf-8"
+        )
+        _write_progress(plan, out)
 
 
 def main() -> None:
@@ -325,6 +367,8 @@ def main() -> None:
     ap.add_argument("--out-dir", default="experiments/phase4_transfer/stage2c_controls_v1")
     ap.add_argument("--execute", action="store_true", help="run reviewed units; plan-only is the default")
     ap.add_argument("--ack-plan-sha256", default=None, help="required hash of an existing reviewed execution_plan.json")
+    ap.add_argument("--only-unit", default=None, help="execute one unit and keep the plan resumable")
+    ap.add_argument("--finalize", action="store_true", help="finalize after all unit checkpoints exist")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
     validate_arm_configs()
@@ -348,9 +392,25 @@ def main() -> None:
             raise SystemExit(f"plan review acknowledgment mismatch; expected {want}")
         if plan.get("runtime_snapshot_hash") != runtime_hash:
             raise SystemExit("runtime snapshot changed since plan freeze; regenerate and review plan")
-        if plan.get("training_started"):
+        if plan.get("training_started") and not args.finalize:
             raise SystemExit("plan already marked training_started")
-        _execute(context, plan, out)
+        if args.finalize:
+            completed, _ = _collect_progress(plan, out)
+            if len(completed) != int(plan["n_units"]):
+                raise SystemExit(
+                    f"cannot finalize: {len(completed)}/{plan['n_units']} units complete"
+                )
+            _write_progress(plan, out)
+        else:
+            units = plan["units"]
+            if args.only_unit:
+                units = [u for u in units if u["unit"] == args.only_unit]
+                if len(units) != 1:
+                    raise SystemExit(f"unknown unit: {args.only_unit}")
+            _execute(context, plan, out, units=units)
+            completed, _ = _collect_progress(plan, out)
+            print(json.dumps({"status": "in_progress", "completed": len(completed), "units": plan["n_units"], "out": str(out)}))
+            return
         plan["training_started"] = True
         plan["status"] = "executed"
         plan["completed_units_sha256"] = file_hash(out / "completed_units.json")
@@ -379,6 +439,7 @@ def main() -> None:
         "tasks_hash": context["task_manifest"]["tasks_hash"],
         "roles_hash": context["task_manifest"]["roles_hash"],
         "stage2c_spec_sha256": file_hash(spec_path),
+        "runner_sha256": file_hash(Path(__file__)),
         "datasets": {a: context["summaries"][a]["sha256"] for a in ANALYTES},
         "nodes_sha256": file_hash(NODES),
         "edges_sha256": file_hash(EDGES),
