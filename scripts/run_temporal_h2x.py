@@ -41,6 +41,7 @@ DEFAULT_SEEDS = (42, 43, 44)
 FULL_SEEDS = (42, 43, 44, 45, 46)
 OUT_ROOT = Path("experiments/phase4_transfer/temporal_h2x_v1")
 MASKS_DIR = Path("experiments/masks_stcore_v1")
+TARGET_MASKS_DIR = OUT_ROOT / "target_masks"
 
 
 def _dataset(path: str | Path) -> dict:
@@ -56,6 +57,37 @@ def _split(mask: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         for key in roles
         if key in mask
     }
+
+
+def _target_mask_path(analyte: str, mask_name: str, dataset: dict) -> Path:
+    """Materialize the frozen missingness family on an analyte's observed grid.
+
+    The primary masks were frozen on DOC.  Other analytes have a small number
+    of additional missing labels, so their role cells are intersected with
+    that analyte's observed mask.  The resulting file is deterministic and
+    becomes the mask identity for both matched models.
+    """
+    TARGET_MASKS_DIR.mkdir(parents=True, exist_ok=True)
+    out = TARGET_MASKS_DIR / f"{analyte}__{mask_name}.npz"
+    observed = np.asarray(
+        dataset["y_mask"].cpu() if isinstance(dataset["y_mask"], torch.Tensor)
+        else dataset["y_mask"]
+    ).reshape(-1).astype(bool)
+    source = load_mask(mask_name, MASKS_DIR)
+    roles = ("train", "val", "test", "context")
+    filtered = {
+        role: np.asarray(source[role], dtype=np.int64)
+        for role in roles if role in source
+    }
+    filtered = {role: cells[observed[cells]] for role, cells in filtered.items()}
+    if not out.is_file():
+        np.savez_compressed(out, **filtered)
+    else:
+        with np.load(out, allow_pickle=False) as saved:
+            for role, cells in filtered.items():
+                if not np.array_equal(saved[role], cells):
+                    raise ValueError(f"target mask drift for {analyte}/{mask_name}")
+    return out
 
 
 def _model_name(kind: str, analyte: str, mask: str, seed: int) -> str:
@@ -95,7 +127,7 @@ def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, kind: str,
 
 
 def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
-            mask_name: str, max_epochs: int, patience: int,
+            mask_name: str, mask_path: str, max_epochs: int, patience: int,
             lookback: int = 12) -> dict:
     temporal = "gru" if kind == "h2x_t" else "none"
     return {
@@ -120,7 +152,7 @@ def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
         "patience": int(patience),
         "env_emb": 32,
         "dataset_path": str(dataset_path),
-        "mask_path": str(MASKS_DIR / f"{mask_name}.npz"),
+        "mask_path": str(mask_path),
         "temporal": temporal,
         "lookback": int(lookback if kind == "h2x_t" else 1),
         "causal": True,
@@ -135,16 +167,19 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
              force: bool = False) -> dict:
     dataset_path = DATASETS[analyte]
     dataset = _dataset(dataset_path)
-    split = _split(load_mask(mask_name, MASKS_DIR))
+    target_mask_path = _target_mask_path(analyte, mask_name, dataset)
+    with np.load(target_mask_path, allow_pickle=False) as target_mask:
+        split = _split({key: target_mask[key] for key in target_mask.files})
     run_name = _model_name(kind, analyte, mask_name, seed)
     run_dir = out_root / "runs" / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     params = _params(
         kind=kind, analyte=analyte, seed=seed, dataset_path=dataset_path,
-        mask_name=mask_name, max_epochs=max_epochs, patience=patience,
+        mask_name=mask_name, mask_path=str(target_mask_path),
+        max_epochs=max_epochs, patience=patience,
     )
     ds_identity = file_identity(dataset_path)
-    mask_identity = file_identity(MASKS_DIR / f"{mask_name}.npz")
+    mask_identity = file_identity(target_mask_path)
     params["dataset_sha256"] = ds_identity.get("sha256")
     params["mask_sha256"] = mask_identity.get("sha256")
     params["config_hash_version"] = 3
@@ -218,6 +253,7 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
         params=params,
         results_path=full_path,
         masks_dir=MASKS_DIR,
+        mask_path=target_mask_path,
         caller="scripts/run_temporal_h2x.py",
     )
     meta["config_hash"] = expected_hash
@@ -228,6 +264,9 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
     )
     meta["target_analyte"] = analyte
     meta["target_transform"] = TARGET_TRANSFORMS[analyte]
+    meta["parent_mask_name"] = mask_name
+    meta["target_mask_path"] = str(target_mask_path)
+    meta["target_mask_sha256"] = mask_identity.get("sha256")
     meta["temporal"] = params["temporal"]
     meta["lookback"] = params["lookback"]
     meta["causal"] = params["causal"]
@@ -297,6 +336,11 @@ def main() -> None:
         "lookback": 12,
         "temporal": "gru",
         "causal": True,
+        "target_mask_policy": (
+            "parent frozen mask intersected with analyte y_mask; "
+            "same missingness family, analyte-valid cells only"
+        ),
+        "target_masks_dir": str(TARGET_MASKS_DIR),
         "training_started": True,
     }
     (out_root / "run_plan.json").write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")

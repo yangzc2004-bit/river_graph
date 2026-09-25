@@ -24,6 +24,11 @@ the frozen Phase 0--3 artifacts.
   `mississippi_graph_spec_conductance_st357.pt`.
 - Masks: `e1_r20_seed42`, `e2a_strict`, `e2b_partial`, and
   `e3_spatial_seed42`.
+- The parent masks were frozen on DOC.  For pH and specific conductance, each
+  role is intersected with that analyte's own `y_mask`; the target-specific
+  mask preserves the parent missingness family while removing cells with no
+  target label.  The generated mask file is bound in provenance and is shared
+  by H2X and H2X-T for that analyte.
 - A window beginning before the first month repeats the first input and sets
   `history_valid=0` for the padded positions.
 

@@ -8,6 +8,10 @@
 - **T1: passed.** The DOC/E2a smoke path produced a finite nonconstant full
   station-month product with a recomputable V3 sidecar.  An E3 one-epoch
   smoke was also used to exercise the held-out-site metadata path.
+- The initial DOC-frozen mask was audited across targets.  pH and specific
+  conductance have additional missing labels, so the runner now materializes
+  deterministic target-specific intersections under `target_masks/` before
+  training; this is part of the T2 input contract.
 
 ## T2 pilot
 

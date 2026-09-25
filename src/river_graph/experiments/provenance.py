@@ -187,6 +187,7 @@ def build_meta(
     params: dict[str, Any],
     results_path: str | Path | None = None,
     masks_dir: str | Path = "experiments/masks",
+    mask_path: str | Path | None = None,
     caller: str | None = None,
 ) -> dict[str, Any]:
     """Assemble the sidecar record for one (model, mask) prediction.
@@ -194,7 +195,7 @@ def build_meta(
     ``params`` carries the training configuration; the config hash is computed
     here so callers cannot forget it.
     """
-    mask_file = Path(masks_dir) / f"{mask_name}.npz"
+    mask_file = Path(mask_path) if mask_path is not None else Path(masks_dir) / f"{mask_name}.npz"
     dataset_identity = file_identity(dataset_path)
     mask_identity = file_identity(mask_file)
     # The persisted config must carry the SAME identity fields that the hash is
