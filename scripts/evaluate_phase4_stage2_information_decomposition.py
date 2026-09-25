@@ -22,6 +22,7 @@ CONTROLS_DIR = Path("experiments/phase4_transfer/stage2c_controls_v1_1")
 SPEC = Path("experiments/phase4_transfer/stage2_information_decomposition_v1_spec.md")
 OUT_DIR = Path("experiments/phase4_transfer/stage2_information_decomposition_v1")
 TASK_KEYS = ["analyte", "basin", "task_seed", "task_index", "month", "k"]
+TASK_MANIFEST = Path("experiments/phase4_transfer/cross_basin_tasks_v1/manifest.json")
 BASELINE_METHODS = (
     "climatology",
     "eco_month_climatology",
@@ -83,12 +84,14 @@ def _pair(
     reference_name: str,
     label: str,
     k: int | None,
+    ignore_k: bool = False,
 ) -> pd.DataFrame:
-    left = comparator[TASK_KEYS + ["mae"]].rename(columns={"mae": "comparator_mae"})
-    right = reference[TASK_KEYS + ["mae"]].rename(columns={"mae": "reference_mae"})
-    merged = left.merge(right, on=TASK_KEYS, how="outer", validate="one_to_one", indicator=True)
+    join_keys = [key for key in TASK_KEYS if key != "k"] if ignore_k else TASK_KEYS
+    left = comparator[join_keys + ["mae"]].rename(columns={"mae": "comparator_mae"})
+    right = reference[join_keys + ["mae"]].rename(columns={"mae": "reference_mae"})
+    merged = left.merge(right, on=join_keys, how="outer", validate="one_to_one", indicator=True)
     if not merged["_merge"].eq("both").all():
-        bad = merged.loc[~merged["_merge"].eq("both"), TASK_KEYS].head(2).to_dict("records")
+        bad = merged.loc[~merged["_merge"].eq("both"), join_keys].head(2).to_dict("records")
         raise ValueError(f"unpaired rows for {label}: {bad}")
     merged = merged.drop(columns="_merge")
     merged["delta_mae"] = merged["comparator_mae"] - merged["reference_mae"]
@@ -234,6 +237,17 @@ def main() -> None:
     baselines = _read_metrics(baseline_root / "task_metrics.csv", "Stage-2B")
     controls = _read_metrics(controls_root / "task_metrics.csv", "Stage-2C")
     _verify_shared_keys(baselines, controls)
+    task_manifest = json.loads(TASK_MANIFEST.read_text(encoding="utf-8"))
+    baseline_manifest = json.loads((baseline_root / "manifest.json").read_text(encoding="utf-8"))
+    controls_manifest = json.loads((controls_root / "manifest.json").read_text(encoding="utf-8"))
+    expected_task_sha = file_hash(TASK_MANIFEST)
+    for name, manifest in (("Stage-2B", baseline_manifest), ("Stage-2C", controls_manifest)):
+        if manifest.get("task_manifest_sha256") != expected_task_sha:
+            raise ValueError(f"{name} task manifest hash mismatch")
+        tasks_hash = manifest.get("tasks_hash", manifest.get("task_manifest_tasks_hash"))
+        roles_hash = manifest.get("roles_hash", manifest.get("task_manifest_roles_hash"))
+        if tasks_hash != task_manifest["tasks_hash"] or roles_hash != task_manifest["roles_hash"]:
+            raise ValueError(f"{name} task/role hash mismatch")
     if not set(baselines["model_name"].unique()).issuperset(BASELINE_METHODS):
         raise ValueError("Stage-2B baseline ladder is incomplete")
     if not set(controls["model_name"].unique()).issuperset(CONTROL_ARMS):
@@ -262,13 +276,13 @@ def main() -> None:
     for method in ("local_mean", "mean_bias", "analytic_blend"):
         pair = _pair(_model(baselines, method, k=5), _model(baselines, method, k=0),
                      comparator_name=method, reference_name=method,
-                     label=f"support_increment_{method}", k=5)
+                     label=f"support_increment_{method}", k=5, ignore_k=True)
         _append_comparison(rows, pair, label=f"support_increment_{method}", comparator=method,
                            reference=method, reps=args.reps, seed=300 + len(rows), k=5)
     for arm in CONTROL_ARMS:
         pair = _pair(_model(controls, arm, k=5), _model(controls, arm, k=0),
                      comparator_name=arm, reference_name=arm,
-                     label=f"support_increment_{arm}", k=5)
+                     label=f"support_increment_{arm}", k=5, ignore_k=True)
         _append_comparison(rows, pair, label=f"support_increment_{arm}", comparator=arm,
                            reference=arm, reps=args.reps, seed=400 + len(rows), k=5)
 
@@ -290,7 +304,8 @@ def main() -> None:
     # implementation negative control and fail closed if it is not invariant.
     ecorf_support = _pair(_model(controls, "ecorf", k=5), _model(controls, "ecorf", k=0),
                           comparator_name="ecorf", reference_name="ecorf",
-                          label="negative_control_ecorf_support_invariance", k=5)
+                          label="negative_control_ecorf_support_invariance", k=5,
+                          ignore_k=True)
     if not np.allclose(ecorf_support["delta_mae"], 0.0, atol=1e-12, rtol=0.0):
         raise ValueError("EcoRF K=5/K=0 is not invariant")
     _append_comparison(rows, ecorf_support, label="negative_control_ecorf_support_invariance",
@@ -311,6 +326,9 @@ def main() -> None:
         "controls_metrics_sha256": file_hash(controls_root / "task_metrics.csv"),
         "baseline_manifest_sha256": file_hash(baseline_root / "manifest.json"),
         "controls_manifest_sha256": file_hash(controls_root / "manifest.json"),
+        "task_manifest_sha256": expected_task_sha,
+        "tasks_hash": task_manifest["tasks_hash"],
+        "roles_hash": task_manifest["roles_hash"],
         "missingness_family": FAMILY,
         "secondary_missingness_families": "unavailable",
         "query_labels_opened_by_this_evaluator": False,

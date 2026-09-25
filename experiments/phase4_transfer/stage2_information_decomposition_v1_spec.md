@@ -1,7 +1,9 @@
 # Stage 2 information decomposition specification (v1)
 
 Status: **versioned metrics-only diagnostic; frozen after the Stage-2C
-v1.1 control run and before query scoring**.
+v1.1 control run and before this diagnostic was run**. Stage-2B and Stage-2C
+upstream evaluators had already produced their task metrics; this evaluator
+does not reopen their labels.
 
 This artifact compares already scored Stage-2B and Stage-2C task metrics. It
 does not train, refit, or reopen hidden query labels. It is an information
@@ -73,4 +75,3 @@ The diagnostic does not unlock Stage 2 or Stage 3 by itself. It cannot support
 causal, mechanistic, universal, blind-spot, or active-sampling claims. Full
 stage gating still requires the frozen learned controls, support integrity,
 and transfer endpoints.
-
