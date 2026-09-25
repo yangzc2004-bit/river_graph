@@ -36,7 +36,7 @@ from river_graph.experiments.transfer_stage2c import (
 NODES = "data/processed/graph_nodes_graphfix_st357.csv"
 EDGES = "data/processed/graph_edges_graphfix_st357.csv"
 TASKS = "experiments/phase4_transfer/cross_basin_tasks_v1/manifest.json"
-SPEC = "experiments/phase4_transfer/stage2c_controls_v1_spec.md"
+SPEC = "experiments/phase4_transfer/stage2c_controls_v1_1_spec.md"
 K_VALUES = (0, 1, 3, 5)
 
 
@@ -135,7 +135,7 @@ def build_plan(context: dict, task_path: Path, spec_path: Path, runtime_hash: st
         role = context["roles"][(basin, seed)]
         for arm in ARMS:
             cfg = {
-                "version": "phase4_stage2c_controls_v1",
+                "version": "phase4_stage2c_controls_v1_1",
                 "arm": arm,
                 "arm_config": ARM_CONFIGS[arm],
                 "analyte": analyte,
@@ -180,7 +180,7 @@ def build_plan(context: dict, task_path: Path, spec_path: Path, runtime_hash: st
                 },
             })
     plan = {
-        "version": "phase4_stage2c_controls_v1",
+        "version": "phase4_stage2c_controls_v1_1",
         "status": "plan_only_pending_identity_review",
         "arms": list(ARMS),
         "units": units,
@@ -364,7 +364,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=TASKS)
     ap.add_argument("--spec", default=SPEC)
-    ap.add_argument("--out-dir", default="experiments/phase4_transfer/stage2c_controls_v1")
+    ap.add_argument("--out-dir", default="experiments/phase4_transfer/stage2c_controls_v1_1")
     ap.add_argument("--execute", action="store_true", help="run reviewed units; plan-only is the default")
     ap.add_argument("--ack-plan-sha256", default=None, help="required hash of an existing reviewed execution_plan.json")
     ap.add_argument("--only-unit", default=None, help="execute one unit and keep the plan resumable")
@@ -432,7 +432,7 @@ def main() -> None:
     plan_path.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
     plan_sha = file_hash(plan_path)
     manifest = {
-        "version": "phase4_stage2c_controls_v1",
+        "version": "phase4_stage2c_controls_v1_1",
         "status": "plan_only_pending_identity_review",
         "execution_plan_sha256": plan_sha,
         "task_manifest_sha256": file_hash(task_path),

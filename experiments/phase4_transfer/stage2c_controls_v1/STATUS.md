@@ -1,9 +1,3 @@
-# Stage 2C controls status
+# Stage 2C controls v1 — invalidated
 
-Plan-only freeze complete. No model has been trained and no prediction product has been generated. Review `execution_plan.json` before using the following explicit command:
-
-```bash
-.venv/bin/python scripts/run_phase4_stage2c_controls.py --execute --ack-plan-sha256 cb421a967b7261f075c0c4f11a82120e3d31dcc8023682e23cc904137e72eb61
-```
-
-The reviewed plan contains 180 units (135 GNN and 45 EcoRF fits).
+The 200-epoch execution was stopped after 15 partial units because the runtime cost was too high. No query labels were opened and no aggregate metrics were evaluated. These files are retained only as an implementation audit and must not be used as results. The versioned v1.1 pilot uses the unchanged tasks and arms with a 50-epoch/10-patience budget.

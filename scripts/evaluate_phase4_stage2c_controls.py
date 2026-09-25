@@ -43,7 +43,7 @@ def _bootstrap_months(frame: pd.DataFrame, reps: int = 2000, seed: int = 42):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--input-dir", default="experiments/phase4_transfer/stage2c_controls_v1")
+    ap.add_argument("--input-dir", default="experiments/phase4_transfer/stage2c_controls_v1_1")
     ap.add_argument("--reps", type=int, default=2000)
     args = ap.parse_args()
     root = Path(args.input_dir)
@@ -132,7 +132,7 @@ def main() -> None:
     primary_frame.to_csv(root / "primary_k5_metrics.csv", index=False)
     source_selection = pd.read_csv(root / "source_selection.csv")
     verdict = {
-        "version": "phase4_stage2c_controls_evaluation_v1",
+        "version": "phase4_stage2c_controls_evaluation_v1_1",
         "status": "completed_control_diagnostic",
         "training_started": True,
         "query_labels_used_for_prediction": False,

@@ -47,8 +47,8 @@ GNN_TRAINING = {
     "hidden": 64,
     "layers": 2,
     "dropout": 0.1,
-    "max_epochs": 200,
-    "patience": 20,
+    "max_epochs": 50,
+    "patience": 10,
 }
 ECORF_TRAINING = {"n_estimators": 200, "random_state": "unit_seed", "n_jobs": 1}
 
