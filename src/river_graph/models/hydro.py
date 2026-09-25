@@ -195,9 +195,16 @@ class TransportGCNImputer(nn.Module):
         self.head = nn.Linear(hidden, 1)
         self.dropout = dropout
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
-                edge_attr: torch.Tensor,
-                env_raw: torch.Tensor | None = None) -> torch.Tensor:
+    def encode_nodes(self, x: torch.Tensor, edge_index: torch.Tensor,
+                     edge_attr: torch.Tensor,
+                     env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        """Encode one monthly graph snapshot into node representations.
+
+        The released H2/H2X forward path is deliberately preserved: this
+        method contains the old trunk and ``forward`` delegates to it.  The
+        temporal H2X-T model reuses this encoder for every month and applies
+        its temporal memory to the returned hidden representations.
+        """
         if self.env_encoder is not None:
             emb = self.env_encoder(env_raw)          # (N, env_emb), static
             x = torch.cat([x, emb], dim=-1)
@@ -205,7 +212,18 @@ class TransportGCNImputer(nn.Module):
         for conv in self.convs:
             h = F.relu(conv(h, edge_index, edge_attr, self.edge_direction))
             h = F.dropout(h, p=self.dropout, training=self.training)
-        return self.head(h).squeeze(-1)
+        return h
+
+    def predict_from_hidden(self, hidden: torch.Tensor) -> torch.Tensor:
+        """Apply the original scalar prediction head to node representations."""
+        return self.head(hidden).squeeze(-1)
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_attr: torch.Tensor,
+                env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        return self.predict_from_hidden(
+            self.encode_nodes(x, edge_index, edge_attr, env_raw)
+        )
 
 
 class DirectedGCNImputer(nn.Module):

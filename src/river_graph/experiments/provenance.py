@@ -62,6 +62,17 @@ CONFIG_FIELDS_V2 = CONFIG_FIELDS_V1 + (
     "patience",
     "env_emb",
 )
+CONFIG_FIELDS_V3 = CONFIG_FIELDS_V2 + (
+    "temporal",
+    "lookback",
+    "causal",
+    "temporal_hidden",
+    "target_analyte",
+    "target_transform",
+    "runtime_snapshot_hash",
+)
+# Keep the default schema at V2 for existing snapshot runners.  Temporal runs
+# opt into V3 explicitly through ``config_hash_version=3`` in their params.
 CONFIG_FIELDS = CONFIG_FIELDS_V2
 CONFIG_HASH_VERSION = 2
 
@@ -90,6 +101,9 @@ _RUNTIME_EXTRA = (
     "configs/phase2_ablation_stcore_v1.json",
     "configs/phase2_2c_policy.json",
     "experiments/phase2_ablation_stcore_v1/h2x_policy.json",
+    "src/river_graph/models/temporal.py",
+    "src/river_graph/experiments/temporal_h2x.py",
+    "scripts/run_temporal_h2x.py",
 )
 
 
@@ -142,14 +156,20 @@ def file_identity(path: str | Path) -> dict[str, Any]:
 def config_hash(params: dict[str, Any], version: int | None = None) -> str:
     """Stable hash over the parameters that determine the produced numbers.
 
-    ``version`` selects the field schema (1 = historical, 2 = complete). When
+    ``version`` selects the field schema (1 = historical, 2 = complete, 3 =
+    temporal/analyte-aware). When
     omitted it is taken from ``params['config_hash_version']``, defaulting to
     the current schema. The schema version is NOT mixed into the hashed blob,
     so V1 sidecars recompute under V1 exactly as they were written.
     """
     if version is None:
         version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
-    fields = CONFIG_FIELDS_V2 if version >= 2 else CONFIG_FIELDS_V1
+    if version >= 3:
+        fields = CONFIG_FIELDS_V3
+    elif version >= 2:
+        fields = CONFIG_FIELDS_V2
+    else:
+        fields = CONFIG_FIELDS_V1
     payload = {key: params.get(key) for key in fields}
     if isinstance(payload.get("env_groups"), list):
         payload["env_groups"] = sorted(payload["env_groups"])
@@ -181,14 +201,21 @@ def build_meta(
     # computed over, otherwise a later run cannot tell that its inputs changed.
     full_config = config_payload({**params, "model_name": model_name},
                                  dataset_identity, mask_identity)
+    schema_version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
+    if schema_version >= 3:
+        fields = CONFIG_FIELDS_V3
+    elif schema_version >= 2:
+        fields = CONFIG_FIELDS_V2
+    else:
+        fields = CONFIG_FIELDS_V1
     payload: dict[str, Any] = {
         "model_name": model_name,
         "mask_name": mask_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "caller": caller or params.get("script"),
         "python": platform.python_version(),
-        "config_hash_version": CONFIG_HASH_VERSION,
-        "config": {key: full_config.get(key) for key in CONFIG_FIELDS_V2},
+        "config_hash_version": schema_version,
+        "config": {key: full_config.get(key) for key in fields},
         "dataset": dataset_identity,
         "mask": mask_identity,
         "results_path": str(results_path) if results_path else None,
@@ -199,8 +226,7 @@ def build_meta(
             "a full-grid missing-value imputation product"
         ),
     }
-    payload["config_hash"] = config_hash(full_config,
-                                         version=CONFIG_HASH_VERSION)
+    payload["config_hash"] = config_hash(full_config, version=schema_version)
     return payload
 
 
@@ -228,7 +254,12 @@ def identity_problems(meta: dict[str, Any] | None,
         return ["no provenance sidecar"]
     stored = meta.get("config", {}) or {}
     version = int(meta.get("config_hash_version") or 1)
-    fields = CONFIG_FIELDS_V2 if version >= 2 else CONFIG_FIELDS_V1
+    if version >= 3:
+        fields = CONFIG_FIELDS_V3
+    elif version >= 2:
+        fields = CONFIG_FIELDS_V2
+    else:
+        fields = CONFIG_FIELDS_V1
     problems = []
     for key in fields:
         want = expected.get(key)
