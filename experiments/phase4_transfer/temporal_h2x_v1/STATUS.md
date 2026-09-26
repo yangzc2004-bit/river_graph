@@ -92,3 +92,13 @@ The ledger records 144 historical sidecars whose declared temporal fields do
 not fully describe the runtime arm (the predictions are retained unchanged).
 This is reported as a provenance metadata discrepancy; it does not alter the
 already frozen predictions or their original audit records.
+
+## T9 final products and figures
+
+T9 builds the five-seed H2X-T median product for all three analytes and four
+masks (2,801,736 full-grid rows; 32,400 test rows), plus seed spread SD/IQR,
+station-level test error, and a manifest of all source prediction hashes.
+Publication figures include the analyte-by-missingness reduction heatmap,
+descriptive station traces, and E2a station error maps. Seed spread is labeled
+as ensemble dispersion and is not presented as a calibrated prediction
+interval.
