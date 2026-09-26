@@ -1,0 +1,36 @@
+{
+  "version": "temporal_h2x_v1_t4_ablation",
+  "stage": "full",
+  "analytes": [
+    "doc",
+    "ph",
+    "spec_conductance"
+  ],
+  "masks": [
+    "e1_r20_seed42",
+    "e2a_strict",
+    "e2b_partial",
+    "e3_spatial_seed42"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "models": [
+    "h2x_t_no_history",
+    "h2x_t_hydro_only"
+  ],
+  "max_epochs": 10,
+  "patience": 3,
+  "lookback": 12,
+  "temporal": "gru",
+  "causal": true,
+  "training_protocol": "matched_full_grid",
+  "target_mask_policy": "same target-specific masks as T2/T3",
+  "ablation_definitions": {
+    "h2x_t_no_history": "reverse preceding GRU history steps; current step retained",
+    "h2x_t_hydro_only": "zero target value/visibility channels before spatial encoding"
+  },
+  "training_started": true
+}
