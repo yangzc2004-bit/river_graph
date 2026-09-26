@@ -94,6 +94,14 @@ def _model_name(kind: str, analyte: str, mask: str, seed: int) -> str:
     return f"{kind}__{analyte}__{mask}__seed{seed}"
 
 
+def _history_ablation(kind: str) -> str:
+    return {
+        "h2x_t": "none",
+        "h2x_t_no_history": "shuffle",
+        "h2x_t_hydro_only": "hydro_only",
+    }.get(kind, "none")
+
+
 def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, kind: str,
                analyte: str, mask: str, seed: int) -> pd.DataFrame:
     y = np.asarray(dataset["y"].cpu() if isinstance(dataset["y"], torch.Tensor) else dataset["y"])
@@ -129,7 +137,7 @@ def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, kind: str,
 def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
             mask_name: str, mask_path: str, max_epochs: int, patience: int,
             lookback: int = 12) -> dict:
-    temporal = "gru" if kind == "h2x_t" else "none"
+    temporal = "gru" if kind.startswith("h2x_t") else "none"
     return {
         "script": "scripts/run_temporal_h2x.py",
         "model_name": kind,
@@ -162,6 +170,7 @@ def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
         # Both arms use one optimizer update per full monthly sequence.  This
         # makes the snapshot comparison commensurate with the GRU wrapper.
         "training_protocol": "matched_full_grid",
+        "history_ablation": _history_ablation(kind),
     }
 
 
@@ -217,7 +226,7 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
             target_transform=TARGET_TRANSFORMS[analyte],
             training_protocol="matched_full_grid",
         )
-    elif kind == "h2x_t":
+    elif kind.startswith("h2x_t"):
         model = H2XTemporalModel(
             seed=seed,
             lookback=12,
@@ -229,6 +238,7 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
             max_epochs=max_epochs,
             patience=patience,
             target_transform=TARGET_TRANSFORMS[analyte],
+            history_ablation=_history_ablation(kind),
         )
     else:
         raise ValueError(f"unknown model kind: {kind}")
@@ -276,7 +286,8 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
     meta["lookback"] = params["lookback"]
     meta["causal"] = params["causal"]
     meta["temporal_hidden"] = params["temporal_hidden"]
-    meta["temporal_product"] = kind == "h2x_t"
+    meta["history_ablation"] = params["history_ablation"]
+    meta["temporal_product"] = kind.startswith("h2x_t")
     meta["export_scope"] = (
         "full station-month grid; observed labels are retained only for final "
         "evaluation and hidden cells have y_true=NaN"
@@ -302,7 +313,11 @@ def main() -> None:
     ap.add_argument("--analytes", nargs="+", choices=ANALYTES, default=None)
     ap.add_argument("--masks", nargs="+", default=None)
     ap.add_argument("--seeds", nargs="+", type=int, default=None)
-    ap.add_argument("--models", nargs="+", choices=("h2x", "h2x_t"), default=None)
+    ap.add_argument(
+        "--models", nargs="+",
+        choices=("h2x", "h2x_t", "h2x_t_no_history", "h2x_t_hydro_only"),
+        default=None,
+    )
     ap.add_argument("--max-epochs", type=int, default=None)
     ap.add_argument("--patience", type=int, default=None)
     ap.add_argument("--force", action="store_true")

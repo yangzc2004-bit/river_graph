@@ -223,6 +223,7 @@ class H2XTemporalModel:
         edge_direction: str = "both",
         target_transform: str = "log1p",
         chunk_months: int = 256,
+        history_ablation: str = "none",
     ):
         self.seed = int(seed)
         self.lookback = int(lookback)
@@ -240,6 +241,7 @@ class H2XTemporalModel:
         self.edge_direction = edge_direction
         self.target_transform = target_transform
         self.chunk_months = int(chunk_months)
+        self.history_ablation = history_ablation
 
     def _build_model(self, inputs: TemporalInputs, dataset: dict) -> TemporalTransportGCNImputer:
         edge_attr = _as_tensor(dataset["edge_attr"])
@@ -261,6 +263,7 @@ class H2XTemporalModel:
             lookback=self.lookback,
             temporal_hidden=self.temporal_hidden,
             chunk_months=self.chunk_months,
+            history_ablation=self.history_ablation,
         )
         model._edge_index = edge_index
         model._edge_attr = edge_attr

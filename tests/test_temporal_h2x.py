@@ -88,6 +88,21 @@ def test_batched_month_encoding_matches_independent_spatial_calls():
     assert torch.allclose(batched, independent, atol=1e-6, rtol=1e-6)
 
 
+def test_history_ablation_modes_keep_current_step_and_are_valid():
+    torch.manual_seed(5)
+    spatial = TransportGCNImputer(10, 6, hidden=16, layers=2)
+    x = torch.randn(5, 4, 10)
+    ei = torch.tensor([[0, 1, 2], [1, 2, 3]])
+    ea = torch.randn(3, 6)
+    for mode in ("shuffle", "hydro_only"):
+        temporal = TemporalTransportGCNImputer(
+            spatial, lookback=3, temporal_hidden=16, chunk_months=2,
+            history_ablation=mode,
+        )
+        out = temporal(x, ei, ea)
+        assert out.shape == (5, 4)
+
+
 def test_temporal_input_visibility_fills_only_visible_target_cells():
     dataset = _toy_dataset()
     split = _split()

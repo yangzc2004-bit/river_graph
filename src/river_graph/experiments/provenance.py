@@ -71,6 +71,7 @@ CONFIG_FIELDS_V3 = CONFIG_FIELDS_V2 + (
     "target_transform",
     "runtime_snapshot_hash",
     "training_protocol",
+    "history_ablation",
 )
 # Keep the default schema at V2 for existing snapshot runners.  Temporal runs
 # opt into V3 explicitly through ``config_hash_version=3`` in their params.

@@ -33,7 +33,8 @@ class TemporalTransportGCNImputer(nn.Module):
     """
 
     def __init__(self, spatial: TransportGCNImputer, *, lookback: int = 12,
-                 temporal_hidden: int = 64, chunk_months: int = 256):
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none"):
         super().__init__()
         if lookback < 1:
             raise ValueError("lookback must be positive")
@@ -41,10 +42,15 @@ class TemporalTransportGCNImputer(nn.Module):
             raise ValueError("temporal_hidden must be positive")
         if chunk_months < 1:
             raise ValueError("chunk_months must be positive")
+        if history_ablation not in ("none", "shuffle", "hydro_only"):
+            raise ValueError(
+                "history_ablation must be 'none', 'shuffle', or 'hydro_only'"
+            )
         self.spatial = spatial
         self.lookback = int(lookback)
         self.temporal_hidden = int(temporal_hidden)
         self.chunk_months = int(chunk_months)
+        self.history_ablation = history_ablation
         spatial_hidden = spatial.head.in_features
         if temporal_hidden != spatial_hidden:
             raise ValueError(
@@ -121,6 +127,14 @@ class TemporalTransportGCNImputer(nn.Module):
             valid_feature = valid.T[:, :, None].expand(
                 self.lookback, stop - start, n
             ).reshape(self.lookback, (stop - start) * n, 1)
+            if self.history_ablation == "shuffle" and self.lookback > 1:
+                # Keep the current month in the final GRU step, but reverse
+                # the preceding history.  This preserves the information
+                # amount while removing chronological order.
+                seq = torch.cat([seq[:-1].flip(0), seq[-1:]], dim=0)
+                valid_feature = torch.cat(
+                    [valid_feature[:-1].flip(0), valid_feature[-1:]], dim=0
+                )
             gru_in = torch.cat([seq, valid_feature], dim=-1)
             gru_out, _ = self.temporal(gru_in)
             last = gru_out[-1].reshape(stop - start, n, self.temporal_hidden)
@@ -132,6 +146,11 @@ class TemporalTransportGCNImputer(nn.Module):
                          edge_attr: torch.Tensor,
                          env_raw: torch.Tensor | None = None) -> torch.Tensor:
         """Predict every month in a chronological input sequence."""
+        if self.history_ablation == "hydro_only":
+            # Remove the target value/visibility channels before the spatial
+            # encoder.  Hydro, ecology, seasonality, and history-valid remain.
+            x_seq = x_seq.clone()
+            x_seq[:, :, 8:10] = 0.0
         hidden = self.encode_months(x_seq, edge_index, edge_attr, env_raw)
         return self._temporal_windows(hidden)
 
