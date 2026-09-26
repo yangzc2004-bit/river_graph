@@ -72,3 +72,9 @@ three seeds, 36 runs). The already completed current-only and full H2X-T
 products provide the lookback-1 and lookback-12 endpoints. The purpose is to
 identify whether the temporal benefit appears gradually or is concentrated in
 the full 12-month window.
+
+## T7 matched snapshot completion
+
+T7 adds H2X snapshot seeds 45 and 46 for all three analytes and four masks
+(24 runs). These runs complete a five-seed matched baseline for the existing
+five-seed H2X-T confirmation products.
