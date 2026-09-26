@@ -102,3 +102,12 @@ Publication figures include the analyte-by-missingness reduction heatmap,
 descriptive station traces, and E2a station error maps. Seed spread is labeled
 as ensemble dispersion and is not presented as a calibrated prediction
 interval.
+
+## T10 manuscript package
+
+The first English results chapter, figure captions, and claim-evidence table
+are frozen as `docs/paper/h2x_t_results_v1.md`,
+`docs/paper/h2x_t_figure_captions_v1.md`, and
+`docs/paper/h2x_t_claim_evidence_v1.csv`. They use the T8/T9 outputs directly
+and preserve the conditional pH result, the window/ablation interpretation,
+and the previously closed blind-spot claim.
