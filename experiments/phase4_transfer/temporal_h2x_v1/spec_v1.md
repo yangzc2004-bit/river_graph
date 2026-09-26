@@ -31,6 +31,10 @@ the frozen Phase 0--3 artifacts.
   by H2X and H2X-T for that analyte.
 - A window beginning before the first month repeats the first input and sets
   `history_valid=0` for the padded positions.
+- The pilot uses `matched_full_grid`: both the snapshot and temporal arms make
+  one optimizer update after the full monthly sequence per epoch. Pilot
+  defaults are 10 epochs with patience 3; formal T3 may use a longer budget
+  only after the pilot gate is reviewed.
 
 ## Visibility and training contract
 
@@ -59,10 +63,10 @@ single-run identity.
 ### T2: pilot
 
 The pilot is 3 analytes × 4 masks × 3 seeds × {H2X, H2X-T} = 72 runs.  The
-same masks, query cells, metric script, and target units are used for both
-models.  The pilot is a feasibility decision: proceed to T3 only if at least
-two analytes improve on E2a/E2b on average and no systematic E1 degradation is
-present.
+same masks, query cells, metric script, target units, and matched training
+protocol are used for both models. The pilot is a feasibility decision:
+proceed to T3 only if at least two analytes improve on E2a/E2b on average and
+no systematic E1 degradation is present.
 
 ### T3: formal H2X-T products
 

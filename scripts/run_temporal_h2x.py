@@ -159,6 +159,9 @@ def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
         "temporal_hidden": 64 if kind == "h2x_t" else None,
         "target_analyte": analyte,
         "target_transform": TARGET_TRANSFORMS[analyte],
+        # Both arms use one optimizer update per full monthly sequence.  This
+        # makes the snapshot comparison commensurate with the GRU wrapper.
+        "training_protocol": "matched_full_grid",
     }
 
 
@@ -211,6 +214,8 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
             max_epochs=max_epochs,
             patience=patience,
             seed=seed,
+            target_transform=TARGET_TRANSFORMS[analyte],
+            training_protocol="matched_full_grid",
         )
     elif kind == "h2x_t":
         model = H2XTemporalModel(
@@ -314,7 +319,11 @@ def main() -> None:
         masks = args.masks or list(DEFAULT_MASKS)
         seeds = args.seeds or list(DEFAULT_SEEDS)
         models = args.models or ["h2x", "h2x_t"]
-        max_epochs, patience = args.max_epochs or 50, args.patience or 10
+        # Pilot is a feasibility screen.  The full sequence is expensive
+        # because each epoch encodes all 654 monthly graphs; keep both arms
+        # on the same bounded budget and reserve the longer formal budget for
+        # T3.
+        max_epochs, patience = args.max_epochs or 10, args.patience or 3
     else:
         analytes = args.analytes or list(ANALYTES)
         masks = args.masks or list(DEFAULT_MASKS)

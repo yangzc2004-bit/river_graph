@@ -70,7 +70,8 @@ class GCNDocModel:
                  share_weights: bool = False, edge_dropout: float = 0.0,
                  weight_decay: float = 0.0, env_groups: list[str] | None = None,
                  env_encoder: bool = False, edge_set: str = "river",
-                 edge_direction: str = "both"):
+                 edge_direction: str = "both", target_transform: str = "log1p",
+                 training_protocol: str = "monthly_updates"):
         self.variant = variant
         self.hidden = hidden
         self.layers = layers
@@ -93,6 +94,14 @@ class GCNDocModel:
                 "edge_direction must be 'both', 'upstream', or 'downstream'"
             )
         self.edge_direction = edge_direction
+        if target_transform not in ("log1p", "standard"):
+            raise ValueError("target_transform must be 'log1p' or 'standard'")
+        self.target_transform = target_transform
+        if training_protocol not in ("monthly_updates", "matched_full_grid"):
+            raise ValueError(
+                "training_protocol must be 'monthly_updates' or 'matched_full_grid'"
+            )
+        self.training_protocol = training_protocol
 
     def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
         """Fixed features + pieces for the dynamic DOC-obs channel.
@@ -102,10 +111,13 @@ class GCNDocModel:
         y is log1p mg/L, base_visible marks val+context cells (always
         visible, never used for loss), and train_cells are flat indices.
         """
-        y = torch.log1p(dataset["y"])  # (N, T)
+        y_raw = dataset["y"].float()
+        y_transformed = (
+            torch.log1p(y_raw) if self.target_transform == "log1p" else y_raw
+        )
         x = dataset["x"]  # (N, T, 2), already 0-filled
         x_mask = dataset["x_mask"].float()
-        n, t = y.shape
+        n, t = y_transformed.shape
 
         base_visible = torch.zeros(n * t, dtype=torch.bool)
         for key in ("val", "context"):
@@ -124,6 +136,14 @@ class GCNDocModel:
 
         train_cells = torch.as_tensor(split["train"])
         ti, tj = train_cells // t, train_cells % t
+        target_mu = y_transformed[ti, tj].mean()
+        target_sd = y_transformed[ti, tj].std() + 1e-8
+        if self.target_transform == "standard":
+            y = (y_transformed - target_mu) / target_sd
+            channel_stats = (torch.tensor(0.0), torch.tensor(1.0))
+        else:
+            y = y_transformed
+            channel_stats = (target_mu, target_sd)
 
         def standardized(v: torch.Tensor) -> torch.Tensor:
             mu = v[ti, tj].mean() if v.shape == y.shape else v.mean()
@@ -164,14 +184,23 @@ class GCNDocModel:
                 for c in range(reg.shape[1]):
                     feats.append(reg[:, c:c + 1].expand(n, t))
         xt_static = torch.stack(feats, dim=-1).permute(1, 0, 2).contiguous()
-        # fixed log-space standardization stats for the DOC channel
-        doc_mu, doc_sd = y[ti, tj].mean(), y[ti, tj].std() + 1e-8
-        return xt_static, y, base_visible, train_cells, (doc_mu, doc_sd), env_raw
+        # Target-channel statistics are always fit on train cells only.  For
+        # the historical DOC path this is log-space; the generic standard
+        # path supports pH and other analytes without changing old defaults.
+        # Preserve the historical two-value bundle for DOC callers (H3 and
+        # older wrappers); the additional affine pair is only needed by the
+        # new raw-scale standardization path.
+        stats = (
+            (target_mu, target_sd)
+            if self.target_transform == "log1p"
+            else (*channel_stats, target_mu, target_sd)
+        )
+        return xt_static, y, base_visible, train_cells, stats, env_raw
 
     @staticmethod
     def _fill_doc_channel(xt, y, visible, stats):
         """Set channels 8/9 (standardized observed DOC + visibility mask)."""
-        mu, sd = stats
+        mu, sd = stats[:2]
         doc_obs = torch.where(visible, y, torch.zeros_like(y))
         xt[:, :, 8] = ((doc_obs - mu) / sd).permute(1, 0)
         xt[:, :, 9] = visible.float().permute(1, 0)
@@ -236,7 +265,9 @@ class GCNDocModel:
         # model learns to copy the input channel and never learns imputation.
         # Early stopping uses the FIXED val set, hidden from the input.
         best_loss, best_state, bad = float("inf"), None, 0
+        epochs_run = 0
         for _epoch in range(self.max_epochs):
+            epochs_run = _epoch + 1
             perm = rng.permutation(train_cells.numpy())
             half = len(perm) // 2
             ctx_cells = torch.as_tensor(perm[:half])
@@ -248,16 +279,32 @@ class GCNDocModel:
 
             model.train()
             np.random.shuffle(months_idx)
-            for j in months_idx:
-                sel = ti[tj == j]
-                if len(sel) == 0:
-                    continue
-                pred = fwd(xt[j])
-                loss = F.mse_loss(pred[sel], y[sel, j])
+            if self.training_protocol == "matched_full_grid":
+                # H2X-T receives one optimizer update from the complete
+                # monthly sequence per epoch.  Accumulate the equivalent
+                # snapshot losses before stepping so the comparison differs
+                # only by the temporal GRU, not by update count.
                 opt.zero_grad()
-                loss.backward()
+                total = max(len(tgt_cells), 1)
+                for j in months_idx:
+                    sel = ti[tj == j]
+                    if len(sel) == 0:
+                        continue
+                    pred = fwd(xt[j])
+                    F.mse_loss(pred[sel], y[sel, j], reduction="sum").div(total).backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 opt.step()
+            else:
+                for j in months_idx:
+                    sel = ti[tj == j]
+                    if len(sel) == 0:
+                        continue
+                    pred = fwd(xt[j])
+                    loss = F.mse_loss(pred[sel], y[sel, j])
+                    opt.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                    opt.step()
 
             # selection: fixed val cells, hidden from input
             model.eval()
@@ -299,6 +346,8 @@ class GCNDocModel:
             "stats": stats,
             "n": n,
             "t": t,
+            "epochs_run": epochs_run,
+            "best_val_loss": best_loss if len(val_cells) else None,
         }
 
     def predict(
@@ -350,8 +399,11 @@ class GCNDocModel:
                     if vals.numel() != extra.numel():
                         raise ValueError("extra_values must match extra_visible")
                     y_feed = y.clone()
-                    # values are in mg/L; channel uses log1p space like y
-                    y_feed.reshape(-1)[extra] = torch.log1p(vals.clamp(min=0))
+                    if self.target_transform == "log1p":
+                        vals = torch.log1p(vals.clamp(min=0))
+                    else:
+                        vals = (vals - stats[2]) / stats[3]
+                    y_feed.reshape(-1)[extra] = vals
         self._fill_doc_channel(xt, y_feed, visible, stats)
         model.eval()
         preds = torch.empty(n, t)
@@ -362,7 +414,9 @@ class GCNDocModel:
         lo = y[ti, tj].min()
         hi = torch.quantile(y[ti, tj], 0.995)
         preds = preds.clamp(min=lo, max=hi)
-        return np.expm1(preds.numpy())
+        if self.target_transform == "log1p":
+            return np.expm1(preds.numpy())
+        return (preds * stats[3] + stats[2]).numpy()
 
     def fit_predict(self, dataset: dict, split: dict[str, np.ndarray],
                     extra_visible: np.ndarray | torch.Tensor | None = None) -> np.ndarray:

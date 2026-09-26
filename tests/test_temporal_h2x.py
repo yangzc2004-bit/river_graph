@@ -69,6 +69,25 @@ def test_temporal_windows_are_causal_and_cover_all_months():
     assert not torch.equal(first[4:], second[4:])
 
 
+def test_batched_month_encoding_matches_independent_spatial_calls():
+    torch.manual_seed(4)
+    spatial = TransportGCNImputer(10, 6, hidden=16, layers=2)
+    temporal = TemporalTransportGCNImputer(
+        spatial, lookback=3, temporal_hidden=16, chunk_months=2
+    )
+    x = torch.randn(5, 5, 10)
+    ei = torch.tensor([[0, 1, 2], [1, 2, 3]])
+    ea = torch.randn(3, 6)
+    env = torch.randn(5, 4)
+    temporal.eval()
+    with torch.no_grad():
+        batched = temporal.encode_months(x, ei, ea, env)
+        independent = torch.stack(
+            [spatial.encode_nodes(x[j], ei, ea, env) for j in range(x.shape[0])]
+        )
+    assert torch.allclose(batched, independent, atol=1e-6, rtol=1e-6)
+
+
 def test_temporal_input_visibility_fills_only_visible_target_cells():
     dataset = _toy_dataset()
     split = _split()

@@ -33,7 +33,7 @@ class TemporalTransportGCNImputer(nn.Module):
     """
 
     def __init__(self, spatial: TransportGCNImputer, *, lookback: int = 12,
-                 temporal_hidden: int = 64, chunk_months: int = 16):
+                 temporal_hidden: int = 64, chunk_months: int = 256):
         super().__init__()
         if lookback < 1:
             raise ValueError("lookback must be positive")
@@ -74,10 +74,31 @@ class TemporalTransportGCNImputer(nn.Module):
         """
         if x_seq.ndim != 3:
             raise ValueError("x_seq must have shape [time, nodes, channels]")
-        return torch.stack([
-            self.spatial.encode_nodes(x, edge_index, edge_attr, env_raw)
-            for x in x_seq
-        ], dim=0)
+        t, n, channels = x_seq.shape
+        # Treat each month as a disconnected copy of the same graph.  This
+        # keeps the spatial operator exactly unchanged while replacing a
+        # Python loop over 654 monthly calls with a few batched calls.
+        outputs = []
+        for start in range(0, t, self.chunk_months):
+            stop = min(start + self.chunk_months, t)
+            count = stop - start
+            x_batch = x_seq[start:stop].reshape(count * n, channels)
+            if edge_index.numel():
+                offsets = torch.arange(count, device=edge_index.device) * n
+                batched_edges = (
+                    edge_index[:, None, :].expand(-1, count, -1)
+                    + offsets[None, :, None]
+                ).reshape(2, -1)
+                batched_attr = edge_attr.repeat(count, 1)
+            else:
+                batched_edges = edge_index
+                batched_attr = edge_attr
+            env_batch = env_raw.repeat(count, 1) if env_raw is not None else None
+            encoded = self.spatial.encode_nodes(
+                x_batch, batched_edges, batched_attr, env_batch
+            )
+            outputs.append(encoded.reshape(count, n, -1))
+        return torch.cat(outputs, dim=0)
 
     def _temporal_windows(self, hidden_seq: torch.Tensor) -> torch.Tensor:
         """Apply rolling causal GRU windows to ``[T, N, H]`` hidden states."""

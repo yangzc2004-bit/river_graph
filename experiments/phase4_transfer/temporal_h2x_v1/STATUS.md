@@ -15,13 +15,18 @@
 
 ## T2 pilot
 
-The 72-run pilot was started with the frozen 3-analyte × 4-mask × 3-seed ×
-{H2X, H2X-T} plan.  It was stopped after 11 pilot units had complete,
-identity-valid products because the sequential 50-epoch temporal runs were
-using several minutes per unit.  The runner is resumable: rerunning
-`scripts/run_temporal_h2x.py --stage pilot` reuses only complete matching
-sidecars and continues missing units.  T2 has **not** been accepted and T3 is
-not authorized by this status file.
+The complete 72-run pilot uses the frozen 3-analyte × 4-mask × 3-seed ×
+{H2X, H2X-T} design. Both arms use the explicit `matched_full_grid` training
+protocol (one optimizer update after the full monthly sequence per epoch),
+with a pilot budget of 10 epochs and patience 3.
 
-The partial products are diagnostic only until all expected units pass
-`scripts/evaluate_temporal_h2x.py --stage pilot`.
+`evaluate_temporal_h2x.py --stage pilot` audits all 72 products, including
+dataset/mask/prediction hashes, station-month alignment, role visibility,
+metric recomputation, and paired protocol identity. The audit is **72/72
+pass**. The feasibility gate is also **pass**: all three analytes improve on
+average in E2a/E2b and none shows an E1 mean degradation. Detailed numbers are
+in `pilot_summary.csv`; the machine-readable gate is in `pilot_verdict.json`.
+
+This is a pilot result, not authorization to start T3. Before formal training,
+review the matched-budget comparison and decide whether to retain the current
+10-epoch feasibility budget or increase the formal H2X-T budget.

@@ -222,7 +222,7 @@ class H2XTemporalModel:
         edge_set: str = "river",
         edge_direction: str = "both",
         target_transform: str = "log1p",
-        chunk_months: int = 16,
+        chunk_months: int = 256,
     ):
         self.seed = int(seed)
         self.lookback = int(lookback)
