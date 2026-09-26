@@ -1,0 +1,35 @@
+{
+  "version": "temporal_h2x_v1_t6_window_curve",
+  "stage": "full",
+  "analytes": [
+    "doc",
+    "ph",
+    "spec_conductance"
+  ],
+  "masks": [
+    "e2a_strict",
+    "e2b_partial"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "models": [
+    "h2x_t_lb3",
+    "h2x_t_lb6"
+  ],
+  "max_epochs": 10,
+  "patience": 3,
+  "lookbacks": [
+    3,
+    6
+  ],
+  "temporal": "gru",
+  "causal": true,
+  "temporal_hidden": 64,
+  "training_protocol": "matched_full_grid",
+  "target_mask_policy": "same target-specific masks as T3-T5",
+  "purpose": "diagnostic temporal window curve; combine with frozen lookback=1 and lookback=12 products",
+  "training_started": true
+}

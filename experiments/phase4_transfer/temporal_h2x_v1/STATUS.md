@@ -64,3 +64,11 @@ The next diagnostic keeps the GRU wrapper and optimizer protocol but sets
 `t5_current_only/run_plan.json` as 36 runs (three analytes, four masks, three
 seeds). This separates a genuine multi-month signal from effects of the
 temporal wrapper and matched training budget.
+
+## T6 temporal window curve
+
+T6 adds lookback-3 and lookback-6 arms for E2a and E2b (three analytes,
+three seeds, 36 runs). The already completed current-only and full H2X-T
+products provide the lookback-1 and lookback-12 endpoints. The purpose is to
+identify whether the temporal benefit appears gradually or is concentrated in
+the full 12-month window.

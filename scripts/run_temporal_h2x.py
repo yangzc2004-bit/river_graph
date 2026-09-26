@@ -105,7 +105,11 @@ def _history_ablation(kind: str) -> str:
 
 def _lookback_for_kind(kind: str) -> int:
     """Return the frozen temporal window for each diagnostic arm."""
-    return 1 if kind == "h2x_t_current_only" else 12
+    return {
+        "h2x_t_current_only": 1,
+        "h2x_t_lb3": 3,
+        "h2x_t_lb6": 6,
+    }.get(kind, 12)
 
 
 def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, kind: str,
@@ -321,7 +325,8 @@ def main() -> None:
     ap.add_argument("--seeds", nargs="+", type=int, default=None)
     ap.add_argument(
         "--models", nargs="+",
-        choices=("h2x", "h2x_t", "h2x_t_current_only",
+        choices=("h2x", "h2x_t", "h2x_t_current_only", "h2x_t_lb3",
+                 "h2x_t_lb6",
                  "h2x_t_no_history", "h2x_t_hydro_only"),
         default=None,
     )
