@@ -78,3 +78,17 @@ the full 12-month window.
 T7 adds H2X snapshot seeds 45 and 46 for all three analytes and four masks
 (24 runs). These runs complete a five-seed matched baseline for the existing
 five-seed H2X-T confirmation products.
+
+## T8 matched-budget synthesis
+
+T8 combines the audited T2/T3--T7 products without new training. The main
+five-seed H2X-T versus snapshot table uses paired station- and month-cluster
+bootstrap intervals (2,000 replicates, seed 20260927), with no resampling of
+training seeds. The 1/3/6/12-month window curve and history ablations remain
+descriptive three-seed diagnostics. The complete analysis, input ledger,
+summary tables, confidence intervals, and figures are under `t8_synthesis/`.
+
+The ledger records 144 historical sidecars whose declared temporal fields do
+not fully describe the runtime arm (the predictions are retained unchanged).
+This is reported as a provenance metadata discrepancy; it does not alter the
+already frozen predictions or their original audit records.
