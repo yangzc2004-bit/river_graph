@@ -306,6 +306,11 @@ def main() -> None:
     ap.add_argument("--max-epochs", type=int, default=None)
     ap.add_argument("--patience", type=int, default=None)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument(
+        "--no-plan-write",
+        action="store_true",
+        help="use an already frozen run_plan.json (for parallel workers)",
+    )
     args = ap.parse_args()
 
     if args.stage == "smoke":
@@ -352,7 +357,14 @@ def main() -> None:
         "target_masks_dir": str(TARGET_MASKS_DIR),
         "training_started": True,
     }
-    (out_root / "run_plan.json").write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
+    plan_path = out_root / "run_plan.json"
+    if args.no_plan_write:
+        if not plan_path.is_file():
+            raise FileNotFoundError(
+                f"--no-plan-write requires an existing frozen plan: {plan_path}"
+            )
+    else:
+        plan_path.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
     results = []
     for analyte in analytes:
         for mask_name in masks:
