@@ -33,9 +33,16 @@ review the matched-budget comparison and decide whether to retain the current
 
 ## T3 formal confirmation
 
-T3 has been authorized after the pilot review and is running under
-`t3_formal/`. The initial 50-epoch trial was stopped before any product was
-written because the measured runtime was impractical. The frozen confirmation
-budget is now 20 epochs with patience 5, applied identically to all five seeds;
-this is a runtime decision recorded in `t3_formal/run_plan.json`, not a change
-to the model or endpoints.
+T3 was authorized after the pilot review and completed under `t3_formal/`.
+The initial 50-epoch trial was stopped before any product was written because
+the measured runtime was impractical. The frozen confirmation budget was set
+to 10 epochs with patience 3, applied identically to all five seeds; this is a
+runtime decision recorded in `t3_formal/run_plan.json`, not a change to the
+model or endpoints.
+
+All 60/60 products passed the V3 audit. Using the pre-existing matched
+snapshot baseline for seeds 42–44, the mean E2a/E2b reductions were 46.1% for
+DOC, 5.1% for pH, and 56.9% for specific conductance. The five-seed H2X-T MAE
+standard deviations were small relative to the analyte scales. T3 therefore
+passes the seed-confirmation gate; pH remains a smaller-effect analyte and is
+reported separately rather than pooled into the DOC/EC effect size.
