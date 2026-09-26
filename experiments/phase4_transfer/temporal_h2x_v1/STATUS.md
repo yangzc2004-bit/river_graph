@@ -46,3 +46,21 @@ DOC, 5.1% for pH, and 56.9% for specific conductance. The five-seed H2X-T MAE
 standard deviations were small relative to the analyte scales. T3 therefore
 passes the seed-confirmation gate; pH remains a smaller-effect analyte and is
 reported separately rather than pooled into the DOC/EC effect size.
+
+## T4 history ablations
+
+T4 completed 72/72 runs for two diagnostic arms: `h2x_t_no_history`
+(reverse the preceding history steps) and `h2x_t_hydro_only` (remove the
+target-value and target-visibility channels from the sequence). All products
+pass the V3 identity audit. Against matched H2X-T runs on seeds 42--44, the
+MAE changes are below 0.6% in every analyte/mask family. The current
+10-epoch result therefore does not isolate a measurable contribution from
+chronological ordering or target-history channels.
+
+## T5 current-only control
+
+The next diagnostic keeps the GRU wrapper and optimizer protocol but sets
+`lookback=1`, so the model receives only the current month. It is frozen in
+`t5_current_only/run_plan.json` as 36 runs (three analytes, four masks, three
+seeds). This separates a genuine multi-month signal from effects of the
+temporal wrapper and matched training budget.

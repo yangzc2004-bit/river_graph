@@ -1,0 +1,33 @@
+{
+  "version": "temporal_h2x_v1_t5_current_only",
+  "stage": "full",
+  "analytes": [
+    "doc",
+    "ph",
+    "spec_conductance"
+  ],
+  "masks": [
+    "e1_r20_seed42",
+    "e2a_strict",
+    "e2b_partial",
+    "e3_spatial_seed42"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "models": [
+    "h2x_t_current_only"
+  ],
+  "max_epochs": 10,
+  "patience": 3,
+  "lookback": 1,
+  "temporal": "gru",
+  "causal": true,
+  "temporal_hidden": 64,
+  "training_protocol": "matched_full_grid",
+  "target_mask_policy": "same target-specific masks as T3/T4",
+  "purpose": "diagnostic control: current-month input only with the H2X-T GRU wrapper",
+  "training_started": true
+}

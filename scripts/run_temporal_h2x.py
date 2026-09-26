@@ -97,9 +97,15 @@ def _model_name(kind: str, analyte: str, mask: str, seed: int) -> str:
 def _history_ablation(kind: str) -> str:
     return {
         "h2x_t": "none",
+        "h2x_t_current_only": "none",
         "h2x_t_no_history": "shuffle",
         "h2x_t_hydro_only": "hydro_only",
     }.get(kind, "none")
+
+
+def _lookback_for_kind(kind: str) -> int:
+    """Return the frozen temporal window for each diagnostic arm."""
+    return 1 if kind == "h2x_t_current_only" else 12
 
 
 def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, kind: str,
@@ -162,7 +168,7 @@ def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
         "dataset_path": str(dataset_path),
         "mask_path": str(mask_path),
         "temporal": temporal,
-        "lookback": int(lookback if kind == "h2x_t" else 1),
+        "lookback": int(lookback if kind == "h2x_t" else _lookback_for_kind(kind)),
         "causal": True,
         "temporal_hidden": 64 if kind == "h2x_t" else None,
         "target_analyte": analyte,
@@ -229,7 +235,7 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
     elif kind.startswith("h2x_t"):
         model = H2XTemporalModel(
             seed=seed,
-            lookback=12,
+            lookback=_lookback_for_kind(kind),
             temporal_hidden=64,
             hidden=64,
             layers=2,
@@ -315,7 +321,8 @@ def main() -> None:
     ap.add_argument("--seeds", nargs="+", type=int, default=None)
     ap.add_argument(
         "--models", nargs="+",
-        choices=("h2x", "h2x_t", "h2x_t_no_history", "h2x_t_hydro_only"),
+        choices=("h2x", "h2x_t", "h2x_t_current_only",
+                 "h2x_t_no_history", "h2x_t_hydro_only"),
         default=None,
     )
     ap.add_argument("--max-epochs", type=int, default=None)
@@ -362,7 +369,10 @@ def main() -> None:
         "models": models,
         "max_epochs": max_epochs,
         "patience": patience,
-        "lookback": 12,
+        "lookback": (
+            1 if models and all(_lookback_for_kind(kind) == 1 for kind in models)
+            else 12
+        ),
         "temporal": "gru",
         "causal": True,
         "target_mask_policy": (
