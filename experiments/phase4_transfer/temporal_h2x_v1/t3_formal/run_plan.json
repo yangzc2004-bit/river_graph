@@ -1,0 +1,35 @@
+{
+  "version": "temporal_h2x_v1_t3",
+  "stage": "full",
+  "analytes": [
+    "doc",
+    "ph",
+    "spec_conductance"
+  ],
+  "masks": [
+    "e1_r20_seed42",
+    "e2a_strict",
+    "e2b_partial",
+    "e3_spatial_seed42"
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "models": [
+    "h2x_t"
+  ],
+  "max_epochs": 20,
+  "patience": 5,
+  "lookback": 12,
+  "temporal": "gru",
+  "causal": true,
+  "training_protocol": "matched_full_grid",
+  "target_mask_policy": "parent frozen mask intersected with analyte y_mask; same missingness family, analyte-valid cells only",
+  "target_masks_dir": "experiments/phase4_transfer/temporal_h2x_v1/target_masks",
+  "training_started": true,
+  "training_budget_note": "formal confirmation budget reduced from 50/10 after runtime measurement; same budget for both future comparison arms"
+}
