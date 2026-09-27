@@ -115,3 +115,14 @@ and the previously closed blind-spot claim.
 The full draft is `docs/paper/h2x_t_manuscript_draft_v1.md`. It contains the
 abstract, introduction, methods, results, discussion, and conclusion based on
 the frozen T8/T9 package.
+
+## T11 LaTeX manuscript draft
+
+The first compiled manuscript is `docs/paper/latex/ecohydrograph_draft.tex`,
+with the rendered PDF at `docs/paper/latex/ecohydrograph_draft.pdf`. It uses
+the T8/T9 tables and figures directly, adds a vector architecture diagram,
+and uses the paper name EcoHydroGraph; H2X-T remains an internal experiment
+identifier. The source was compiled twice with a user-local TeX Live 2026
+installation at `/Users/yzccc/local_texlive/texlive/2026`. The PDF is a six-page
+working draft; no new training or endpoint changes were made for manuscript
+generation.

@@ -1,0 +1,37 @@
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  >=Latex,
+  box/.style={draw=navy, rounded corners=2pt, thick, align=center, minimum height=9mm, minimum width=28mm, fill=blue!5},
+  eco/.style={draw=forest, rounded corners=2pt, thick, align=center, minimum height=9mm, minimum width=25mm, fill=green!7},
+  time/.style={draw=orange!80!black, rounded corners=2pt, thick, align=center, minimum height=12mm, minimum width=31mm, fill=orange!10},
+  output/.style={draw=navy, rounded corners=2pt, thick, align=center, minimum height=11mm, minimum width=30mm, fill=navy!8},
+  arrow/.style={->, thick, draw=navy!85!black},
+  dashedarrow/.style={->, thick, dashed, draw=gray!80}
+]
+\definecolor{navy}{RGB}{35,68,105}
+\definecolor{forest}{RGB}{48,116,82}
+\definecolor{orange}{RGB}{205,112,42}
+
+\node[box] (x0) {Monthly station inputs\\$x_t$: hydro + target visibility};
+\node[eco, right=13mm of x0] (eco) {Ecological\\encoder};
+\node[box, right=13mm of eco] (g0) {Spatial river\\graph encoder};
+\node[time, right=15mm of g0] (gru) {Causal GRU\\12-month memory};
+\node[output, right=15mm of gru] (pred) {Water-quality\\prediction $\hat y_t$};
+
+\draw[arrow] (x0) -- (eco);
+\draw[arrow] (eco) -- (g0);
+\draw[arrow] (g0) -- (gru);
+\draw[arrow] (gru) -- (pred);
+
+\node[below=9mm of g0, align=center, text=gray!70!black] (graphnote) {river nodes, directed edges,\\edge attributes};
+\draw[dashedarrow] (graphnote.north) -- (g0.south);
+
+\node[above=10mm of gru, align=center, text=orange!80!black] (memory) {$t-11 \;\rightarrow\; t-1 \;\rightarrow\; t$\\no future labels};
+\draw[dashedarrow] (memory.south) -- (gru.north);
+
+\node[below=10mm of pred, align=center, text=gray!70!black] (roles) {train/context labels for input;\\validation and test labels hidden};
+\draw[dashedarrow] (roles.north) -- (pred.south);
+
+\node[fit=(x0)(eco)(g0)(gru)(pred)(graphnote)(memory)(roles), inner sep=5mm, draw=gray!35, rounded corners=4pt] {};
+\end{tikzpicture}
+
