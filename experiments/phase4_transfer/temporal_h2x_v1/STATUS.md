@@ -132,3 +132,12 @@ unobserved-period extrapolation, observation-assisted extrapolation, and
 unmonitored stations. Publication-only figures are rendered by
 `scripts/render_ecohydrograph_figures.py`; internal mask identifiers remain in
 the experiment directories for reproducibility.
+
+## T12 evidence audit
+
+`docs/paper/ecohydrograph_evidence_audit_v1.md` records the first scientific
+review of the LaTeX draft. It verifies the main numbers against T8/T9, adds a
+station-clustered paired-bootstrap table to the manuscript, and lists the
+remaining scope gaps: the main text uses the matched snapshot graph as its
+primary baseline, the training budget is a matched 10-epoch study budget, and
+there is no external-basin replication. No new training was run.

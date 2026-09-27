@@ -18,7 +18,7 @@
 \maketitle
 
 \begin{abstract}
-River monitoring networks rarely observe every water-quality indicator at every station and month. These gaps are structured by river connectivity, watershed ecology, hydrologic conditions, and sampling schedules. We introduce \textbf{EcoHydroGraph}, a temporal river-graph model that combines a spatial graph encoder, watershed ecological features, hydroclimatic inputs, and a causal gated recurrent unit. We evaluate separate models for dissolved organic carbon (DOC), pH, and specific conductance on an audited 357-station, 654-month river-network cohort under random, temporal, and spatial missingness. In a five-seed matched comparison, EcoHydroGraph reduces DOC mean absolute error by 37.5--47.2\% and specific-conductance error by 38.8--57.2\% relative to the matched snapshot graph model. pH gains are smaller (0.5--3.8\%) and depend on the missingness regime. Window diagnostics show that most pH and conductance gains appear by six months, whereas DOC changes little with window length. The results establish analyte-specific hydro--ecological memory as a useful source of information for sparse water-quality reconstruction.
+River monitoring networks rarely observe every water-quality indicator at every station and month. These gaps are structured by river connectivity, watershed ecology, hydrologic conditions, and sampling schedules. We introduce \textbf{EcoHydroGraph}, a temporal river-graph model that combines a spatial graph encoder, watershed ecological features, hydroclimatic inputs, and a causal gated recurrent unit. We evaluate separate models for dissolved organic carbon (DOC), pH, and specific conductance on an audited 357-station, 654-month river-network cohort under random, temporal, and spatial missingness. In a five-seed matched comparison, EcoHydroGraph reduces DOC mean absolute error by 37.5--47.2\% and specific-conductance error by 38.8--57.2\% relative to the matched snapshot graph model. pH gains are smaller (0.5--3.8\%) and depend on the missingness regime. Window diagnostics show that most pH and conductance gains appear by six months, whereas DOC changes little with window length. The results show that analyte-specific hydro--ecological temporal context can improve sparse water-quality reconstruction.
 \end{abstract}
 \paragraph{Keywords:} river monitoring; water-quality reconstruction; graph neural network; ecological informatics; temporal memory; dissolved organic carbon
 
@@ -29,7 +29,7 @@ Conventional interpolation uses local spatial or temporal similarity. Tabular ma
 
 We develop EcoHydroGraph. A spatial river-graph encoder combines station inputs, edge attributes, and ecological features at each month. A causal GRU integrates the current representation with the preceding eleven months. Here causal describes the information-flow constraint that a prediction at month $t$ receives no future-month labels; it is not a causal-inference claim. Separate models are trained for DOC, pH, and specific conductance.
 
-Our contributions are threefold: (i) a hydro--ecological temporal graph model for sparse station-month reconstruction; (ii) evidence that temporal information has analyte- and missingness-dependent value, with large gains for DOC and specific conductance and smaller gains for pH; and (iii) a matched evaluation framework that separates random, temporal, and spatial missingness and measures the useful history length.
+Our contributions are threefold: (i) a hydro--ecological temporal graph model for sparse station-month reconstruction; (ii) evidence that temporal information has analyte- and missingness-dependent value, with large gains for DOC and specific conductance and smaller gains for pH; and (iii) a matched evaluation framework that separates random, temporal, and spatial missingness and measures the useful history length. The design isolates the value of temporal context by keeping the spatial encoder and target masks fixed between the snapshot and temporal models.
 
 \section{Materials and Methods}
 \subsection{Cohort, targets, and inputs}
@@ -48,11 +48,13 @@ The spatial trunk is a two-layer transport graph encoder with hidden width 64, e
 \end{figure}
 
 \subsection{Training and evaluation}
-Primary comparisons use five seeds (42--46) and the matched 10-epoch, patience-3 budget for both models. The primary metric is MAE on hidden query cells; RMSE, $R^2$, log-space error, and train-derived Q90 tail MAE are secondary. Tails with fewer than 20 query cells are flagged unstable. Errors are averaged across seeds at each query cell before 2,000 paired station- or month-clustered bootstrap replicates. Relative reduction is $100(1-\mathrm{MAE}_{\mathrm{EcoHydroGraph}}/\mathrm{MAE}_{\mathrm{snapshot}})$.
+Primary comparisons use five seeds (42--46) and the matched 10-epoch, patience-3 budget for both models. The primary metric is MAE on hidden query cells; RMSE, $R^2$, log-space error, and train-derived Q90 tail MAE are secondary. Tails with fewer than 20 query cells are flagged unstable. Errors are averaged across seeds at each query cell before 2,000 paired station- or month-clustered bootstrap replicates. The primary uncertainty table reports station-clustered 95\% intervals for the paired MAE difference; month-clustered intervals are retained in the analysis files. Relative reduction is $100(1-\mathrm{MAE}_{\mathrm{EcoHydroGraph}}/\mathrm{MAE}_{\mathrm{snapshot}})$.
 
 \section{Results}
 \subsection{EcoHydroGraph improves sparse reconstruction}
 Table~\ref{tab:main} gives the five-seed matched comparison. EcoHydroGraph improves DOC in all four regimes, with reductions from 37.5\% in unmonitored stations to 47.2\% in observation-assisted extrapolation. Specific conductance shows reductions from 38.8\% in unmonitored stations to 57.2\% in observation-assisted extrapolation. Both analytes improve for all five seeds in every regime. The largest gains occur in the two temporal extrapolation scenarios, where the query month is separated from observed target history.
+
+The paired station-clustered intervals in Table~\ref{tab:ci} remain below zero for every DOC and conductance scenario. For pH, the intervals are below zero in random gaps and both temporal extrapolation scenarios, but include zero for unmonitored stations. This pattern is consistent with an analyte- and missingness-dependent temporal benefit rather than a uniform improvement.
 
 pH shows a smaller effect: reductions range from 0.5\% in unmonitored stations to 3.8\% in observation-assisted extrapolation. Random gaps and both temporal extrapolation scenarios improve for four of five seeds. Reconstruction at unmonitored stations is close to parity, with the station-clustered interval including zero.
 
@@ -73,6 +75,26 @@ Specific conductance&Strict temporal&572.7&247.9&56.71&5/5\\
 Specific conductance&Context-assisted temporal&568.9&243.5&57.19&5/5\\
 Specific conductance&Unmonitored stations&996.4&609.4&38.84&5/5\\\bottomrule
 \end{tabular}\end{table*}
+
+\begin{table}[t]\centering
+\caption{Station-clustered 95\% bootstrap intervals for the paired MAE difference (EcoHydroGraph minus snapshot). Negative values favor EcoHydroGraph.}
+\label{tab:ci}\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}\toprule
+Analyte & Scenario & $\Delta$ MAE & 95\% CI\\\midrule
+DOC&Random gaps&$-1.660$&$[-1.894,-1.415]$\\
+DOC&Strict temporal&$-1.263$&$[-1.722,-0.763]$\\
+DOC&Context-assisted temporal&$-1.266$&$[-1.725,-0.740]$\\
+DOC&Unmonitored stations&$-2.322$&$[-2.770,-1.900]$\\\midrule
+pH&Random gaps&$-0.012$&$[-0.019,-0.007]$\\
+pH&Strict temporal&$-0.011$&$[-0.017,-0.005]$\\
+pH&Context-assisted temporal&$-0.012$&$[-0.018,-0.006]$\\
+pH&Unmonitored stations&$-0.001$&$[-0.005,0.002]$\\\midrule
+Specific conductance&Random gaps&$-308.4$&$[-345.1,-272.8]$\\
+Specific conductance&Strict temporal&$-324.8$&$[-396.2,-247.1]$\\
+Specific conductance&Context-assisted temporal&$-325.4$&$[-396.9,-245.3]$\\
+Specific conductance&Unmonitored stations&$-387.0$&$[-443.2,-321.8]$\\\bottomrule
+\end{tabular}\end{table}
 
 \begin{figure}[t]\centering
 \includegraphics[width=\linewidth]{reconstruction_improvement.pdf}
@@ -96,7 +118,7 @@ Specific conductance&279.12&255.19&247.72&245.75\\\bottomrule
 \label{fig:window}\end{figure}
 
 \subsection{Longer history matters more than one isolated channel}
-The reverse-history and hydro-only arms remain within 0.6\% of the full temporal model in the three-seed diagnostic. The current-only control is 20.9\% worse for pH and 13.8\% worse for specific conductance in the two temporal extrapolation scenarios, while DOC changes by 0.5\%. These results identify the amount of temporal context as useful for pH and conductance, without assigning the gain to strict chronological order or target persistence alone.
+The reverse-history and hydro-only arms remain within 0.6\% of the full temporal model in the three-seed diagnostic. The current-only control is 20.9\% worse for pH and 13.8\% worse for specific conductance in the two temporal extrapolation scenarios, while DOC changes by 0.5\%. These results identify the amount of temporal context as useful for pH and conductance. They do not isolate strict chronological order from the amount of history, and they do not establish that target-analyte history is the source of the gain.
 
 \begin{figure}[t]\centering
 \includegraphics[width=\linewidth]{unobserved_period_traces.pdf}
@@ -115,7 +137,7 @@ The five-seed ensemble produces a full station-month reconstruction for every an
 \section{Discussion}
 The central finding is that hydro--ecological temporal memory improves sparse water-quality reconstruction, with value determined by the target analyte and missingness process. DOC and specific conductance show large and consistent gains, especially under temporal extrapolation. pH shows smaller gains and near-parity under spatial station holdout. The same model therefore reveals heterogeneity in the recoverable information of water-quality variables.
 
-The graph provides the spatial context in which ecological and hydroclimatic inputs are interpreted. The headline result is the performance pattern created by jointly modeling river structure, ecology, and time. The window curve suggests that a six-month implementation may offer most of the benefit for pH and conductance, while the 12-month configuration remains the best common model.
+The graph provides the spatial context in which ecological and hydroclimatic inputs are interpreted. The headline result is the performance pattern created by jointly modeling river structure, ecology, and time. The window curve suggests that a six-month implementation may offer most of the benefit for pH and conductance, while the 12-month configuration remains the best common model. Because the spatial trunk is held fixed, this comparison isolates the temporal extension rather than ranking all possible spatial models.
 
 The reconstruction products expose where the model is less informative. pH gains are modest, and tail metrics are unstable in scenarios with very few high-value query cells. Ensemble seed spread is a model-dispersion diagnostic rather than a calibrated prediction interval. External-basin replication and a channel-factorial experiment are natural next tests.
 
@@ -128,7 +150,7 @@ Analysis products, provenance records, and scripts are maintained in the project
 \section*{Acknowledgements}Draft placeholder.
 
 \bibliographystyle{plainnat}
-\begin{thebibliography}{9}
+\begin{thebibliography}{9}\small
 \bibitem[Kipf and Welling(2017)]{kipf2017} Kipf, T. N. and Welling, M. (2017). Semi-supervised classification with graph convolutional networks. \emph{ICLR}.
 \bibitem[Hamilton et~al.(2017)Hamilton, Ying, and Leskovec]{hamilton2017} Hamilton, W. L., Ying, R., and Leskovec, J. (2017). Inductive representation learning on large graphs. \emph{NeurIPS}, 30.
 \bibitem[Cho et~al.(2014)Cho et~al.]{cho2014} Cho, K. et~al. (2014). Learning phrase representations using RNN encoder--decoder for statistical machine translation. \emph{EMNLP}, 1724--1734.
