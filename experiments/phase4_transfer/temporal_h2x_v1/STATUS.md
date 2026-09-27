@@ -141,3 +141,13 @@ station-clustered paired-bootstrap table to the manuscript, and lists the
 remaining scope gaps: the main text uses the matched snapshot graph as its
 primary baseline, the training budget is a matched 10-epoch study budget, and
 there is no external-basin replication. No new training was run.
+
+## T13 related-work pass
+
+The LaTeX draft now frames the problem against water-quality missing-data
+systems, dynamic imputation, spatio-temporal graph learning in hydrology,
+architecture-dependent generalization, and recent graph-based water-quality
+work. New references are cited in the Introduction and added to the local
+bibliography. The manuscript was compiled twice with the local TeX Live 2026
+installation and rendered to an eight-page PDF. No data, model, endpoint, or
+frozen result was changed.

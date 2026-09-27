@@ -23,6 +23,7 @@ This review checks the LaTeX draft against the frozen T8 matched-budget synthesi
 3. Stated that the fixed spatial trunk and shared masks make the comparison a temporal-extension test, not a ranking of all spatial models.
 4. Clarified that the history ablations identify the value of additional context but do not isolate chronological order or target-analyte history.
 5. Kept the four missingness scenarios descriptive throughout the manuscript and figures.
+6. Added a focused related-work bridge covering operational water-quality gap filling, dynamic missing-data imputation, spatio-temporal graph learning in hydrology, architecture-dependent generalization, and recent sparse river-water-quality graph applications.
 
 ## Evidence still absent from the main draft
 
@@ -33,4 +34,9 @@ This review checks the LaTeX draft against the frozen T8 matched-budget synthesi
 
 ## Editorial recommendation
 
-The central result is ready for a full draft: adding a temporal wrapper to the fixed ecology-aware river graph produces large, reproducible gains for DOC and specific conductance, while pH remains near parity under station holdout. The next manuscript pass should add literature on water-quality gap filling and spatiotemporal graph learning, then decide whether the existing EcoRF results can be included as a strictly matched supplementary baseline. No new large training matrix is required for this review pass.
+The central result is ready for a full draft: adding a temporal wrapper to the fixed ecology-aware river graph produces large, reproducible gains for DOC and specific conductance, while pH remains near parity under station holdout. The existing EcoRF results can be considered later as a strictly matched supplementary baseline; they are not required for the current manuscript pass. No new large training matrix is required for this review pass.
+
+The related-work pass is now complete. The Introduction uses the new citations to
+motivate the gap and position the contribution; it does not change any result or
+upgrade the paper's claims. The bibliography includes primary or source-level
+records for the cited graph, hydrology, missing-data, and water-quality studies.
