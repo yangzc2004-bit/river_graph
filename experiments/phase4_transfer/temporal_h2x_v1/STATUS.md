@@ -166,3 +166,21 @@ optimizer and checkpoint rule, graph-message equations, recurrent-window
 padding, and prediction clipping. Local TeX Live compilation completed twice
 with a nine-page PDF and visual checks of the equations, appendix table, and
 references. No new training or endpoint change was made.
+
+## T15 model-upgrade pilot
+
+The post-T9 upgrade track is under
+`experiments/phase4_transfer/model_upgrade_v1/`. U1 showed that the original
+10-epoch matched budget was limiting: a 30-epoch EcoHydroGraph improved mean
+MAE by 10.6--26.9% across the tested DOC and specific-conductance families.
+The 60-epoch arm was stopped after this gate was met; its partial files are
+retained and excluded from the verdict.
+
+U2 added explicit visible-network target summaries. The first raw-count
+implementation was invalidated as a scale defect; the corrected partial arm
+was mixed (specific conductance improved, DOC did not) and was not promoted.
+U3 completed a temporal random-forest baseline with identical target masks and
+query cells. Temporal RF outperformed the 30-epoch graph model in all four
+tested DOC/electrical-conductance families. This redirects the next model
+decision toward a targeted hybrid or representation study rather than a
+deeper graph architecture. Frozen T8/T9 results remain unchanged.

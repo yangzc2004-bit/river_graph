@@ -1,0 +1,20 @@
+{
+  "protocol": "u1_convergence_pilot_v1",
+  "status": "frozen_before_runs",
+  "purpose": "diagnose whether the matched 10-epoch budget limits EcoHydroGraph",
+  "analytes": ["doc", "spec_conductance"],
+  "masks": ["e2a_strict", "e3_spatial_seed42"],
+  "seeds": [42, 43, 44],
+  "epoch_budgets": [10, 30, 60],
+  "patience": 10,
+  "model": "h2x_t",
+  "lookback": 12,
+  "causal": true,
+  "primary_metric": "test_mae",
+  "diagnostics": ["best_val_loss", "epochs_run", "train_loss", "validation_loss", "test_mae", "test_rmse", "test_r2"],
+  "pass_rules": {
+    "enter_u2": "30 or 60 epochs improves mean MAE by at least 5 percent over 10 epochs, or 10 epochs has not reached a validation-loss plateau",
+    "retain_budget": "if 30 and 60 epochs do not improve by 5 percent and validation loss has plateaued, retain the 10-epoch matched budget",
+    "no_claim_change": "U1 is a convergence diagnostic and cannot change the frozen T8/T9 result"
+  }
+}

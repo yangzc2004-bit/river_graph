@@ -1,0 +1,21 @@
+{
+  "protocol": "u2_visible_network_context_pilot_v1",
+  "status": "frozen_before_runs",
+  "purpose": "test whether explicit current-month visible-target context closes the gap to tabular baselines",
+  "model": "h2x_t_context",
+  "context_mode": "all",
+  "context_channels": ["global_mean_excl_self", "global_count_excl_self", "upstream_mean", "upstream_count", "downstream_mean", "downstream_count", "global_mean_duplicate_for_context_block", "global_count_duplicate_for_context_block"],
+  "analytes": ["doc", "spec_conductance"],
+  "masks": ["e2a_strict", "e3_spatial_seed42"],
+  "seeds": [42, 43, 44],
+  "max_epochs": 30,
+  "patience": 10,
+  "reference": "U1 30-epoch h2x_t products",
+  "visibility": "context features use only labels visible under the fit or final-prediction role; own target is excluded from global summaries",
+  "pass_rules": {
+    "primary": "mean MAE improves at least 5 percent over the 30-epoch reference for at least two analyte-by-mask families",
+    "scenario": "DOC or specific conductance improves at least 5 percent in at least one temporal family",
+    "no_harm": "no tested family worsens by more than 3 percent",
+    "shuffle": "a context-shuffle diagnostic must reduce performance before context is treated as used information"
+  }
+}

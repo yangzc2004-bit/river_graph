@@ -23,6 +23,8 @@ TARGET_TRANSFORMS = {
     "spec_conductance": "log1p",
 }
 
+CONTEXT_MODES = {"none": 0, "global": 2, "directional": 6, "all": 8}
+
 
 def _as_tensor(value) -> torch.Tensor:
     if isinstance(value, torch.Tensor):
@@ -61,6 +63,7 @@ class TemporalInputs:
     target_sd: torch.Tensor
     target_transform: str
     env_raw: torch.Tensor | None
+    context_mode: str
 
 
 def _split_target_stats(y_model: torch.Tensor,
@@ -81,9 +84,12 @@ def build_temporal_inputs(
     target_transform: str,
     env_groups: list[str] | None = None,
     env_encoder: bool = True,
+    context_mode: str = "none",
 ) -> TemporalInputs:
     """Build H2X-compatible monthly features without exposing hidden labels."""
     y_raw = _as_tensor(dataset["y"])
+    if context_mode not in CONTEXT_MODES:
+        raise ValueError(f"unknown context_mode: {context_mode}")
     y_mask = _as_tensor(dataset["y_mask"]).bool()
     x = _as_tensor(dataset["x"])
     x_mask = _as_tensor(dataset["x_mask"]).float()
@@ -139,6 +145,8 @@ def build_temporal_inputs(
         standardized(static[:, 1:2]).expand(n, t),
         torch.zeros(n, t), torch.zeros(n, t),  # target value + visibility slots
     ]
+    for _ in range(CONTEXT_MODES[context_mode]):
+        feats.append(torch.zeros(n, t))
 
     env_raw = None
     if "regime" in dataset:
@@ -186,11 +194,54 @@ def build_temporal_inputs(
         target_sd=target_sd,
         target_transform=target_transform,
         env_raw=env_raw,
+        context_mode=context_mode,
     )
 
 
+def _context_features(y_model: torch.Tensor, visible: torch.Tensor,
+                      edge_index: torch.Tensor, mode: str) -> torch.Tensor:
+    """Build current-month visible-target context without self leakage.
+
+    The returned tensor is ``[time, nodes, channels]``.  Edge orientation is
+    the frozen river convention: source is upstream and destination is
+    downstream.  Every statistic is calculated from ``visible`` only.
+    """
+    if mode not in CONTEXT_MODES:
+        raise ValueError(f"unknown context_mode: {mode}")
+    if mode == "none":
+        return y_model.new_zeros((y_model.shape[1], y_model.shape[0], 0))
+    n, _t = y_model.shape
+    source, destination = edge_index
+    upstream = torch.zeros(n, n, dtype=y_model.dtype, device=y_model.device)
+    upstream[destination, source] = 1.0
+    downstream = upstream.T
+    values = y_model * visible.float()
+    counts = visible.float()
+    total = counts.sum(dim=0, keepdim=True) - visible.float()
+    global_sum = values.sum(dim=0, keepdim=True) - values
+    global_mean = global_sum / total.clamp_min(1.0)
+    global_count = total / float(max(n - 1, 1))
+    features = [global_mean, global_count]
+    if mode in ("directional", "all"):
+        up_degree = upstream.sum(dim=1).clamp_min(1.0)
+        down_degree = downstream.sum(dim=1).clamp_min(1.0)
+        up_count = (counts.T @ upstream.T) / up_degree
+        up_sum = values.T @ upstream.T
+        down_count = (counts.T @ downstream.T) / down_degree
+        down_sum = values.T @ downstream.T
+        up_mean = up_sum / up_count.clamp_min(1.0)
+        down_mean = down_sum / down_count.clamp_min(1.0)
+        features.extend([up_mean.T, up_count.T, down_mean.T, down_count.T])
+    if mode == "all":
+        # Recent context is represented by the current-month network summary;
+        # the temporal wrapper supplies the previous months as separate steps.
+        features.extend([global_mean, global_count])
+    return torch.stack([f.T for f in features], dim=-1)
+
+
 def fill_target_channel(xt_static: torch.Tensor, y_model: torch.Tensor,
-                        visible: torch.Tensor) -> torch.Tensor:
+                        visible: torch.Tensor, *, context_mode: str = "none",
+                        edge_index: torch.Tensor | None = None) -> torch.Tensor:
     """Return an input copy with the visible target channel populated."""
     if visible.shape != y_model.shape:
         raise ValueError("visible and target shapes differ")
@@ -198,6 +249,12 @@ def fill_target_channel(xt_static: torch.Tensor, y_model: torch.Tensor,
     observed = torch.where(visible, y_model, torch.zeros_like(y_model))
     xt[:, :, 8] = observed.T
     xt[:, :, 9] = visible.float().T
+    if context_mode != "none":
+        if edge_index is None:
+            raise ValueError("edge_index is required for context features")
+        context = _context_features(y_model, visible, edge_index, context_mode)
+        start = 11
+        xt[:, :, start:start + context.shape[-1]] = context
     return xt
 
 
@@ -224,6 +281,7 @@ class H2XTemporalModel:
         target_transform: str = "log1p",
         chunk_months: int = 256,
         history_ablation: str = "none",
+        context_mode: str = "none",
     ):
         self.seed = int(seed)
         self.lookback = int(lookback)
@@ -242,6 +300,7 @@ class H2XTemporalModel:
         self.target_transform = target_transform
         self.chunk_months = int(chunk_months)
         self.history_ablation = history_ablation
+        self.context_mode = context_mode
 
     def _build_model(self, inputs: TemporalInputs, dataset: dict) -> TemporalTransportGCNImputer:
         edge_attr = _as_tensor(dataset["edge_attr"])
@@ -294,6 +353,7 @@ class H2XTemporalModel:
             target_transform=transform,
             env_groups=self.env_groups,
             env_encoder=self.env_encoder,
+            context_mode=self.context_mode,
         )
         model = self._build_model(inputs, dataset)
         optimizer = torch.optim.Adam(
@@ -317,7 +377,10 @@ class H2XTemporalModel:
             visible = base_train.clone()
             if context.numel():
                 visible.reshape(-1)[context] = True
-            xt = fill_target_channel(inputs.xt_static, inputs.y_model, visible)
+            xt = fill_target_channel(
+                inputs.xt_static, inputs.y_model, visible,
+                context_mode=self.context_mode, edge_index=model._edge_index,
+            )
             model.train()
             pred = self._predict_model(model, xt, inputs, dataset)
             ti, tj = self._target_cells(targets, t)
@@ -332,7 +395,10 @@ class H2XTemporalModel:
                 eval_visible = base_train.clone()
                 if train_cells.numel():
                     eval_visible.reshape(-1)[train_cells] = True
-                eval_xt = fill_target_channel(inputs.xt_static, inputs.y_model, eval_visible)
+                eval_xt = fill_target_channel(
+                    inputs.xt_static, inputs.y_model, eval_visible,
+                    context_mode=self.context_mode, edge_index=model._edge_index,
+                )
                 eval_pred = self._predict_model(model, eval_xt, inputs, dataset)
                 if val_cells.numel():
                     vi, vj = self._target_cells(val_cells, t)
@@ -415,7 +481,10 @@ class H2XTemporalModel:
             extra_visible=extra_visible,
             extra_values=extra_values,
         )
-        xt = fill_target_channel(inputs.xt_static, y_feed, visible)
+        xt = fill_target_channel(
+            inputs.xt_static, y_feed, visible,
+            context_mode=self.context_mode, edge_index=model._edge_index,
+        )
         model.eval()
         with torch.no_grad():
             pred_std = self._predict_model(model, xt, inputs, bundle["dataset"])

@@ -103,6 +103,10 @@ def _history_ablation(kind: str) -> str:
     }.get(kind, "none")
 
 
+def _context_mode(kind: str) -> str:
+    return "all" if kind == "h2x_t_context" else "none"
+
+
 def _lookback_for_kind(kind: str) -> int:
     """Return the frozen temporal window for each diagnostic arm."""
     return {
@@ -146,7 +150,7 @@ def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, kind: str,
 
 def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
             mask_name: str, mask_path: str, max_epochs: int, patience: int,
-            lookback: int = 12) -> dict:
+    lookback: int = 12) -> dict:
     temporal = "gru" if kind.startswith("h2x_t") else "none"
     return {
         "script": "scripts/run_temporal_h2x.py",
@@ -181,6 +185,7 @@ def _params(*, kind: str, analyte: str, seed: int, dataset_path: str,
         # makes the snapshot comparison commensurate with the GRU wrapper.
         "training_protocol": "matched_full_grid",
         "history_ablation": _history_ablation(kind),
+        "context_mode": _context_mode(kind),
     }
 
 
@@ -249,6 +254,7 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
             patience=patience,
             target_transform=TARGET_TRANSFORMS[analyte],
             history_ablation=_history_ablation(kind),
+            context_mode=_context_mode(kind),
         )
     else:
         raise ValueError(f"unknown model kind: {kind}")
@@ -297,6 +303,7 @@ def _run_one(*, kind: str, analyte: str, mask_name: str, seed: int,
     meta["causal"] = params["causal"]
     meta["temporal_hidden"] = params["temporal_hidden"]
     meta["history_ablation"] = params["history_ablation"]
+    meta["context_mode"] = params["context_mode"]
     meta["temporal_product"] = kind.startswith("h2x_t")
     meta["export_scope"] = (
         "full station-month grid; observed labels are retained only for final "
@@ -327,7 +334,7 @@ def main() -> None:
         "--models", nargs="+",
         choices=("h2x", "h2x_t", "h2x_t_current_only", "h2x_t_lb3",
                  "h2x_t_lb6",
-                 "h2x_t_no_history", "h2x_t_hydro_only"),
+                 "h2x_t_no_history", "h2x_t_hydro_only", "h2x_t_context"),
         default=None,
     )
     ap.add_argument("--max-epochs", type=int, default=None)
