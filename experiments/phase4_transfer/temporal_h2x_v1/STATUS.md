@@ -111,3 +111,7 @@ are frozen as `docs/paper/h2x_t_results_v1.md`,
 `docs/paper/h2x_t_claim_evidence_v1.csv`. They use the T8/T9 outputs directly
 and preserve the conditional pH result, the window/ablation interpretation,
 and the previously closed blind-spot claim.
+
+The full draft is `docs/paper/h2x_t_manuscript_draft_v1.md`. It contains the
+abstract, introduction, methods, results, discussion, and conclusion based on
+the frozen T8/T9 package.
