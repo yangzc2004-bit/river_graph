@@ -88,9 +88,11 @@ statistics are computed from the training role.
 
 ### 2.2 Missingness regimes and visibility
 
-We use four frozen missingness families. E1 masks random observed cells. E2a
-and E2b represent temporal extrapolation settings. E3 holds out spatial
-stations. For each analyte, the frozen role cells are intersected with that
+We use four frozen missingness families: random gaps mask individual observed
+cells; unobserved-period extrapolation hides all target observations after the
+cutoff; observation-assisted extrapolation retains a subset of post-cutoff
+observations as context; and unmonitored stations withhold target observations
+at selected stations. For each analyte, the frozen role cells are intersected with that
 analyte's observed-label mask. Training and context labels can enter the input
 according to the role definition. Validation labels remain hidden during
 training and early stopping. Test labels are used only for the final metric
@@ -153,26 +155,26 @@ and `t9_products/`.
 ### 3.1 Five-seed matched comparison
 
 H2X-T reduced MAE in every analyte-by-mask family. DOC reductions ranged from
-37.5% in E3 to 47.2% in E2b. Specific-conductance reductions ranged from
-38.8% in E3 to 57.2% in E2b. Both analytes improved for all five seeds in all
+37.5% in unmonitored stations to 47.2% in observation-assisted extrapolation. Specific-conductance reductions ranged from
+38.8% in unmonitored stations to 57.2% in observation-assisted extrapolation. Both analytes improved for all five seeds in all
 four families.
 
-The pH effect was smaller. Reductions ranged from 0.5% in E3 to 3.8% in E2b.
-E1, E2a, and E2b improved for four of five seeds, while E3 improved for three
-of five. The station-clustered E3 interval included zero, so we report this as
+The pH effect was smaller. Reductions ranged from 0.5% in unmonitored stations to 3.8% in observation-assisted extrapolation.
+random gaps, unobserved-period extrapolation, and observation-assisted extrapolation improved for four of five seeds, while unmonitored stations improved for three
+of five. The station-clustered unmonitored stations interval included zero, so we report this as
 a regime-dependent small effect rather than a general pH improvement.
 
-The largest DOC and conductance gains occurred in E2a and E2b, the temporal
+The largest DOC and conductance gains occurred in unobserved-period extrapolation and observation-assisted extrapolation, the temporal
 missingness settings. The result is consistent with a temporal representation
 being most useful when the query month is separated from the observed target
-history. The same model also improved E3, showing that the gain is not limited
-to temporal masking, although the magnitude is smaller for conductance in E3
+history. The same model also improved unmonitored stations, showing that the gain is not limited
+to temporal masking, although the magnitude is smaller for conductance in unmonitored stations
 than in E2.
 
 ### 3.2 Temporal window length
 
-The E2 window diagnostic compared 1, 3, 6, and 12 months. Mean MAE across E2a
-and E2b decreased from 1.420 to 1.415 for DOC, from 0.362 to 0.301 for pH,
+The E2 window diagnostic compared 1, 3, 6, and 12 months. Mean MAE across unobserved-period extrapolation
+and observation-assisted extrapolation decreased from 1.420 to 1.415 for DOC, from 0.362 to 0.301 for pH,
 and from 279.12 to 245.75 for specific conductance. The pH and conductance
 curves showed most of their improvement by six months. DOC was nearly flat.
 We retained 12 months because it produced the lowest observed error and gives
@@ -184,7 +186,7 @@ alternative for future operational testing.
 The reverse-history and hydro-only arms remained within 0.6% of full H2X-T in
 MAE across the three-analyte and four-mask diagnostic grid. In contrast, the
 current-only control was 20.9% worse for pH and 13.8% worse for conductance in
-E2a/E2b, while DOC changed by 0.5%.
+the two temporal extrapolation scenarios, while DOC changed by 0.5%.
 
 This pattern indicates that a longer history representation is useful for pH
 and conductance, but the available ablations do not identify a single causal
@@ -197,7 +199,7 @@ the sole mechanism.
 ### 3.4 Spatial and station-level products
 
 The five-seed ensemble products provide a full station-month reconstruction
-for all three analytes and four masks. The E2a station maps show heterogeneous
+for all three analytes and four masks. The unobserved-period extrapolation station maps show heterogeneous
 error across the river network. Descriptive station traces show the model's
 seasonal reconstruction and local departures from observations. These products
 are intended to support ecological interpretation and downstream monitoring

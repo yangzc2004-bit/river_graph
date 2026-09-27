@@ -11,8 +11,9 @@ conductance. The comparison used the same target-specific masks and query
 cells for both models, five training seeds (42--46), and the matched
 10-epoch/patience-3 training budget.
 
-We considered four missingness families: E1 random cell masking, E2a and E2b
-temporal masking, and E3 held-out spatial stations. The primary comparison is
+We considered four missingness families: random gaps (random cell masking),
+unobserved-period extrapolation, observation-assisted extrapolation, and
+unmonitored stations (held-out spatial stations). The primary comparison is
 paired MAE on the hidden query cells. A negative delta (H2X-T minus H2X) favors
 the temporal model. Station-clustered and month-clustered bootstrap intervals
 use 2,000 paired replicates; training seeds are averaged before resampling and
@@ -24,20 +25,23 @@ H2X-T reduced MAE in every analyte-by-missingness family in the five-seed
 comparison. The gains were large for DOC and specific conductance and smaller
 for pH.
 
-For DOC, MAE decreased by 37.5--47.2% across E1--E3. The largest reductions
-occurred in the temporal extrapolation settings E2a (47.1%) and E2b (47.2%),
+For DOC, MAE decreased by 37.5--47.2% across the four missingness scenarios.
+The largest reductions occurred in unobserved-period extrapolation (47.1%) and
+observation-assisted extrapolation (47.2%),
 where the snapshot model had no access to the target-month temporal context.
 Both station- and month-clustered intervals for the MAE delta remained below
 zero in every DOC family.
 
 For specific conductance, the corresponding reduction was 38.8--57.2%.
-E2a and E2b produced reductions of 56.7% and 57.2%, respectively, with
+Unobserved-period extrapolation and observation-assisted extrapolation produced
+reductions of 56.7% and 57.2%, respectively, with
 negative bootstrap intervals under both clustering choices. The result shows
 that the temporal extension is especially valuable for an analyte whose
 variation is strongly coupled to evolving hydro-ecological conditions.
 
-For pH, H2X-T reduced MAE by 0.5--3.8%. E1, E2a, and E2b showed small but
-consistent improvements across most seeds. The E3 result was close to parity:
+For pH, H2X-T reduced MAE by 0.5--3.8%. Random gaps, unobserved-period
+extrapolation, and observation-assisted extrapolation showed small but
+consistent improvements across most seeds. The unmonitored stations result was close to parity:
 the month-clustered interval was slightly below zero, whereas the
 station-clustered interval included zero. We therefore treat pH as a
 small-effect analyte whose benefit depends on the missingness regime, rather
@@ -45,12 +49,12 @@ than pooling it with the larger DOC and conductance effects.
 
 The improvement is not confined to one scenario. DOC and specific conductance
 were better for all five seeds in all four families. The pH comparison was
-better for four of five seeds in E1, E2a, and E2b, and three of five in E3.
+better for four of five seeds in random gaps, unobserved-period extrapolation, and observation-assisted extrapolation, and three of five in unmonitored stations.
 
 ## How much temporal history is useful?
 
 A matched three-seed window diagnostic compared lookbacks of 1, 3, 6, and 12
-months in E2a and E2b. Mean MAE across the two temporal families was:
+months in unobserved-period extrapolation and observation-assisted extrapolation. Mean MAE across the two temporal families was:
 
 | analyte | 1 month | 3 months | 6 months | 12 months |
 |---|---:|---:|---:|---:|
@@ -81,7 +85,7 @@ MAE for the observed analyte-by-mask families at the matched budget.
 
 A separate current-only control used the same GRU wrapper with `lookback=1`.
 Relative to H2X-T, current-only MAE was 20.9% higher for pH and 13.8% higher
-for specific conductance in E2a/E2b, while DOC changed by 0.5%. Together,
+for specific conductance in the two temporal extrapolation scenarios, while DOC changed by 0.5%. Together,
 these results support a practical conclusion: a longer input history matters
 for pH and conductance, but the present experiments do not isolate a unique
 contribution from strict chronological order or from the target analyte's own
@@ -92,7 +96,7 @@ causal temporal extension, without assigning the gain to a single channel.
 
 The five-seed ensemble product provides a full station-month reconstruction
 for each analyte and missingness family. The station-error maps show where
-E2a test errors concentrate across the Mississippi graph, while the station
+unobserved-period extrapolation test errors concentrate across the Mississippi graph, while the station
 traces illustrate how the ensemble follows seasonal variation and where
 observations depart from the reconstruction. These displays are descriptive:
 station examples were chosen by a fixed data-availability rule and were not

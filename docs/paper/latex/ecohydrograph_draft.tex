@@ -9,7 +9,7 @@
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
 \definecolor{navy}{RGB}{35,68,105}
-\graphicspath{{figures/}{../../../experiments/phase4_transfer/temporal_h2x_v1/t9_products/}}
+\graphicspath{{figures/}}
 \sisetup{detect-all,group-separator={,},output-decimal-marker={.}}
 \title{\textbf{EcoHydroGraph: Hydro--ecological temporal graph learning for sparse river water-quality reconstruction}}
 \author{Zhaochen Yang\\[2pt]\small Draft manuscript --- September 2026}
@@ -36,7 +36,7 @@ Our contributions are threefold: (i) a hydro--ecological temporal graph model fo
 The audited ST357 cohort contains 357 stream stations, 324 river-network edges, and 654 monthly time points. DOC and specific conductance use a log1p target transform; pH is standardized on the raw scale using training cells only. Monthly inputs contain temperature, discharge, visibility flags, seasonal sine/cosine terms, static station coordinates, ecological regime features, and target-value/visibility channels. The graph input contains the frozen river edge set and edge attributes.
 
 \subsection{Missingness and visibility}
-E1 masks random observed cells; E2a and E2b create temporal extrapolation settings; E3 holds out spatial stations. Role cells are intersected with each analyte's observed-label mask. Training and context labels can populate the input under the role definition. Validation labels remain hidden during fitting and early stopping; test labels are used only for final evaluation. Snapshot and temporal models use identical target masks and query cells.
+We evaluate four scenarios: \textit{random gaps}, which hide individual observed cells; \textit{unobserved-period extrapolation}, which hides all target observations after the temporal cutoff; \textit{observation-assisted extrapolation}, which retains a subset of post-cutoff observations as context; and \textit{unmonitored stations}, which withholds target observations at selected stations. Role cells are intersected with each analyte's observed-label mask. Training and context labels can populate the input under the role definition. Validation labels remain hidden during fitting and early stopping; test labels are used only for final evaluation. Snapshot and temporal models use identical target masks and query cells.
 
 \subsection{EcoHydroGraph}
 The spatial trunk is a two-layer transport graph encoder with hidden width 64, ecological encoding, and dropout 0.1. It is applied to every monthly station graph. The resulting node representations enter a one-layer GRU with hidden width 64 and a 12-month causal window. The final recurrent representation is mapped through the prediction head to the target analyte. The snapshot baseline uses the same spatial trunk without the temporal wrapper. Figure~\ref{fig:architecture} summarizes the architecture.
@@ -52,36 +52,37 @@ Primary comparisons use five seeds (42--46) and the matched 10-epoch, patience-3
 
 \section{Results}
 \subsection{EcoHydroGraph improves sparse reconstruction}
-Table~\ref{tab:main} gives the five-seed matched comparison. EcoHydroGraph improves DOC in all four regimes, with reductions from 37.5\% in E3 to 47.2\% in E2b. Specific conductance shows reductions from 38.8\% in E3 to 57.2\% in E2b. Both analytes improve for all five seeds in every regime. The largest gains occur in E2a and E2b, where the query month is separated from observed target history.
+Table~\ref{tab:main} gives the five-seed matched comparison. EcoHydroGraph improves DOC in all four regimes, with reductions from 37.5\% in unmonitored stations to 47.2\% in observation-assisted extrapolation. Specific conductance shows reductions from 38.8\% in unmonitored stations to 57.2\% in observation-assisted extrapolation. Both analytes improve for all five seeds in every regime. The largest gains occur in the two temporal extrapolation scenarios, where the query month is separated from observed target history.
 
-pH shows a smaller effect: reductions range from 0.5\% in E3 to 3.8\% in E2b. E1, E2a, and E2b improve for four of five seeds. E3 is close to parity, with the station-clustered interval including zero.
+pH shows a smaller effect: reductions range from 0.5\% in unmonitored stations to 3.8\% in observation-assisted extrapolation. Random gaps and both temporal extrapolation scenarios improve for four of five seeds. Reconstruction at unmonitored stations is close to parity, with the station-clustered interval including zero.
 
 \begin{table*}[t]\centering\caption{Five-seed matched comparison. Positive reduction favors EcoHydroGraph.}\label{tab:main}\scriptsize
-\begin{tabular}{llrrrr}\toprule
-Analyte & Regime & Snapshot MAE & EcoHydroGraph MAE & Reduction (\%) & Better seeds\\\midrule
-DOC&E1&4.285&2.625&38.75&5/5\\
-DOC&E2a&2.679&1.417&47.12&5/5\\
-DOC&E2b&2.679&1.413&47.24&5/5\\
-DOC&E3&6.198&3.876&37.47&5/5\\\midrule
-pH&E1&0.347&0.335&3.53&4/5\\
-pH&E2a&0.313&0.302&3.58&4/5\\
-pH&E2b&0.312&0.300&3.77&4/5\\
-pH&E3&0.286&0.284&0.51&3/5\\\midrule
-Specific conductance&E1&683.2&374.8&45.14&5/5\\
-Specific conductance&E2a&572.7&247.9&56.71&5/5\\
-Specific conductance&E2b&568.9&243.5&57.19&5/5\\
-Specific conductance&E3&996.4&609.4&38.84&5/5\\\bottomrule
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lp{2.8cm}rrrr}\toprule
+Analyte & Scenario & \shortstack{Snapshot\\MAE} & \shortstack{EcoHydroGraph\\MAE} & \shortstack{Reduction\\(\%)} & \shortstack{Better\\seeds}\\\midrule
+DOC&Random gaps&4.285&2.625&38.75&5/5\\
+DOC&Strict temporal&2.679&1.417&47.12&5/5\\
+DOC&Context-assisted temporal&2.679&1.413&47.24&5/5\\
+DOC&Unmonitored stations&6.198&3.876&37.47&5/5\\\midrule
+pH&Random gaps&0.347&0.335&3.53&4/5\\
+pH&Strict temporal&0.313&0.302&3.58&4/5\\
+pH&Context-assisted temporal&0.312&0.300&3.77&4/5\\
+pH&Unmonitored stations&0.286&0.284&0.51&3/5\\\midrule
+Specific conductance&Random gaps&683.2&374.8&45.14&5/5\\
+Specific conductance&Strict temporal&572.7&247.9&56.71&5/5\\
+Specific conductance&Context-assisted temporal&568.9&243.5&57.19&5/5\\
+Specific conductance&Unmonitored stations&996.4&609.4&38.84&5/5\\\bottomrule
 \end{tabular}\end{table*}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{figure_main_reduction_heatmap.png}
+\includegraphics[width=\linewidth]{reconstruction_improvement.pdf}
 \caption{\textbf{Analyte- and regime-specific improvement.} Relative MAE reduction of EcoHydroGraph relative to the matched snapshot graph model.}
 \label{fig:heatmap}\end{figure}
 
 \subsection{Temporal history length has analyte-specific value}
-The window diagnostic compares 1, 3, 6, and 12 months in E2a and E2b using three matched seeds. Mean MAE decreases from 1.420 to 1.415 for DOC, from 0.362 to 0.301 for pH, and from 279.12 to 245.75 for specific conductance. Most pH and conductance improvement appears by six months, while DOC is nearly flat. We retain 12 months as the common working configuration.
+The window diagnostic compares 1, 3, 6, and 12 months in the two temporal extrapolation scenarios using three matched seeds. Mean MAE decreases from 1.420 to 1.415 for DOC, from 0.362 to 0.301 for pH, and from 279.12 to 245.75 for specific conductance. Most pH and conductance improvement appears by six months, while DOC is nearly flat. We retain 12 months as the common working configuration.
 
-\begin{table}[t]\centering\caption{Mean E2a/E2b MAE by temporal lookback.}\label{tab:window}\small
+\begin{table}[t]\centering\caption{Mean MAE across the two temporal extrapolation scenarios by temporal lookback.}\label{tab:window}\small
 \begin{tabular}{lrrrr}\toprule
 Analyte&1 month&3 months&6 months&12 months\\\midrule
 DOC&1.420&1.419&1.417&1.415\\
@@ -90,24 +91,24 @@ Specific conductance&279.12&255.19&247.72&245.75\\\bottomrule
 \end{tabular}\end{table}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{window_curve.png}
+\includegraphics[width=\linewidth]{history_window.pdf}
 \caption{\textbf{Temporal window diagnostic.} Longer history improves pH and specific conductance, with diminishing gains beyond six months. DOC changes little.}
 \label{fig:window}\end{figure}
 
 \subsection{Longer history matters more than one isolated channel}
-The reverse-history and hydro-only arms remain within 0.6\% of the full temporal model in the three-seed diagnostic. The current-only control is 20.9\% worse for pH and 13.8\% worse for specific conductance in E2a/E2b, while DOC changes by 0.5\%. These results identify the amount of temporal context as useful for pH and conductance, without assigning the gain to strict chronological order or target persistence alone.
+The reverse-history and hydro-only arms remain within 0.6\% of the full temporal model in the three-seed diagnostic. The current-only control is 20.9\% worse for pH and 13.8\% worse for specific conductance in the two temporal extrapolation scenarios, while DOC changes by 0.5\%. These results identify the amount of temporal context as useful for pH and conductance, without assigning the gain to strict chronological order or target persistence alone.
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{figure_station_trace_e2a.png}
-\caption{\textbf{Descriptive station traces under E2a.} Five-seed EcoHydroGraph median predictions, observed values, and seed dispersion for one fixed data-availability-selected station per analyte.}
+\includegraphics[width=\linewidth]{unobserved_period_traces.pdf}
+\caption{\textbf{Descriptive station traces under unobserved-period extrapolation.} Five-seed EcoHydroGraph median predictions, observed values, and seed dispersion for one fixed data-availability-selected station per analyte.}
 \label{fig:trace}\end{figure}
 
 \subsection{Spatially heterogeneous reconstruction error}
-The five-seed ensemble produces a full station-month reconstruction for every analyte and regime. Figure~\ref{fig:map} shows E2a test-cell error by station. Error is spatially heterogeneous, and the scale differs among analytes.
+The five-seed ensemble produces a full station-month reconstruction for every analyte and regime. Figure~\ref{fig:map} shows test-cell error under unobserved-period extrapolation by station. Error is spatially heterogeneous, and the scale differs among analytes.
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{figure_spatial_error_e2a.png}
-\caption{\textbf{Spatial distribution of E2a test error.} Station-level MAE for the five-seed EcoHydroGraph median reconstruction.}
+\includegraphics[width=\linewidth]{unobserved_period_spatial_error.pdf}
+\caption{\textbf{Spatial error under unobserved-period extrapolation.} Station-level MAE for the five-seed EcoHydroGraph median reconstruction.}
 \label{fig:map}\end{figure}
 
 \FloatBarrier

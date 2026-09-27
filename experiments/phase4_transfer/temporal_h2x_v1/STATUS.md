@@ -123,6 +123,12 @@ with the rendered PDF at `docs/paper/latex/ecohydrograph_draft.pdf`. It uses
 the T8/T9 tables and figures directly, adds a vector architecture diagram,
 and uses the paper name EcoHydroGraph; H2X-T remains an internal experiment
 identifier. The source was compiled twice with a user-local TeX Live 2026
-installation at `/Users/yzccc/local_texlive/texlive/2026`. The PDF is a six-page
+installation at `/Users/yzccc/local_texlive/texlive/2026`. The PDF is a seven-page
 working draft; no new training or endpoint changes were made for manuscript
 generation.
+
+The manuscript now uses descriptive missingness names throughout: random gaps,
+unobserved-period extrapolation, observation-assisted extrapolation, and
+unmonitored stations. Publication-only figures are rendered by
+`scripts/render_ecohydrograph_figures.py`; internal mask identifiers remain in
+the experiment directories for reproducibility.
