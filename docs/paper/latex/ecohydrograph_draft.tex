@@ -25,21 +25,37 @@ River monitoring networks rarely observe every water-quality indicator at every 
 \section{Introduction}
 Long-term river monitoring networks provide broad spatial and temporal coverage, but observations remain sparse and irregular. Stations differ in sampling frequency, programs change over time, and access or instrumentation creates gaps. These gaps are embedded in a river network, a watershed ecological context, and a changing hydrologic regime. This limits the use of raw records for carbon-cycle analysis, salinity assessment, acid--base characterization, extreme-event detection, and comparisons among watersheds.
 
-Conventional interpolation uses local spatial or temporal similarity. This is difficult to operationalize when gaps arise from network failures, device replacement, irregular sampling, or other mechanisms that can bias downstream analysis \citep{zhang2022missing,pazo2024bayesian}. Tabular machine-learning models add environmental covariates while treating station-month records as independent samples. Graph neural networks encode relational structure \citep{kipf2017,hamilton2017}; spatio-temporal graph studies in hydrology show that explicit connectivity can be learned jointly with temporal dynamics and can help generalize to unobserved locations \citep{yu2018stgcn,sun2021hydro}. River-temperature work also shows that the choice of spatial and temporal architecture affects robustness when geographic or climatic conditions shift \citep{topp2023stream}. Recent graph-based river water-quality studies extend this idea toward sparse monitoring and management interpretation, but typically focus on one target variable and a single basin \citep{choi2026water}. The open problem is to combine spatial graph structure, ecological context, and hydroclimatic temporal memory while testing the result under the distinct ways a monitoring network becomes incomplete.
+Conventional interpolation uses local spatial or temporal similarity. This is difficult to operationalize when gaps arise from network failures, device replacement, irregular sampling, or other mechanisms that can bias downstream analysis \citep{zhang2022missing,pazo2024bayesian}. Tabular machine-learning models add environmental covariates while treating station-month records as independent samples. Graph neural networks encode relational structure \citep{kipf2017,hamilton2017}; spatio-temporal graph models learn spatial and temporal dependencies jointly \citep{yu2018stgcn}, and hydrological applications demonstrate their potential for prediction at unobserved locations \citep{sun2021hydro}. River-temperature work also shows that the choice of spatial and temporal architecture affects robustness when geographic or climatic conditions shift \citep{topp2023stream}. For example, Choi et~al. extend graph learning toward sparse water-quality monitoring and management interpretation through a chromaticity case study in the Hantan River Basin \citep{choi2026water}. The open problem is to combine spatial graph structure, ecological context, and hydroclimatic temporal memory while testing the result under the distinct ways a monitoring network becomes incomplete.
 
-We develop EcoHydroGraph. A spatial river-graph encoder combines station inputs, edge attributes, and ecological features at each month. A causal GRU integrates the current representation with the preceding eleven months. Here causal describes the information-flow constraint that a prediction at month $t$ receives no future-month labels; it is not a causal-inference claim. Separate models are trained for DOC, pH, and specific conductance.
+We develop EcoHydroGraph. A spatial river-graph encoder combines station inputs, edge attributes, and ecological features at each month. A causal GRU \citep{cho2014} integrates the current representation with the preceding eleven months. Here causal describes the information-flow constraint that a prediction at month $t$ receives no future-month labels; it is not a causal-inference claim. Separate models are trained for DOC, pH, and specific conductance.
 
 Our contributions are threefold: (i) a hydro--ecological temporal graph model for sparse station-month reconstruction; (ii) evidence that temporal information has analyte- and missingness-dependent value, with large gains for DOC and specific conductance and smaller gains for pH; and (iii) a matched evaluation framework that separates random, temporal, and spatial missingness and measures the useful history length. The design isolates the value of temporal context by keeping the spatial encoder and target masks fixed between the snapshot and temporal models.
 
 \section{Materials and Methods}
 \subsection{Cohort, targets, and inputs}
-The audited ST357 cohort contains 357 stream stations, 324 river-network edges, and 654 monthly time points. DOC and specific conductance use a log1p target transform; pH is standardized on the raw scale using training cells only. Monthly inputs contain temperature, discharge, visibility flags, seasonal sine/cosine terms, static station coordinates, ecological regime features, and target-value/visibility channels. The graph input contains the frozen river edge set and edge attributes.
+The audited ST357 cohort contains 357 stream stations, 324 river-network edges, and 654 monthly time points. DOC and specific conductance use a log1p target transform; pH is standardized on the raw scale using training cells only. Monthly inputs contain temperature, discharge, visibility flags, seasonal sine/cosine terms, static station coordinates, ecological regime features, and target-value/visibility channels. The graph input contains the frozen river edge set and edge attributes. All targets are standardized after the target transform using training-label statistics. Dynamic input scaling uses training-cell locations; coordinates and ecological descriptors are standardized across the known station cohort. This setting assumes that station descriptors and contemporaneous hydrological inputs are available at prediction locations.
 
 \subsection{Missingness and visibility}
-We evaluate four scenarios: \textit{random gaps}, which hide individual observed cells; \textit{unobserved-period extrapolation}, which hides all target observations after the temporal cutoff; \textit{observation-assisted extrapolation}, which retains a subset of post-cutoff observations as context; and \textit{unmonitored stations}, which withholds target observations at selected stations. Role cells are intersected with each analyte's observed-label mask. Training and context labels can populate the input under the role definition. Validation labels remain hidden during fitting and early stopping; test labels are used only for final evaluation. Snapshot and temporal models use identical target masks and query cells.
+We evaluate four scenarios: \textit{random gaps}, which hide individual observed cells; \textit{unobserved-period extrapolation}, which hides all target observations after the temporal cutoff; \textit{observation-assisted extrapolation}, which retains a subset of post-cutoff observations as context; and \textit{unmonitored stations}, which withholds target observations at selected stations. Role cells are intersected with each analyte's observed-label mask. During fitting, half of the training cells are randomly retained as input context each epoch and the remainder provide the loss targets, alongside any designated context cells. Validation labels never enter the fitting or early-stopping inputs; they are used to calculate the early-stopping loss. Final inference exposes training, validation, and designated context labels, while test labels remain hidden. Each temporal window ends at the prediction month. Snapshot and temporal models use identical target masks and query cells.
 
 \subsection{EcoHydroGraph}
 The spatial trunk is a two-layer transport graph encoder with hidden width 64, ecological encoding, and dropout 0.1. It is applied to every monthly station graph. The resulting node representations enter a one-layer GRU with hidden width 64 and a 12-month causal window. The final recurrent representation is mapped through the prediction head to the target analyte. The snapshot baseline uses the same spatial trunk without the temporal wrapper. Figure~\ref{fig:architecture} summarizes the architecture.
+
+For station $i$ and month $t$, let $x_{i,t}$ denote the monthly input and $e_i$ the ecological descriptor. The ecological encoder is a two-layer perceptron with width 32. Its output is concatenated with $x_{i,t}$. Each spatial layer computes
+\begin{equation}
+ h^{(\ell+1)}_{i,t}=\operatorname{Dropout}\!\left[\operatorname{ReLU}\!\left(
+ W_0^{(\ell)}h^{(\ell)}_{i,t}+b_0^{(\ell)}+
+ \sum_{r\in\{\mathrm{up},\mathrm{down}\}}m^{(\ell)}_{i,t,r}\right)\right],
+\end{equation}
+where
+\begin{equation}
+ m^{(\ell)}_{i,t,r}=\frac{1}{\max(1,|\mathcal N_r(i)|)}
+ \sum_{j\in\mathcal N_r(i)}\sigma(g_r^{(\ell)}(a_{ji}))
+ \left(W_r^{(\ell)}h^{(\ell)}_{j,t}+b_r^{(\ell)}\right).
+\end{equation}
+Here $a_{ji}$ contains edge attributes, $g_r$ is a learned two-layer gate network with intermediate width 16, and $\sigma$ is the sigmoid function. Upstream and downstream messages have separate parameters. The gates are learned functions of static edge attributes.
+
+The temporal module receives $[h_{i,\tau}^{(2)},v_\tau]$ for $\tau=t-11,\ldots,t$, where $v_\tau$ indicates a valid history position. A fresh recurrent state is used for each window, and the last GRU state is passed through a scalar linear head. At the start of the record, unavailable history positions repeat the first encoded month and have $v_\tau=0$. Thus, padding adds no distinct earlier observation.
 
 \begin{figure}[t]\centering
 \resizebox{\linewidth}{!}{\input{figures/architecture.tex}}
@@ -48,7 +64,7 @@ The spatial trunk is a two-layer transport graph encoder with hidden width 64, e
 \end{figure}
 
 \subsection{Training and evaluation}
-Primary comparisons use five seeds (42--46) and the matched 10-epoch, patience-3 budget for both models. The primary metric is MAE on hidden query cells; RMSE, $R^2$, log-space error, and train-derived Q90 tail MAE are secondary. Tails with fewer than 20 query cells are flagged unstable. Errors are averaged across seeds at each query cell before 2,000 paired station- or month-clustered bootstrap replicates. The primary uncertainty table reports station-clustered 95\% intervals for the paired MAE difference; month-clustered intervals are retained in the analysis files. Relative reduction is $100(1-\mathrm{MAE}_{\mathrm{EcoHydroGraph}}/\mathrm{MAE}_{\mathrm{snapshot}})$.
+Primary comparisons use five seeds (42--46) and the matched 10-epoch, patience-3 budget for both models. Training minimizes mean squared error on standardized targets with Adam (learning rate $10^{-3}$, no weight decay) and gradient-norm clipping at 1. The checkpoint with the lowest validation loss is retained. Before inverse transformation, log-transformed predictions are clipped to the training minimum and 99.5th percentile; pH predictions are clipped to the training minimum and maximum. The primary metric is MAE on hidden query cells; RMSE, $R^2$, log-space error, and train-derived Q90 tail MAE are secondary. Tails with fewer than 20 query cells are flagged unstable. Errors are averaged across seeds at each query cell before 2,000 paired station- or month-clustered bootstrap replicates. The primary uncertainty table reports station-clustered 95\% intervals for the paired MAE difference; month-clustered intervals are retained in the analysis files. Relative reduction is $100(1-\mathrm{MAE}_{\mathrm{EcoHydroGraph}}/\mathrm{MAE}_{\mathrm{snapshot}})$.
 
 \section{Results}
 \subsection{EcoHydroGraph improves sparse reconstruction}
@@ -139,6 +155,8 @@ The central finding is that hydro--ecological temporal memory improves sparse wa
 
 The graph provides the spatial context in which ecological and hydroclimatic inputs are interpreted. The headline result is the performance pattern created by jointly modeling river structure, ecology, and time. The window curve suggests that a six-month implementation may offer most of the benefit for pH and conductance, while the 12-month configuration remains the best common model. Because the spatial trunk is held fixed, this comparison isolates the temporal extension rather than ranking all possible spatial models.
 
+The primary comparison quantifies improvement over a matched snapshot graph. A separate historical DOC random-forest benchmark performs better on the same query cells (Appendix~\ref{sec:rfcontext}), so the present results do not establish superiority over strong tabular learning. This makes a common-protocol comparison with tabular and sequence models the next empirical priority.
+
 The reconstruction products expose where the model is less informative. pH gains are modest, and tail metrics are unstable in scenarios with very few high-value query cells. Ensemble seed spread is a model-dispersion diagnostic rather than a calibrated prediction interval. External-basin replication and a channel-factorial experiment are natural next tests.
 
 \section{Conclusion}
@@ -147,10 +165,24 @@ EcoHydroGraph combines river-network structure, watershed ecology, and hydro-tem
 \section*{Data and code availability}
 Analysis products, provenance records, and scripts are maintained in the project repository. Main tables are in \path{experiments/phase4_transfer/temporal_h2x_v1/t8_synthesis/}; five-seed products and figures are in \path{experiments/phase4_transfer/temporal_h2x_v1/t9_products/}.
 
-\section*{Acknowledgements}Draft placeholder.
+\section*{Acknowledgements}Author and funding details will be completed before submission.
+
+\appendix
+\section{Historical random-forest context}\label{sec:rfcontext}
+An audit of the existing DOC ecological random forest verified identical dataset hashes, training/validation/test/context cell sets, and station-month test labels for the four scenarios. Table~\ref{tab:rfcontext} reports MAE recomputed from the stored predictions for seeds 42--46. The historical forest uses 200 trees, ecological and hydrological covariates, and self-excluded same-month visible-DOC aggregates. These are historical pilot results with a different model-fitting protocol, included to contextualize the matched graph comparison; they are not a new confirmatory experiment. Existing three-analyte forest experiments use basin-transfer tasks and cannot populate the present four-scenario table.
+
+\begin{table}[H]\centering\small
+\caption{Historical DOC random-forest context on identical query cells. MAE is in mg/L; both columns average five seeds.}\label{tab:rfcontext}
+\begin{tabular}{lrrr}\toprule
+Scenario & Query cells & Historical EcoRF & EcoHydroGraph\\\midrule
+Random gaps & 4,514 & 1.476 & 2.625\\
+Unobserved period & 2,223 & 1.186 & 1.417\\
+Observation-assisted & 1,778 & 1.298 & 1.413\\
+Unmonitored stations & 2,531 & 2.862 & 3.876\\\bottomrule
+\end{tabular}\end{table}
 
 \bibliographystyle{plainnat}
-\begin{thebibliography}{9}\small
+\begin{thebibliography}{10}\small
 \bibitem[Kipf and Welling(2017)]{kipf2017} Kipf, T. N. and Welling, M. (2017). Semi-supervised classification with graph convolutional networks. \emph{ICLR}.
 \bibitem[Hamilton et~al.(2017)Hamilton, Ying, and Leskovec]{hamilton2017} Hamilton, W. L., Ying, R., and Leskovec, J. (2017). Inductive representation learning on large graphs. \emph{NeurIPS}, 30.
 \bibitem[Cho et~al.(2014)Cho et~al.]{cho2014} Cho, K. et~al. (2014). Learning phrase representations using RNN encoder--decoder for statistical machine translation. \emph{EMNLP}, 1724--1734.

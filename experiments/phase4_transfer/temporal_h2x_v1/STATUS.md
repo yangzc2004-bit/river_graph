@@ -151,3 +151,18 @@ work. New references are cited in the Introduction and added to the local
 bibliography. The manuscript was compiled twice with the local TeX Live 2026
 installation and rendered to an eight-page PDF. No data, model, endpoint, or
 frozen result was changed.
+
+## T14 baseline-context audit and methods pass
+
+`scripts/audit_manuscript_rf_context.py` rejoined the historical DOC
+EcoRandomForest predictions to the temporal paper query cells. Dataset hashes,
+role-cell arrays, and station-month test labels matched for all four scenarios.
+The resulting five-seed RF MAE table is retained as contextual Appendix A
+evidence, not a new confirmatory comparison, because the RF fitting protocol
+and feature pipeline differ from the matched temporal study budget.
+
+The LaTeX methods now state the visibility protocol, target standardization,
+optimizer and checkpoint rule, graph-message equations, recurrent-window
+padding, and prediction clipping. Local TeX Live compilation completed twice
+with a nine-page PDF and visual checks of the equations, appendix table, and
+references. No new training or endpoint change was made.

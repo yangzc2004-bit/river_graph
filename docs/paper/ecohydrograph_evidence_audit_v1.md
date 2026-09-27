@@ -40,3 +40,14 @@ The related-work pass is now complete. The Introduction uses the new citations t
 motivate the gap and position the contribution; it does not change any result or
 upgrade the paper's claims. The bibliography includes primary or source-level
 records for the cited graph, hydrology, missing-data, and water-quality studies.
+
+## Baseline context audit
+
+The historical DOC EcoRandomForest predictions were rejoined to the temporal
+paper query sets using station-month keys. Dataset hashes, role-cell arrays, and
+test labels matched for all four scenarios. The five-seed RF MAE was lower than
+the temporal graph MAE in each scenario (1.186--2.862 versus 1.413--3.876
+mg/L). Because the RF runs use a different feature pipeline and historical
+fitting protocol, this result is included as contextual evidence in Appendix A,
+not as a new confirmatory head-to-head claim. The audit table and source hashes
+are in `docs/paper/latex/supplementary/`.
