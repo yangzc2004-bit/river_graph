@@ -57,10 +57,13 @@ def load_arm(root: Path) -> tuple[dict, list[dict]]:
         if not np.isfinite(test[['y_true', 'y_pred']].to_numpy()).all():
             raise ValueError(f"nonfinite test values: {product}")
         threshold = float(full.loc[full['split'] == 'train', 'y_true'].quantile(.9))
+        tail = test[test.y_true >= threshold]
         record = {"run_dir": str(path), "status": "complete", "identity": identity,
                   "analyte": key[0], "mask": key[1], "seed": key[2],
                   "max_epochs": cfg.get('max_epochs'), "patience": cfg.get('patience'),
                   "n": len(test), "q90_threshold": threshold,
+                  "q90_n": len(tail), "q90_unstable": len(tail) < 20,
+                  "q90_mae": float((tail.y_true - tail.y_pred).abs().mean()),
                   "mae": float((test.y_true - test.y_pred).abs().mean())}
         inventory.append(record)
         runs[key] = (test, cfg, record)
@@ -100,7 +103,7 @@ def compare(arms: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
     for a_name, b_name in itertools.combinations(arms, 2):
         left, right = arms[a_name], arms[b_name]
         shared = sorted(set(left) & set(right))
-        groups = {}
+        groups, tails = {}, {}
         for key in shared:
             a, ac, ar = left[key]
             b, bc, br = right[key]
@@ -109,6 +112,10 @@ def compare(arms: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
                     raise ValueError(f'{key}: unequal or missing {field}')
             errors = paired_errors(a, b)
             groups.setdefault(key[:2], []).append(errors)
+            if ar['q90_threshold'] != br['q90_threshold']:
+                raise ValueError(f'{key}: unequal training Q90 thresholds')
+            tail = errors.loc[a.y_true >= ar['q90_threshold']]
+            tails.setdefault(key[:2], []).append(tail)
             mean_a, mean_b = errors.mean().to_numpy()
             seed_rows.append({
                 'a': a_name, 'b': b_name, 'analyte': key[0], 'mask': key[1],
@@ -117,6 +124,8 @@ def compare(arms: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
                 'same_epoch_cap': ac.get('max_epochs') == bc.get('max_epochs'),
                 'same_patience': ac.get('patience') == bc.get('patience'),
                 'identity_a': ar['identity'], 'identity_b': br['identity'],
+                'q90_n': len(tail), 'q90_unstable': len(tail) < 20,
+                'q90_mae_a': float(tail.a.mean()), 'q90_mae_b': float(tail.b.mean()),
             })
         for (analyte, mask), errors_by_seed in groups.items():
             if any(not e.index.equals(errors_by_seed[0].index) for e in errors_by_seed):
@@ -124,6 +133,11 @@ def compare(arms: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
             averaged = sum(errors_by_seed) / len(errors_by_seed)
             ma, mb = averaged.mean().to_numpy()
             lo, hi = station_interval(averaged)
+            tail_errors = tails[(analyte, mask)]
+            if any(not e.index.equals(tail_errors[0].index) for e in tail_errors):
+                raise ValueError('tail query cells changed with training seed')
+            tail_average = sum(tail_errors) / len(tail_errors)
+            tail_lo, tail_hi = station_interval(tail_average)
             summaries.append({
                 'a': a_name, 'b': b_name, 'analyte': analyte, 'mask': mask,
                 'paired_seeds': len(errors_by_seed), 'unique_query_cells': len(averaged),
@@ -132,6 +146,11 @@ def compare(arms: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
                 'improvement_a_vs_b_pct': 100 * (mb - ma) / mb,
                 'station_ci_low': lo, 'station_ci_high': hi,
                 'seeds_a_better': sum(e.a.mean() < e.b.mean() for e in errors_by_seed),
+                'q90_unique_cells': len(tail_average),
+                'q90_unstable': len(tail_average) < 20,
+                'q90_mae_a': float(tail_average.a.mean()),
+                'q90_mae_b': float(tail_average.b.mean()),
+                'q90_station_ci_low': tail_lo, 'q90_station_ci_high': tail_hi,
             })
     return pd.DataFrame(seed_rows), pd.DataFrame(summaries)
 

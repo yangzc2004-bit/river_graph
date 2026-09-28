@@ -156,6 +156,24 @@ def test_observation_multiscale_path_is_causal():
     assert torch.equal(first[:, :5], second[:, :5])
 
 
+def test_observation_multiscale_trains_all_four_paths():
+    from river_graph.models.graph_upgrade import ObservationAwareMultiScaleTemporalTransportImputer
+    from river_graph.models.hydro import TransportGCNImputer
+
+    torch.manual_seed(42)
+    spatial = TransportGCNImputer(in_channels=19, edge_dim=6, hidden=8)
+    model = ObservationAwareMultiScaleTemporalTransportImputer(
+        spatial, temporal_hidden=8, lookback=12,
+    )
+    hidden = torch.randn(36, 2, 8, requires_grad=True)
+    age = torch.ones(36, 2)
+    model._temporal_windows(hidden, age)[30].sum().backward()
+    assert torch.count_nonzero(hidden.grad[31:]) == 0
+    for module in (model.temporal, model.decay, model.short_conv, model.season_conv,
+                   model.trend_gru, model.scale_gate):
+        assert any(p.grad is not None and p.grad.abs().sum() > 0 for p in module.parameters())
+
+
 def test_multiscale_trend_receives_information_older_than_twelve_months():
     from river_graph.models.graph_upgrade import MultiScaleTemporalTransportImputer
     from river_graph.models.hydro import TransportGCNImputer
