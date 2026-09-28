@@ -1,0 +1,17 @@
+{
+  "version": "u4_graph_rf_blend_confirm_v1",
+  "purpose": "Confirm the validation-selected graph/RF blend after the two-analyte seed-42 pilot improved both test MAEs.",
+  "status": "frozen_before_confirm_runs",
+  "parent_protocol": "u4_blend_protocol.json",
+  "analytes": ["doc", "spec_conductance"],
+  "masks": ["e2a_strict"],
+  "seeds": [42, 43, 44],
+  "models": ["temporal_rf", "h2x_t", "validation_selected_blend"],
+  "gnn_max_epochs": 30,
+  "gnn_patience": 6,
+  "blend_grid": "alpha in {0.00, 0.05, ..., 1.00}; alpha multiplies temporal RF prediction",
+  "selection": "alpha selected independently within each analyte x mask x seed on validation cells using raw-scale MAE; test labels are read only once for final evaluation",
+  "visibility": {"fit": ["train", "context"], "validation": ["train", "context"], "test": ["train", "val", "context"]},
+  "success_description": "Report per-seed and equal-seed mean test MAE; a positive pilot is not sufficient for a universal claim.",
+  "provenance": ["dataset_sha256", "mask_sha256", "config_hash", "runtime_snapshot_hash", "protocol_sha256"]
+}

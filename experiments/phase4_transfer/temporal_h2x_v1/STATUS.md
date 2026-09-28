@@ -183,4 +183,11 @@ U3 completed a temporal random-forest baseline with identical target masks and
 query cells. Temporal RF outperformed the 30-epoch graph model in all four
 tested DOC/electrical-conductance families. This redirects the next model
 decision toward a targeted hybrid or representation study rather than a
-deeper graph architecture. Frozen T8/T9 results remain unchanged.
+deeper graph architecture. U4 then froze a validation-selected convex blend
+of the temporal graph and Temporal RF. On strict temporal extrapolation, all
+three seeds improved for both DOC and specific conductance; equal-seed mean
+MAE reductions were 2.89% and 1.90%. Station-clustered intervals crossed zero,
+so this is directional complementarity evidence, not a universal model claim.
+The first spatial holdout configuration selected pure RF and showed no blend
+gain; the remaining spatial configurations were stopped as an exploratory
+early-stop. Frozen T8/T9 results remain unchanged.

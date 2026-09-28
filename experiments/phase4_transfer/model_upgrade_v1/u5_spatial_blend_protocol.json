@@ -1,0 +1,17 @@
+{
+  "version": "u5_spatial_graph_rf_blend_v1",
+  "purpose": "Test whether the U4 graph/RF complementarity survives spatially unmonitored stations.",
+  "status": "frozen_before_runs",
+  "parent_protocol": "u4_blend_confirm_protocol.json",
+  "analytes": ["doc", "spec_conductance"],
+  "masks": ["e3_spatial_seed42"],
+  "seeds": [42, 43, 44],
+  "models": ["temporal_rf", "h2x_t", "validation_selected_blend"],
+  "gnn_max_epochs": 30,
+  "gnn_patience": 6,
+  "blend_grid": "alpha in {0.00, 0.05, ..., 1.00}; alpha multiplies temporal RF prediction",
+  "selection": "alpha selected independently within each analyte x mask x seed on validation cells using raw-scale MAE; test labels are read only once for final evaluation",
+  "visibility": {"fit": ["train", "context"], "validation": ["train", "context"], "test": ["train", "val", "context"]},
+  "decision": "If spatial gains are absent, retain the blend only as a temporal-extrapolation diagnostic and do not expand the model.",
+  "provenance": ["dataset_sha256", "mask_sha256", "config_hash", "runtime_snapshot_hash", "protocol_sha256"]
+}

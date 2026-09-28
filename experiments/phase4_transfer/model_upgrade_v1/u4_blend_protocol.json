@@ -1,0 +1,20 @@
+{
+  "version": "u4_graph_rf_blend_v1",
+  "purpose": "Test whether the temporal graph model adds complementary information to the strong temporal random-forest baseline.",
+  "status": "frozen_pilot",
+  "analytes": ["doc", "spec_conductance"],
+  "masks": ["e2a_strict"],
+  "seeds": [42],
+  "models": ["temporal_rf", "h2x_t", "validation_selected_blend"],
+  "gnn_max_epochs": 30,
+  "gnn_patience": 6,
+  "blend_grid": "alpha in {0.00, 0.05, ..., 1.00}; alpha multiplies temporal RF prediction",
+  "selection": "alpha selected on validation cells using raw-scale MAE; test labels are read only once for final evaluation",
+  "visibility": {
+    "fit": ["train", "context"],
+    "validation": ["train", "context"],
+    "test": ["train", "val", "context"]
+  },
+  "gate": "If the validation-selected blend improves test MAE over temporal RF for both analytes, expand to seeds 42-44; otherwise stop GNN architecture expansion and retain temporal RF as the primary model.",
+  "provenance": ["dataset_sha256", "mask_sha256", "config_hash", "runtime_snapshot_hash", "protocol_sha256"]
+}

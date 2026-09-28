@@ -12,3 +12,13 @@ hyperparameter matrices. The existing EcoHydroGraph remains the spatially
 structured model, while Temporal RF becomes the strong performance baseline.
 The paper should report this boundary explicitly unless a later hybrid closes
 it under the same masks and provenance rules.
+
+U4 tested a validation-selected convex blend of Temporal RF and the temporal
+graph model. On strict temporal extrapolation, the blend improved all three
+seeds for both DOC and specific conductance (mean reduction 2.9% and 1.9%).
+The station-clustered intervals crossed zero, so this is directional
+complementarity evidence rather than a general superiority claim. The next
+discriminating run is one spatial holdout family with the same two analytes
+and three seeds. Its first completed DOC configuration selected pure RF and
+showed no blend gain, so the spatial branch was stopped as an exploratory
+early-stop. Deeper GNNs and broad hyperparameter search remain out of scope.

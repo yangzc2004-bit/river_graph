@@ -24,13 +24,17 @@ diagnostic pilot; it does not alter T8/T9 claims.
 1. U1 convergence and training-budget diagnosis.
 2. U2 explicit visible-observation network context.
 3. U3 temporal random-forest baseline.
-4. U4 temporal-mechanism variants only if U2 leaves a meaningful gap.
-5. U5 five-seed confirmation of the selected model.
+4. U4 validation-selected RF/graph blend to test complementary information.
+5. U5 one additional missingness family, then stop or promote the blend.
 
 U1 established that 30 epochs is materially better than the original
 10-epoch matched budget. U2 context results are mixed and incomplete. U3
 Temporal RF is currently the strongest tested model on the targeted pilot
-families; any further model work must explain or close this gap before a new
-architecture is considered.
+families. U4 closes part of this gap on strict temporal extrapolation: a
+validation-selected convex blend improves all three seeds for DOC and
+specific conductance, while its clustered intervals remain compatible with
+zero. The first spatial holdout configuration selected pure RF and showed no
+blend gain, so that branch was stopped as an exploratory early-stop. Deeper
+architectures and broad searches are not authorized.
 
 All products must carry dataset, mask, configuration, and runtime identities.
