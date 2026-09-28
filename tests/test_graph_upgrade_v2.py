@@ -157,7 +157,9 @@ def test_observation_multiscale_path_is_causal():
 
 
 def test_observation_multiscale_trains_all_four_paths():
-    from river_graph.models.graph_upgrade import ObservationAwareMultiScaleTemporalTransportImputer
+    from river_graph.models.graph_upgrade import (
+        ObservationAwareMultiScaleTemporalTransportImputer,
+    )
     from river_graph.models.hydro import TransportGCNImputer
 
     torch.manual_seed(42)
