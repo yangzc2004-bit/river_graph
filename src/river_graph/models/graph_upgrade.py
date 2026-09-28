@@ -47,9 +47,15 @@ class ObservationAwareTemporalTransportGCNImputer(
         with torch.no_grad():
             self.decay.weight[:, 0] = 0.1
 
-    def _temporal_windows(self, hidden_seq: torch.Tensor,
-                          age_seq: torch.Tensor | None = None,
-                          support_seq: torch.Tensor | None = None) -> torch.Tensor:
+    def _memory_states(self, hidden_seq: torch.Tensor,
+                       age_seq: torch.Tensor | None = None,
+                       support_seq: torch.Tensor | None = None) -> torch.Tensor:
+        """Return the GRU-D state for every month as ``[time, nodes, hidden]``.
+
+        Keeping the state-producing part separate lets the combination model
+        reuse the same observation-aware memory without changing M1's rolling
+        window semantics.
+        """
         if hidden_seq.ndim != 3:
             raise ValueError("hidden_seq must have shape [time, nodes, hidden]")
         t, n, h = hidden_seq.shape
@@ -96,8 +102,14 @@ class ObservationAwareTemporalTransportGCNImputer(
                 )
                 state = torch.where(valid_feature[step].bool(), updated, state)
             last = state.reshape(stop - start, n, self.temporal_hidden)
-            outputs.append(self.spatial.predict_from_hidden(last))
+            outputs.append(last)
         return torch.cat(outputs, dim=0)
+
+    def _temporal_windows(self, hidden_seq: torch.Tensor,
+                          age_seq: torch.Tensor | None = None,
+                          support_seq: torch.Tensor | None = None) -> torch.Tensor:
+        states = self._memory_states(hidden_seq, age_seq, support_seq)
+        return self.spatial.predict_from_hidden(states)
 
     def forward_sequence(self, x_seq, edge_index, edge_attr, env_raw=None,
                          *, age_seq: torch.Tensor | None = None):
@@ -107,6 +119,75 @@ class ObservationAwareTemporalTransportGCNImputer(
         hidden = self.encode_months(x_seq, edge_index, edge_attr, env_raw)
         support_seq = torch.stack([x_seq[..., 9], x_seq[..., -2], x_seq[..., -1]], -1)
         return self._temporal_windows(hidden, age_seq, support_seq)
+
+
+class ObservationAwareMultiScaleTemporalTransportImputer(
+    ObservationAwareTemporalTransportGCNImputer
+):
+    """Combine observation-aware memory with causal multi-scale paths.
+
+    The memory path is the GRU-D style state from M1.  Short and seasonal
+    causal convolutions plus a causal trend GRU provide the M3 paths.  A
+    learned gate mixes the four hidden states at each station-month, so the
+    model can fall back to observation memory when a long temporal path is
+    poorly supported.
+    """
+
+    def __init__(self, spatial, *, lookback: int = 12,
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none"):
+        super().__init__(
+            spatial,
+            lookback=lookback,
+            temporal_hidden=temporal_hidden,
+            chunk_months=chunk_months,
+            history_ablation=history_ablation,
+        )
+        if history_ablation != "none":
+            raise ValueError("M13 history ablations require causal implementation")
+        self.history_scope = "full_causal_sequence"
+        h = spatial.head.in_features
+        path_hidden = max(8, h // 4)
+        self.path_hidden = path_hidden
+        self.short_conv = nn.Conv1d(h, path_hidden, kernel_size=3)
+        self.season_conv = nn.Conv1d(h, path_hidden, kernel_size=5, dilation=2)
+        self.trend_gru = nn.GRU(h + 1, h, num_layers=1)
+        self.short_projection = nn.Linear(path_hidden, h)
+        self.season_projection = nn.Linear(path_hidden, h)
+        self.scale_gate = nn.Sequential(nn.Linear(4 * h, 4), nn.Softmax(dim=-1))
+
+    @staticmethod
+    def _causal_conv(conv: nn.Conv1d, seq: torch.Tensor) -> torch.Tensor:
+        pad = (conv.kernel_size[0] - 1) * conv.dilation[0]
+        return conv(torch.nn.functional.pad(seq, (pad, 0)))
+
+    def _temporal_windows(self, hidden_seq: torch.Tensor,
+                          age_seq: torch.Tensor | None = None,
+                          support_seq: torch.Tensor | None = None) -> torch.Tensor:
+        if hidden_seq.ndim != 3:
+            raise ValueError("hidden_seq must have shape [time, nodes, hidden]")
+        t, n, _ = hidden_seq.shape
+        memory = self._memory_states(hidden_seq, age_seq, support_seq)
+        sequence = hidden_seq.permute(1, 2, 0)
+        short = self.short_projection(
+            self._causal_conv(self.short_conv, sequence).permute(0, 2, 1)
+        )
+        seasonal = self.season_projection(
+            self._causal_conv(self.season_conv, sequence).permute(0, 2, 1)
+        )
+        valid = hidden_seq.new_ones((t, n, 1))
+        trend, _ = self.trend_gru(torch.cat([hidden_seq, valid], dim=-1))
+        trend = trend.permute(1, 0, 2)
+        memory = memory.permute(1, 0, 2)
+        paths = torch.cat([memory, short, seasonal, trend], dim=-1)
+        gate = self.scale_gate(paths)
+        fused = (
+            gate[..., 0:1] * memory
+            + gate[..., 1:2] * short
+            + gate[..., 2:3] * seasonal
+            + gate[..., 3:4] * trend
+        )
+        return self.spatial.predict_from_hidden(fused).permute(1, 0)
 
 
 class LaggedTransportTemporalImputer(ObservationAwareTemporalTransportGCNImputer):

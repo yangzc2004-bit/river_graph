@@ -89,7 +89,7 @@ def test_graph_upgrade_m1_smoke_fit_predict():
 
 def test_graph_upgrade_m2_and_m3_forward_shapes():
     data, split = _toy_dataset(), _split()
-    for mechanism in ("m2", "m3"):
+    for mechanism in ("m2", "m3", "m13"):
         model = GraphUpgradeModel(
             mechanism=mechanism, seed=42, hidden=8, temporal_hidden=8,
             max_epochs=1, patience=1, chunk_months=4,
@@ -134,6 +134,25 @@ def test_multiscale_temporal_path_is_causal():
         changed = x.clone()
         changed[5:] += 100.0
         second = model._forward(bundle.model, changed, bundle.inputs, data)
+    assert torch.equal(first[:, :5], second[:, :5])
+
+
+def test_observation_multiscale_path_is_causal():
+    data, split = _toy_dataset(), _split()
+    model = GraphUpgradeModel(
+        mechanism="m13", seed=42, hidden=8, temporal_hidden=8,
+        max_epochs=1, patience=1, chunk_months=8, lookback=24,
+    )
+    model.fit(data, split)
+    bundle = model._bundle
+    visible, y_feed = model._visible_input()
+    x, age = model._make_input(bundle.inputs, visible, bundle.model, y_feed)
+    bundle.model.eval()
+    with torch.no_grad():
+        first = model._forward(bundle.model, x, bundle.inputs, data, age)
+        changed = x.clone()
+        changed[5:] += 100.0
+        second = model._forward(bundle.model, changed, bundle.inputs, data, age)
     assert torch.equal(first[:, :5], second[:, :5])
 
 

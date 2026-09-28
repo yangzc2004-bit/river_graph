@@ -2,8 +2,9 @@
 
 This module is intentionally separate from the released H2X-T wrapper.  It
 provides a small, research-facing interface for testing three mechanisms:
-``m1`` observation-aware memory, ``m2`` lagged river transport, and ``m3``
-multi-scale temporal features.  Each mechanism uses the same split and target
+``m1`` observation-aware memory, ``m2`` lagged river transport, ``m3``
+multi-scale temporal features, and ``m13`` their observation-aware
+multi-scale combination.  Each mechanism uses the same split and target
 transform code as H2X-T, which makes comparisons to the existing model direct.
 """
 
@@ -27,11 +28,12 @@ from river_graph.experiments.temporal_h2x import (
 from river_graph.models.graph_upgrade import (
     LaggedTransportTemporalImputer,
     MultiScaleTemporalTransportImputer,
+    ObservationAwareMultiScaleTemporalTransportImputer,
     ObservationAwareTemporalTransportGCNImputer,
 )
 from river_graph.models.hydro import TransportGCNImputer
 
-MECHANISMS = ("m1", "m2", "m3")
+MECHANISMS = ("m1", "m2", "m3", "m13")
 OBS_FEATURE_NAMES = (
     "last_observed_value",
     "observation_age_log",
@@ -230,7 +232,7 @@ class GraphUpgradeModel:
         edge_index, edge_attr = self._edges(dataset, self.edge_set)
         spatial = TransportGCNImputer(
             in_channels=inputs.xt_static.shape[-1] + (
-                len(OBS_FEATURE_NAMES) if self.mechanism in ("m1", "m2", "m3") else 0
+                len(OBS_FEATURE_NAMES) if self.mechanism in ("m1", "m2", "m3", "m13") else 0
             ),
             edge_dim=edge_attr.shape[1], hidden=self.hidden, layers=self.layers,
             dropout=self.dropout, env_dim=inputs.env_raw.shape[1] if inputs.env_raw is not None else 0,
@@ -240,6 +242,7 @@ class GraphUpgradeModel:
             "m1": ObservationAwareTemporalTransportGCNImputer,
             "m2": LaggedTransportTemporalImputer,
             "m3": MultiScaleTemporalTransportImputer,
+            "m13": ObservationAwareMultiScaleTemporalTransportImputer,
         }[self.mechanism]
         model = cls(spatial, lookback=self.lookback,
                     temporal_hidden=self.temporal_hidden, chunk_months=self.chunk_months,
@@ -252,14 +255,14 @@ class GraphUpgradeModel:
         return cells // t, cells % t
 
     def _forward(self, model, x, inputs, dataset, age=None):
-        if self.mechanism in ("m1", "m2"):
+        if self.mechanism in ("m1", "m2", "m13"):
             return model.forward_sequence(x, model._edge_index, model._edge_attr,
                                           inputs.env_raw, age_seq=age).T
         return model.forward_sequence(x, model._edge_index, model._edge_attr,
                                       inputs.env_raw).T
 
     def _make_input(self, inputs, visible, model, y_feed=None):
-        if self.mechanism in ("m1", "m2", "m3"):
+        if self.mechanism in ("m1", "m2", "m3", "m13"):
             return build_observation_features(
                 inputs, visible, model._edge_index, y_feed=y_feed
             )

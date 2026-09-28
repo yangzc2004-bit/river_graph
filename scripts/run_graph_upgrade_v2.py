@@ -129,11 +129,14 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
     with np.load(mask_path, allow_pickle=False) as archive:
         split = _split({key: archive[key] for key in archive.files})
     model_name = {"m1": "observation_memory", "m2": "lagged_transport",
-                  "m3": "multiscale_temporal"}[mechanism]
+                  "m3": "multiscale_temporal", "m13": "observation_multiscale"}[mechanism]
     lag_suffix = f"__lag-{lag_mode}" if mechanism == "m2" else ""
     run_name = f"{model_name}__{analyte}__{mask_name}__seed{seed}{lag_suffix}"
     run_dir = out_root / mechanism / "runs" / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
+    # M13 keeps M1's local 12-month memory while its M3 paths see the full
+    # causal sequence.  Passing the full chronology to the rolling GRU would
+    # turn the combination pilot into an unnecessary quadratic computation.
     lookback = dataset['y'].shape[1] if mechanism == 'm3' else 12
     params = {
         "script": "scripts/run_graph_upgrade_v2.py",
@@ -159,9 +162,9 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "env_emb": 32,
         "dataset_path": str(dataset_path),
         "mask_path": str(mask_path),
-        "temporal": "gru_d" if mechanism == "m1" else ("lagged_gru" if mechanism == "m2" else "multiscale"),
+        "temporal": "gru_d" if mechanism == "m1" else ("lagged_gru" if mechanism == "m2" else ("multiscale" if mechanism == "m3" else "observation_multiscale")),
         "lookback": lookback,
-        "history_scope": 'full_causal_sequence' if mechanism == 'm3' else 'rolling_12_months',
+        "history_scope": 'full_causal_sequence' if mechanism == 'm3' else ('mixed_causal_sequence' if mechanism == 'm13' else 'rolling_12_months'),
         "chunk_months": 256,
         "torch_threads": torch.get_num_threads(),
         "execution_stage": stage,
@@ -311,7 +314,7 @@ def main() -> None:
         "version": "graph_upgrade_v2", "mechanism": args.mechanism,
         "analytes": analytes, "masks": masks, "seeds": seeds,
         "max_epochs": max_epochs, "patience": patience,
-        "history_scope": 'full_causal_sequence' if args.mechanism == 'm3' else 'rolling_12_months',
+        "history_scope": 'full_causal_sequence' if args.mechanism == 'm3' else ('mixed_causal_sequence' if args.mechanism == 'm13' else 'rolling_12_months'),
         "causal": True,
         "lag_buckets": [0, 1, 3, 6, 12] if args.mechanism == "m2" else None,
         "lag_mode": args.lag_mode if args.mechanism == "m2" else None,
