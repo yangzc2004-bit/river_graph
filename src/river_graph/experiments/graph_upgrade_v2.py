@@ -27,6 +27,7 @@ from river_graph.experiments.temporal_h2x import (
 )
 from river_graph.models.graph_upgrade import (
     LaggedTransportTemporalImputer,
+    MessageResidualTransportGCNImputer,
     MultiScaleTemporalTransportImputer,
     ObservationAwareMultiScaleTemporalTransportImputer,
     ObservationAwareTemporalTransportGCNImputer,
@@ -34,7 +35,7 @@ from river_graph.models.graph_upgrade import (
 from river_graph.models.hydro import TransportGCNImputer
 
 MECHANISMS = ("m1", "m2", "m3", "m13")
-SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk")
+SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk", "msgres2")
 OBS_FEATURE_NAMES = (
     "last_observed_value",
     "observation_age_log",
@@ -207,6 +208,8 @@ class GraphUpgradeModel:
             raise ValueError(f"unknown mechanism: {mechanism}")
         if spatial_variant not in SPATIAL_VARIANTS:
             raise ValueError(f"unknown spatial variant: {spatial_variant}")
+        if mechanism == "m2" and spatial_variant != "baseline":
+            raise ValueError("lagged transport currently supports only the baseline spatial trunk")
         self.mechanism = mechanism
         self.spatial_variant = spatial_variant
         self.seed, self.lookback, self.temporal_hidden = int(seed), int(lookback), int(temporal_hidden)
@@ -236,11 +239,15 @@ class GraphUpgradeModel:
     def _build_model(self, inputs: TemporalInputs, dataset: dict) -> torch.nn.Module:
         edge_index, edge_attr = self._edges(dataset, self.edge_set)
         variant_layers = {"baseline": self.layers, "res2": 2,
-                          "res3": 3, "res4": 4, "res3_jk": 3}
+                          "res3": 3, "res4": 4, "res3_jk": 3,
+                          "msgres2": 2}
         spatial_layers = variant_layers[self.spatial_variant]
-        residual = self.spatial_variant != "baseline"
+        residual = self.spatial_variant in {"res2", "res3", "res4", "res3_jk"}
         jumping_knowledge = self.spatial_variant == "res3_jk"
-        spatial = TransportGCNImputer(
+        spatial_cls = (MessageResidualTransportGCNImputer
+                       if self.spatial_variant == "msgres2"
+                       else TransportGCNImputer)
+        spatial = spatial_cls(
             in_channels=inputs.xt_static.shape[-1] + (
                 len(OBS_FEATURE_NAMES) if self.mechanism in ("m1", "m2", "m3", "m13") else 0
             ),

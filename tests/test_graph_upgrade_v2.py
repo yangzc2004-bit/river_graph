@@ -176,6 +176,35 @@ def test_observation_multiscale_trains_all_four_paths():
         assert any(p.grad is not None and p.grad.abs().sum() > 0 for p in module.parameters())
 
 
+def test_message_residual_scales_only_directed_messages():
+    from river_graph.models.graph_upgrade import MessageResidualTransportGCNImputer
+    from river_graph.models.hydro import TransportGCNImputer
+
+    torch.manual_seed(7)
+    kwargs = {"in_channels": 10, "edge_dim": 6, "hidden": 8,
+              "layers": 2, "dropout": 0.0}
+    message = MessageResidualTransportGCNImputer(**kwargs)
+    baseline = TransportGCNImputer(**kwargs)
+    baseline.load_state_dict(message.state_dict(), strict=False)
+    x = torch.randn(5, 10)
+    edge = torch.tensor([[0, 1, 2], [1, 2, 3]])
+    attrs = torch.randn(3, 6)
+    message.eval(); baseline.eval()
+    with torch.no_grad():
+        message.message_scales.fill_(1.0)
+        torch.testing.assert_close(message(x, edge, attrs), baseline(x, edge, attrs))
+        message.message_scales.zero_()
+        empty = torch.empty((2, 0), dtype=torch.long)
+        empty_attrs = attrs[:0]
+        torch.testing.assert_close(message(x, edge, attrs), baseline(x, empty, empty_attrs))
+    assert message.message_scales.requires_grad
+
+
+def test_message_residual_variant_rejects_lagged_bypass():
+    with pytest.raises(ValueError, match="lagged transport"):
+        GraphUpgradeModel(mechanism="m2", spatial_variant="msgres2")
+
+
 def test_multiscale_trend_receives_information_older_than_twelve_months():
     from river_graph.models.graph_upgrade import MultiScaleTemporalTransportImputer
     from river_graph.models.hydro import TransportGCNImputer

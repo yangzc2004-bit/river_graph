@@ -14,9 +14,64 @@ released temporal model, so each mechanism can be switched on independently.
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
+from river_graph.models.hydro import TransportGCNImputer
 from river_graph.models.temporal import TemporalTransportGCNImputer
+
+
+class MessageResidualTransportGCNImputer(TransportGCNImputer):
+    """Transport trunk with a learnable residual scale on edge messages.
+
+    The local (self) path is evaluated once.  The two directed message paths
+    are then multiplied by a per-layer scalar before they are added.  This is
+    deliberately different from a conventional residual block, which adds a
+    second copy of the self path and can therefore change the scale of local
+    information as depth increases.  Initialising the scales at ``0.1`` makes
+    the pilot a conservative test of whether a small graph correction helps;
+    the parameters remain trainable and can move toward zero or one.
+    """
+
+    def __init__(self, *args, message_scale_init: float = 0.1, **kwargs):
+        # The factory passes the common spatial flags to every variant.  This
+        # branch owns its message-only residual path and ignores those flags
+        # rather than allowing duplicate keyword errors or silently enabling
+        # the conventional self-path residual.
+        kwargs.pop("residual", None)
+        kwargs.pop("jumping_knowledge", None)
+        super().__init__(*args, residual=False, jumping_knowledge=False, **kwargs)
+        self.message_scales = nn.Parameter(
+            torch.full((len(self.convs),), float(message_scale_init))
+        )
+
+    def encode_nodes(self, x: torch.Tensor, edge_index: torch.Tensor,
+                     edge_attr: torch.Tensor,
+                     env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        if self.env_encoder is not None:
+            emb = self.env_encoder(env_raw)
+            x = torch.cat([x, emb], dim=-1)
+        h = x
+        for layer, conv in enumerate(self.convs):
+            if self.edge_direction not in ("both", "upstream", "downstream"):
+                raise ValueError(
+                    "edge_direction must be 'both', 'upstream', or 'downstream'"
+                )
+            n = h.shape[0]
+            g_up = torch.sigmoid(conv.gate_up(edge_attr))
+            g_down = torch.sigmoid(conv.gate_down(edge_attr))
+            zero = torch.zeros(n, conv.up_lin.out_features, device=h.device,
+                               dtype=h.dtype)
+            up = conv._agg(conv.up_lin(h), edge_index, g_up, n) if self.edge_direction in (
+                "both", "upstream"
+            ) else zero
+            down = conv._agg(
+                conv.down_lin(h), edge_index.flip(0), g_down, n
+            ) if self.edge_direction in ("both", "downstream") else zero
+            scale = self.message_scales[layer]
+            h = F.relu(conv.self_lin(h) + scale * up + scale * down)
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        return h
 
 
 class ObservationAwareTemporalTransportGCNImputer(
