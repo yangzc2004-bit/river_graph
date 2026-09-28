@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from run_temporal_h2x import MASKS_DIR, _split, _target_mask_path
 from river_graph.experiments.evaluate import load_mask, metrics
 from river_graph.experiments.graph_upgrade_v2 import (
     MECHANISMS,
+    OBS_FEATURE_NAMES,
     GraphUpgradeModel,
     observation_statistics,
 )
@@ -28,6 +30,7 @@ from river_graph.experiments.provenance import (
     config_hash,
     file_identity,
     run_identity_sha256,
+    runtime_code_snapshot,
     runtime_code_snapshot_sha256,
 )
 from river_graph.experiments.temporal_h2x import TARGET_TRANSFORMS
@@ -67,7 +70,7 @@ def _full_grid(dataset: dict, pred: np.ndarray, split: dict, *, model_name: str,
 
 def _diagnostics(model: GraphUpgradeModel, dataset: dict, split: dict,
                  pred: np.ndarray) -> dict:
-    """Tail and support-stratified errors using train-derived cutoffs."""
+    """Train-defined Q90 and fixed observation-age/network-support strata."""
     inputs = model._bundle.inputs
     n, t = inputs.y_model.shape
     visible = torch.zeros(n * t, dtype=torch.bool)
@@ -81,7 +84,9 @@ def _diagnostics(model: GraphUpgradeModel, dataset: dict, split: dict,
     # are flattened in [nodes, time] order.  Transpose before indexing so
     # strata refer to the same station-month cells as the test split.
     age = stats[1].T.reshape(-1).numpy()
-    support = (stats[-2] + stats[-1]).T.reshape(-1).numpy()
+    up = stats[-2].T.reshape(-1).numpy()
+    down = stats[-1].T.reshape(-1).numpy()
+    last_valid = stats[2].T.reshape(-1).numpy().astype(bool)
     test = np.asarray(split["test"], dtype=np.int64)
     y = np.asarray(dataset["y"]).reshape(-1)
     err = np.abs(y - pred.reshape(-1))
@@ -91,16 +96,19 @@ def _diagnostics(model: GraphUpgradeModel, dataset: dict, split: dict,
     result = {
         "q90_threshold_train": threshold,
         "q90_n": len(tail),
+        "q90_unstable": len(tail) < 20,
         "q90_mae": float(err[tail].mean()) if len(tail) else float("nan"),
     }
-    age_months = np.expm1(age * np.log1p(12.0))
+    age_months = np.rint(np.expm1(age * np.log1p(12.0)))
     strata = {
-        "age": (("fresh", age_months <= 0),
-                ("recent", (age_months > 0) & (age_months <= 3)),
-                ("stale", age_months > 3)),
-        "support": (("none", support <= 0),
-                    ("one_side", (support > 0) & (support <= 1)),
-                    ("both_sides", support > 1)),
+        "age": (("never_observed", ~last_valid),
+                ("fresh", last_valid & (age_months == 0)),
+                ("recent", last_valid & (age_months >= 1) & (age_months <= 3)),
+                ("seasonal", last_valid & (age_months > 3) & (age_months <= 12)),
+                ("old", last_valid & (age_months > 12))),
+        "support": (("none", (up == 0) & (down == 0)),
+                    ("one_side", (up > 0) ^ (down > 0)),
+                    ("both_sides", (up > 0) & (down > 0))),
     }
     for label, groups in strata.items():
         for group, select in groups:
@@ -113,7 +121,8 @@ def _diagnostics(model: GraphUpgradeModel, dataset: dict, split: dict,
 
 def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
              max_epochs: int, patience: int, out_root: Path,
-             force: bool = False, lag_mode: str = "learned") -> dict:
+             force: bool = False, lag_mode: str = "learned",
+             stage: str = 'pilot', runtime_snapshot: str | None = None) -> dict:
     dataset_path = DATASETS[analyte]
     dataset = _load(dataset_path)
     mask_path = _target_mask_path(analyte, mask_name, dataset)
@@ -125,6 +134,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
     run_name = f"{model_name}__{analyte}__{mask_name}__seed{seed}{lag_suffix}"
     run_dir = out_root / mechanism / "runs" / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
+    lookback = dataset['y'].shape[1] if mechanism == 'm3' else 12
     params = {
         "script": "scripts/run_graph_upgrade_v2.py",
         "model_name": model_name,
@@ -150,7 +160,11 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "dataset_path": str(dataset_path),
         "mask_path": str(mask_path),
         "temporal": "gru_d" if mechanism == "m1" else ("lagged_gru" if mechanism == "m2" else "multiscale"),
-        "lookback": 24 if mechanism == "m3" else 12,
+        "lookback": lookback,
+        "history_scope": 'full_causal_sequence' if mechanism == 'm3' else 'rolling_12_months',
+        "chunk_months": 256,
+        "torch_threads": torch.get_num_threads(),
+        "execution_stage": stage,
         "causal": True,
         "temporal_hidden": 64,
         "target_analyte": analyte,
@@ -159,24 +173,24 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "training_masking": "point_temporal_block_station_block",
         "lag_buckets": [0, 1, 3, 6, 12] if mechanism == "m2" else None,
         "lag_mode": lag_mode if mechanism == "m2" else None,
-        "observation_features": [
-            "last_observed_value", "observation_age_log", "support_count_1",
-            "support_count_3", "support_count_6", "support_count_12",
-            "upstream_visible_fraction", "downstream_visible_fraction",
-        ] if mechanism in ("m1", "m2", "m3") else [],
+        "observation_features": list(OBS_FEATURE_NAMES),
         "training_protocol": "graph_upgrade_v2_mechanism_pilot",
-        "config_hash_version": 4,
+        "config_hash_version": 5,
     }
     params["dataset_sha256"] = file_identity(dataset_path).get("sha256")
     params["mask_sha256"] = file_identity(mask_path).get("sha256")
-    params["runtime_snapshot_hash"] = runtime_code_snapshot_sha256()
-    params["config_hash"] = config_hash(params, version=4)
+    params["runtime_snapshot_hash"] = runtime_snapshot or runtime_code_snapshot_sha256()
+    params["config_hash"] = config_hash(params)
     meta_path, metrics_path = run_dir / "meta.json", run_dir / "metrics.json"
     full_path = run_dir / "full_grid.parquet"
     if not force and all(p.is_file() for p in (meta_path, metrics_path, full_path)):
         old = json.loads(meta_path.read_text(encoding="utf-8"))
-        if old.get("config_hash") == params["config_hash"]:
-            return {"run": run_name, "status": "cached", **json.loads(metrics_path.read_text())}
+        cached_metrics = json.loads(metrics_path.read_text())
+        if (old.get("config_hash") == params["config_hash"]
+                and config_hash(old['config']) == params['config_hash']
+                and old['full_grid_sha256'] == file_identity(full_path)['sha256']
+                and all(np.isfinite(cached_metrics[k]) for k in ('mae', 'rmse', 'r2'))):
+            return {"run": run_name, "status": "cached", **cached_metrics}
         if not force:
             raise RuntimeError(
                 f"existing run has a different configuration: {run_dir}; "
@@ -184,14 +198,27 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
             )
 
     started_at = datetime.now(timezone.utc).isoformat()
+    clock_start = time.perf_counter()
+    trace_path = run_dir / 'training_trace.jsonl'
+    trace_path.write_text('')
+
+    def record_epoch(row):
+        row = {**row, 'elapsed_s': time.perf_counter() - clock_start}
+        with trace_path.open('a') as stream:
+            stream.write(json.dumps(row) + '\n')
+        if row['epoch'] == 1 or row['epoch'] % 5 == 0:
+            print(f"  epoch {row['epoch']}: val={row['val_loss']:.5f}, "
+                  f"elapsed={row['elapsed_s']:.0f}s", flush=True)
+
     model = GraphUpgradeModel(
         mechanism=mechanism, seed=seed,
-        lookback=24 if mechanism == "m3" else 12, hidden=64,
+        lookback=lookback, hidden=64,
         temporal_hidden=64, max_epochs=max_epochs, patience=patience,
         target_transform=TARGET_TRANSFORMS[analyte],
         edge_direction="upstream" if mechanism == "m2" else "both",
         chunk_months=256,
         lag_mode=lag_mode,
+        epoch_callback=record_epoch,
     )
     pred = model.fit_predict(dataset, split)
     test = np.asarray(split["test"], dtype=np.int64)
@@ -206,8 +233,30 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
                       analyte=analyte, mask=mask_name, seed=seed)
     full.to_parquet(full_path, index=False)
     full[full["observed"]].to_parquet(run_dir / "observed_predictions.parquet", index=False)
+    # Save selected weights and source-train statistics so the mechanism can
+    # be inspected without another fit. Target labels are not in this file.
+    inputs = model._bundle.inputs
+    torch.save({
+        'state_dict': model._bundle.model.state_dict(), 'config': params,
+        'target_mu': inputs.target_mu, 'target_sd': inputs.target_sd,
+        'edge_index': model._bundle.model._edge_index,
+        'edge_attr': model._bundle.model._edge_attr,
+    }, run_dir / 'checkpoint.pt')
+    if mechanism == 'm2':
+        with torch.no_grad():
+            visible, feed = model._visible_input()
+            x, _ = model._make_input(inputs, visible, model._bundle.model, feed)
+            weights = model._bundle.model.lag_weights(
+                x, model._bundle.model._edge_index, model._bundle.model._edge_attr
+            )
+        np.savez_compressed(run_dir / 'lag_weights.npz',
+                            weights=weights.numpy(), lags=model._bundle.model.LAGS,
+                            edge_index=model._bundle.model._edge_index.numpy())
     meta = {
         "run": run_name, "config": params,
+        "config_hash_version": 5,
+        "started_at": started_at,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
         "config_hash": params["config_hash"], "created_at": started_at,
         "runtime_code_snapshot_sha256": params["runtime_snapshot_hash"],
         "run_identity_sha256": run_identity_sha256(
@@ -218,6 +267,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "target_analyte": analyte, "target_transform": TARGET_TRANSFORMS[analyte],
         "causal": True, "lookback": params["lookback"],
         "full_grid_sha256": file_identity(full_path)["sha256"],
+        "checkpoint_sha256": file_identity(run_dir / 'checkpoint.pt')['sha256'],
         "rows_full_grid": len(full), "rows_observed": int(full["observed"].sum()),
         "training": {"epochs_run": model._bundle.epochs_run,
                      "best_val_loss": model._bundle.best_val_loss,
@@ -240,7 +290,9 @@ def main() -> None:
     ap.add_argument("--patience", type=int, default=None)
     ap.add_argument("--out-dir", default=str(OUT_ROOT))
     ap.add_argument("--force", action="store_true")
+    ap.add_argument('--threads', type=int, default=torch.get_num_threads())
     args = ap.parse_args()
+    torch.set_num_threads(args.threads)
     if args.stage == "smoke":
         analytes = args.analytes or ["doc"]
         masks, seeds = args.masks or ["e2a_strict"], args.seeds or [42]
@@ -249,13 +301,18 @@ def main() -> None:
         analytes = args.analytes or list(ANALYTES)
         masks, seeds = args.masks or list(DEFAULT_MASKS), args.seeds or list(DEFAULT_SEEDS)
         max_epochs, patience = args.max_epochs or 30, args.patience or 5
-    out = Path(args.out_dir)
+    out = Path(args.out_dir) / args.stage
     out.mkdir(parents=True, exist_ok=True)
+    snapshot = runtime_code_snapshot_sha256()
+    (out / 'runtime_snapshot.json').write_text(json.dumps({
+        'hash': snapshot, 'files': runtime_code_snapshot(),
+    }, indent=2) + '\n')
     plan = {
         "version": "graph_upgrade_v2", "mechanism": args.mechanism,
         "analytes": analytes, "masks": masks, "seeds": seeds,
         "max_epochs": max_epochs, "patience": patience,
-        "lookback": 24 if args.mechanism == "m3" else 12, "causal": True,
+        "history_scope": 'full_causal_sequence' if args.mechanism == 'm3' else 'rolling_12_months',
+        "causal": True,
         "lag_buckets": [0, 1, 3, 6, 12] if args.mechanism == "m2" else None,
         "lag_mode": args.lag_mode if args.mechanism == "m2" else None,
         "purpose": "mechanism exploration; results are compared to H2X-T and Temporal RF",
@@ -273,6 +330,7 @@ def main() -> None:
                     mask_name=mask, seed=seed, max_epochs=max_epochs,
                     patience=patience, out_root=out, force=args.force,
                     lag_mode=args.lag_mode,
+                    stage=args.stage, runtime_snapshot=snapshot,
                 ))
                 # Keep an incremental ledger so an interrupted batch still
                 # exposes the completed configurations for review.

@@ -1,6 +1,7 @@
 """Scientific contracts for observation-driven graph upgrades."""
 
 import numpy as np
+import pytest
 import torch
 
 from river_graph.experiments.graph_upgrade_v2 import (
@@ -134,3 +135,57 @@ def test_multiscale_temporal_path_is_causal():
         changed[5:] += 100.0
         second = model._forward(bundle.model, changed, bundle.inputs, data)
     assert torch.equal(first[:, :5], second[:, :5])
+
+
+def test_multiscale_trend_receives_information_older_than_twelve_months():
+    from river_graph.models.graph_upgrade import MultiScaleTemporalTransportImputer
+    from river_graph.models.hydro import TransportGCNImputer
+
+    torch.manual_seed(42)
+    spatial = TransportGCNImputer(in_channels=10, edge_dim=6, hidden=8)
+    model = MultiScaleTemporalTransportImputer(spatial, temporal_hidden=8)
+    # Set a persistent update gate so this tests history availability rather
+    # than whether one random untrained GRU happens to forget quickly.
+    with torch.no_grad():
+        model.trend_gru.bias_ih_l0[8:16] = 2.0
+    hidden = torch.randn(36, 2, 8, requires_grad=True)
+    model._temporal_windows(hidden)[30].sum().backward()
+    assert hidden.grad[15].abs().sum() > 0
+    assert torch.count_nonzero(hidden.grad[31:]) == 0
+    for module in (model.short_conv, model.season_conv, model.trend_gru, model.scale_gate):
+        assert any(p.grad is not None and p.grad.abs().sum() > 0 for p in module.parameters())
+
+
+@pytest.mark.parametrize('lag_mode', ['learned', 'fixed', 'static', 'none'])
+def test_lag_controls_and_single_edge_gradient(lag_mode):
+    from river_graph.models.graph_upgrade import LaggedTransportTemporalImputer
+    from river_graph.models.hydro import TransportGCNImputer
+
+    torch.manual_seed(42)
+    spatial = TransportGCNImputer(in_channels=19, edge_dim=6, hidden=8,
+                                  layers=1, dropout=0, edge_direction='upstream')
+    model = LaggedTransportTemporalImputer(spatial, temporal_hidden=8, lag_mode=lag_mode)
+    x = torch.rand(20, 2, 19, requires_grad=True)
+    edge = torch.tensor([[0], [1]])
+    attr = torch.ones(1, 6)
+    weights = model.lag_weights(x, edge, attr)
+    if lag_mode == 'none':
+        assert torch.count_nonzero(weights) == 0
+    else:
+        torch.testing.assert_close(weights.sum(-1), torch.ones(20, 1))
+        assert torch.count_nonzero(weights[:12, :, -1]) == 0
+    if lag_mode == 'static':
+        assert torch.count_nonzero(weights[:, :, 1:]) == 0
+    if lag_mode == 'fixed':
+        torch.testing.assert_close(weights[12:], torch.full((8, 1, 5), .2))
+    output = model.encode_months(x, edge, attr)
+    output[15, 1].sum().backward()
+    assert torch.count_nonzero(x.grad[16:]) == 0
+    if lag_mode in ('fixed', 'learned'):
+        assert x.grad[3, 0].abs().sum() > 0  # actual upstream 12-month lag
+    else:
+        assert torch.count_nonzero(x.grad[:15, 0]) == 0
+    if lag_mode == 'none':
+        assert torch.count_nonzero(x.grad[:, 0]) == 0
+    if lag_mode == 'learned':
+        assert sum(p.grad.abs().sum() for p in model.lag_gate.parameters()) > 0

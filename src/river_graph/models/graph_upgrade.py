@@ -209,6 +209,9 @@ class MultiScaleTemporalTransportImputer(TemporalTransportGCNImputer):
             history_ablation=history_ablation,
         )
         h = spatial.head.in_features
+        if history_ablation != 'none':
+            raise ValueError('M3 history ablations require separate causal implementations')
+        self.history_scope = 'full_causal_sequence'
         # The two convolutional paths are intentionally low-rank.  Applying
         # full HxH kernels to every station-month makes the pilot needlessly
         # expensive while adding no scientific degree of freedom.
@@ -240,13 +243,7 @@ class MultiScaleTemporalTransportImputer(TemporalTransportGCNImputer):
             self._causal_conv(self.season_conv, sequence).permute(0, 2, 1)
         )
         valid = hidden_seq.new_ones((t, n, 1))
-        if self.history_ablation == "shuffle" and t > 1:
-            history = hidden_seq[:-1].flip(0)
-            trend_input = torch.cat([history, hidden_seq[-1:]], dim=0)
-            valid = torch.cat([valid[:-1].flip(0), valid[-1:]], dim=0)
-        else:
-            trend_input = hidden_seq
-        trend, _ = self.trend_gru(torch.cat([trend_input, valid], dim=-1))
+        trend, _ = self.trend_gru(torch.cat([hidden_seq, valid], dim=-1))
         trend = trend.permute(1, 0, 2)  # [nodes, time, hidden]
         gate = self.scale_gate(torch.cat([short, seasonal, trend], dim=-1))
         fused = (
