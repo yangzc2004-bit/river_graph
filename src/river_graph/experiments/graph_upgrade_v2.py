@@ -34,6 +34,7 @@ from river_graph.models.graph_upgrade import (
 from river_graph.models.hydro import TransportGCNImputer
 
 MECHANISMS = ("m1", "m2", "m3", "m13")
+SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk")
 OBS_FEATURE_NAMES = (
     "last_observed_value",
     "observation_age_log",
@@ -200,10 +201,14 @@ class GraphUpgradeModel:
                  env_encoder: bool = True, edge_direction: str = "both",
                  context_mode: str = "none", edge_set: str = "river",
                  chunk_months: int = 32, masking: str = "mixed",
-                 epoch_callback=None, lag_mode: str = "learned"):
+                 epoch_callback=None, lag_mode: str = "learned",
+                 spatial_variant: str = "baseline"):
         if mechanism not in MECHANISMS:
             raise ValueError(f"unknown mechanism: {mechanism}")
+        if spatial_variant not in SPATIAL_VARIANTS:
+            raise ValueError(f"unknown spatial variant: {spatial_variant}")
         self.mechanism = mechanism
+        self.spatial_variant = spatial_variant
         self.seed, self.lookback, self.temporal_hidden = int(seed), int(lookback), int(temporal_hidden)
         self.hidden, self.layers, self.dropout = int(hidden), int(layers), float(dropout)
         self.lr, self.max_epochs, self.patience = float(lr), int(max_epochs), int(patience)
@@ -230,13 +235,19 @@ class GraphUpgradeModel:
 
     def _build_model(self, inputs: TemporalInputs, dataset: dict) -> torch.nn.Module:
         edge_index, edge_attr = self._edges(dataset, self.edge_set)
+        variant_layers = {"baseline": self.layers, "res2": 2,
+                          "res3": 3, "res4": 4, "res3_jk": 3}
+        spatial_layers = variant_layers[self.spatial_variant]
+        residual = self.spatial_variant != "baseline"
+        jumping_knowledge = self.spatial_variant == "res3_jk"
         spatial = TransportGCNImputer(
             in_channels=inputs.xt_static.shape[-1] + (
                 len(OBS_FEATURE_NAMES) if self.mechanism in ("m1", "m2", "m3", "m13") else 0
             ),
-            edge_dim=edge_attr.shape[1], hidden=self.hidden, layers=self.layers,
+            edge_dim=edge_attr.shape[1], hidden=self.hidden, layers=spatial_layers,
             dropout=self.dropout, env_dim=inputs.env_raw.shape[1] if inputs.env_raw is not None else 0,
             edge_direction=self.edge_direction,
+            residual=residual, jumping_knowledge=jumping_knowledge,
         )
         cls = {
             "m1": ObservationAwareTemporalTransportGCNImputer,
@@ -403,6 +414,7 @@ class GraphUpgradeModel:
 __all__ = [
     "MECHANISMS",
     "OBS_FEATURE_NAMES",
+    "SPATIAL_VARIANTS",
     "TARGET_TRANSFORMS",
     "GraphUpgradeModel",
     "build_observation_features",

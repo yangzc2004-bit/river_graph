@@ -45,3 +45,20 @@ def test_no_edges_safe():
     conv = GatedDirectedConv(10, 16, edge_dim=6)
     out = conv(x, torch.empty((2, 0), dtype=torch.long), ea[:0])
     assert out.shape == (5, 16) and torch.isfinite(out).all()
+
+
+def test_residual_and_jumping_knowledge_variants_forward():
+    torch.manual_seed(42)
+    x, ei, ea = _toy()
+    residual = TransportGCNImputer(
+        in_channels=10, edge_dim=6, hidden=16, layers=3, dropout=0.0,
+        residual=True,
+    )
+    jk = TransportGCNImputer(
+        in_channels=10, edge_dim=6, hidden=16, layers=3, dropout=0.0,
+        residual=True, jumping_knowledge=True,
+    )
+    assert residual(x, ei, ea).shape == (5,)
+    assert jk(x, ei, ea).shape == (5,)
+    assert len(residual.residual_projections) == 3
+    assert jk.jk_gate.out_features == 3

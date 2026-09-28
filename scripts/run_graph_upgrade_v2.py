@@ -23,6 +23,7 @@ from river_graph.experiments.evaluate import load_mask, metrics
 from river_graph.experiments.graph_upgrade_v2 import (
     MECHANISMS,
     OBS_FEATURE_NAMES,
+    SPATIAL_VARIANTS,
     GraphUpgradeModel,
     observation_statistics,
 )
@@ -122,14 +123,17 @@ def _diagnostics(model: GraphUpgradeModel, dataset: dict, split: dict,
 def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
              max_epochs: int, patience: int, out_root: Path,
              force: bool = False, lag_mode: str = "learned",
-             stage: str = 'pilot', runtime_snapshot: str | None = None) -> dict:
+             stage: str = 'pilot', runtime_snapshot: str | None = None,
+             spatial_variant: str = "baseline") -> dict:
     dataset_path = DATASETS[analyte]
     dataset = _load(dataset_path)
     mask_path = _target_mask_path(analyte, mask_name, dataset)
     with np.load(mask_path, allow_pickle=False) as archive:
         split = _split({key: archive[key] for key in archive.files})
-    model_name = {"m1": "observation_memory", "m2": "lagged_transport",
-                  "m3": "multiscale_temporal", "m13": "observation_multiscale"}[mechanism]
+    base_model_name = {"m1": "observation_memory", "m2": "lagged_transport",
+                       "m3": "multiscale_temporal", "m13": "observation_multiscale"}[mechanism]
+    model_name = (base_model_name if spatial_variant == "baseline"
+                  else f"{base_model_name}_{spatial_variant}")
     lag_suffix = f"__lag-{lag_mode}" if mechanism == "m2" else ""
     run_name = f"{model_name}__{analyte}__{mask_name}__seed{seed}{lag_suffix}"
     run_dir = out_root / mechanism / "runs" / run_name
@@ -138,6 +142,9 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
     # causal sequence.  Passing the full chronology to the rolling GRU would
     # turn the combination pilot into an unnecessary quadratic computation.
     lookback = dataset['y'].shape[1] if mechanism == 'm3' else 12
+    variant_layers = {"baseline": 2, "res2": 2, "res3": 3,
+                      "res4": 4, "res3_jk": 3}
+    spatial_layers = variant_layers[spatial_variant]
     params = {
         "script": "scripts/run_graph_upgrade_v2.py",
         "model_name": model_name,
@@ -155,7 +162,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "edge_set": "river",
         "edge_direction": "upstream" if mechanism == "m2" else "both",
         "hidden": 64,
-        "layers": 2,
+        "layers": spatial_layers,
         "dropout": .1,
         "max_epochs": int(max_epochs),
         "patience": int(patience),
@@ -173,12 +180,15 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "target_analyte": analyte,
         "target_transform": TARGET_TRANSFORMS[analyte],
         "upgrade_stage": mechanism,
+        "spatial_variant": spatial_variant,
+        "residual": spatial_variant != "baseline",
+        "jumping_knowledge": spatial_variant == "res3_jk",
         "training_masking": "point_temporal_block_station_block",
         "lag_buckets": [0, 1, 3, 6, 12] if mechanism == "m2" else None,
         "lag_mode": lag_mode if mechanism == "m2" else None,
         "observation_features": list(OBS_FEATURE_NAMES),
         "training_protocol": "graph_upgrade_v2_mechanism_pilot",
-        "config_hash_version": 5,
+        "config_hash_version": 6,
     }
     params["dataset_sha256"] = file_identity(dataset_path).get("sha256")
     params["mask_sha256"] = file_identity(mask_path).get("sha256")
@@ -222,6 +232,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         chunk_months=256,
         lag_mode=lag_mode,
         epoch_callback=record_epoch,
+        spatial_variant=spatial_variant,
     )
     pred = model.fit_predict(dataset, split)
     test = np.asarray(split["test"], dtype=np.int64)
@@ -285,6 +296,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", choices=("smoke", "pilot"), default="smoke")
     ap.add_argument("--mechanism", choices=MECHANISMS, default="m1")
+    ap.add_argument("--spatial-variant", choices=SPATIAL_VARIANTS, default="baseline")
     ap.add_argument("--lag-mode", choices=("learned", "static", "fixed", "none"), default="learned")
     ap.add_argument("--analytes", nargs="+", choices=ANALYTES, default=None)
     ap.add_argument("--masks", nargs="+", default=None)
@@ -305,13 +317,15 @@ def main() -> None:
         masks, seeds = args.masks or list(DEFAULT_MASKS), args.seeds or list(DEFAULT_SEEDS)
         max_epochs, patience = args.max_epochs or 30, args.patience or 5
     out = Path(args.out_dir) / args.stage
-    out.mkdir(parents=True, exist_ok=True)
+    variant_root = out / args.spatial_variant
+    variant_root.mkdir(parents=True, exist_ok=True)
     snapshot = runtime_code_snapshot_sha256()
-    (out / 'runtime_snapshot.json').write_text(json.dumps({
+    (variant_root / 'runtime_snapshot.json').write_text(json.dumps({
         'hash': snapshot, 'files': runtime_code_snapshot(),
     }, indent=2) + '\n')
     plan = {
         "version": "graph_upgrade_v2", "mechanism": args.mechanism,
+        "spatial_variant": args.spatial_variant,
         "analytes": analytes, "masks": masks, "seeds": seeds,
         "max_epochs": max_epochs, "patience": patience,
         "history_scope": 'full_causal_sequence' if args.mechanism == 'm3' else ('mixed_causal_sequence' if args.mechanism == 'm13' else 'rolling_12_months'),
@@ -320,8 +334,8 @@ def main() -> None:
         "lag_mode": args.lag_mode if args.mechanism == "m2" else None,
         "purpose": "mechanism exploration; results are compared to H2X-T and Temporal RF",
     }
-    (out / args.mechanism).mkdir(parents=True, exist_ok=True)
-    (out / args.mechanism / "run_plan.json").write_text(json.dumps(plan, indent=2) + "\n")
+    (variant_root / args.mechanism).mkdir(parents=True, exist_ok=True)
+    (variant_root / args.mechanism / "run_plan.json").write_text(json.dumps(plan, indent=2) + "\n")
     rows = []
     for analyte in analytes:
         for mask in masks:
@@ -331,14 +345,15 @@ def main() -> None:
                 rows.append(_run_one(
                     mechanism=args.mechanism, analyte=analyte,
                     mask_name=mask, seed=seed, max_epochs=max_epochs,
-                    patience=patience, out_root=out, force=args.force,
+                    patience=patience, out_root=variant_root, force=args.force,
                     lag_mode=args.lag_mode,
                     stage=args.stage, runtime_snapshot=snapshot,
+                    spatial_variant=args.spatial_variant,
                 ))
                 # Keep an incremental ledger so an interrupted batch still
                 # exposes the completed configurations for review.
-                pd.DataFrame(rows).to_csv(out / args.mechanism / "metrics.csv", index=False)
-    pd.DataFrame(rows).to_csv(out / args.mechanism / "metrics.csv", index=False)
+                pd.DataFrame(rows).to_csv(variant_root / args.mechanism / "metrics.csv", index=False)
+    pd.DataFrame(rows).to_csv(variant_root / args.mechanism / "metrics.csv", index=False)
     print(pd.DataFrame(rows).to_string(index=False))
 
 

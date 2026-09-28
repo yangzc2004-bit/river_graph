@@ -84,6 +84,9 @@ CONFIG_FIELDS_V4 = CONFIG_FIELDS_V3 + (
 CONFIG_FIELDS_V5 = CONFIG_FIELDS_V4 + (
     "chunk_months", "torch_threads", "history_scope", "execution_stage",
 )
+CONFIG_FIELDS_V6 = CONFIG_FIELDS_V5 + (
+    "spatial_variant", "residual", "jumping_knowledge",
+)
 # Keep the default schema at V2 for existing snapshot runners.  Temporal runs
 # opt into V3 explicitly through ``config_hash_version=3`` in their params.
 CONFIG_FIELDS = CONFIG_FIELDS_V2
@@ -181,7 +184,9 @@ def config_hash(params: dict[str, Any], version: int | None = None) -> str:
     """
     if version is None:
         version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
-    if version >= 5:
+    if version >= 6:
+        fields = CONFIG_FIELDS_V6
+    elif version >= 5:
         fields = CONFIG_FIELDS_V5
     elif version >= 4:
         fields = CONFIG_FIELDS_V4
@@ -224,7 +229,9 @@ def build_meta(
     full_config = config_payload({**params, "model_name": model_name},
                                  dataset_identity, mask_identity)
     schema_version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
-    if schema_version >= 5:
+    if schema_version >= 6:
+        fields = CONFIG_FIELDS_V6
+    elif schema_version >= 5:
         fields = CONFIG_FIELDS_V5
     elif schema_version >= 4:
         fields = CONFIG_FIELDS_V4

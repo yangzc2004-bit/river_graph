@@ -164,7 +164,8 @@ class TransportGCNImputer(nn.Module):
     def __init__(self, in_channels: int, edge_dim: int, hidden: int = 64,
                  layers: int = 2, dropout: float = 0.1,
                  env_dim: int = 0, env_emb: int = 32,
-                 edge_direction: str = "both", gate_mode: str = "static"):
+                 edge_direction: str = "both", gate_mode: str = "static",
+                 residual: bool = False, jumping_knowledge: bool = False):
         super().__init__()
         if edge_direction not in ("both", "upstream", "downstream"):
             raise ValueError(
@@ -180,6 +181,8 @@ class TransportGCNImputer(nn.Module):
                 "refusing gate_mode=" + repr(gate_mode)
             )
         self.gate_mode = gate_mode
+        self.residual = bool(residual)
+        self.jumping_knowledge = bool(jumping_knowledge)
         import itertools
 
         self.env_encoder = (
@@ -192,6 +195,13 @@ class TransportGCNImputer(nn.Module):
         dims = [in_eff, *([hidden] * layers)]
         for a, b in itertools.pairwise(dims):
             self.convs.append(GatedDirectedConv(a, b, edge_dim))
+        if self.residual:
+            self.residual_projections = nn.ModuleList(
+                nn.Linear(a, b) if a != b else nn.Identity()
+                for a, b in itertools.pairwise(dims)
+            )
+        if self.jumping_knowledge:
+            self.jk_gate = nn.Linear(hidden * layers, layers)
         self.head = nn.Linear(hidden, 1)
         self.dropout = dropout
 
@@ -209,9 +219,21 @@ class TransportGCNImputer(nn.Module):
             emb = self.env_encoder(env_raw)          # (N, env_emb), static
             x = torch.cat([x, emb], dim=-1)
         h = x
-        for conv in self.convs:
-            h = F.relu(conv(h, edge_index, edge_attr, self.edge_direction))
+        states = []
+        for layer, conv in enumerate(self.convs):
+            update = conv(h, edge_index, edge_attr, self.edge_direction)
+            if self.residual:
+                update = update + self.residual_projections[layer](h)
+            h = F.relu(update)
             h = F.dropout(h, p=self.dropout, training=self.training)
+            if self.jumping_knowledge:
+                states.append(h)
+        if self.jumping_knowledge:
+            stacked = torch.stack(states, dim=1)
+            gate = torch.softmax(
+                self.jk_gate(torch.cat(states, dim=-1)), dim=-1
+            ).unsqueeze(-1)
+            h = (stacked * gate).sum(dim=1)
         return h
 
     def predict_from_hidden(self, hidden: torch.Tensor) -> torch.Tensor:
