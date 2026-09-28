@@ -268,7 +268,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
                             edge_index=model._bundle.model._edge_index.numpy())
     meta = {
         "run": run_name, "config": params,
-        "config_hash_version": 5,
+        "config_hash_version": params["config_hash_version"],
         "started_at": started_at,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "config_hash": params["config_hash"], "created_at": started_at,
