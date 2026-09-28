@@ -34,7 +34,8 @@ families. U4 closes part of this gap on strict temporal extrapolation: a
 validation-selected convex blend improves all three seeds for DOC and
 specific conductance, while its clustered intervals remain compatible with
 zero. The first spatial holdout configuration selected pure RF and showed no
-blend gain, so that branch was stopped as an exploratory early-stop. Deeper
-architectures and broad searches are not authorized.
+blend gain, but the remaining configurations were not completed; this is a
+partial exploratory result, not a spatial gate. Deeper architectures and
+broad searches are not authorized.
 
 All products must carry dataset, mask, configuration, and runtime identities.

@@ -215,7 +215,7 @@ def _context_features(y_model: torch.Tensor, visible: torch.Tensor,
     upstream = torch.zeros(n, n, dtype=y_model.dtype, device=y_model.device)
     upstream[destination, source] = 1.0
     downstream = upstream.T
-    values = y_model * visible.float()
+    values = torch.where(visible, y_model, torch.zeros_like(y_model))
     counts = visible.float()
     total = counts.sum(dim=0, keepdim=True) - visible.float()
     global_sum = values.sum(dim=0, keepdim=True) - values
@@ -225,13 +225,14 @@ def _context_features(y_model: torch.Tensor, visible: torch.Tensor,
     if mode in ("directional", "all"):
         up_degree = upstream.sum(dim=1).clamp_min(1.0)
         down_degree = downstream.sum(dim=1).clamp_min(1.0)
-        up_count = (counts.T @ upstream.T) / up_degree
+        up_count = counts.T @ upstream.T
         up_sum = values.T @ upstream.T
-        down_count = (counts.T @ downstream.T) / down_degree
+        down_count = counts.T @ downstream.T
         down_sum = values.T @ downstream.T
         up_mean = up_sum / up_count.clamp_min(1.0)
         down_mean = down_sum / down_count.clamp_min(1.0)
-        features.extend([up_mean.T, up_count.T, down_mean.T, down_count.T])
+        features.extend([up_mean.T, (up_count / up_degree).T,
+                         down_mean.T, (down_count / down_degree).T])
     if mode == "all":
         # Recent context is represented by the current-month network summary;
         # the temporal wrapper supplies the previous months as separate steps.
@@ -253,7 +254,9 @@ def fill_target_channel(xt_static: torch.Tensor, y_model: torch.Tensor,
         if edge_index is None:
             raise ValueError("edge_index is required for context features")
         context = _context_features(y_model, visible, edge_index, context_mode)
-        start = 11
+        # Channels 8/9 are target value/visibility. Context follows at 10;
+        # history_valid is appended inside the temporal wrapper, not here.
+        start = 10
         xt[:, :, start:start + context.shape[-1]] = context
     return xt
 

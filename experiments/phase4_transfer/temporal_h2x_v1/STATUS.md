@@ -189,5 +189,6 @@ three seeds improved for both DOC and specific conductance; equal-seed mean
 MAE reductions were 2.89% and 1.90%. Station-clustered intervals crossed zero,
 so this is directional complementarity evidence, not a universal model claim.
 The first spatial holdout configuration selected pure RF and showed no blend
-gain; the remaining spatial configurations were stopped as an exploratory
-early-stop. Frozen T8/T9 results remain unchanged.
+gain, but the remaining spatial configurations were not completed; this is a
+partial exploratory result, not a spatial gate. Frozen T8/T9 results remain
+unchanged.

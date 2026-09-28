@@ -20,5 +20,6 @@ The station-clustered intervals crossed zero, so this is directional
 complementarity evidence rather than a general superiority claim. The next
 discriminating run is one spatial holdout family with the same two analytes
 and three seeds. Its first completed DOC configuration selected pure RF and
-showed no blend gain, so the spatial branch was stopped as an exploratory
-early-stop. Deeper GNNs and broad hyperparameter search remain out of scope.
+showed no blend gain, but the remaining configurations were not completed;
+this is an exploratory partial result, not a spatial gate. Deeper GNNs and
+broad hyperparameter search remain out of scope.
