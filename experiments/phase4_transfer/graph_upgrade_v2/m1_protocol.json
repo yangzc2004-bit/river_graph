@@ -1,0 +1,26 @@
+{
+  "version": "graph_upgrade_v2_m1_pilot",
+  "question": "Does explicit observation age and support improve temporal graph reconstruction under realistic monitoring gaps?",
+  "mechanism": "observation-aware memory with GRU-D-style state decay",
+  "analytes": ["doc", "ph", "spec_conductance"],
+  "masks": ["e2a_strict", "e3_spatial_seed42"],
+  "seeds": [42, 43, 44],
+  "epoch_budget": 30,
+  "lookback": 12,
+  "causal": true,
+  "training_masks": ["point", "temporal_block", "station_block"],
+  "observation_features": [
+    "last_observed_value",
+    "observation_age_log",
+    "last_observation_valid",
+    "support_count_1",
+    "support_count_3",
+    "support_count_6",
+    "support_count_12",
+    "upstream_visible_fraction",
+    "downstream_visible_fraction"
+  ],
+  "primary_comparisons": ["H2X-T", "temporal_random_forest"],
+  "metrics": ["mae", "rmse", "r2", "q90_tail_error", "age_stratified_mae", "support_stratified_mae"],
+  "interpretation": "M1 is a mechanism experiment. Improvements are interpreted alongside the observation-age and support strata, not as evidence that extra GCN layers are needed."
+}

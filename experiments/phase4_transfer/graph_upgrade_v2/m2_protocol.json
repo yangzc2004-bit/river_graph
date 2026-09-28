@@ -1,0 +1,15 @@
+{
+  "version": "graph_upgrade_v2_m2_pilot",
+  "question": "Does an upstream graph signal become more useful when messages are delayed to plausible monthly travel times?",
+  "mechanism": "directed lagged transport on top of observation-aware memory",
+  "lag_buckets_months": [0, 1, 3, 6, 12],
+  "lag_direction": "upstream_to_downstream",
+  "analytes": ["doc", "ph", "spec_conductance"],
+  "masks": ["e2a_strict", "e3_spatial_seed42"],
+  "seeds": [42, 43, 44],
+  "epoch_budget": 30,
+  "comparators": ["H2X-T", "M1 observation-aware memory", "temporal random forest"],
+  "controls_available": ["same-month static message", "fixed lag", "no-message"],
+  "metrics": ["mae", "rmse", "q90_tail_error", "age_stratified_mae", "support_stratified_mae"],
+  "interpretation": "A benefit is treated as a transport mechanism result only when the lagged model also improves the observation-aware model in the same analyte and missingness family."
+}

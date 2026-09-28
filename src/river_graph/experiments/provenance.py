@@ -73,6 +73,14 @@ CONFIG_FIELDS_V3 = CONFIG_FIELDS_V2 + (
     "training_protocol",
     "history_ablation",
 )
+CONFIG_FIELDS_V4 = CONFIG_FIELDS_V3 + (
+    "mechanism",
+    "upgrade_stage",
+    "lag_mode",
+    "lag_buckets",
+    "observation_features",
+    "training_masking",
+)
 # Keep the default schema at V2 for existing snapshot runners.  Temporal runs
 # opt into V3 explicitly through ``config_hash_version=3`` in their params.
 CONFIG_FIELDS = CONFIG_FIELDS_V2
@@ -106,6 +114,10 @@ _RUNTIME_EXTRA = (
     "src/river_graph/models/temporal.py",
     "src/river_graph/experiments/temporal_h2x.py",
     "scripts/run_temporal_h2x.py",
+    "src/river_graph/models/graph_upgrade.py",
+    "src/river_graph/experiments/graph_upgrade_v2.py",
+    "scripts/run_graph_upgrade_v2.py",
+    "scripts/analyze_graph_upgrade_v2.py",
 )
 
 
@@ -166,7 +178,9 @@ def config_hash(params: dict[str, Any], version: int | None = None) -> str:
     """
     if version is None:
         version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
-    if version >= 3:
+    if version >= 4:
+        fields = CONFIG_FIELDS_V4
+    elif version >= 3:
         fields = CONFIG_FIELDS_V3
     elif version >= 2:
         fields = CONFIG_FIELDS_V2
@@ -205,7 +219,9 @@ def build_meta(
     full_config = config_payload({**params, "model_name": model_name},
                                  dataset_identity, mask_identity)
     schema_version = int(params.get("config_hash_version") or CONFIG_HASH_VERSION)
-    if schema_version >= 3:
+    if schema_version >= 4:
+        fields = CONFIG_FIELDS_V4
+    elif schema_version >= 3:
         fields = CONFIG_FIELDS_V3
     elif schema_version >= 2:
         fields = CONFIG_FIELDS_V2

@@ -1,0 +1,14 @@
+{
+  "version": "graph_upgrade_v2_m3_pilot",
+  "question": "Do short event, seasonal and longer trend histories need separate causal pathways?",
+  "mechanism": "causal short convolution, seasonal dilated convolution and trend GRU",
+  "lookback_months": 12,
+  "paths": {"short": "1-3 months", "seasonal": "6-12 months", "trend": "long-memory GRU"},
+  "analytes": ["doc", "ph", "spec_conductance"],
+  "masks": ["e2a_strict", "e3_spatial_seed42"],
+  "seeds": [42, 43, 44],
+  "epoch_budget": 30,
+  "comparators": ["H2X-T", "M1 observation-aware memory", "M2 lagged transport"],
+  "metrics": ["mae", "rmse", "q90_tail_error", "age_stratified_mae", "support_stratified_mae"],
+  "interpretation": "The multiscale path is evaluated as a temporal representation change, not as evidence that a deeper graph is needed."
+}
