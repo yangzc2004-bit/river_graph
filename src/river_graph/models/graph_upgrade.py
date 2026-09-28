@@ -190,7 +190,13 @@ class LaggedTransportTemporalImputer(ObservationAwareTemporalTransportGCNImputer
 
 
 class MultiScaleTemporalTransportImputer(TemporalTransportGCNImputer):
-    """Causal short/seasonal/trend temporal mixer over H2X states."""
+    """Causal short/seasonal/trend temporal mixer over H2X states.
+
+    The temporal paths are evaluated once on the chronological hidden
+    sequence.  This is causal and avoids duplicating an ``N x lookback``
+    window for every station-month, which made the first pilot needlessly
+    slow.  The trend path carries state through all earlier months.
+    """
 
     def __init__(self, spatial, *, lookback: int = 12,
                  temporal_hidden: int = 64, chunk_months: int = 256,
@@ -223,37 +229,31 @@ class MultiScaleTemporalTransportImputer(TemporalTransportGCNImputer):
         return conv(torch.nn.functional.pad(seq, (pad, 0)))
 
     def _temporal_windows(self, hidden_seq: torch.Tensor) -> torch.Tensor:
-        t, n, h = hidden_seq.shape
-        outputs = []
-        device = hidden_seq.device
-        for start in range(0, t, self.chunk_months):
-            stop = min(start + self.chunk_months, t)
-            months = torch.arange(start, stop, device=device)
-            offsets = torch.arange(self.lookback - 1, -1, -1, device=device)
-            raw_idx = months[:, None] - offsets[None, :]
-            valid = (raw_idx >= 0).float()
-            idx = raw_idx.clamp(min=0)
-            seq = hidden_seq[idx].permute(0, 2, 3, 1).reshape(
-                (stop - start) * n, h, self.lookback
-            )
-            short = self.short_projection(
-                self._causal_conv(self.short_conv, seq)[:, :, -1]
-            )
-            seasonal = self.season_projection(
-                self._causal_conv(self.season_conv, seq)[:, :, -1]
-            )
-            trend_in = seq.permute(2, 0, 1)
-            valid_feature = valid.T[:, :, None].expand(
-                self.lookback, stop - start, n
-            ).reshape(self.lookback, (stop - start) * n, 1)
-            trend, _ = self.trend_gru(torch.cat([trend_in, valid_feature], dim=-1))
-            trend = trend[-1]
-            gate = self.scale_gate(torch.cat([short, seasonal, trend], dim=-1))
-            fused = (
-                gate[:, 0:1] * short
-                + gate[:, 1:2] * seasonal
-                + gate[:, 2:3] * trend
-            )
-            last = fused.reshape(stop - start, n, h)
-            outputs.append(self.spatial.predict_from_hidden(last))
-        return torch.cat(outputs, dim=0)
+        if hidden_seq.ndim != 3:
+            raise ValueError("hidden_seq must have shape [time, nodes, hidden]")
+        t, n, _ = hidden_seq.shape
+        sequence = hidden_seq.permute(1, 2, 0)  # [nodes, hidden, time]
+        short = self.short_projection(
+            self._causal_conv(self.short_conv, sequence).permute(0, 2, 1)
+        )
+        seasonal = self.season_projection(
+            self._causal_conv(self.season_conv, sequence).permute(0, 2, 1)
+        )
+        valid = hidden_seq.new_ones((t, n, 1))
+        if self.history_ablation == "shuffle" and t > 1:
+            history = hidden_seq[:-1].flip(0)
+            trend_input = torch.cat([history, hidden_seq[-1:]], dim=0)
+            valid = torch.cat([valid[:-1].flip(0), valid[-1:]], dim=0)
+        else:
+            trend_input = hidden_seq
+        trend, _ = self.trend_gru(torch.cat([trend_input, valid], dim=-1))
+        trend = trend.permute(1, 0, 2)  # [nodes, time, hidden]
+        gate = self.scale_gate(torch.cat([short, seasonal, trend], dim=-1))
+        fused = (
+            gate[..., 0:1] * short
+            + gate[..., 1:2] * seasonal
+            + gate[..., 2:3] * trend
+        )
+        # Temporal modules expose [time, nodes], matching the released H2X-T
+        # wrapper and the training/evaluation code.
+        return self.spatial.predict_from_hidden(fused).permute(1, 0)

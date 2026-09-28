@@ -115,3 +115,22 @@ def test_upgrade_temporal_predictions_do_not_read_future_months():
         changed[5:] += 100.0
         second = model._forward(bundle.model, changed, bundle.inputs, data, age)
     assert torch.equal(first[:, :5], second[:, :5])
+
+
+def test_multiscale_temporal_path_is_causal():
+    data, split = _toy_dataset(), _split()
+    model = GraphUpgradeModel(
+        mechanism="m3", seed=42, hidden=8, temporal_hidden=8,
+        max_epochs=1, patience=1, chunk_months=8, lookback=24,
+    )
+    model.fit(data, split)
+    bundle = model._bundle
+    visible, y_feed = model._visible_input()
+    x, _ = model._make_input(bundle.inputs, visible, bundle.model, y_feed)
+    bundle.model.eval()
+    with torch.no_grad():
+        first = model._forward(bundle.model, x, bundle.inputs, data)
+        changed = x.clone()
+        changed[5:] += 100.0
+        second = model._forward(bundle.model, changed, bundle.inputs, data)
+    assert torch.equal(first[:, :5], second[:, :5])

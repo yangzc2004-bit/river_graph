@@ -1,10 +1,11 @@
 # Graph upgrade status
 
-M1 and M2 pilots are complete. Their results and interpretation are in
-`m1_verdict.md` and `m2_verdict.md`; each mechanism directory contains its
-run plan, metrics, full-grid products and per-run metadata. M3 is running under
-the same 30-epoch pilot budget after a low-rank optimization of its short and
-seasonal paths.
+The first M1 and M2 pilots are complete. Their results and interpretation are
+in `m1_verdict.md` and `m2_verdict.md`; each mechanism directory contains its
+run plan, metrics, full-grid products and per-run metadata. The first M3
+attempt was stopped after its initial smoke exposed a slow rolling-window
+implementation. A refactored continuation is in `continuation_r1/` and is
+being evaluated separately.
 
 The `development_v0/` directory retains the first code snapshot and the
 interrupted M3 development inventory. It is not mixed into the current pilot
