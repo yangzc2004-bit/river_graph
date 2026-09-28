@@ -20,7 +20,7 @@ def main() -> None:
     ap.add_argument("--mechanism", default="m1")
     ap.add_argument(
         "--baseline-dir",
-        default="experiments/phase4_transfer/temporal_h2x_v1/t3_formal",
+        default="experiments/phase4_transfer/model_upgrade_v1/u1_convergence/epoch_30",
     )
     ap.add_argument(
         "--rf-dir",
