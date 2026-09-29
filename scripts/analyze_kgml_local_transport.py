@@ -57,23 +57,30 @@ def paired_predictions(runs: pd.DataFrame, mask: str) -> pd.DataFrame:
         for _, row in runs[(runs["mask"] == mask) & (runs["arm"] == arm)].iterrows():
             frame = pd.read_parquet(row.prediction_path)
             frame = frame[["cell", "station", "month", "y_true", "final_pred"]].copy()
+            frame[f"{arm}_error"] = np.abs(frame.y_true - frame.final_pred)
             frame["seed"] = row.seed
             pieces.append(frame)
         pooled = pd.concat(pieces, ignore_index=True)
-        pooled = pooled.groupby(["cell", "station", "month", "y_true"], as_index=False).final_pred.mean()
+        if not pooled.groupby("cell").seed.nunique().eq(3).all():
+            raise ValueError("query cells differ between seeds")
+        pooled = pooled.groupby(["cell", "station", "month", "y_true"], as_index=False)[
+            ["final_pred", f"{arm}_error"]].mean()
         wide.append(pooled.rename(columns={"final_pred": arm}))
     paired = wide[0]
     for frame in wide[1:]:
+        if set(paired.cell) != set(frame.cell):
+            raise ValueError("query cells differ between arms")
         paired = paired.merge(frame, on=["cell", "station", "month", "y_true"], validate="one_to_one")
     return paired
 
 
 def station_bootstrap(delta: pd.Series, stations: pd.Series, *, seed: int = 42, reps: int = 5000) -> tuple[float, float, float]:
-    grouped = pd.DataFrame({"station": stations, "delta": delta}).groupby("station").delta.mean()
-    values = grouped.to_numpy()
+    grouped = pd.DataFrame({"station": stations, "delta": delta}).groupby("station").delta.agg(["sum", "count"])
+    sums, counts = grouped["sum"].to_numpy(), grouped["count"].to_numpy()
     rng = np.random.default_rng(seed)
-    draws = values[rng.integers(len(values), size=(reps, len(values)))].mean(1)
-    return float(values.mean()), float(np.quantile(draws, .025)), float(np.quantile(draws, .975))
+    index = rng.integers(len(sums), size=(reps, len(sums)))
+    draws = sums[index].sum(1) / counts[index].sum(1)
+    return float(sums.sum() / counts.sum()), float(np.quantile(draws, .025)), float(np.quantile(draws, .975))
 
 
 def analyze(root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -86,28 +93,28 @@ def analyze(root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
         paired_cells.append(paired)
         for arm in ["h2x_t", "residual_upstream", "residual_both", "residual_nomsg"]:
             # Positive means the candidate has lower absolute error than the reference.
-            delta = np.abs(paired.y_true - paired.rf_local) - np.abs(paired.y_true - paired[arm])
+            delta = paired.rf_local_error - paired[f"{arm}_error"]
             mean, lo, hi = station_bootstrap(delta, paired.station)
             paired_rows.append({"mask": mask, "comparison": f"{arm}_vs_rf_local",
-                                "mae_candidate": float(np.abs(paired.y_true - paired[arm]).mean()),
-                                "mae_reference": float(np.abs(paired.y_true - paired.rf_local).mean()),
-                                "gain_mae": mean, "gain_pct": 100 * mean / np.abs(paired.y_true - paired.rf_local).mean(),
+                                "mae_candidate": float(paired[f"{arm}_error"].mean()),
+                                "mae_reference": float(paired.rf_local_error.mean()),
+                                "gain_mae": mean, "gain_pct": 100 * mean / paired.rf_local_error.mean(),
                                 "ci_low": lo, "ci_high": hi})
         for arm in ["h2x_t", "residual_upstream", "residual_both", "residual_nomsg"]:
-            delta = np.abs(paired.y_true - paired.rf_context) - np.abs(paired.y_true - paired[arm])
+            delta = paired.rf_context_error - paired[f"{arm}_error"]
             mean, lo, hi = station_bootstrap(delta, paired.station, seed=44)
             paired_rows.append({"mask": mask, "comparison": f"{arm}_vs_rf_context",
-                                "mae_candidate": float(np.abs(paired.y_true - paired[arm]).mean()),
-                                "mae_reference": float(np.abs(paired.y_true - paired.rf_context).mean()),
-                                "gain_mae": mean, "gain_pct": 100 * mean / np.abs(paired.y_true - paired.rf_context).mean(),
+                                "mae_candidate": float(paired[f"{arm}_error"].mean()),
+                                "mae_reference": float(paired.rf_context_error.mean()),
+                                "gain_mae": mean, "gain_pct": 100 * mean / paired.rf_context_error.mean(),
                                 "ci_low": lo, "ci_high": hi})
         for arm in ["residual_upstream", "residual_both"]:
-            delta = np.abs(paired.y_true - paired.residual_nomsg) - np.abs(paired.y_true - paired[arm])
+            delta = paired.residual_nomsg_error - paired[f"{arm}_error"]
             mean, lo, hi = station_bootstrap(delta, paired.station, seed=43)
             paired_rows.append({"mask": mask, "comparison": f"{arm}_vs_residual_nomsg",
-                                "mae_candidate": float(np.abs(paired.y_true - paired[arm]).mean()),
-                                "mae_reference": float(np.abs(paired.y_true - paired.residual_nomsg).mean()),
-                                "gain_mae": mean, "gain_pct": 100 * mean / np.abs(paired.y_true - paired.residual_nomsg).mean(),
+                                "mae_candidate": float(paired[f"{arm}_error"].mean()),
+                                "mae_reference": float(paired.residual_nomsg_error.mean()),
+                                "gain_mae": mean, "gain_pct": 100 * mean / paired.residual_nomsg_error.mean(),
                                 "ci_low": lo, "ci_high": hi})
     summary = pd.DataFrame(paired_rows)
     cells = pd.concat(paired_cells, ignore_index=True)
@@ -115,6 +122,9 @@ def analyze(root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     cells.to_csv(root / "paired_seedmean_cells.csv", index=False)
     runs.to_csv(root / "audited_runs.csv", index=False)
     report = ["# K1 Local--Transport KGML verdict", "", f"Completed runs: {len(runs)}", "",
+              ("Estimator: cell-weighted absolute error, then mean across training seeds. "
+              "Bootstrap resamples stations, retaining all cells and all seed errors. "
+              "Intervals describe station sampling uncertainty conditional on these seeds and masks."), "",
               "## Mean test MAE by arm", "",
               runs.groupby(["arm", "mask"], as_index=False).mae.agg(["mean", "std", "count"]).to_string(), "",
               "## Paired station bootstrap", "", summary.to_string(index=False), "",

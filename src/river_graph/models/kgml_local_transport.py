@@ -219,7 +219,8 @@ class LocalTransportKGML:
 
     def __init__(self, *, analyte="doc", seed=42, edge_direction="upstream", edge_set="river",
                  max_epochs=30, patience=5, n_estimators=200, n_jobs=4, hidden=64,
-                 dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None):
+                 dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None,
+                 spatial_variant="baseline"):
         if analyte not in TARGET_TRANSFORMS or edge_direction not in ("upstream", "both"):
             raise ValueError("invalid analyte/direction")
         if edge_set not in ("river", "empty") or min(max_epochs, patience, n_estimators, hidden, chunk_months) < 1:
@@ -230,6 +231,9 @@ class LocalTransportKGML:
         self.n_estimators, self.n_jobs = n_estimators, n_jobs
         self.hidden, self.dropout, self.lr = hidden, dropout, lr
         self.chunk_months, self.epoch_callback = chunk_months, epoch_callback
+        if spatial_variant not in ("baseline", "msgonly"):
+            raise ValueError("invalid spatial_variant")
+        self.spatial_variant = spatial_variant
 
     def initialize(self, dataset: dict, split: dict, rf: RFArtifacts):
         """Build the zero-residual model; also supports a real initialization test."""
@@ -241,7 +245,7 @@ class LocalTransportKGML:
             hidden=self.hidden, temporal_hidden=self.hidden, layers=2, dropout=self.dropout,
             target_transform=TARGET_TRANSFORMS[self.analyte], env_encoder=True,
             edge_direction=self.edge_direction, edge_set=self.edge_set, feature_edge_set="river",
-            chunk_months=self.chunk_months)
+            chunk_months=self.chunk_months, spatial_variant=self.spatial_variant)
         self.model = self.builder._build_model(self.inputs, dataset)
         nn.init.zeros_(self.model.spatial.head.weight)
         nn.init.zeros_(self.model.spatial.head.bias)
@@ -286,7 +290,8 @@ class LocalTransportKGML:
                 loss = F.mse_loss(delta, residual.reshape(-1)[cells]) * (len(cells) / len(train))
                 if not torch.isfinite(loss):
                     raise FloatingPointError("nonfinite KGML training loss")
-                loss.backward()
+                if loss.requires_grad:
+                    loss.backward()
                 total_loss += float(loss.detach())
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
             optimizer.step()

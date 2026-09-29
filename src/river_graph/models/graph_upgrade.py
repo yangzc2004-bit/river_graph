@@ -119,6 +119,44 @@ class ObservationGatedTransportGCNImputer(TransportGCNImputer):
         return h
 
 
+class MessageOnlyTransportGCNImputer(TransportGCNImputer):
+    """Spatial encoder whose representation is created only by edge messages.
+
+    The self path is deliberately omitted.  With an empty edge set the
+    representation is exactly zero, which makes this class useful for a
+    matched source-isolation control rather than a second full predictor.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.pop("residual", None)
+        kwargs.pop("jumping_knowledge", None)
+        super().__init__(*args, residual=False, jumping_knowledge=False, **kwargs)
+        self.message_only = True
+
+    def encode_nodes(self, x: torch.Tensor, edge_index: torch.Tensor,
+                     edge_attr: torch.Tensor,
+                     env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        if self.env_encoder is not None:
+            x = torch.cat([x, self.env_encoder(env_raw)], dim=-1)
+        h = x
+        for layer, conv in enumerate(self.convs):
+            n = h.shape[0]
+            g_up = torch.sigmoid(conv.gate_up(edge_attr))
+            g_down = torch.sigmoid(conv.gate_down(edge_attr))
+            zero = torch.zeros(n, conv.up_lin.out_features, device=h.device, dtype=h.dtype)
+            up = conv._agg(conv.up_lin(h), edge_index, g_up, n) if self.edge_direction in (
+                "both", "upstream"
+            ) else zero
+            down = conv._agg(conv.down_lin(h), edge_index.flip(0), g_down, n) if self.edge_direction in (
+                "both", "downstream"
+            ) else zero
+            # Retain the first-hop representation when adding the second
+            # hop. A pure two-hop stack would discard singly linked reaches.
+            h = F.relu(up + down + (h if layer else zero))
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        return h
+
+
 class ObservationAwareTemporalTransportGCNImputer(
     TemporalTransportGCNImputer
 ):
@@ -219,6 +257,59 @@ class ObservationAwareTemporalTransportGCNImputer(
         hidden = self.encode_months(x_seq, edge_index, edge_attr, env_raw)
         support_seq = torch.stack([x_seq[..., 9], x_seq[..., -2], x_seq[..., -1]], -1)
         return self._temporal_windows(hidden, age_seq, support_seq)
+
+
+class MessageOnlyTemporalTransportImputer(ObservationAwareTemporalTransportGCNImputer):
+    """Temporal response to upstream messages with an exact zero null.
+
+    The source-isolation pilot omits the history-valid input from this one
+    temporal layer and removes GRU biases. A zero message sequence
+    therefore remains zero, while observation age still controls decay of a
+    nonzero message state. This gives one forward pass instead of subtracting
+    two full temporal runs.
+    """
+
+    def __init__(self, spatial, *, lookback=12, temporal_hidden=64,
+                 chunk_months=256, history_ablation="none"):
+        super().__init__(spatial, lookback=lookback,
+                         temporal_hidden=temporal_hidden,
+                         chunk_months=chunk_months,
+                         history_ablation=history_ablation)
+        self.temporal = nn.GRUCell(temporal_hidden, temporal_hidden, bias=False)
+
+    def _temporal_windows(self, hidden_seq, age_seq=None, support_seq=None):
+        if age_seq is None:
+            age_seq = hidden_seq.new_zeros(hidden_seq.shape[:2])
+        if support_seq is None:
+            support_seq = hidden_seq.new_zeros((*hidden_seq.shape[:2], 3))
+        t, n, h = hidden_seq.shape
+        decay_input = torch.cat([age_seq[..., None], support_seq], dim=-1)
+        gamma = torch.exp(-torch.relu(self.decay(decay_input)))
+        outputs = []
+        for start in range(0, t, self.chunk_months):
+            stop = min(start + self.chunk_months, t)
+            months = torch.arange(start, stop, device=hidden_seq.device)
+            offsets = torch.arange(self.lookback - 1, -1, -1, device=hidden_seq.device)
+            raw_idx = months[:, None] - offsets[None, :]
+            valid = (raw_idx >= 0).float()
+            idx = raw_idx.clamp_min(0)
+            seq = hidden_seq[idx].permute(1, 0, 2, 3).reshape(
+                self.lookback, (stop - start) * n, h
+            )
+            decay = gamma[idx].permute(1, 0, 2, 3).reshape(
+                self.lookback, (stop - start) * n, h
+            )
+            valid_feature = valid.T[:, :, None].expand(
+                self.lookback, stop - start, n
+            ).reshape(self.lookback, (stop - start) * n, 1)
+            seq = seq * valid_feature
+            state = hidden_seq.new_zeros(((stop - start) * n, h))
+            for step in range(self.lookback):
+                updated = self.temporal(seq[step], decay[step] * state)
+                state = torch.where(valid_feature[step].bool(), updated, state)
+            outputs.append(state.reshape(stop - start, n, h))
+        states = torch.cat(outputs, dim=0)
+        return F.linear(states, self.spatial.head.weight, bias=None).squeeze(-1)
 
 
 class ObservationAwareMultiScaleTemporalTransportImputer(

@@ -41,9 +41,12 @@ from river_graph.models.kgml_local_transport import (
 
 ROOT = Path("experiments/phase4_transfer/kgml_local_transport_v1")
 MASKS = ("e2a_strict", "e3_spatial_seed42")
-ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg")
+ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg",
+        "residual_msgdelta", "residual_msgnull")
+K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
-                 "scripts/analyze_kgml_local_transport.py", str(ROOT / "plan.md"))
+                 "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
+                 str(ROOT / "k2_source_isolation_spec_v3.md"), str(ROOT / "plan.md"))
 
 
 def digest(value):
@@ -257,7 +260,8 @@ def run_one(root, data, split, cfg, rf):
     if arm.startswith("residual"):
         model = LocalTransportKGML(analyte=cfg["analyte"], edge_direction=cfg["edge_direction"],
             edge_set=cfg["edge_set"], n_estimators=cfg["n_estimators"], n_jobs=cfg["n_jobs"],
-            epoch_callback=trace, **settings)
+            epoch_callback=trace,
+            spatial_variant=cfg["spatial_variant"], **settings)
         model.fit(data, split, rf=rf)
         epochs = model.epochs_run
         checkpoint = {"state_dict": model.model.state_dict(), "target_mu": rf.target_mu,
@@ -316,7 +320,7 @@ def main():
     parser.add_argument("--analytes", nargs="+", choices=ANALYTES, default=["doc"])
     parser.add_argument("--masks", nargs="+", choices=MASKS, default=list(MASKS))
     parser.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
-    parser.add_argument("--arms", nargs="+", choices=ARMS, default=list(ARMS))
+    parser.add_argument("--arms", nargs="+", choices=ARMS, default=list(K1_ARMS))
     parser.add_argument("--max-epochs", type=int, default=30)
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--n-estimators", type=int, default=200)
@@ -367,15 +371,23 @@ def main():
                     "local_feature_names": rf_feature_names(False), "context_feature_names": rf_feature_names(True)}
                 rf, rf_path = rf_bundle(args.out_dir, data, split, base)
                 for arm in args.arms:
-                    cfg = {**base, "arm": arm, "rf_bundle_path": str(rf_path), "rf_bundle_sha256": sha256_file(rf_path),
+                    cfg = {**base, "arm": arm,
+                           "residual_definition": ("zero_preserving_message_gru_v1" if arm in
+                               ("residual_msgdelta", "residual_msgnull") else "direct_residual_v1"),
+                           "spatial_variant": "msgonly" if arm in ("residual_msgdelta", "residual_msgnull") else "baseline",
+                           "rf_bundle_path": str(rf_path), "rf_bundle_sha256": sha256_file(rf_path),
                            "edge_direction": "both" if arm in ("h2x_t", "residual_both") else "upstream",
-                           "edge_set": "empty" if arm == "residual_nomsg" else "river"}
+                           "edge_set": "empty" if arm in ("residual_nomsg", "residual_msgnull") else "river"}
                     rows.append(run_one(args.out_dir, data, split, cfg, rf))
                     pd.DataFrame(rows).to_csv(args.out_dir / "metrics.csv", index=False)
                     write_json(args.out_dir / "progress.json", {"completed": len(rows), "expected": len(expected),
                                                                 "latest": rows[-1]})
-    from analyze_kgml_local_transport import analyze
-    analyze(args.out_dir)
+    if set(args.arms) == set(K1_ARMS) and set(args.seeds) == {42, 43, 44} and set(args.masks) == set(MASKS):
+        from analyze_kgml_local_transport import analyze
+        analyze(args.out_dir)
+    elif set(args.arms) == {"residual_msgdelta", "residual_msgnull"} and set(args.seeds) == {42, 43, 44} and set(args.masks) == set(MASKS):
+        from analyze_kgml_source_isolation import analyze
+        analyze(args.out_dir)
 
 
 if __name__ == "__main__":

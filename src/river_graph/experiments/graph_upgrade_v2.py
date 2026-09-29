@@ -27,6 +27,8 @@ from river_graph.experiments.temporal_h2x import (
 )
 from river_graph.models.graph_upgrade import (
     LaggedTransportTemporalImputer,
+    MessageOnlyTemporalTransportImputer,
+    MessageOnlyTransportGCNImputer,
     MessageResidualTransportGCNImputer,
     MultiScaleTemporalTransportImputer,
     ObservationAwareMultiScaleTemporalTransportImputer,
@@ -36,7 +38,7 @@ from river_graph.models.graph_upgrade import (
 from river_graph.models.hydro import TransportGCNImputer
 
 MECHANISMS = ("m1", "m2", "m3", "m13")
-SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk", "msgres2", "msggate2")
+SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk", "msgres2", "msggate2", "msgonly")
 OBS_FEATURE_NAMES = (
     "last_observed_value",
     "observation_age_log",
@@ -246,13 +248,14 @@ class GraphUpgradeModel:
         feature_edge_index, _ = self._edges(dataset, self.feature_edge_set)
         variant_layers = {"baseline": self.layers, "res2": 2,
                           "res3": 3, "res4": 4, "res3_jk": 3,
-                          "msgres2": 2, "msggate2": 2}
+                          "msgres2": 2, "msggate2": 2, "msgonly": 2}
         spatial_layers = variant_layers[self.spatial_variant]
         residual = self.spatial_variant in {"res2", "res3", "res4", "res3_jk"}
         jumping_knowledge = self.spatial_variant == "res3_jk"
         spatial_cls = {
             "msgres2": MessageResidualTransportGCNImputer,
             "msggate2": ObservationGatedTransportGCNImputer,
+            "msgonly": MessageOnlyTransportGCNImputer,
         }.get(self.spatial_variant, TransportGCNImputer)
         spatial = spatial_cls(
             in_channels=inputs.xt_static.shape[-1] + (
@@ -269,6 +272,10 @@ class GraphUpgradeModel:
             "m3": MultiScaleTemporalTransportImputer,
             "m13": ObservationAwareMultiScaleTemporalTransportImputer,
         }[self.mechanism]
+        if self.spatial_variant == "msgonly":
+            if self.mechanism != "m1":
+                raise ValueError("message-only source isolation uses M1 memory")
+            cls = MessageOnlyTemporalTransportImputer
         model = cls(spatial, lookback=self.lookback,
                     temporal_hidden=self.temporal_hidden, chunk_months=self.chunk_months,
                     **({"lag_mode": self.lag_mode} if self.mechanism == "m2" else {}))
