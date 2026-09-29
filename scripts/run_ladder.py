@@ -51,6 +51,13 @@ def load_runner() -> ModuleType:
 
 
 def main() -> None:
+    # New experimental family, with its own versioned products and verifier.
+    # Legacy snapshot arguments and behavior remain unchanged.
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "kgml"]:
+        from run_kgml_local_transport import main as kgml_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        kgml_main()
+        return
     ap = argparse.ArgumentParser(
         description="Training wrapper that always stores per-cell predictions.")
     ap.add_argument("--only", default=None)
