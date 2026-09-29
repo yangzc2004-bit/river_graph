@@ -47,7 +47,8 @@ ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both",
 K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
-                 "scripts/analyze_kgml_joint.py", str(ROOT / "k2_source_isolation_spec_v3.md"),
+                 "scripts/analyze_kgml_joint.py", "scripts/analyze_kgml_channel_isolation.py",
+                 str(ROOT / "k2_source_isolation_spec_v3.md"),
                  str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"),
                  str(ROOT / "k4_channel_isolation_spec.md"), str(ROOT / "plan.md"))
 
