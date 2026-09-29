@@ -80,7 +80,9 @@ def _diagnostics(model: GraphUpgradeModel, dataset: dict, split: dict,
         if cells.size:
             visible[cells] = True
     visible = visible.reshape(n, t)
-    stats = observation_statistics(inputs.y_model, visible, model._bundle.model._edge_index)
+    feature_edges = getattr(model._bundle.model, "_feature_edge_index",
+                            model._bundle.model._edge_index)
+    stats = observation_statistics(inputs.y_model, visible, feature_edges)
     # observation_statistics is [time, nodes], while prediction/data cells
     # are flattened in [nodes, time] order.  Transpose before indexing so
     # strata refer to the same station-month cells as the test split.

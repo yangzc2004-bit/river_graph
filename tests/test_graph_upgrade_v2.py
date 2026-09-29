@@ -205,6 +205,19 @@ def test_message_residual_variant_rejects_lagged_bypass():
         GraphUpgradeModel(mechanism="m2", spatial_variant="msgres2")
 
 
+def test_no_message_keeps_observation_support_features_matched():
+    data, split = _toy_dataset(), _split()
+    model = GraphUpgradeModel(mechanism="m1", edge_set="empty",
+                              feature_edge_set="river", hidden=8,
+                              temporal_hidden=8, max_epochs=1, patience=1)
+    model.fit(data, split)
+    visible, feed = model._visible_input(only_visible=split["train"])
+    x, _ = model._make_input(model._bundle.inputs, visible, model._bundle.model, feed)
+    # The spatial trunk has no edges, but the observation support channels are
+    # still computed from the same river graph as the matched-input arm.
+    assert torch.count_nonzero(x[..., -2:]) > 0
+
+
 def test_multiscale_trend_receives_information_older_than_twelve_months():
     from river_graph.models.graph_upgrade import MultiScaleTemporalTransportImputer
     from river_graph.models.hydro import TransportGCNImputer

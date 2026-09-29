@@ -203,7 +203,8 @@ class GraphUpgradeModel:
                  context_mode: str = "none", edge_set: str = "river",
                  chunk_months: int = 32, masking: str = "mixed",
                  epoch_callback=None, lag_mode: str = "learned",
-                 spatial_variant: str = "baseline"):
+                 spatial_variant: str = "baseline",
+                 feature_edge_set: str | None = None):
         if mechanism not in MECHANISMS:
             raise ValueError(f"unknown mechanism: {mechanism}")
         if spatial_variant not in SPATIAL_VARIANTS:
@@ -218,7 +219,10 @@ class GraphUpgradeModel:
         self.target_transform = target_transform
         self.env_groups, self.env_encoder = env_groups, bool(env_encoder)
         self.edge_direction, self.context_mode, self.edge_set = edge_direction, context_mode, edge_set
-        if edge_set not in ("river", "empty") or masking not in ("mixed", "point"):
+        self.feature_edge_set = feature_edge_set or edge_set
+        if (edge_set not in ("river", "empty")
+                or self.feature_edge_set not in ("river", "empty")
+                or masking not in ("mixed", "point")):
             raise ValueError("invalid edge set or masking mode")
         if max_epochs < 1 or patience < 1:
             raise ValueError("epochs and patience must be positive")
@@ -238,6 +242,7 @@ class GraphUpgradeModel:
 
     def _build_model(self, inputs: TemporalInputs, dataset: dict) -> torch.nn.Module:
         edge_index, edge_attr = self._edges(dataset, self.edge_set)
+        feature_edge_index, _ = self._edges(dataset, self.feature_edge_set)
         variant_layers = {"baseline": self.layers, "res2": 2,
                           "res3": 3, "res4": 4, "res3_jk": 3,
                           "msgres2": 2}
@@ -266,6 +271,9 @@ class GraphUpgradeModel:
                     temporal_hidden=self.temporal_hidden, chunk_months=self.chunk_months,
                     **({"lag_mode": self.lag_mode} if self.mechanism == "m2" else {}))
         model._edge_index, model._edge_attr = edge_index, edge_attr
+        # Observation support features can remain matched between river and
+        # no-message controls while the spatial encoder receives no edges.
+        model._feature_edge_index = feature_edge_index
         return model
 
     @staticmethod
@@ -282,7 +290,7 @@ class GraphUpgradeModel:
     def _make_input(self, inputs, visible, model, y_feed=None):
         if self.mechanism in ("m1", "m2", "m3", "m13"):
             return build_observation_features(
-                inputs, visible, model._edge_index, y_feed=y_feed
+                inputs, visible, model._feature_edge_index, y_feed=y_feed
             )
         values = inputs.y_model if y_feed is None else y_feed
         return fill_target_channel(

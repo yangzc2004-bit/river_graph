@@ -67,11 +67,12 @@ def select_alpha(y_val, rf_val, gnn_val) -> tuple[float, list[dict]]:
     return best["alpha_rf"], grid
 
 
-def model_settings(seed: int) -> dict:
+def model_settings(seed: int, *, edge_set: str = "river") -> dict:
     return {"mechanism": "m1", "spatial_variant": "baseline", "seed": seed,
             "lookback": 12, "hidden": 64, "temporal_hidden": 64, "layers": 2,
             "dropout": 0.1, "lr": 0.001, "max_epochs": 30, "patience": 5,
-            "target_transform": "log1p", "edge_direction": "both", "edge_set": "river",
+            "target_transform": "log1p", "edge_direction": "both", "edge_set": edge_set,
+            "feature_edge_set": "river",
             "env_encoder": True, "context_mode": "none", "masking": "mixed",
             "chunk_months": 256}
 
@@ -156,13 +157,15 @@ def verify_run(run: Path) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
     return meta, val, test
 
 
-def run_one(data, split, fit_x, test_x, *, mask_path, mask, seed, root, snapshot_hash):
+def run_one(data, split, fit_x, test_x, *, mask_path, mask, seed, root, snapshot_hash,
+            edge_set: str):
     run = root / "runs" / f"rf_m1_blend__doc__{mask}__seed{seed}"
     config = {
         "model_name": "validation_selected_rf_m1_blend", "analyte": "doc", "mask": mask,
         "seed": seed, "dataset_path": str(DATASETS["doc"]), "mask_path": str(mask_path),
         "dataset_sha256": sha256_file(DATASETS["doc"]), "mask_sha256": sha256_file(mask_path),
-        "gnn": model_settings(seed), "rf": {"n_estimators": 200, "n_jobs": 4, "random_state": seed},
+        "gnn": model_settings(seed, edge_set=edge_set),
+        "rf": {"n_estimators": 200, "n_jobs": 4, "random_state": seed},
         "fit_roles": list(FIT_VISIBILITY), "test_roles": list(TEST_VISIBILITY),
         "alpha_rf_grid": ALPHAS.tolist(), "selection": "raw_validation_mae; ties_prefer_rf",
         "torch_threads": torch.get_num_threads(), "runtime_snapshot_hash": snapshot_hash,
@@ -190,7 +193,8 @@ def run_one(data, split, fit_x, test_x, *, mask_path, mask, seed, root, snapshot
         if row["epoch"] == 1 or row["epoch"] % 5 == 0:
             print(f"  epoch {row['epoch']}: val={row['val_loss']:.4f}, {row['elapsed_s']:.0f}s", flush=True)
 
-    print(f"[R7] {mask} seed={seed}: fitting M1 + RF", flush=True)
+    label = "R7" if edge_set == "river" else "R8"
+    print(f"[{label}] {mask} seed={seed}: fitting M1 + RF", flush=True)
     gnn = GraphUpgradeModel(**config["gnn"], epoch_callback=epoch)
     gnn.fit(data, split)
     rf = RandomForestRegressor(**config["rf"])
@@ -294,6 +298,7 @@ def main():
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--analyze-only", action="store_true")
     parser.add_argument("--threads", type=int, default=4)
+    parser.add_argument("--edge-set", choices=("river", "empty"), default="river")
     args = parser.parse_args()
     torch.set_num_threads(args.threads)
     if args.analyze_only:
@@ -313,11 +318,12 @@ def main():
         mask_path = _target_mask_path("doc", mask, data)
         with np.load(mask_path, allow_pickle=False) as archive:
             split = _split({k: archive[k] for k in archive.files})
-        print(f"[R7] building paired visibility features for {mask}", flush=True)
+        label = "R7" if args.edge_set == "river" else "R8"
+        print(f"[{label}] building paired visibility features for {mask}", flush=True)
         fit_x, test_x = _features(data, split, FIT_VISIBILITY), _features(data, split, TEST_VISIBILITY)
         for seed in SEEDS:
             run_one(data, split, fit_x, test_x, mask_path=mask_path, mask=mask, seed=seed,
-                    root=args.root, snapshot_hash=digest(snapshot))
+                    root=args.root, snapshot_hash=digest(snapshot), edge_set=args.edge_set)
             gc.collect()
         del fit_x, test_x
     analyze(args.root)
