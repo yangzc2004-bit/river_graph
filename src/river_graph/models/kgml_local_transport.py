@@ -335,3 +335,125 @@ class LocalTransportKGML:
 
     def predict(self, visible_roles=TEST_ROLES) -> np.ndarray:
         return self.predict_components(visible_roles)["final_pred"]
+
+
+class AdditiveLocalTransportKGML:
+    """Joint local-residual plus message-only residual model.
+
+    The local branch keeps the K1 self/temporal representation with an empty
+    message edge set. The message branch is the zero-preserving K2 module.
+    They share the RF-local base and are optimized against the same OOF
+    residual, so the message branch must explain error left by the local
+    branch rather than duplicating an arbitrary offset.
+    """
+
+    def __init__(self, *, analyte="doc", seed=42, max_epochs=30, patience=5,
+                 n_estimators=200, n_jobs=4, hidden=64, dropout=0.1, lr=1e-3,
+                 chunk_months=64, epoch_callback=None):
+        common = {"analyte": analyte, "seed": seed, "edge_direction": "upstream",
+                  "max_epochs": max_epochs, "patience": patience,
+                  "n_estimators": n_estimators, "n_jobs": n_jobs, "hidden": hidden,
+                  "dropout": dropout, "lr": lr, "chunk_months": chunk_months}
+        self.local = LocalTransportKGML(edge_set="empty", spatial_variant="baseline", **common)
+        self.message = LocalTransportKGML(edge_set="river", spatial_variant="msgonly", **common)
+        self.epoch_callback = epoch_callback
+        self.seed = seed
+
+    def initialize(self, dataset: dict, split: dict, rf: RFArtifacts):
+        self.dataset, self.split, self.rf = dataset, split, rf
+        self.local.initialize(dataset, split, rf)
+        self.message.initialize(dataset, split, rf)
+
+    def fit(self, dataset: dict, split: dict, rf: RFArtifacts | None = None) -> None:
+        if rf is None:
+            rf = fit_rf_artifacts(dataset, split, target_transform=TARGET_TRANSFORMS[self.local.analyte],
+                                  seed=self.seed, n_estimators=self.local.n_estimators,
+                                  n_jobs=self.local.n_jobs)
+        self.initialize(dataset, split, rf)
+        _n, t = self.local.inputs.y_model.shape
+        train = np.asarray(split["train"], dtype=np.int64)
+        val = np.asarray(split.get("val", []), dtype=np.int64)
+        if not len(val):
+            raise ValueError("validation cells required for checkpoint selection")
+        residual = (target_values(dataset, rf.target_transform) - rf.local_oof_z) / rf.target_sd
+        residual = torch.as_tensor(residual, dtype=torch.float32)
+        views = []
+        for stations in rf.folds:
+            cells = train[np.isin(train // t, stations)]
+            view = fold_split(split, stations, t)
+            local_x, local_age = self.local.input_view(view)
+            message_x, message_age = self.message.input_view(view)
+            views.append((cells, local_x, local_age, message_x, message_age))
+        local_val_x, local_val_age = self.local.input_view(split)
+        message_val_x, message_val_age = self.message.input_view(split)
+        base_val, _ = rf.predict_std(dataset, split, FIT_ROLES)
+        base_val = torch.as_tensor(base_val.ravel()[val], dtype=torch.float32)
+        parameters = list(self.local.model.parameters()) + list(self.message.model.parameters())
+        optimizer = torch.optim.Adam(parameters, lr=self.local.lr)
+        best, state, bad = float("inf"), None, 0
+        self.trace = []
+        for epoch in range(1, self.local.max_epochs + 1):
+            self.local.model.train()
+            self.message.model.train()
+            optimizer.zero_grad()
+            total_loss = 0.0
+            for cells, local_x, local_age, message_x, message_age in views:
+                local_delta = self.local.delta_tensor(local_x, local_age).reshape(-1)[cells]
+                message_delta = self.message.delta_tensor(message_x, message_age).reshape(-1)[cells]
+                loss = F.mse_loss(local_delta + message_delta, residual.reshape(-1)[cells]) * (len(cells) / len(train))
+                if not torch.isfinite(loss):
+                    raise FloatingPointError("nonfinite additive KGML training loss")
+                loss.backward()
+                total_loss += float(loss.detach())
+            torch.nn.utils.clip_grad_norm_(parameters, 1.0)
+            optimizer.step()
+            self.local.model.eval()
+            self.message.model.eval()
+            with torch.no_grad():
+                local_delta = self.local.delta_tensor(local_val_x, local_val_age).reshape(-1)[val]
+                message_delta = self.message.delta_tensor(message_val_x, message_val_age).reshape(-1)[val]
+                criterion = float(F.mse_loss(base_val + local_delta + message_delta,
+                                             self.local.inputs.y_model.reshape(-1)[val]))
+            row = {"epoch": epoch, "loss": total_loss, "val_loss": criterion}
+            self.trace.append(row)
+            if self.epoch_callback:
+                self.epoch_callback(row)
+            if criterion < best - 1e-6:
+                best, bad = criterion, 0
+                self.best_epoch = epoch
+                state = {
+                    "local": {k: v.detach().clone() for k, v in self.local.model.state_dict().items()},
+                    "message": {k: v.detach().clone() for k, v in self.message.model.state_dict().items()},
+                }
+            else:
+                bad += 1
+            if bad >= self.local.patience:
+                break
+        self.local.model.load_state_dict(state["local"])
+        self.message.model.load_state_dict(state["message"])
+        self.epochs_run, self.best_val_loss = epoch, best
+        self.local.epochs_run, self.local.best_epoch, self.local.best_val_loss = epoch, self.best_epoch, best
+        self.local.model.eval()
+        self.message.model.eval()
+
+    def predict_components(self, visible_roles=TEST_ROLES) -> dict:
+        local_std, context_std = self.rf.predict_std(self.dataset, self.split, visible_roles)
+        local_x, local_age = self.local.input_view(self.split, visible_roles)
+        message_x, message_age = self.message.input_view(self.split, visible_roles)
+        with torch.no_grad():
+            local_delta_std = self.local.delta_tensor(local_x, local_age).numpy().astype(np.float64)
+            message_delta_std = self.message.delta_tensor(message_x, message_age).numpy().astype(np.float64)
+        total_delta_std = local_delta_std + message_delta_std
+        local = self.rf.inverse_std(local_std)
+        final = self.rf.inverse_std(local_std + total_delta_std)
+        delta_scale = self.rf.target_sd if self.local.analyte != "ph" else 1.0
+        return {"local_pred": local, "context_pred": self.rf.inverse_std(context_std),
+                "final_pred": final, "local_delta": local_delta_std * delta_scale,
+                "message_delta": message_delta_std * delta_scale,
+                "graph_delta": total_delta_std * delta_scale,
+                "graph_delta_std": total_delta_std,
+                "graph_delta_raw": final - local,
+                "graph_delta_abs": np.abs(total_delta_std * delta_scale)}
+
+    def predict(self, visible_roles=TEST_ROLES) -> np.ndarray:
+        return self.predict_components(visible_roles)["final_pred"]

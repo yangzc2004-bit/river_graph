@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from river_graph.models.kgml_local_transport import (
+    AdditiveLocalTransportKGML,
     LocalTransportKGML,
     build_rf_features,
     fit_rf_artifacts,
@@ -139,3 +140,14 @@ def test_message_only_is_centered_with_nonzero_head_and_respects_direction_and_t
         model.model.train(training)
         null = model.delta_tensor(x, age)
         torch.testing.assert_close(null, torch.zeros_like(null), rtol=0, atol=0)
+
+
+def test_additive_local_message_model_has_separate_components():
+    data, split = toy_bundle()
+    model = AdditiveLocalTransportKGML(seed=42, max_epochs=1, patience=1,
+                                      n_estimators=3, n_jobs=1, hidden=8,
+                                      chunk_months=12)
+    model.fit(data, split)
+    comp = model.predict_components(("train", "val", "context"))
+    np.testing.assert_allclose(comp["graph_delta"], comp["local_delta"] + comp["message_delta"])
+    assert np.isfinite(comp["final_pred"]).all()

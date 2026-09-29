@@ -30,6 +30,7 @@ from river_graph.experiments.transfer import ANALYTES, DATASETS
 from river_graph.models.kgml_local_transport import (
     FIT_ROLES,
     TEST_ROLES,
+    AdditiveLocalTransportKGML,
     LocalTransportKGML,
     fit_rf_artifacts,
     local_history,
@@ -42,11 +43,12 @@ from river_graph.models.kgml_local_transport import (
 ROOT = Path("experiments/phase4_transfer/kgml_local_transport_v1")
 MASKS = ("e2a_strict", "e3_spatial_seed42")
 ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg",
-        "residual_msgdelta", "residual_msgnull")
+        "residual_msgdelta", "residual_msgnull", "residual_additive")
 K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
-                 str(ROOT / "k2_source_isolation_spec_v3.md"), str(ROOT / "plan.md"))
+                 "scripts/analyze_kgml_joint.py", str(ROOT / "k2_source_isolation_spec_v3.md"),
+                 str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"), str(ROOT / "plan.md"))
 
 
 def digest(value):
@@ -257,7 +259,17 @@ def run_one(root, data, split, cfg, rf):
             print(f"  epoch {row['epoch']}: val={row['val_loss']:.4f}", flush=True)
 
     settings = {k: cfg[k] for k in ("seed", "hidden", "max_epochs", "patience", "chunk_months", "lr", "dropout")}
-    if arm.startswith("residual"):
+    if arm == "residual_additive":
+        model = AdditiveLocalTransportKGML(analyte=cfg["analyte"],
+            n_estimators=cfg["n_estimators"], n_jobs=cfg["n_jobs"],
+            epoch_callback=trace, **settings)
+        model.fit(data, split, rf=rf)
+        epochs = model.epochs_run
+        checkpoint = {"local_state_dict": model.local.model.state_dict(),
+                      "message_state_dict": model.message.model.state_dict(),
+                      "target_mu": rf.target_mu, "target_sd": rf.target_sd,
+                      "best_epoch": model.best_epoch}
+    elif arm.startswith("residual"):
         model = LocalTransportKGML(analyte=cfg["analyte"], edge_direction=cfg["edge_direction"],
             edge_set=cfg["edge_set"], n_estimators=cfg["n_estimators"], n_jobs=cfg["n_jobs"],
             epoch_callback=trace,
@@ -372,7 +384,8 @@ def main():
                 rf, rf_path = rf_bundle(args.out_dir, data, split, base)
                 for arm in args.arms:
                     cfg = {**base, "arm": arm,
-                           "residual_definition": ("zero_preserving_message_gru_v1" if arm in
+                    "residual_definition": ("joint_local_message_v1" if arm == "residual_additive" else
+                               "zero_preserving_message_gru_v1" if arm in
                                ("residual_msgdelta", "residual_msgnull") else "direct_residual_v1"),
                            "spatial_variant": "msgonly" if arm in ("residual_msgdelta", "residual_msgnull") else "baseline",
                            "rf_bundle_path": str(rf_path), "rf_bundle_sha256": sha256_file(rf_path),
