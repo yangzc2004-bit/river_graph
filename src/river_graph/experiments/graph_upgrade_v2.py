@@ -26,6 +26,7 @@ from river_graph.experiments.temporal_h2x import (
     transform_target,
 )
 from river_graph.models.graph_upgrade import (
+    DualMessageOnlyTransportGCNImputer,
     LaggedTransportTemporalImputer,
     MessageOnlyTemporalTransportImputer,
     MessageOnlyTransportGCNImputer,
@@ -38,7 +39,7 @@ from river_graph.models.graph_upgrade import (
 from river_graph.models.hydro import TransportGCNImputer
 
 MECHANISMS = ("m1", "m2", "m3", "m13")
-SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk", "msgres2", "msggate2", "msgonly")
+SPATIAL_VARIANTS = ("baseline", "res2", "res3", "res4", "res3_jk", "msgres2", "msggate2", "msgonly", "msgdual")
 OBS_FEATURE_NAMES = (
     "last_observed_value",
     "observation_age_log",
@@ -252,7 +253,7 @@ class GraphUpgradeModel:
         feature_edge_index, _ = self._edges(dataset, self.feature_edge_set)
         variant_layers = {"baseline": self.layers, "res2": 2,
                           "res3": 3, "res4": 4, "res3_jk": 3,
-                          "msgres2": 2, "msggate2": 2, "msgonly": 2}
+                          "msgres2": 2, "msggate2": 2, "msgonly": 2, "msgdual": 2}
         spatial_layers = variant_layers[self.spatial_variant]
         residual = self.spatial_variant in {"res2", "res3", "res4", "res3_jk"}
         jumping_knowledge = self.spatial_variant == "res3_jk"
@@ -260,6 +261,7 @@ class GraphUpgradeModel:
             "msgres2": MessageResidualTransportGCNImputer,
             "msggate2": ObservationGatedTransportGCNImputer,
             "msgonly": MessageOnlyTransportGCNImputer,
+            "msgdual": DualMessageOnlyTransportGCNImputer,
         }.get(self.spatial_variant, TransportGCNImputer)
         spatial = spatial_cls(
             in_channels=inputs.xt_static.shape[-1] + (
@@ -269,6 +271,8 @@ class GraphUpgradeModel:
             dropout=self.dropout, env_dim=inputs.env_raw.shape[1] if inputs.env_raw is not None else 0,
             edge_direction=self.edge_direction,
             residual=residual, jumping_knowledge=jumping_knowledge,
+            **({"target_base_end": 10 + {"none": 0, "global": 2, "directional": 6, "all": 8}[inputs.context_mode]}
+               if self.spatial_variant == "msgdual" else {}),
         )
         cls = {
             "m1": ObservationAwareTemporalTransportGCNImputer,
@@ -276,7 +280,7 @@ class GraphUpgradeModel:
             "m3": MultiScaleTemporalTransportImputer,
             "m13": ObservationAwareMultiScaleTemporalTransportImputer,
         }[self.mechanism]
-        if self.spatial_variant == "msgonly":
+        if self.spatial_variant in ("msgonly", "msgdual"):
             if self.mechanism != "m1":
                 raise ValueError("message-only source isolation uses M1 memory")
             cls = MessageOnlyTemporalTransportImputer

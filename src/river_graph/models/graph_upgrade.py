@@ -157,6 +157,78 @@ class MessageOnlyTransportGCNImputer(TransportGCNImputer):
         return h
 
 
+class DualMessageOnlyTransportGCNImputer(TransportGCNImputer):
+    """Separate target-observation and hydro-ecology message channels.
+
+    Both branches use the same directed graph layers, but their input
+    channels are disjoint.  A two-way softmax gate then combines the hidden
+    states using flow, observation age, recent support and upstream support.
+    With an empty edge set both hidden states are exactly zero.
+    """
+
+    def __init__(self, *args, target_base_end: int = 10, **kwargs):
+        kwargs.pop("residual", None)
+        kwargs.pop("jumping_knowledge", None)
+        super().__init__(*args, residual=False, jumping_knowledge=False, **kwargs)
+        self.target_base_end = int(target_base_end)
+        hidden = self.convs[-1].self_lin.out_features
+        self.fusion_gate = nn.Linear(hidden * 2 + 4, 2)
+        nn.init.zeros_(self.fusion_gate.weight)
+        nn.init.zeros_(self.fusion_gate.bias)
+        self.message_only = True
+        self.last_fusion_weights = None
+
+    def _branch_step(self, h, edge_index, edge_attr, conv):
+        n = h.shape[0]
+        g_up = torch.sigmoid(conv.gate_up(edge_attr))
+        g_down = torch.sigmoid(conv.gate_down(edge_attr))
+        zero = torch.zeros(n, conv.up_lin.out_features, device=h.device, dtype=h.dtype)
+        up = conv._agg(conv.up_lin(h), edge_index, g_up, n) if self.edge_direction in (
+            "both", "upstream"
+        ) else zero
+        down = conv._agg(conv.down_lin(h), edge_index.flip(0), g_down, n) if self.edge_direction in (
+            "both", "downstream"
+        ) else zero
+        return up + down
+
+    def encode_nodes(self, x: torch.Tensor, edge_index: torch.Tensor,
+                     edge_attr: torch.Tensor,
+                     env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        base_channels = x.shape[-1] - 9
+        if self.target_base_end > base_channels:
+            raise ValueError("target_base_end exceeds static input channels")
+        target_mask = torch.zeros_like(x)
+        target_mask[..., 8:self.target_base_end] = 1.0
+        target_mask[..., base_channels:] = 1.0
+        target_x = x * target_mask
+        hydro_x = x * (1.0 - target_mask)
+        # Ecological embeddings belong to the hydro-ecology branch, while a
+        # zero embedding keeps the two branches dimensionally matched.
+        if self.env_encoder is not None:
+            env_emb = self.env_encoder(env_raw)
+            target_x = torch.cat((target_x, torch.zeros_like(env_emb)), dim=-1)
+            hydro_x = torch.cat((hydro_x, env_emb), dim=-1)
+        h_target, h_hydro = target_x, hydro_x
+        for layer, conv in enumerate(self.convs):
+            target_msg = self._branch_step(h_target, edge_index, edge_attr, conv)
+            hydro_msg = self._branch_step(h_hydro, edge_index, edge_attr, conv)
+            h_target = F.relu(target_msg + (h_target if layer else 0.0))
+            h_hydro = F.relu(hydro_msg + (h_hydro if layer else 0.0))
+            h_target = F.dropout(h_target, p=self.dropout, training=self.training)
+            h_hydro = F.dropout(h_hydro, p=self.dropout, training=self.training)
+        age_idx = base_channels + 1
+        support_idx = base_channels + 6
+        upstream_idx = base_channels + 7
+        condition = torch.cat(
+            (x[..., 2:3], x[..., age_idx:age_idx + 1],
+             x[..., support_idx:support_idx + 1], x[..., upstream_idx:upstream_idx + 1]),
+            dim=-1,
+        )
+        weights = torch.softmax(self.fusion_gate(torch.cat((h_target, h_hydro, condition), dim=-1)), dim=-1)
+        self.last_fusion_weights = weights.detach()
+        return weights[..., :1] * h_target + weights[..., 1:2] * h_hydro
+
+
 class ObservationAwareTemporalTransportGCNImputer(
     TemporalTransportGCNImputer
 ):

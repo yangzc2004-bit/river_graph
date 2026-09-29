@@ -180,3 +180,23 @@ def test_additive_local_message_model_has_separate_components():
     comp = model.predict_components(("train", "val", "context"))
     np.testing.assert_allclose(comp["graph_delta"], comp["local_delta"] + comp["message_delta"])
     assert np.isfinite(comp["final_pred"]).all()
+
+
+def test_dual_message_model_has_zero_empty_graph_and_finite_river_output():
+    data, split = toy_bundle()
+    rf = fit_rf_artifacts(data, split, target_transform="log1p", seed=42,
+                          n_estimators=3, n_jobs=1)
+    null = LocalTransportKGML(seed=42, edge_set="empty", spatial_variant="msgdual",
+                              max_epochs=1, patience=1, n_estimators=3, n_jobs=1,
+                              hidden=8, chunk_months=12)
+    null.fit(data, split, rf=rf)
+    null_comp = null.predict_components(("train", "val", "context"))
+    np.testing.assert_array_equal(null_comp["graph_delta"], 0.0)
+
+    river = LocalTransportKGML(seed=42, edge_set="river", spatial_variant="msgdual",
+                               max_epochs=1, patience=1, n_estimators=3, n_jobs=1,
+                               hidden=8, chunk_months=12)
+    river.fit(data, split, rf=rf)
+    comp = river.predict_components(("train", "val", "context"))
+    assert np.isfinite(comp["final_pred"]).all()
+    assert np.isfinite(comp["graph_delta"]).all()

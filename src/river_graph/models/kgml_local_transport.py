@@ -231,12 +231,12 @@ class LocalTransportKGML:
         self.n_estimators, self.n_jobs = n_estimators, n_jobs
         self.hidden, self.dropout, self.lr = hidden, dropout, lr
         self.chunk_months, self.epoch_callback = chunk_months, epoch_callback
-        if spatial_variant not in ("baseline", "msgonly"):
+        if spatial_variant not in ("baseline", "msgonly", "msgdual"):
             raise ValueError("invalid spatial_variant")
         self.spatial_variant = spatial_variant
         if message_feature_mode not in ("all", "target_only", "hydro_ecology"):
             raise ValueError("invalid message feature mode")
-        if spatial_variant != "msgonly" and message_feature_mode != "all":
+        if spatial_variant not in ("msgonly", "msgdual") and message_feature_mode != "all":
             raise ValueError("message feature mode only applies to msgonly")
         self.message_feature_mode = message_feature_mode
 
