@@ -101,6 +101,35 @@ def test_message_delta_null_is_structurally_zero():
     np.testing.assert_array_equal(comp["final_pred"], comp["local_pred"])
 
 
+def test_message_feature_modes_isolate_target_and_hydro_ecology_channels():
+    data, split = toy_bundle()
+    rf = fit_rf_artifacts(data, split, target_transform="log1p", seed=42,
+                          n_estimators=3, n_jobs=1)
+    target = LocalTransportKGML(seed=42, spatial_variant="msgonly",
+                                message_feature_mode="target_only", hidden=8,
+                                dropout=0, chunk_months=12)
+    target.initialize(data, split, rf)
+    with torch.no_grad():
+        target.model.spatial.head.weight.fill_(0.7)
+    x, age = target.input_view(split)
+    target_base = target.delta_tensor(x, age)
+    hydro_changed = x.clone()
+    hydro_changed[..., 0] += 50
+    torch.testing.assert_close(target_base, target.delta_tensor(hydro_changed, age), rtol=0, atol=0)
+
+    hydro = LocalTransportKGML(seed=42, spatial_variant="msgonly",
+                               message_feature_mode="hydro_ecology", hidden=8,
+                               dropout=0, chunk_months=12)
+    hydro.initialize(data, split, rf)
+    with torch.no_grad():
+        hydro.model.spatial.head.weight.fill_(0.7)
+    x, age = hydro.input_view(split)
+    hydro_base = hydro.delta_tensor(x, age)
+    target_changed = x.clone()
+    target_changed[..., 8] += 50
+    torch.testing.assert_close(hydro_base, hydro.delta_tensor(target_changed, age), rtol=0, atol=0)
+
+
 def test_message_only_is_centered_with_nonzero_head_and_respects_direction_and_time():
     """A trained head cannot synthesize a correction without upstream messages."""
     data, split = toy_bundle()

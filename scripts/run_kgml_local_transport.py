@@ -48,7 +48,8 @@ K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
                  "scripts/analyze_kgml_joint.py", str(ROOT / "k2_source_isolation_spec_v3.md"),
-                 str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"), str(ROOT / "plan.md"))
+                 str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"),
+                 str(ROOT / "k4_channel_isolation_spec.md"), str(ROOT / "plan.md"))
 
 
 def digest(value):
@@ -273,7 +274,8 @@ def run_one(root, data, split, cfg, rf):
         model = LocalTransportKGML(analyte=cfg["analyte"], edge_direction=cfg["edge_direction"],
             edge_set=cfg["edge_set"], n_estimators=cfg["n_estimators"], n_jobs=cfg["n_jobs"],
             epoch_callback=trace,
-            spatial_variant=cfg["spatial_variant"], **settings)
+            spatial_variant=cfg["spatial_variant"],
+            message_feature_mode=cfg["message_feature_mode"], **settings)
         model.fit(data, split, rf=rf)
         epochs = model.epochs_run
         checkpoint = {"state_dict": model.model.state_dict(), "target_mu": rf.target_mu,
@@ -340,6 +342,8 @@ def main():
     parser.add_argument("--hidden", type=int, default=64)
     parser.add_argument("--chunk-months", type=int, default=64)
     parser.add_argument("--torch-threads", type=int, default=4)
+    parser.add_argument("--message-feature-mode", choices=("all", "target_only", "hydro_ecology"),
+                        default="all")
     parser.add_argument("--verify-only", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -377,6 +381,7 @@ def main():
                     "max_epochs": args.max_epochs, "patience": args.patience, "hidden": args.hidden,
                     "layers": 2, "dropout": .1, "lr": .001, "lookback": 12,
                     "chunk_months": args.chunk_months, "torch_threads": args.torch_threads,
+                    "message_feature_mode": args.message_feature_mode,
                     "fit_roles": list(FIT_ROLES), "test_roles": list(TEST_ROLES),
                     "oof": "station_blocked_5_fold_all_station_targets_hidden",
                     "residual_updates_per_epoch": 1, "downstream_support_in_residual": False,
@@ -388,6 +393,7 @@ def main():
                                "zero_preserving_message_gru_v1" if arm in
                                ("residual_msgdelta", "residual_msgnull") else "direct_residual_v1"),
                            "spatial_variant": "msgonly" if arm in ("residual_msgdelta", "residual_msgnull") else "baseline",
+                           "message_feature_mode": args.message_feature_mode,
                            "rf_bundle_path": str(rf_path), "rf_bundle_sha256": sha256_file(rf_path),
                            "edge_direction": "both" if arm in ("h2x_t", "residual_both") else "upstream",
                            "edge_set": "empty" if arm in ("residual_nomsg", "residual_msgnull") else "river"}

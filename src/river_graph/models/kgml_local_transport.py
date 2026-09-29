@@ -220,7 +220,7 @@ class LocalTransportKGML:
     def __init__(self, *, analyte="doc", seed=42, edge_direction="upstream", edge_set="river",
                  max_epochs=30, patience=5, n_estimators=200, n_jobs=4, hidden=64,
                  dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None,
-                 spatial_variant="baseline"):
+                 spatial_variant="baseline", message_feature_mode="all"):
         if analyte not in TARGET_TRANSFORMS or edge_direction not in ("upstream", "both"):
             raise ValueError("invalid analyte/direction")
         if edge_set not in ("river", "empty") or min(max_epochs, patience, n_estimators, hidden, chunk_months) < 1:
@@ -234,6 +234,11 @@ class LocalTransportKGML:
         if spatial_variant not in ("baseline", "msgonly"):
             raise ValueError("invalid spatial_variant")
         self.spatial_variant = spatial_variant
+        if message_feature_mode not in ("all", "target_only", "hydro_ecology"):
+            raise ValueError("invalid message feature mode")
+        if spatial_variant != "msgonly" and message_feature_mode != "all":
+            raise ValueError("message feature mode only applies to msgonly")
+        self.message_feature_mode = message_feature_mode
 
     def initialize(self, dataset: dict, split: dict, rf: RFArtifacts):
         """Build the zero-residual model; also supports a real initialization test."""
@@ -245,7 +250,8 @@ class LocalTransportKGML:
             hidden=self.hidden, temporal_hidden=self.hidden, layers=2, dropout=self.dropout,
             target_transform=TARGET_TRANSFORMS[self.analyte], env_encoder=True,
             edge_direction=self.edge_direction, edge_set=self.edge_set, feature_edge_set="river",
-            chunk_months=self.chunk_months, spatial_variant=self.spatial_variant)
+            chunk_months=self.chunk_months, spatial_variant=self.spatial_variant,
+            message_feature_mode=self.message_feature_mode)
         self.model = self.builder._build_model(self.inputs, dataset)
         nn.init.zeros_(self.model.spatial.head.weight)
         nn.init.zeros_(self.model.spatial.head.bias)

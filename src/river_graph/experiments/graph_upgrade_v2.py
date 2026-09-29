@@ -207,15 +207,19 @@ class GraphUpgradeModel:
                  chunk_months: int = 32, masking: str = "mixed",
                  epoch_callback=None, lag_mode: str = "learned",
                  spatial_variant: str = "baseline",
-                 feature_edge_set: str | None = None):
+                 feature_edge_set: str | None = None,
+                 message_feature_mode: str = "all"):
         if mechanism not in MECHANISMS:
             raise ValueError(f"unknown mechanism: {mechanism}")
         if spatial_variant not in SPATIAL_VARIANTS:
             raise ValueError(f"unknown spatial variant: {spatial_variant}")
+        if message_feature_mode not in ("all", "target_only", "hydro_ecology"):
+            raise ValueError("invalid message feature mode")
         if mechanism == "m2" and spatial_variant != "baseline":
             raise ValueError("lagged transport currently supports only the baseline spatial trunk")
         self.mechanism = mechanism
         self.spatial_variant = spatial_variant
+        self.message_feature_mode = message_feature_mode
         self.seed, self.lookback, self.temporal_hidden = int(seed), int(lookback), int(temporal_hidden)
         self.hidden, self.layers, self.dropout = int(hidden), int(layers), float(dropout)
         self.lr, self.max_epochs, self.patience = float(lr), int(max_epochs), int(patience)
@@ -290,11 +294,32 @@ class GraphUpgradeModel:
         return cells // t, cells % t
 
     def _forward(self, model, x, inputs, dataset, age=None):
+        env_raw = inputs.env_raw
+        if self.spatial_variant == "msgonly" and self.message_feature_mode != "all":
+            # The message-only branch is used for source isolation.  Its
+            # input channels are masked here, before any edge aggregation,
+            # while the local RF base and the no-message null stay unchanged.
+            base_channels = inputs.xt_static.shape[-1]
+            context_count = {"none": 0, "global": 2, "directional": 6, "all": 8}[inputs.context_mode]
+            target_base_end = 10 + context_count
+            target_stats_start = base_channels
+            target_stats_end = base_channels + len(OBS_FEATURE_NAMES)
+            channel_mask = torch.ones_like(x)
+            if self.message_feature_mode == "target_only":
+                channel_mask.zero_()
+                channel_mask[..., 8:target_base_end] = 1.0
+                channel_mask[..., target_stats_start:target_stats_end] = 1.0
+                env_raw = torch.zeros_like(env_raw) if env_raw is not None else None
+            else:  # hydro_ecology: remove target values and all target statistics
+                channel_mask[..., 8:target_base_end] = 0.0
+                channel_mask[..., target_stats_start:target_stats_end] = 0.0
+                age = torch.zeros_like(age) if age is not None else None
+            x = x * channel_mask
         if self.mechanism in ("m1", "m2", "m13"):
             return model.forward_sequence(x, model._edge_index, model._edge_attr,
-                                          inputs.env_raw, age_seq=age).T
+                                          env_raw, age_seq=age).T
         return model.forward_sequence(x, model._edge_index, model._edge_attr,
-                                      inputs.env_raw).T
+                                      env_raw).T
 
     def _make_input(self, inputs, visible, model, y_feed=None):
         if self.mechanism in ("m1", "m2", "m3", "m13"):
