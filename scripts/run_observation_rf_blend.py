@@ -92,7 +92,8 @@ def build_frame(data, split, cells, role, rf, gnn, alpha, mask, seed):
 def add_strata(frame, gnn):
     bundle = gnn._bundle
     visible, feed = gnn._visible_input()
-    stats = observation_statistics(feed, visible, bundle.model._edge_index)
+    feature_edges = getattr(bundle.model, "_feature_edge_index", bundle.model._edge_index)
+    stats = observation_statistics(feed, visible, feature_edges)
     cells = frame.cell.to_numpy()
     age = np.rint(np.expm1(stats[1].T.numpy().ravel()[cells] * np.log1p(12)))
     known = stats[2].T.numpy().ravel()[cells].astype(bool)

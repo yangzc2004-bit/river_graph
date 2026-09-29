@@ -18,3 +18,7 @@ removes the gain. The river-message and no-message paired summaries are in
 For spatial extrapolation validation selects pure RF for all seeds in both
 experiments. The graph model therefore contributes no spatial test gain in
 this comparison.
+
+The saved support strata were regenerated after fitting using the river
+feature edge table; this changed diagnostic labels only, not predictions,
+validation selection, or metrics. `strata_repair.json` records the repair.
