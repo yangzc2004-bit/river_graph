@@ -6,11 +6,18 @@ from pathlib import Path
 
 import pandas as pd
 
-from scripts.analyze_kgml_source_isolation import (
-    load_runs,
-    paired_predictions,
-    station_bootstrap,
-)
+try:
+    from scripts.analyze_kgml_source_isolation import (
+        load_runs,
+        paired_predictions,
+        station_bootstrap,
+    )
+except ModuleNotFoundError:  # direct execution from the scripts directory
+    from analyze_kgml_source_isolation import (
+        load_runs,
+        paired_predictions,
+        station_bootstrap,
+    )
 
 
 def audit(root: Path, all_root: Path) -> pd.DataFrame:
