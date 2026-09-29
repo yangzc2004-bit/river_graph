@@ -29,3 +29,9 @@ These runs support a focused next experiment: learn a graph residual or gate
 only for temporal extrapolation, with the RF-like branch fixed as the local
 baseline. They do not justify adding more GNN depth or claiming general
 spatial superiority.
+
+An exploratory age-specific alpha gate was then selected from the saved
+validation predictions. It reduced the temporal river blend from 1.006 to
+1.027 MAE and the temporal no-message blend from 1.091 to 1.140 MAE; spatial
+performance also moved slightly worse. The current sample therefore supports
+a single global blend weight, not a hand-built observation-age gate.
