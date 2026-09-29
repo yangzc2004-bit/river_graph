@@ -218,6 +218,29 @@ def test_no_message_keeps_observation_support_features_matched():
     assert torch.count_nonzero(x[..., -2:]) > 0
 
 
+def test_observation_message_gate_is_trainable_and_node_specific():
+    from river_graph.models.graph_upgrade import ObservationGatedTransportGCNImputer
+
+    torch.manual_seed(8)
+    model = ObservationGatedTransportGCNImputer(
+        in_channels=10, edge_dim=6, hidden=8, layers=2, dropout=0.0,
+    )
+    x = torch.randn(5, 10, requires_grad=True)
+    edge = torch.tensor([[0, 1, 2], [1, 2, 3]])
+    attrs = torch.randn(3, 6)
+    output = model(x, edge, attrs)
+    output.sum().backward()
+    assert len(model.message_gate) == 2
+    assert all(g.weight.grad is not None and g.weight.grad.abs().sum() > 0
+               for g in model.message_gate)
+    with torch.no_grad():
+        model.message_gate[0].bias.fill_(-10)
+        suppressed = model(x.detach(), edge, attrs)
+        model.message_gate[0].bias.fill_(10)
+        open_gate = model(x.detach(), edge, attrs)
+    assert not torch.allclose(suppressed, open_gate)
+
+
 def test_multiscale_trend_receives_information_older_than_twelve_months():
     from river_graph.models.graph_upgrade import MultiScaleTemporalTransportImputer
     from river_graph.models.hydro import TransportGCNImputer

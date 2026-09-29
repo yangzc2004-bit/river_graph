@@ -74,6 +74,51 @@ class MessageResidualTransportGCNImputer(TransportGCNImputer):
         return h
 
 
+class ObservationGatedTransportGCNImputer(TransportGCNImputer):
+    """Transport trunk with a node/month adaptive message gate.
+
+    The gate is computed from the current hidden state, which includes the
+    target visibility and observation-history channels in M1. It scales the
+    directed message sum while leaving the local path unchanged. Thus a
+    station can suppress an unsupported graph correction without disabling
+    river messages globally.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.pop("residual", None)
+        kwargs.pop("jumping_knowledge", None)
+        super().__init__(*args, residual=False, jumping_knowledge=False, **kwargs)
+        dims = [self.convs[0].self_lin.in_features,
+                *[conv.self_lin.out_features for conv in self.convs[:-1]]]
+        self.message_gate = nn.ModuleList(nn.Linear(width, 1) for width in dims)
+        for gate in self.message_gate:
+            nn.init.zeros_(gate.weight)
+            nn.init.zeros_(gate.bias)
+
+    def encode_nodes(self, x: torch.Tensor, edge_index: torch.Tensor,
+                     edge_attr: torch.Tensor,
+                     env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        if self.env_encoder is not None:
+            x = torch.cat([x, self.env_encoder(env_raw)], dim=-1)
+        h = x
+        for layer, conv in enumerate(self.convs):
+            n = h.shape[0]
+            g_up = torch.sigmoid(conv.gate_up(edge_attr))
+            g_down = torch.sigmoid(conv.gate_down(edge_attr))
+            zero = torch.zeros(n, conv.up_lin.out_features, device=h.device,
+                               dtype=h.dtype)
+            up = conv._agg(conv.up_lin(h), edge_index, g_up, n) if self.edge_direction in (
+                "both", "upstream"
+            ) else zero
+            down = conv._agg(
+                conv.down_lin(h), edge_index.flip(0), g_down, n
+            ) if self.edge_direction in ("both", "downstream") else zero
+            gate = torch.sigmoid(self.message_gate[layer](h))
+            h = F.relu(conv.self_lin(h) + gate * (up + down))
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        return h
+
+
 class ObservationAwareTemporalTransportGCNImputer(
     TemporalTransportGCNImputer
 ):

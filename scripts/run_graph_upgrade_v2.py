@@ -145,7 +145,8 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
     # turn the combination pilot into an unnecessary quadratic computation.
     lookback = dataset['y'].shape[1] if mechanism == 'm3' else 12
     variant_layers = {"baseline": 2, "res2": 2, "res3": 3,
-                      "res4": 4, "res3_jk": 3, "msgres2": 2}
+                      "res4": 4, "res3_jk": 3, "msgres2": 2,
+                      "msggate2": 2}
     spatial_layers = variant_layers[spatial_variant]
     params = {
         "script": "scripts/run_graph_upgrade_v2.py",
@@ -187,6 +188,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "jumping_knowledge": spatial_variant == "res3_jk",
         "message_residual": spatial_variant == "msgres2",
         "message_scale_init": 0.1 if spatial_variant == "msgres2" else None,
+        "message_gate": spatial_variant == "msggate2",
         "training_masking": "point_temporal_block_station_block",
         "lag_buckets": [0, 1, 3, 6, 12] if mechanism == "m2" else None,
         "lag_mode": lag_mode if mechanism == "m2" else None,
