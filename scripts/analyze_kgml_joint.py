@@ -55,7 +55,8 @@ def audit(root: Path):
     summary = result.groupby("mask", as_index=False).mean(numeric_only=True)
     summary.to_csv(root / "joint_summary.csv", index=False)
     boot = []
-    for mask in sorted(result.mask.unique()):
+    # ``DataFrame.mask`` is a method, so use the explicit column lookup here.
+    for mask in sorted(result["mask"].unique()):
         parts = [x for x in paired_rows if x["mask"] == mask]
         frame = pd.DataFrame({key: np.concatenate([p[key] for p in parts]) for key in
                               ("station", "joint_error", "local_error", "context_error")})
