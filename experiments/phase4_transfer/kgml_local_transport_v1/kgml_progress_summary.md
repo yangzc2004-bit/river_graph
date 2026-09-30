@@ -116,6 +116,12 @@ family blend as the reference and treats a per-cell gate as an extension;
 spatial cases currently stay RF-dominant while temporal cases use the
 temporal residual contribution.
 
+The reusable implementation is `src/river_graph/models/unified_fusion.py`.
+It exposes the same equation as a trainable PyTorch gate, starts from a
+constant alpha, and preserves the alpha=0/1 expert endpoints. This is the
+fusion layer for the next training pass; the two expert backbones remain
+frozen while the gate is evaluated.
+
 ## Support-matched spatial validation
 
 The spatial validation design was then matched to the frozen E3 test's graph
