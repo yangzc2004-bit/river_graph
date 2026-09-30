@@ -42,6 +42,13 @@ from river_graph.models.kgml_local_transport import (
 
 ROOT = Path("experiments/phase4_transfer/kgml_local_transport_v1")
 MASKS = ("e2a_strict", "e3_spatial_seed42")
+CUSTOM_MASKS = {
+    "e3_spatial_validation": Path(
+        "experiments/phase4_transfer/kgml_local_transport_v1/"
+        "spatial_validation_e3/masks/e3_spatial_validation.npz"
+    )
+}
+ALL_MASKS = MASKS + tuple(CUSTOM_MASKS)
 ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg",
         "residual_msgdelta", "residual_msgnull", "residual_msgdual", "residual_additive",
         "residual_context_nomsg", "residual_context_msgdelta", "residual_context_both")
@@ -55,6 +62,7 @@ EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"),
                  str(ROOT / "k4_channel_isolation_spec.md"), str(ROOT / "k5_dual_gate_spec.md"),
                  str(ROOT / "k6_multianalyte_spec.md"), str(ROOT / "spatial_context_spec.md"),
+                 str(ROOT / "spatial_validation_spec.md"), "scripts/build_spatial_validation_mask.py",
                  str(ROOT / "plan.md"))
 
 
@@ -80,7 +88,7 @@ def write_json(path, value):
 
 def load_task(root, analyte, mask):
     dataset = torch.load(DATASETS[analyte], map_location="cpu", weights_only=False)
-    source = Path("experiments/masks_stcore_v1") / f"{mask}.npz"
+    source = CUSTOM_MASKS.get(mask, Path("experiments/masks_stcore_v1") / f"{mask}.npz")
     with np.load(source, allow_pickle=False) as saved:
         observed = dataset["y_mask"].numpy().ravel()
         split = {r: saved[r][observed[saved[r]]] for r in ("train", "val", "test", "context") if r in saved}
@@ -341,7 +349,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, default=ROOT / "k1")
     parser.add_argument("--analytes", nargs="+", choices=ANALYTES, default=["doc"])
-    parser.add_argument("--masks", nargs="+", choices=MASKS, default=list(MASKS))
+    parser.add_argument("--masks", nargs="+", choices=ALL_MASKS, default=list(MASKS))
     parser.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     parser.add_argument("--arms", nargs="+", choices=ARMS, default=list(K1_ARMS))
     parser.add_argument("--max-epochs", type=int, default=30)
