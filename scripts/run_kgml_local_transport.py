@@ -46,6 +46,10 @@ CUSTOM_MASKS = {
     "e3_spatial_validation": Path(
         "experiments/phase4_transfer/kgml_local_transport_v1/"
         "spatial_validation_e3/masks/e3_spatial_validation.npz"
+    ),
+    "e3_spatial_validation_110100": Path(
+        "experiments/phase4_transfer/kgml_local_transport_v1/"
+        "spatial_validation_e3_110100/masks/e3_spatial_validation_110100.npz"
     )
 }
 ALL_MASKS = MASKS + tuple(CUSTOM_MASKS)
@@ -63,6 +67,7 @@ EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  str(ROOT / "k4_channel_isolation_spec.md"), str(ROOT / "k5_dual_gate_spec.md"),
                  str(ROOT / "k6_multianalyte_spec.md"), str(ROOT / "spatial_context_spec.md"),
                  str(ROOT / "spatial_validation_spec.md"), "scripts/build_spatial_validation_mask.py",
+                 str(ROOT / "spatial_validation_e3_110100/spatial_validation_spec.md"),
                  str(ROOT / "plan.md"))
 
 
