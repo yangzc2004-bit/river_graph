@@ -86,6 +86,22 @@ The first E3 result is therefore useful exploratory evidence for conditional
 upstream correction, but it is not yet a robust spatial-extrapolation gain.
 RF-context remains the strongest confirmed spatial baseline.
 
+## Support-matched spatial validation
+
+The spatial validation design was then matched to the frozen E3 test's graph
+support structure. A deterministic 20-station holdout was selected using only
+graph connectivity and observation masks, with visible-upstream support 0.4033
+versus 0.4034 in E3 (7 supported and 13 unsupported validation stations).
+
+On this validation block, RF-context had MAE 2.52684, the upstream residual
+branch 2.52766, and the both-direction branch 2.53496. The upstream branch was
+0.032% worse with a paired station bootstrap interval of [-0.00184, -0.00001]
+mg/L. On the frozen E3 test, the upstream branch improved RF-context by only
+0.040% and the both-direction interval crossed zero. This matched-support
+confirmation therefore keeps RF-context as the spatial baseline and treats the
+graph residual as a small conditional diagnostic rather than a general spatial
+gain.
+
 ## Model decision
 
 Stop adding spatial architecture in this branch. Keep the K2 all-input
