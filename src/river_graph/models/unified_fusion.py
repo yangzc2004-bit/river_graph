@@ -36,10 +36,14 @@ class UnifiedSpatiotemporalFusion(nn.Module):
     """
 
     def __init__(self, feature_dim: int, *, hidden: int = 0,
-                 init_alpha: float = 0.0):
+                 init_alpha: float = 0.0, alpha_floor: float = 0.0,
+                 alpha_ceiling: float = 1.0):
         super().__init__()
-        if feature_dim < 1 or hidden < 0 or not 0.0 <= init_alpha <= 1.0:
+        if (feature_dim < 1 or hidden < 0 or not 0.0 <= alpha_floor < alpha_ceiling <= 1.0
+                or not alpha_floor <= init_alpha <= alpha_ceiling):
             raise ValueError("invalid fusion gate settings")
+        self.alpha_floor = alpha_floor
+        self.alpha_ceiling = alpha_ceiling
         if hidden:
             self.gate = nn.Sequential(nn.Linear(feature_dim, hidden), nn.Tanh(),
                                       nn.Linear(hidden, 1))
@@ -49,7 +53,8 @@ class UnifiedSpatiotemporalFusion(nn.Module):
             output = self.gate
         for parameter in self.gate.parameters():
             nn.init.zeros_(parameter)
-        output.bias.data.fill_(self._logit(init_alpha))
+        normalized = (init_alpha - alpha_floor) / (alpha_ceiling - alpha_floor)
+        output.bias.data.fill_(self._logit(normalized))
 
     @staticmethod
     def _logit(alpha: float) -> float:
@@ -63,6 +68,6 @@ class UnifiedSpatiotemporalFusion(nn.Module):
             raise ValueError("features must be [batch, feature_dim]")
         if rf_z.shape != local_z.shape or rf_z.ndim != 1:
             raise ValueError("expert predictions must be one-dimensional and aligned")
-        alpha = torch.sigmoid(self.gate(features)).squeeze(-1)
+        raw_alpha = torch.sigmoid(self.gate(features)).squeeze(-1)
+        alpha = self.alpha_floor + (self.alpha_ceiling - self.alpha_floor) * raw_alpha
         return alpha, fuse_transformed(rf_z, local_z, alpha)
-

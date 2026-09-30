@@ -30,6 +30,13 @@ def test_gate_starts_at_constant_alpha_and_has_gradients():
     assert model.gate.weight.grad is not None
 
 
+def test_gate_alpha_floor_avoids_boundary_saturation():
+    model = UnifiedSpatiotemporalFusion(2, init_alpha=0.01, alpha_floor=0.01,
+                                        alpha_ceiling=0.99)
+    alpha, _ = model(torch.zeros(3), torch.ones(3), torch.zeros(3, 2))
+    np.testing.assert_allclose(alpha.detach().numpy(), 0.01, atol=1e-5)
+
+
 def test_fusion_rejects_misaligned_inputs():
     model = UnifiedSpatiotemporalFusion(2)
     with pytest.raises(ValueError):

@@ -141,8 +141,37 @@ The pooled MAE is 1.5058, a 5.5% reduction relative to RF-context and a
 collapses toward RF-context in the spatial case and toward the temporal
 expert in the time-extrapolation cases. This is the first unified model run
 that improves or matches both expert branches in all four families; the next
-run is a five-seed DOC confirmation, followed by the same gate on pH and
+step was a five-seed DOC confirmation, followed by the same gate on pH and
 specific conductance.
+
+## Five-seed DOC confirmation
+
+The two expert branches were completed for seeds 42--46 before refitting the
+gate. The conditional gate remained stable:
+
+| family | RF-context | residual | conditional fusion |
+|---|---:|---:|---:|
+| E1 random point | 1.4504 | 1.4906 | **1.4292** |
+| E2b partial time | 1.0531 | 0.8023 | **0.8006** |
+| E2a strict time | 1.0702 | 0.9778 | **0.8945** |
+| E3 spatial holdout | 2.6826 | 2.9363 | **2.6820** |
+
+Pooled MAE was 1.5075 for conditional fusion, 1.5923 for RF-context, and
+1.6079 for the residual expert. A single global gate was retained as a
+control; it produced 1.5241 pooled MAE and degraded E3 to 2.7429 because it
+mixed in the temporal expert for spatial cells. The useful model is therefore
+a shared fusion operator with missingness-conditioned gate calibration, not a
+single universal alpha.
+
+## Support-matched spatial gate check
+
+For E3, the same gate was recalibrated on a 20-station support-matched spatial
+validation block (796 cells) and evaluated on the frozen 2,531-cell test
+block. The validation-selected alpha was 0.11, but the learned gate moved to
+0.378 on the test cells and produced MAE 2.6945 versus RF-context 2.6402.
+This confirms that the spatial gate should remain RF-dominant; the E3
+improvement in the ordinary five-seed confirmation is only a near-zero
+diagnostic effect, not evidence for a general spatial fusion gain.
 
 ## Support-matched spatial validation
 
