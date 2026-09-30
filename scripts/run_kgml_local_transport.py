@@ -42,6 +42,7 @@ from river_graph.models.kgml_local_transport import (
 
 ROOT = Path("experiments/phase4_transfer/kgml_local_transport_v1")
 MASKS = ("e2a_strict", "e3_spatial_seed42")
+EXTRA_MASKS = ("e1_r20_seed42", "e2b_partial")
 CUSTOM_MASKS = {
     "e3_spatial_validation": Path(
         "experiments/phase4_transfer/kgml_local_transport_v1/"
@@ -57,7 +58,7 @@ CUSTOM_MASKS = {
         "e3_spatial_validation_supportmatched.npz"
     )
 }
-ALL_MASKS = MASKS + tuple(CUSTOM_MASKS)
+ALL_MASKS = MASKS + EXTRA_MASKS + tuple(CUSTOM_MASKS)
 ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg",
         "residual_msgdelta", "residual_msgnull", "residual_msgdual", "residual_additive",
         "residual_context_nomsg", "residual_context_msgdelta", "residual_context_both")
