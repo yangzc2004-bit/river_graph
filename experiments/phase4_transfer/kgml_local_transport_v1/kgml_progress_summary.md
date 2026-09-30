@@ -42,11 +42,30 @@ spatial extrapolation. It does not beat the K4 hydro-ecology branch and is
 6.33% worse than the K2 all-input branch in temporal extrapolation. The gate
 does not convert channel separation into an additional predictive gain.
 
+## K6: cross-analyte replication
+
+The K2 all-input message branch was tested against the K1 local residual branch
+for pH and specific conductance, using the same temporal and spatial holdouts.
+The DOC result does not replicate across analytes:
+
+| analyte | temporal message gain | spatial message gain |
+|---|---:|---:|
+| DOC | +9.50% | +0.56% |
+| pH | -3.07% | +0.34% |
+| specific conductance | -0.56% | -0.36% |
+
+The pH temporal loss is supported by its paired confidence interval; the other
+pH and conductance differences are small and compatible with zero. The current
+evidence therefore supports an analyte- and missingness-dependent river
+message effect, rather than a universal advantage of the graph branch.
+
 ## Model decision
 
 Stop adding spatial architecture in this branch. Keep the K2 all-input
 message-only model as the interpretable conditional river-message module and
-keep K1 no-message local residual as the strongest overall KGML predictor.
-The next scientific extension should test whether the same decomposition holds
-for pH and specific conductance, rather than adding more layers or gates to
-the DOC model.
+keep K1 no-message local residual as the strongest overall KGML predictor. The
+cross-analyte test shows that the river-message mechanism is strongest for DOC
+under temporal extrapolation and should be presented as a conditional
+transport correction. The next step is to consolidate the results into the
+paper figures and analyte-specific mechanism analysis, rather than launch
+another architecture search.
