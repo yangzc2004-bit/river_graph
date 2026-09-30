@@ -40,12 +40,13 @@ def pooled(root: Path, analyte: str, mask: str, arm: str) -> pd.DataFrame:
     return frame.groupby(["cell", "station", "month", "y_true"], as_index=False).error.mean()
 
 
-def analyze(root: Path) -> pd.DataFrame:
+def analyze(root: Path, analyte_roots: dict[str, Path] | None = None) -> pd.DataFrame:
     rows = []
     for analyte in ("ph", "spec_conductance"):
+        source_root = (analyte_roots or {}).get(analyte, root)
         for mask in ("e2a_strict", "e3_spatial_seed42"):
-            local = pooled(root, analyte, mask, "residual_nomsg").rename(columns={"error": "local_error"})
-            message = pooled(root, analyte, mask, "residual_msgdelta").rename(columns={"error": "message_error"})
+            local = pooled(source_root, analyte, mask, "residual_nomsg").rename(columns={"error": "local_error"})
+            message = pooled(source_root, analyte, mask, "residual_msgdelta").rename(columns={"error": "message_error"})
             merged = local.merge(message, on=["cell", "station", "month", "y_true"], validate="one_to_one")
             frame = merged[["station"]].copy()
             frame["gain"] = merged.local_error - merged.message_error
@@ -72,8 +73,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path,
                         default=Path("experiments/phase4_transfer/kgml_local_transport_v1/k6_multianalyte"))
+    parser.add_argument("--ph-root", type=Path, default=None)
+    parser.add_argument("--ec-root", type=Path, default=None)
     args = parser.parse_args()
-    print(analyze(args.root).to_string(index=False))
+    roots = {}
+    if args.ph_root is not None:
+        roots["ph"] = args.ph_root
+    if args.ec_root is not None:
+        roots["spec_conductance"] = args.ec_root
+    print(analyze(args.root, roots).to_string(index=False))
 
 
 if __name__ == "__main__":
