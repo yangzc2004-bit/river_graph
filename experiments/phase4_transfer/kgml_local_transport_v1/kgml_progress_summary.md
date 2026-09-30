@@ -76,16 +76,22 @@ The upstream gain is supported by the station-clustered bootstrap interval
 [0.0013, 0.0402] mg/L. It is concentrated in cells with visible upstream
 support (MAE 1.7871 to 1.7547); cells without visible upstream support show
 almost no change. The both-direction diagnostic is smaller and its interval
-crosses zero. This identifies a modest but reproducible spatial contribution
-after the explicit RF-context baseline has been accounted for.
+crosses zero.
+
+A stricter confirmation then reserved HUC6 `101900` as an unseen spatial
+validation block while keeping the E3 test stations fixed. Under this spatial
+model-selection protocol, the upstream gain fell to 0.017% (bootstrap CI
+[-0.0010, 0.0020] mg/L), and the both-direction branch was slightly worse.
+The first E3 result is therefore useful exploratory evidence for conditional
+upstream correction, but it is not yet a robust spatial-extrapolation gain.
+RF-context remains the strongest confirmed spatial baseline.
 
 ## Model decision
 
 Stop adding spatial architecture in this branch. Keep the K2 all-input
 message-only model as the interpretable conditional river-message module and
-keep K1 no-message local residual as the strongest overall KGML predictor. The
-cross-analyte test shows that the river-message mechanism is strongest for DOC
-under temporal extrapolation and should be presented as a conditional
-transport correction. The next step is to consolidate the results into the
-paper figures and analyte-specific mechanism analysis, rather than launch
-another architecture search.
+keep RF-context as the confirmed spatial baseline. The cross-analyte test shows
+that the river-message mechanism is strongest for DOC under temporal
+extrapolation. The spatial-validation result says that the next improvement
+should target station-to-station transfer of residual structure, rather than
+another graph-depth or gate search.
