@@ -48,6 +48,7 @@ K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
                  "scripts/analyze_kgml_joint.py", "scripts/analyze_kgml_channel_isolation.py",
+                 "scripts/analyze_kgml_dual_gate.py",
                  str(ROOT / "k2_source_isolation_spec_v3.md"),
                  str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"),
                  str(ROOT / "k4_channel_isolation_spec.md"), str(ROOT / "k5_dual_gate_spec.md"),
