@@ -155,11 +155,12 @@ def component_frame(dataset, split, comp, *, config, roles, cells=None):
     net = network_context(values, visible, dataset["edge_index"].numpy())
     y_obs = np.where(dataset["y_mask"].numpy(), y, np.nan).ravel()[idx]
     local = comp["local_pred"].ravel()[idx]
+    base = comp.get("base_pred", local)
     if config["target_transform"] == "log1p":
-        residual_true = np.log1p(y_obs) - np.log1p(local)
+        residual_true = np.log1p(y_obs) - np.log1p(base.ravel()[idx])
     else:
         train_sd = max(float(y.ravel()[split["train"]].std()), 1e-8)
-        residual_true = (y_obs - local) / train_sd
+        residual_true = (y_obs - base.ravel()[idx]) / train_sd
     known = hist[..., 2].ravel()[idx].astype(bool)
     age = np.rint(np.expm1(hist[..., 1].ravel()[idx]))
     frame = pd.DataFrame({
@@ -311,7 +312,8 @@ def run_one(root, data, split, cfg, rf):
                 visible = np.flatnonzero(role_visible(split, roles, data["y"].shape))
                 final = model.predict(only_visible=visible)
             zero = np.zeros_like(final)
-            comp = {"local_pred": local, "context_pred": context, "final_pred": final,
+            comp = {"local_pred": local, "context_pred": context, "base_pred": local if arm == "rf_local" else context,
+                    "final_pred": final,
                     "graph_delta": zero, "graph_delta_std": zero, "graph_delta_raw": zero, "graph_delta_abs": zero}
         frame = component_frame(data, split, comp, config=cfg, roles=roles, cells=split[role])
         frame.to_parquet(run / f"{role}_predictions.parquet", index=False)
