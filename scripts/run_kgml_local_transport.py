@@ -43,7 +43,8 @@ from river_graph.models.kgml_local_transport import (
 ROOT = Path("experiments/phase4_transfer/kgml_local_transport_v1")
 MASKS = ("e2a_strict", "e3_spatial_seed42")
 ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg",
-        "residual_msgdelta", "residual_msgnull", "residual_msgdual", "residual_additive")
+        "residual_msgdelta", "residual_msgnull", "residual_msgdual", "residual_additive",
+        "residual_context_nomsg", "residual_context_msgdelta", "residual_context_both")
 K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
@@ -53,7 +54,7 @@ EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  str(ROOT / "k2_source_isolation_spec_v3.md"),
                  str(ROOT / "k3_joint_spec.md"), str(ROOT / "k3_joint_spec_v2.md"),
                  str(ROOT / "k4_channel_isolation_spec.md"), str(ROOT / "k5_dual_gate_spec.md"),
-                 str(ROOT / "k6_multianalyte_spec.md"),
+                 str(ROOT / "k6_multianalyte_spec.md"), str(ROOT / "spatial_context_spec.md"),
                  str(ROOT / "plan.md"))
 
 
@@ -280,7 +281,8 @@ def run_one(root, data, split, cfg, rf):
             edge_set=cfg["edge_set"], n_estimators=cfg["n_estimators"], n_jobs=cfg["n_jobs"],
             epoch_callback=trace,
             spatial_variant=cfg["spatial_variant"],
-            message_feature_mode=cfg["message_feature_mode"], **settings)
+            message_feature_mode=cfg["message_feature_mode"],
+            base_variant=cfg["base_variant"], **settings)
         model.fit(data, split, rf=rf)
         epochs = model.epochs_run
         checkpoint = {"state_dict": model.model.state_dict(), "target_mu": rf.target_mu,
@@ -396,13 +398,18 @@ def main():
                     cfg = {**base, "arm": arm,
                     "residual_definition": ("joint_local_message_v1" if arm == "residual_additive" else
                                "zero_preserving_message_gru_v1" if arm in
-                               ("residual_msgdelta", "residual_msgnull") else "direct_residual_v1"),
-                           "spatial_variant": ("msgdual" if arm == "residual_msgdual" else
-                               "msgonly" if arm in ("residual_msgdelta", "residual_msgnull") else "baseline"),
-                           "message_feature_mode": args.message_feature_mode,
-                           "rf_bundle_path": str(rf_path), "rf_bundle_sha256": sha256_file(rf_path),
-                           "edge_direction": "both" if arm in ("h2x_t", "residual_both") else "upstream",
-                           "edge_set": "empty" if arm in ("residual_nomsg", "residual_msgnull") else "river"}
+                               ("residual_msgdelta", "residual_msgnull", "residual_context_msgdelta")
+                               else "direct_residual_v1"),
+                   "spatial_variant": ("msgdual" if arm == "residual_msgdual" else
+                               "msgonly" if arm in ("residual_msgdelta", "residual_msgnull",
+                                                     "residual_context_msgdelta") else "baseline"),
+                   "message_feature_mode": args.message_feature_mode,
+                   "base_variant": ("context" if arm.startswith("residual_context_") else "local"),
+                   "rf_bundle_path": str(rf_path), "rf_bundle_sha256": sha256_file(rf_path),
+                    "edge_direction": "both" if arm in ("h2x_t", "residual_both",
+                                                            "residual_context_both") else "upstream",
+                    "edge_set": "empty" if arm in ("residual_nomsg", "residual_msgnull",
+                                                      "residual_context_nomsg") else "river"}
                     rows.append(run_one(args.out_dir, data, split, cfg, rf))
                     pd.DataFrame(rows).to_csv(args.out_dir / "metrics.csv", index=False)
                     write_json(args.out_dir / "progress.json", {"completed": len(rows), "expected": len(expected),

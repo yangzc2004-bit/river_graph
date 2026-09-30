@@ -59,6 +59,33 @@ def test_oof_rf_is_complete_and_does_not_use_test_labels():
     assert np.isfinite(first.local_oof_z.reshape(-1)[train]).all()
     np.testing.assert_array_equal(first.local_oof_z.reshape(-1)[train],
                                   second.local_oof_z.reshape(-1)[train])
+    assert np.isfinite(first.context_oof_z.reshape(-1)[train]).all()
+    np.testing.assert_array_equal(first.context_oof_z.reshape(-1)[train],
+                                  second.context_oof_z.reshape(-1)[train])
+
+
+def test_context_base_uses_context_predictions_before_residual_training():
+    data, split = toy_bundle()
+    rf = fit_rf_artifacts(data, split, target_transform="log1p", seed=42,
+                          n_estimators=3, n_jobs=1)
+    model = LocalTransportKGML(seed=42, base_variant="context", edge_set="empty",
+                               max_epochs=1, patience=1, n_estimators=3,
+                               n_jobs=1, hidden=8, chunk_months=12)
+    model.initialize(data, split, rf)
+    comp = model.predict_components(("train", "val", "context"))
+    np.testing.assert_allclose(comp["final_pred"], comp["context_pred"], rtol=0, atol=0)
+    assert model.context_mode == "all"
+
+
+def test_context_base_residual_trains_and_predicts():
+    data, split = toy_bundle()
+    model = LocalTransportKGML(seed=42, base_variant="context", edge_set="empty",
+                               max_epochs=1, patience=1, n_estimators=3,
+                               n_jobs=1, hidden=8, chunk_months=12)
+    model.fit(data, split)
+    comp = model.predict_components(("train", "val", "context"))
+    assert np.isfinite(comp["base_pred"]).all()
+    assert np.isfinite(comp["final_pred"]).all()
 
 
 def test_zero_residual_head_starts_at_local_prediction():

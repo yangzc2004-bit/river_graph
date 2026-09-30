@@ -154,6 +154,7 @@ class RFArtifacts:
     target_mu: float
     target_sd: float
     target_transform: str
+    context_oof_z: np.ndarray | None = None
 
     def predict_std(self, dataset: dict, split: dict, roles: Iterable[str]) -> tuple:
         shape = dataset["y"].shape
@@ -175,12 +176,17 @@ def fit_oof_fold(dataset: dict, split: dict, held_stations: np.ndarray, *,
     train = np.asarray(split["train"], dtype=np.int64)
     held = train[np.isin(train // t, held_stations)]
     view = fold_split(split, held_stations, t)
-    x = build_rf_features(dataset, view, FIT_ROLES, target_transform=target_transform, include_network=False)
+    x_local = build_rf_features(dataset, view, FIT_ROLES, target_transform=target_transform,
+                                include_network=False)
+    x_context = build_rf_features(dataset, view, FIT_ROLES, target_transform=target_transform,
+                                  include_network=True)
     y = target_values(dataset, target_transform).ravel()
     # Trees fit directly in log1p/raw units; thus no held-label normalizer.
-    rf = RandomForestRegressor(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed)
-    rf.fit(x[view["train"]], y[view["train"]])
-    return held, rf.predict(x[held])
+    local = RandomForestRegressor(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed)
+    context = RandomForestRegressor(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed)
+    local.fit(x_local[view["train"]], y[view["train"]])
+    context.fit(x_context[view["train"]], y[view["train"]])
+    return held, local.predict(x_local[held]), context.predict(x_context[held])
 
 
 def fit_rf_artifacts(dataset: dict, split: dict, *, target_transform: str, seed: int,
@@ -196,14 +202,17 @@ def fit_rf_artifacts(dataset: dict, split: dict, *, target_transform: str, seed:
         rf.fit(x[train], y.ravel()[train])
         forests.append(rf)
     folds = station_folds(train, y.shape[1], seed)
-    oof = np.full(y.shape, np.nan)
+    local_oof = np.full(y.shape, np.nan)
+    context_oof = np.full(y.shape, np.nan)
     for stations in folds:
-        cells, pred = fit_oof_fold(dataset, split, stations, target_transform=target_transform,
-                                   seed=seed, n_estimators=n_estimators, n_jobs=n_jobs)
-        oof.ravel()[cells] = pred
-    if not np.isfinite(oof.ravel()[train]).all():
+        cells, local_pred, context_pred = fit_oof_fold(
+            dataset, split, stations, target_transform=target_transform,
+            seed=seed, n_estimators=n_estimators, n_jobs=n_jobs)
+        local_oof.ravel()[cells] = local_pred
+        context_oof.ravel()[cells] = context_pred
+    if not np.isfinite(local_oof.ravel()[train]).all() or not np.isfinite(context_oof.ravel()[train]).all():
         raise ValueError("OOF coverage incomplete")
-    return RFArtifacts(*forests, oof, folds, mu, sd, target_transform)
+    return RFArtifacts(*forests, local_oof, folds, mu, sd, target_transform, context_oof)
 
 
 def residual_inputs(builder, inputs, visible, model):
@@ -215,12 +224,19 @@ def residual_inputs(builder, inputs, visible, model):
 
 
 class LocalTransportKGML:
-    """RF-local + signed residual in train-standardized target space."""
+    """A fixed RF base plus a signed causal residual in target space.
+
+    ``base_variant='local'`` is the original K1 model.  ``base_variant='context'``
+    uses the explicit current-month network summaries of RF-context and lets
+    the temporal graph branch fit only the residual left by that stronger
+    spatial base.
+    """
 
     def __init__(self, *, analyte="doc", seed=42, edge_direction="upstream", edge_set="river",
                  max_epochs=30, patience=5, n_estimators=200, n_jobs=4, hidden=64,
                  dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None,
-                 spatial_variant="baseline", message_feature_mode="all"):
+                 spatial_variant="baseline", message_feature_mode="all",
+                 base_variant="local"):
         if analyte not in TARGET_TRANSFORMS or edge_direction not in ("upstream", "both"):
             raise ValueError("invalid analyte/direction")
         if edge_set not in ("river", "empty") or min(max_epochs, patience, n_estimators, hidden, chunk_months) < 1:
@@ -239,13 +255,17 @@ class LocalTransportKGML:
         if spatial_variant not in ("msgonly", "msgdual") and message_feature_mode != "all":
             raise ValueError("message feature mode only applies to msgonly")
         self.message_feature_mode = message_feature_mode
+        if base_variant not in ("local", "context"):
+            raise ValueError("invalid base variant")
+        self.base_variant = base_variant
+        self.context_mode = "all" if base_variant == "context" else "none"
 
     def initialize(self, dataset: dict, split: dict, rf: RFArtifacts):
         """Build the zero-residual model; also supports a real initialization test."""
         torch.manual_seed(self.seed)
         self.dataset, self.split, self.rf = dataset, split, rf
         self.inputs = build_temporal_inputs(dataset, split, target_transform=TARGET_TRANSFORMS[self.analyte],
-                                            env_encoder=True, context_mode="none")
+                                            env_encoder=True, context_mode=self.context_mode)
         self.builder = GraphUpgradeModel(mechanism="m1", seed=self.seed, lookback=12,
             hidden=self.hidden, temporal_hidden=self.hidden, layers=2, dropout=self.dropout,
             target_transform=TARGET_TRANSFORMS[self.analyte], env_encoder=True,
@@ -272,7 +292,13 @@ class LocalTransportKGML:
         train, val = (np.asarray(split.get(r, []), dtype=np.int64) for r in ("train", "val"))
         if not len(val):
             raise ValueError("validation cells required for checkpoint selection")
-        residual = (target_values(dataset, rf.target_transform) - rf.local_oof_z) / rf.target_sd
+        if self.base_variant == "context":
+            base_oof = getattr(rf, "context_oof_z", None)
+            if base_oof is None:
+                raise ValueError("context OOF predictions are required for context-base residuals")
+        else:
+            base_oof = rf.local_oof_z
+        residual = (target_values(dataset, rf.target_transform) - base_oof) / rf.target_sd
         residual = torch.as_tensor(residual, dtype=torch.float32)
         views = []
         for stations in rf.folds:
@@ -280,7 +306,8 @@ class LocalTransportKGML:
             x, age = self.input_view(fold_split(split, stations, t))
             views.append((cells, x, age))
         val_x, val_age = self.input_view(split)
-        base_val, _ = rf.predict_std(dataset, split, FIT_ROLES)
+        local_val, context_val = rf.predict_std(dataset, split, FIT_ROLES)
+        base_val = context_val if self.base_variant == "context" else local_val
         base_val = torch.as_tensor(base_val.ravel()[val], dtype=torch.float32)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         best, state, bad = float("inf"), None, 0
@@ -330,12 +357,15 @@ class LocalTransportKGML:
         with torch.no_grad():
             delta_std = self.delta_tensor(x, age).numpy().astype(np.float64)
         local = self.rf.inverse_std(local_std)
-        final = self.rf.inverse_std(local_std + delta_std)
+        base_std = context_std if self.base_variant == "context" else local_std
+        base = self.rf.inverse_std(base_std)
+        final = self.rf.inverse_std(base_std + delta_std)
         if not np.isfinite(final).all():
             raise FloatingPointError("nonfinite KGML full-grid prediction")
         # graph_delta is in transform space (log1p DOC/EC, standardized pH).
         delta = delta_std if self.analyte == "ph" else delta_std * self.rf.target_sd
         return {"local_pred": local, "context_pred": self.rf.inverse_std(context_std),
+                "base_pred": base,
                 "final_pred": final, "graph_delta": delta, "graph_delta_std": delta_std,
                 "graph_delta_raw": final - local, "graph_delta_abs": np.abs(delta)}
 
