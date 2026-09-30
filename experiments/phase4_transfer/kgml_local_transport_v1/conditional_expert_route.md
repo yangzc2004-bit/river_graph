@@ -13,6 +13,11 @@ temporal and spatial extrapolation.
 | spatial holdout (`e3_spatial_seed42`) | RF-context | 2.6838 |
 | spatial holdout (`e3_spatial_seed42`) | RF-local + learned residual (`residual_nomsg`) | 2.9583 |
 
+The matched-budget extension confirms the split on two additional families:
+the local residual expert has MAE 0.8094 on partial-time missingness (`e2b`),
+whereas RF-context has MAE 1.4518 on random point missingness (`e1`) against
+1.4935 for the local residual expert.
+
 The spatial support-matched confirmation gives the same ordering: RF-context
 MAE 2.6536 versus 2.6526 for the upstream residual branch on the frozen test,
 with the validation block selecting the exact RF-context null. The small test
