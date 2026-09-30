@@ -23,7 +23,8 @@ whether a directed graph correction improves the already context-aware base.
 - `context_mode=all` for the residual trunk, so the model sees the same
   visible global/upstream/downstream context family as the RF-context base
 - `residual_context_nomsg` has an empty message edge set and is the matched
-  null; `residual_context_msgdelta` uses upstream-only directed messages
+  zero-residual null; `residual_context_msgdelta` uses upstream-only directed
+  messages while retaining the full visible context feature channels
 - `residual_context_both` uses both edge directions as a spatial interpolation
   diagnostic; it is not interpreted as one-way transport
 - no layer-count, lag or hyperparameter search is included

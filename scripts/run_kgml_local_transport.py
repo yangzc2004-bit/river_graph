@@ -398,10 +398,12 @@ def main():
                     cfg = {**base, "arm": arm,
                     "residual_definition": ("joint_local_message_v1" if arm == "residual_additive" else
                                "zero_preserving_message_gru_v1" if arm in
-                               ("residual_msgdelta", "residual_msgnull", "residual_context_msgdelta")
+                               ("residual_msgdelta", "residual_msgnull", "residual_context_nomsg",
+                                "residual_context_msgdelta")
                                else "direct_residual_v1"),
                    "spatial_variant": ("msgdual" if arm == "residual_msgdual" else
                                "msgonly" if arm in ("residual_msgdelta", "residual_msgnull",
+                                                     "residual_context_nomsg",
                                                      "residual_context_msgdelta") else "baseline"),
                    "message_feature_mode": args.message_feature_mode,
                    "base_variant": ("context" if arm.startswith("residual_context_") else "local"),

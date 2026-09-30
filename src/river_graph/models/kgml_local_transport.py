@@ -367,7 +367,7 @@ class LocalTransportKGML:
         return {"local_pred": local, "context_pred": self.rf.inverse_std(context_std),
                 "base_pred": base,
                 "final_pred": final, "graph_delta": delta, "graph_delta_std": delta_std,
-                "graph_delta_raw": final - local, "graph_delta_abs": np.abs(delta)}
+                "graph_delta_raw": final - base, "graph_delta_abs": np.abs(delta)}
 
     def predict(self, visible_roles=TEST_ROLES) -> np.ndarray:
         return self.predict_components(visible_roles)["final_pred"]

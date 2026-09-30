@@ -69,6 +69,7 @@ def test_context_base_uses_context_predictions_before_residual_training():
     rf = fit_rf_artifacts(data, split, target_transform="log1p", seed=42,
                           n_estimators=3, n_jobs=1)
     model = LocalTransportKGML(seed=42, base_variant="context", edge_set="empty",
+                               spatial_variant="msgonly",
                                max_epochs=1, patience=1, n_estimators=3,
                                n_jobs=1, hidden=8, chunk_months=12)
     model.initialize(data, split, rf)
@@ -80,10 +81,14 @@ def test_context_base_uses_context_predictions_before_residual_training():
 def test_context_base_residual_trains_and_predicts():
     data, split = toy_bundle()
     model = LocalTransportKGML(seed=42, base_variant="context", edge_set="empty",
+                               spatial_variant="msgonly",
                                max_epochs=1, patience=1, n_estimators=3,
                                n_jobs=1, hidden=8, chunk_months=12)
     model.fit(data, split)
     comp = model.predict_components(("train", "val", "context"))
+    np.testing.assert_allclose(comp["final_pred"], comp["context_pred"], rtol=0, atol=0)
+    np.testing.assert_array_equal(comp["graph_delta"], 0.0)
+    np.testing.assert_array_equal(comp["graph_delta_raw"], 0.0)
     assert np.isfinite(comp["base_pred"]).all()
     assert np.isfinite(comp["final_pred"]).all()
 
