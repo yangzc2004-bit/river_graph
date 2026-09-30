@@ -21,3 +21,20 @@ is more informative than a learned local residual.
 This table is a model-selection pilot, not a pooled test-set claim. The next
 run should evaluate a fixed router using the missingness family known before
 prediction, with all four families evaluated by the same script and endpoint.
+
+## Validation-selected route
+
+The route analyzer selected the expert from validation cells only:
+
+| family | selected expert | test MAE |
+|---|---|---:|
+| Random point | RF-context | 1.45185 |
+| Partial time | local residual | 0.80936 |
+| Strict time | local residual | 0.98164 |
+| Spatial station holdout | RF-context | 2.68376 |
+
+Across the four query collections, the routed system had pooled MAE 1.53607,
+compared with 1.59818 for always using RF-context and 1.61601 for always using
+the local residual expert. The pooled number is descriptive because the four
+missingness families contain different query cells; the family-specific values
+are the primary evidence.
