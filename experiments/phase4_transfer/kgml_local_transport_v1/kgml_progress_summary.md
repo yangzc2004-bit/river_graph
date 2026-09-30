@@ -59,6 +59,26 @@ pH and conductance differences are small and compatible with zero. The current
 evidence therefore supports an analyte- and missingness-dependent river
 message effect, rather than a universal advantage of the graph branch.
 
+## Spatial context residual pilot
+
+The E3 spatial holdout was revisited with RF-context as the base. This base
+already uses visible current-month global, upstream and downstream summaries;
+the new graph branch was trained only on its station-blocked OOF residual.
+Across three seeds and 2,531 held-out station-month cells:
+
+| model | MAE | gain vs RF-context |
+|---|---:|---:|
+| RF-context / exact zero-message null | 2.6838 | -- |
+| context + upstream message residual | 2.6636 | **0.75%** |
+| context + both-direction message residual | 2.6725 | 0.42% |
+
+The upstream gain is supported by the station-clustered bootstrap interval
+[0.0013, 0.0402] mg/L. It is concentrated in cells with visible upstream
+support (MAE 1.7871 to 1.7547); cells without visible upstream support show
+almost no change. The both-direction diagnostic is smaller and its interval
+crosses zero. This identifies a modest but reproducible spatial contribution
+after the explicit RF-context baseline has been accounted for.
+
 ## Model decision
 
 Stop adding spatial architecture in this branch. Keep the K2 all-input
