@@ -122,6 +122,28 @@ constant alpha, and preserves the alpha=0/1 expert endpoints. This is the
 fusion layer for the next training pass; the two expert backbones remain
 frozen while the gate is evaluated.
 
+## Trainable fusion pilot
+
+The gate was then fitted separately within each missingness family. It was
+initialized at the validation-selected constant alpha and optimized directly
+on transformed-space validation error using observable support, season, flow,
+and expert disagreement. The terminal test results were:
+
+| family | initial alpha | test alpha mean | RF-context MAE | residual MAE | trainable fusion MAE |
+|---|---:|---:|---:|---:|---:|
+| E1 random point | 0.40 | 0.443 | 1.4490 | 1.4908 | **1.4262** |
+| E2b partial time | 0.74 | 0.666 | 1.0571 | 0.8030 | **0.8004** |
+| E2a strict time | 0.74 | 0.681 | 1.0840 | 0.9763 | **0.8962** |
+| E3 spatial holdout | 0.00 | 0.010 | 2.6791 | 2.9543 | **2.6789** |
+
+The pooled MAE is 1.5058, a 5.5% reduction relative to RF-context and a
+6.6% reduction relative to the temporal residual expert. The gate naturally
+collapses toward RF-context in the spatial case and toward the temporal
+expert in the time-extrapolation cases. This is the first unified model run
+that improves or matches both expert branches in all four families; the next
+run is a five-seed DOC confirmation, followed by the same gate on pH and
+specific conductance.
+
 ## Support-matched spatial validation
 
 The spatial validation design was then matched to the frozen E3 test's graph
