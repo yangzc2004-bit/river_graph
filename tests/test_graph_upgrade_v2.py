@@ -87,6 +87,29 @@ def test_graph_upgrade_m1_smoke_fit_predict():
     assert np.std(pred) > 0
 
 
+def test_graph_upgrade_m1_attention_temporal_operator_smoke_fit_predict():
+    """The attention operator is a drop-in M1 upgrade, not a new runner."""
+    data, split = _toy_dataset(), _split()
+    model = GraphUpgradeModel(
+        mechanism="m1", temporal_operator="gru_attention", seed=42,
+        hidden=8, temporal_hidden=8, max_epochs=1, patience=1,
+        chunk_months=4,
+    )
+    pred = model.fit_predict(data, split)
+    assert model.temporal_operator == "gru_attention"
+    assert pred.shape == (5, 8)
+    assert np.isfinite(pred).all()
+    assert np.std(pred) > 0
+
+
+def test_graph_upgrade_temporal_operator_keeps_default_gru_and_rejects_other_mechanisms():
+    default = GraphUpgradeModel(mechanism="m1", hidden=8, temporal_hidden=8,
+                                max_epochs=1, patience=1)
+    assert default.temporal_operator == "gru"
+    with pytest.raises(ValueError, match="mechanism='m1'"):
+        GraphUpgradeModel(mechanism="m2", temporal_operator="gru_attention")
+
+
 def test_graph_upgrade_m2_and_m3_forward_shapes():
     data, split = _toy_dataset(), _split()
     for mechanism in ("m2", "m3", "m13"):

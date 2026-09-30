@@ -236,7 +236,8 @@ class LocalTransportKGML:
                  max_epochs=30, patience=5, n_estimators=200, n_jobs=4, hidden=64,
                  dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None,
                  spatial_variant="baseline", message_feature_mode="all",
-                 base_variant="local"):
+                 base_variant="local", temporal_operator="gru",
+                 attention_heads=2, attention_dropout=0.1):
         if analyte not in TARGET_TRANSFORMS or edge_direction not in ("upstream", "both"):
             raise ValueError("invalid analyte/direction")
         if edge_set not in ("river", "empty") or min(max_epochs, patience, n_estimators, hidden, chunk_months) < 1:
@@ -247,6 +248,13 @@ class LocalTransportKGML:
         self.n_estimators, self.n_jobs = n_estimators, n_jobs
         self.hidden, self.dropout, self.lr = hidden, dropout, lr
         self.chunk_months, self.epoch_callback = chunk_months, epoch_callback
+        if temporal_operator not in ("gru", "gru_attention"):
+            raise ValueError("temporal_operator must be 'gru' or 'gru_attention'")
+        if attention_heads < 1 or attention_dropout < 0 or attention_dropout >= 1:
+            raise ValueError("invalid attention settings")
+        self.temporal_operator = temporal_operator
+        self.attention_heads = int(attention_heads)
+        self.attention_dropout = float(attention_dropout)
         if spatial_variant not in ("baseline", "msgonly", "msgdual"):
             raise ValueError("invalid spatial_variant")
         self.spatial_variant = spatial_variant
@@ -271,7 +279,10 @@ class LocalTransportKGML:
             target_transform=TARGET_TRANSFORMS[self.analyte], env_encoder=True,
             edge_direction=self.edge_direction, edge_set=self.edge_set, feature_edge_set="river",
             chunk_months=self.chunk_months, spatial_variant=self.spatial_variant,
-            message_feature_mode=self.message_feature_mode)
+            message_feature_mode=self.message_feature_mode,
+            temporal_operator=self.temporal_operator,
+            attention_heads=self.attention_heads,
+            attention_dropout=self.attention_dropout)
         self.model = self.builder._build_model(self.inputs, dataset)
         nn.init.zeros_(self.model.spatial.head.weight)
         nn.init.zeros_(self.model.spatial.head.bias)
@@ -364,10 +375,30 @@ class LocalTransportKGML:
             raise FloatingPointError("nonfinite KGML full-grid prediction")
         # graph_delta is in transform space (log1p DOC/EC, standardized pH).
         delta = delta_std if self.analyte == "ph" else delta_std * self.rf.target_sd
-        return {"local_pred": local, "context_pred": self.rf.inverse_std(context_std),
+        result = {"local_pred": local, "context_pred": self.rf.inverse_std(context_std),
                 "base_pred": base,
                 "final_pred": final, "graph_delta": delta, "graph_delta_std": delta_std,
                 "graph_delta_raw": final - base, "graph_delta_abs": np.abs(delta)}
+        diagnostics = getattr(self.model, "last_attention_diagnostics", None)
+        if diagnostics is not None:
+            weights = diagnostics["weights"].numpy()
+            valid = diagnostics["valid"].numpy()
+            # Keep per-cell diagnostics compact while preserving the main
+            # interpretability quantities for downstream products.
+            p = np.clip(weights, 1e-12, 1.0)
+            entropy = -(p * np.log(p)).sum(axis=-1).mean(axis=-1)
+            lags = np.arange(weights.shape[-1] - 1, -1, -1)
+            recent = weights[..., lags <= 1].sum(axis=-1).mean(axis=-1)
+            seasonal = weights[..., lags >= 6].sum(axis=-1).mean(axis=-1)
+            observed = weights[..., :].copy()
+            observed *= (x[..., 9].numpy() > 0)[:, :, None, None]
+            observed_mass = observed.sum(axis=-1).mean(axis=-1)
+            result.update({"temporal_attention_entropy": entropy.T,
+                           "temporal_recent_mass": recent.T,
+                           "temporal_seasonal_mass": seasonal.T,
+                           "temporal_observed_mass": observed_mass.T,
+                           "temporal_history_valid": valid.astype(np.int8).sum(axis=1)[:, None].repeat(weights.shape[1], axis=1).T})
+        return result
 
     def predict(self, visible_roles=TEST_ROLES) -> np.ndarray:
         return self.predict_components(visible_roles)["final_pred"]

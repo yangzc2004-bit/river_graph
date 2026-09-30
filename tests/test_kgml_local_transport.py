@@ -108,6 +108,22 @@ def test_zero_residual_head_starts_at_local_prediction():
     assert np.isfinite(components["graph_delta"]).all()
 
 
+def test_attention_temporal_operator_is_drop_in_kgml_upgrade():
+    data, split = toy_bundle()
+    model = LocalTransportKGML(
+        seed=42, temporal_operator="gru_attention", attention_heads=2,
+        edge_set="empty", max_epochs=1, patience=1,
+        n_estimators=3, n_jobs=1, hidden=8, chunk_months=12,
+    )
+    model.fit(data, split)
+    components = model.predict_components(("train", "val", "context"))
+    assert components["final_pred"].shape == data["y"].shape
+    assert components["temporal_attention_entropy"].shape == data["y"].shape
+    assert components["temporal_recent_mass"].shape == data["y"].shape
+    assert np.isfinite(components["temporal_attention_entropy"]).all()
+    assert np.isfinite(components["final_pred"]).all()
+
+
 def test_no_message_keeps_local_features_and_produces_finite_output():
     data, split = toy_bundle()
     model = LocalTransportKGML(seed=42, edge_set="empty", edge_direction="upstream",

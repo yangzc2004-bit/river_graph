@@ -126,7 +126,12 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
              max_epochs: int, patience: int, out_root: Path,
              force: bool = False, lag_mode: str = "learned",
              stage: str = 'pilot', runtime_snapshot: str | None = None,
-             spatial_variant: str = "baseline") -> dict:
+             spatial_variant: str = "baseline", temporal_operator: str = "gru",
+             attention_heads: int = 2) -> dict:
+    if temporal_operator not in ("gru", "gru_attention"):
+        raise ValueError("invalid temporal_operator")
+    if temporal_operator == "gru_attention" and mechanism != "m1":
+        raise ValueError("gru_attention currently requires mechanism='m1'")
     dataset_path = DATASETS[analyte]
     dataset = _load(dataset_path)
     mask_path = _target_mask_path(analyte, mask_name, dataset)
@@ -136,6 +141,8 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
                        "m3": "multiscale_temporal", "m13": "observation_multiscale"}[mechanism]
     model_name = (base_model_name if spatial_variant == "baseline"
                   else f"{base_model_name}_{spatial_variant}")
+    if temporal_operator == "gru_attention":
+        model_name = f"{model_name}_attention"
     lag_suffix = f"__lag-{lag_mode}" if mechanism == "m2" else ""
     run_name = f"{model_name}__{analyte}__{mask_name}__seed{seed}{lag_suffix}"
     run_dir = out_root / mechanism / "runs" / run_name
@@ -172,7 +179,10 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "env_emb": 32,
         "dataset_path": str(dataset_path),
         "mask_path": str(mask_path),
-        "temporal": "gru_d" if mechanism == "m1" else ("lagged_gru" if mechanism == "m2" else ("multiscale" if mechanism == "m3" else "observation_multiscale")),
+        "temporal": ("gru_attention" if temporal_operator == "gru_attention" else
+                     ("gru_d" if mechanism == "m1" else ("lagged_gru" if mechanism == "m2" else ("multiscale" if mechanism == "m3" else "observation_multiscale")))),
+        "temporal_operator": temporal_operator,
+        "attention_heads": int(attention_heads),
         "lookback": lookback,
         "history_scope": 'full_causal_sequence' if mechanism == 'm3' else ('mixed_causal_sequence' if mechanism == 'm13' else 'rolling_12_months'),
         "chunk_months": 256,
@@ -194,7 +204,7 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         "lag_mode": lag_mode if mechanism == "m2" else None,
         "observation_features": list(OBS_FEATURE_NAMES),
         "training_protocol": "graph_upgrade_v2_mechanism_pilot",
-        "config_hash_version": 6,
+        "config_hash_version": 7,
     }
     params["dataset_sha256"] = file_identity(dataset_path).get("sha256")
     params["mask_sha256"] = file_identity(mask_path).get("sha256")
@@ -239,6 +249,8 @@ def _run_one(*, mechanism: str, analyte: str, mask_name: str, seed: int,
         lag_mode=lag_mode,
         epoch_callback=record_epoch,
         spatial_variant=spatial_variant,
+        temporal_operator=temporal_operator,
+        attention_heads=attention_heads,
     )
     pred = model.fit_predict(dataset, split)
     test = np.asarray(split["test"], dtype=np.int64)
@@ -307,6 +319,8 @@ def main() -> None:
     ap.add_argument("--mechanism", choices=MECHANISMS, default="m1")
     ap.add_argument("--spatial-variant", choices=SPATIAL_VARIANTS, default="baseline")
     ap.add_argument("--lag-mode", choices=("learned", "static", "fixed", "none"), default="learned")
+    ap.add_argument("--temporal-operator", choices=("gru", "gru_attention"), default="gru")
+    ap.add_argument("--attention-heads", type=int, default=2)
     ap.add_argument("--analytes", nargs="+", choices=ANALYTES, default=None)
     ap.add_argument("--masks", nargs="+", default=None)
     ap.add_argument("--seeds", nargs="+", type=int, default=None)
@@ -335,6 +349,8 @@ def main() -> None:
     plan = {
         "version": "graph_upgrade_v2", "mechanism": args.mechanism,
         "spatial_variant": args.spatial_variant,
+        "temporal_operator": args.temporal_operator,
+        "attention_heads": args.attention_heads,
         "analytes": analytes, "masks": masks, "seeds": seeds,
         "max_epochs": max_epochs, "patience": patience,
         "history_scope": 'full_causal_sequence' if args.mechanism == 'm3' else ('mixed_causal_sequence' if args.mechanism == 'm13' else 'rolling_12_months'),
@@ -358,6 +374,8 @@ def main() -> None:
                     lag_mode=args.lag_mode,
                     stage=args.stage, runtime_snapshot=snapshot,
                     spatial_variant=args.spatial_variant,
+                    temporal_operator=args.temporal_operator,
+                    attention_heads=args.attention_heads,
                 ))
                 # Keep an incremental ledger so an interrupted batch still
                 # exposes the completed configurations for review.

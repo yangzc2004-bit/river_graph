@@ -331,6 +331,273 @@ class ObservationAwareTemporalTransportGCNImputer(
         return self._temporal_windows(hidden, age_seq, support_seq)
 
 
+class CausalObservationAttention(nn.Module):
+    """Causal self-attention over a node's observed temporal history.
+
+    The input convention is ``[time, nodes, hidden]``.  For every target
+    month the query is the current hidden state and keys/values are restricted
+    to the previous ``lookback`` months (including the current month).  The
+    module never materialises attention between different stations, so it
+    cannot create an unstructured spatial shortcut.  Observation age,
+    support, and the presence of a usable history enter as additive head-wise
+    biases rather than as target values.
+
+    ``history_valid`` marks whether an observation history exists for a
+    station-month.  It is deliberately a bias feature, not a hard mask: a
+    station with no local observation can still use hydro/ecology-derived
+    hidden states.  Only left-padding before the first real month is hard
+    masked.
+    """
+
+    def __init__(self, hidden_size: int, *, lookback: int = 12,
+                 num_heads: int = 2, support_dim: int = 3,
+                 dropout: float = 0.1, chunk_months: int = 256):
+        super().__init__()
+        if hidden_size < 1:
+            raise ValueError("hidden_size must be positive")
+        if lookback < 1:
+            raise ValueError("lookback must be positive")
+        if num_heads < 1 or hidden_size % num_heads:
+            raise ValueError("hidden_size must be divisible by num_heads")
+        if support_dim < 0:
+            raise ValueError("support_dim must be non-negative")
+        if chunk_months < 1:
+            raise ValueError("chunk_months must be positive")
+        self.hidden_size = int(hidden_size)
+        self.lookback = int(lookback)
+        self.num_heads = int(num_heads)
+        self.head_dim = hidden_size // num_heads
+        self.support_dim = int(support_dim)
+        self.chunk_months = int(chunk_months)
+        self.q_proj = nn.Linear(hidden_size, hidden_size)
+        self.k_proj = nn.Linear(hidden_size, hidden_size)
+        self.v_proj = nn.Linear(hidden_size, hidden_size)
+        self.out_proj = nn.Linear(hidden_size, hidden_size)
+        self.age_bias = nn.Linear(1, num_heads, bias=False)
+        self.support_bias = nn.Linear(support_dim, num_heads, bias=False) \
+            if support_dim else None
+        self.visibility_bias = nn.Linear(1, num_heads, bias=False)
+        # Relative lag is represented in the same order as the window: the
+        # final position is lag zero and the first is lag lookback-1.
+        self.lag_bias = nn.Parameter(torch.zeros(num_heads, lookback))
+        self.norm1 = nn.LayerNorm(hidden_size)
+        self.norm2 = nn.LayerNorm(hidden_size)
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size * 2),
+            nn.GELU(),
+            nn.Linear(hidden_size * 2, hidden_size),
+        )
+        self.dropout = nn.Dropout(float(dropout))
+
+    def _forward_chunk(
+        self,
+        hidden_seq: torch.Tensor,
+        age_seq: torch.Tensor,
+        support_seq: torch.Tensor,
+        history_valid: torch.Tensor,
+        target_months: torch.Tensor,
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Evaluate a contiguous target-month chunk against the full history."""
+        _total_t, n, h = hidden_seq.shape
+        chunk_t = target_months.numel()
+        device = hidden_seq.device
+
+        # [target_month, window_position] where position zero may be a
+        # left-padding copy of month zero.  Padding is masked below, so the
+        # copied value cannot leak information into early predictions.
+        offsets = torch.arange(self.lookback - 1, -1, -1, device=device)
+        raw_idx = target_months[:, None] - offsets[None, :]
+        valid = raw_idx >= 0
+        idx = raw_idx.clamp_min(0)
+
+        # Build [batch=target_month*node, window, feature] tensors.  This is
+        # equivalent to independent per-node temporal attention and avoids a
+        # dense all-station attention matrix.
+        windows = hidden_seq[idx].permute(0, 2, 1, 3).reshape(
+            chunk_t * n, self.lookback, h
+        )
+        age_windows = age_seq[idx].permute(0, 2, 1)
+        support_windows = support_seq[idx].permute(0, 2, 1, 3)
+        history_windows = history_valid[idx].permute(0, 2, 1).to(
+            hidden_seq.dtype
+        )
+        query = hidden_seq[target_months].reshape(chunk_t * n, h)
+        q = self.q_proj(query).reshape(chunk_t * n, self.num_heads, self.head_dim)
+        k = self.k_proj(windows).reshape(
+            chunk_t * n, self.lookback, self.num_heads, self.head_dim
+        )
+        v = self.v_proj(windows).reshape(
+            chunk_t * n, self.lookback, self.num_heads, self.head_dim
+        )
+        logits = torch.einsum("bhd,blhd->bhl", q, k) / (self.head_dim ** .5)
+        logits = logits + self.lag_bias.unsqueeze(0)
+        age_logits = self.age_bias(age_windows.unsqueeze(-1)).reshape(
+            chunk_t * n, self.lookback, self.num_heads
+        ).permute(0, 2, 1)
+        logits = logits + age_logits
+        if self.support_bias is not None:
+            support_logits = self.support_bias(support_windows).reshape(
+                chunk_t * n, self.lookback, self.num_heads
+            ).permute(0, 2, 1)
+            logits = logits + support_logits
+        visibility_logits = self.visibility_bias(
+            history_windows.unsqueeze(-1)
+        ).reshape(chunk_t * n, self.lookback, self.num_heads).permute(0, 2, 1)
+        logits = logits + visibility_logits
+        logits = logits.masked_fill(
+            ~valid[:, None, :].expand(chunk_t, n, self.lookback).reshape(
+                chunk_t * n, 1, self.lookback
+            ),
+            torch.finfo(logits.dtype).min,
+        )
+        weights = torch.softmax(logits, dim=-1)
+        if not torch.isfinite(weights).all():
+            raise FloatingPointError("nonfinite causal attention weights")
+        context = torch.einsum("bhl,blhd->bhd", self.dropout(weights), v)
+        context = self.out_proj(context.reshape(chunk_t * n, h))
+        context = self.norm1(query + self.dropout(context))
+        output = self.norm2(context + self.dropout(self.ffn(context)))
+        output = output.reshape(chunk_t, n, h)
+        diagnostics = {
+            # Keep pre-dropout weights for a stable, normalized diagnostic.
+            "weights": weights.reshape(chunk_t, n, self.num_heads, self.lookback),
+            "valid": valid,
+            "relative_lag": offsets,
+        }
+        return output, diagnostics
+
+    def forward(
+        self,
+        hidden_seq: torch.Tensor,
+        age_seq: torch.Tensor | None = None,
+        support_seq: torch.Tensor | None = None,
+        history_valid: torch.Tensor | None = None,
+        month_features: torch.Tensor | None = None,
+        return_diagnostics: bool = False,
+    ) -> torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        del month_features  # Reserved for seasonal bias in a later variant.
+        if hidden_seq.ndim != 3:
+            raise ValueError("hidden_seq must have shape [time, nodes, hidden]")
+        t, n, h = hidden_seq.shape
+        if h != self.hidden_size:
+            raise ValueError(
+                f"hidden_seq width {h} does not match attention width "
+                f"{self.hidden_size}"
+            )
+        shape = (t, n)
+        if age_seq is None:
+            age_seq = hidden_seq.new_zeros(shape)
+        if tuple(age_seq.shape) != shape:
+            raise ValueError("age_seq must have shape [time, nodes]")
+        if history_valid is None:
+            history_valid = torch.ones(shape, dtype=torch.bool,
+                                       device=hidden_seq.device)
+        if tuple(history_valid.shape) != shape:
+            raise ValueError("history_valid must have shape [time, nodes]")
+        if history_valid.dtype != torch.bool:
+            history_valid = history_valid > 0
+        if support_seq is None:
+            support_seq = hidden_seq.new_zeros((t, n, self.support_dim))
+        elif support_seq.ndim == 2:
+            support_seq = support_seq.unsqueeze(-1)
+        if support_seq.ndim != 3 or tuple(support_seq.shape[:2]) != shape:
+            raise ValueError("support_seq must have shape [time, nodes, support]")
+        if support_seq.shape[-1] != self.support_dim:
+            raise ValueError(
+                f"support_seq width {support_seq.shape[-1]} does not match "
+                f"support_dim {self.support_dim}"
+            )
+        support_seq = support_seq.to(dtype=hidden_seq.dtype)
+        age_seq = age_seq.to(dtype=hidden_seq.dtype)
+
+        outputs = []
+        weight_chunks = []
+        valid_chunks = []
+        for start in range(0, t, self.chunk_months):
+            stop = min(start + self.chunk_months, t)
+            output, diagnostics = self._forward_chunk(
+                hidden_seq, age_seq, support_seq, history_valid,
+                torch.arange(start, stop, device=hidden_seq.device),
+            )
+            outputs.append(output)
+            weight_chunks.append(diagnostics["weights"])
+            valid_chunks.append(diagnostics["valid"])
+        output = torch.cat(outputs, dim=0) if outputs else hidden_seq.new_empty(hidden_seq.shape)
+        if not return_diagnostics:
+            return output
+        diagnostics = {
+            "weights": torch.cat(weight_chunks, dim=0),
+            "valid": torch.cat(valid_chunks, dim=0),
+            "relative_lag": torch.arange(
+                self.lookback - 1, -1, -1, device=hidden_seq.device
+            ),
+        }
+        return output, diagnostics
+
+
+class ObservationAwareAttentionTemporalTransportGCNImputer(
+    ObservationAwareTemporalTransportGCNImputer
+):
+    """M1 observation-aware GRU with a causal attention residual branch.
+
+    The existing GRU remains the main temporal path.  The attention branch is
+    projected through a zero-initialized residual, so a freshly constructed
+    model is exactly the released M1 model.  This makes the new operator a
+    genuine upgrade of the current model rather than a replacement model.
+    """
+
+    def __init__(self, spatial, *, lookback: int = 12,
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none", attention_heads: int = 2,
+                 attention_dropout: float = 0.1):
+        super().__init__(
+            spatial,
+            lookback=lookback,
+            temporal_hidden=temporal_hidden,
+            chunk_months=chunk_months,
+            history_ablation=history_ablation,
+        )
+        self.temporal_attention = CausalObservationAttention(
+            temporal_hidden,
+            lookback=lookback,
+            num_heads=attention_heads,
+            support_dim=3,
+            dropout=attention_dropout,
+            chunk_months=chunk_months,
+        )
+        self.attention_residual = nn.Linear(temporal_hidden, temporal_hidden)
+        nn.init.zeros_(self.attention_residual.weight)
+        nn.init.zeros_(self.attention_residual.bias)
+        self.last_attention_diagnostics = None
+
+    def _temporal_windows(self, hidden_seq: torch.Tensor,
+                          age_seq: torch.Tensor | None = None,
+                          support_seq: torch.Tensor | None = None) -> torch.Tensor:
+        memory = self._memory_states(hidden_seq, age_seq, support_seq)
+        if support_seq is None:
+            support_seq = hidden_seq.new_zeros((*hidden_seq.shape[:2], 3))
+        # The first support channel is the local target visibility channel in
+        # build_observation_features.  It is used as a reliability bias only;
+        # spatially derived hidden states remain available when it is zero.
+        history_valid = support_seq[..., 0] > 0 if support_seq.shape[-1] else None
+        attended, diagnostics = self.temporal_attention(
+            hidden_seq,
+            age_seq=age_seq,
+            support_seq=support_seq,
+            history_valid=history_valid,
+            return_diagnostics=True,
+        )
+        self.last_attention_diagnostics = {
+            key: value.detach() for key, value in diagnostics.items()
+        }
+        delta = self.attention_residual(attended)
+        # The zero-initialized projection makes a fresh model exactly equal to
+        # M1. Its projection weights receive gradients on the first update;
+        # after they open, the attention parameters train normally.
+        fused = memory + delta
+        return self.spatial.predict_from_hidden(fused)
+
+
 class MessageOnlyTemporalTransportImputer(ObservationAwareTemporalTransportGCNImputer):
     """Temporal response to upstream messages with an exact zero null.
 
