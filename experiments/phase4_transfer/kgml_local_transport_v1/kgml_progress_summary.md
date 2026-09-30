@@ -102,6 +102,16 @@ confirmation therefore keeps RF-context as the spatial baseline and treats the
 graph residual as a small conditional diagnostic rather than a general spatial
 gain.
 
+## Explicit multi-hop context diagnostic
+
+To test whether the spatial limitation was simply a short message range, the
+RF-context baseline was augmented with exact directed upstream summaries at two
+and three hops. The support-matched validation MAE decreased from 2.52684 to
+2.52249 (two hops) and 2.51755 (three hops), but the frozen E3 test MAE
+increased from 2.65364 to 2.65964 and 2.66210. Deeper explicit context thus
+fits the validation block without improving the held-out spatial test, so more
+graph depth is not the next upgrade.
+
 ## Model decision
 
 Stop adding spatial architecture in this branch. Keep the K2 all-input
