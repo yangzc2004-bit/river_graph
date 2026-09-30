@@ -86,6 +86,36 @@ The first E3 result is therefore useful exploratory evidence for conditional
 upstream correction, but it is not yet a robust spatial-extrapolation gain.
 RF-context remains the strongest confirmed spatial baseline.
 
+## Unified spatiotemporal fusion pilot
+
+The existing temporal residual expert and RF-context expert were combined in
+the same transformed target space with an observable-feature gate.  The gate
+was trained from validation errors and evaluated once on the terminal test
+predictions; it never reads test targets.  The feature sets used age,
+upstream support, season, flow, and optionally the missingness family and
+expert prediction disagreement.
+
+The best low-complexity baseline was a family-specific constant blend,
+`z_fuse = (1-alpha) z_RF + alpha z_residual`, with alpha selected from the
+validation set:
+
+| missingness family | alpha | RF-context MAE | residual MAE | fused MAE |
+|---|---:|---:|---:|---:|
+| E1 random point | 0.40 | 1.4490 | 1.4908 | 1.4277 |
+| E2b partial time | 0.74 | 1.0571 | 0.8030 | 0.7935 |
+| E2a strict time | 0.74 | 1.0840 | 0.9763 | 0.9362 |
+| E3 spatial holdout | 0.00 | 2.6791 | 2.9543 | 2.6791 |
+
+Across the four query collections the descriptive pooled MAE was 1.5134 for
+the family blend, compared with 1.5943 for RF-context and 1.6119 for the
+residual expert.  The learned per-cell classifier gate reached 1.5186 with
+the strongest feature set, but it mixed experts in E3 and was worse than the
+RF baseline there.  Direct validation-loss optimization was also less stable
+than the family-constant blend.  The next unified model therefore uses the
+family blend as the reference and treats a per-cell gate as an extension;
+spatial cases currently stay RF-dominant while temporal cases use the
+temporal residual contribution.
+
 ## Support-matched spatial validation
 
 The spatial validation design was then matched to the frozen E3 test's graph
