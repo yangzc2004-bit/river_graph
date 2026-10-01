@@ -1,0 +1,35 @@
+{
+  "model_name": "source_similarity_et",
+  "target_analyte": "doc",
+  "transform": "log1p",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+  "mask_sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91",
+  "validation_artifact": "experiments/phase4_transfer/spatial_adaptation/source_selection_v1_5seed/internal_validation.csv",
+  "validation_sha256": "23cfd45b039a4ba30601a4062f7e9730b1be137d5a3ad21d1bcd1dbe60081cf6",
+  "script": "scripts/run_spatial_source_selection.py",
+  "script_sha256": "7b013ff2cf8c3ed5cf5efb9b45fb0d6670aa3a8567916d253712f88f83125560",
+  "descriptor": "label-free hydro climatology + static + regime + graph degree/edge sums",
+  "selection": "nested station-heldout validation",
+  "selected_k": 40,
+  "n_estimators": 120,
+  "min_samples_leaf": 4,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "prediction_files": {
+    "ensemble_mean.parquet": "ec2aed1e8014c136ec3d088677f6fa75ec85c0300c921491d94a43bd0b7d5cc4",
+    "ensemble_median.parquet": "6d47039fbe6eb9ad869085988c4713564642aeb6d542324c02c14396cf7906a7",
+    "predictions_seed42.parquet": "24591cd470f395ce04360923c286803c4fda2f7de5be442b5f394b70c5e9d89f",
+    "predictions_seed43.parquet": "719e31b1f593cd2aaca0ed565c0654a0b1d56f0faa846a84adf24e9194ba00fc",
+    "predictions_seed44.parquet": "299a87a25a80f1f087011be621de39d3bf84b7a9b62d4a653c85f883c2d6c510",
+    "predictions_seed45.parquet": "2b0625bcd20e66d37e4e468b87f40b155971406af265af6508573fd289d28c69",
+    "predictions_seed46.parquet": "dbfff1320f6a8fea345c0caaed86562a1c9592681ccdb23131f7af03171f79a6"
+  },
+  "config_hash": "1aee967faa9c891b2ddbf9f270018d0516c784ac8bf51326a2ca5c497d09b7e4"
+}
