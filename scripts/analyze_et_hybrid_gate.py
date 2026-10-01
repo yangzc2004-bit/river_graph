@@ -143,6 +143,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict] = []
+    variant_rows: list[dict] = []
     missing: list[dict] = []
     for seed in args.seeds:
         for mask in args.masks:
@@ -174,9 +175,27 @@ def main() -> None:
                 "hybrid_mae": hybrid_mae,
                 "hybrid_gain_vs_context_pct": 100.0 * (context_mae - hybrid_mae) / context_mae,
             })
+            # Keep explicit routing alternatives visible.  The e2a/e2b
+            # validation views are currently matched, but their terminal
+            # regimes differ; reporting the residual-only option prevents a
+            # single transformed blend from hiding that distinction.
+            variants = {"context": test["context_pred"].to_numpy()}
+            if "residual_pred" in test:
+                variants["residual"] = test["residual_pred"].to_numpy()
+                variants["val_blend"] = test_pred
+            for variant, prediction in variants.items():
+                variant_rows.append({
+                    "seed": seed,
+                    "mask": mask,
+                    "variant": variant,
+                    "n_test": len(test),
+                    "mae": float(np.abs(y - prediction).mean()),
+                })
 
     detail = pd.DataFrame(rows)
+    variants = pd.DataFrame(variant_rows)
     detail.to_csv(args.out_dir / "seed_family_metrics.csv", index=False)
+    variants.to_csv(args.out_dir / "route_variants.csv", index=False)
     pd.DataFrame(missing).to_csv(args.out_dir / "missing_runs.csv", index=False)
     if detail.empty:
         raise RuntimeError("no complete runs found")
