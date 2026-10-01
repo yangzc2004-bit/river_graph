@@ -618,6 +618,7 @@ class RiverLagAttentionTemporalTransportGCNImputer(
         self.river_attention = RiverLagAttention(
             temporal_hidden, edge_dim, num_heads=attention_heads,
             dropout=attention_dropout,
+            chunk_months=chunk_months,
         )
         self.river_residual = nn.Linear(temporal_hidden, temporal_hidden)
         nn.init.zeros_(self.river_residual.weight)

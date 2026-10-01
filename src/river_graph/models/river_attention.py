@@ -18,7 +18,8 @@ class RiverLagAttention(nn.Module):
     LAGS = (0, 1, 3, 6, 12)
 
     def __init__(self, hidden_size: int, edge_dim: int, *, num_heads: int = 2,
-                 dropout: float = 0.1, lags: tuple[int, ...] = LAGS):
+                 dropout: float = 0.1, lags: tuple[int, ...] = LAGS,
+                 chunk_months: int = 32):
         super().__init__()
         if hidden_size < 1 or hidden_size % num_heads:
             raise ValueError("hidden_size must be divisible by num_heads")
@@ -28,11 +29,14 @@ class RiverLagAttention(nn.Module):
             raise ValueError("lags must be non-negative and non-empty")
         if tuple(sorted(set(lags))) != tuple(lags):
             raise ValueError("lags must be sorted and unique")
+        if int(chunk_months) < 1:
+            raise ValueError("chunk_months must be positive")
         self.hidden_size = int(hidden_size)
         self.edge_dim = int(edge_dim)
         self.num_heads = int(num_heads)
         self.head_dim = hidden_size // num_heads
         self.lags = tuple(int(lag) for lag in lags)
+        self.chunk_months = int(chunk_months)
         self.q_proj = nn.Linear(hidden_size, hidden_size)
         self.k_proj = nn.Linear(hidden_size, hidden_size)
         self.v_proj = nn.Linear(hidden_size, hidden_size)
@@ -99,51 +103,79 @@ class RiverLagAttention(nn.Module):
         k_all = self.k_proj(hidden_seq).reshape(t, n, self.num_heads, self.head_dim)
         v_all = self.v_proj(hidden_seq).reshape(t, n, self.num_heads, self.head_dim)
 
-        for month in range(t):
+        # Vectorize over all edges and lags in a month chunk.  The previous
+        # implementation iterated over every month and lag, repeatedly
+        # allocating small tensors.  A chunk contains disjoint destination
+        # groups, so segment softmax remains exact while reducing Python
+        # overhead from O(time * n_lags) to O(time / chunk_months).
+        for start in range(0, t, self.chunk_months):
+            stop = min(start + self.chunk_months, t)
+            chunk = stop - start
             candidate_logits = []
             candidate_values = []
             candidate_destinations = []
             candidate_lag_ids = []
-            query = q_all[month, dst]
             for lag_id, lag in enumerate(self.lags):
-                if month < lag:
+                first = max(start, lag)
+                if first >= stop:
                     continue
-                source_month = month - lag
-                keys = k_all[source_month, src]
-                values = v_all[source_month, src]
-                # Input channels are temperature, temperature visibility,
-                # discharge, discharge visibility, then target/context
-                # channels. Transport bias should use discharge explicitly.
+                months = torch.arange(first, stop, device=hidden_seq.device)
+                source_months = months - lag
+                # Gather an [month, edge, head, dim] block.  Every candidate
+                # in this block has a unique local destination group.
+                query = q_all[months[:, None], dst[None, :]]
+                keys = k_all[source_months[:, None], src[None, :]]
+                values = v_all[source_months[:, None], src[None, :]]
                 dynamic = torch.cat((
-                    x_seq[source_month, src, 2:4],
-                    x_seq[month, dst, 2:4],
-                    support_seq[source_month, src, :1],
+                    x_seq[source_months[:, None], src[None, :], 2:4],
+                    x_seq[months[:, None], dst[None, :], 2:4],
+                    support_seq[source_months[:, None], src[None, :], :1],
                 ), dim=-1)
-                bias = self.dynamic_bias(dynamic) + edge_bias + self.lag_bias[lag_id]
+                bias = self.dynamic_bias(dynamic) + edge_bias[None, :, :]
+                bias = bias + self.lag_bias[lag_id][None, None, :]
                 logits = (query * keys).sum(-1) / (self.head_dim ** 0.5) + bias
-                candidate_logits.append(logits)
-                candidate_values.append(values)
-                candidate_destinations.append(dst)
-                candidate_lag_ids.append(torch.full_like(dst, lag_id))
+                candidate_logits.append(logits.reshape(-1, self.num_heads))
+                candidate_values.append(values.reshape(-1, self.num_heads, self.head_dim))
+                local_months = (months - start)[:, None].expand(-1, dst.numel())
+                candidate_destinations.append(
+                    (local_months * n + dst[None, :]).reshape(-1)
+                )
+                candidate_lag_ids.append(
+                    torch.full((months.numel(), dst.numel()), lag_id,
+                               dtype=torch.long, device=hidden_seq.device).reshape(-1)
+                )
+            # At least lag=0 is available for every chunk under the default
+            # lag set.  Keep the guard for custom lag sets with large lags.
+            if not candidate_logits:
+                continue
             logits = torch.cat(candidate_logits, dim=0)
             values = torch.cat(candidate_values, dim=0)
             destinations = torch.cat(candidate_destinations, dim=0)
             lag_ids = torch.cat(candidate_lag_ids, dim=0)
-            weights = self._segment_softmax(logits, destinations, n)
+            weights = self._segment_softmax(logits, destinations, chunk * n)
             weighted = self.dropout(weights)[:, :, None] * values
-            message = hidden_seq.new_zeros((n, self.num_heads, self.head_dim))
+            message = hidden_seq.new_zeros((chunk * n, self.num_heads, self.head_dim))
             message.index_add_(0, destinations, weighted)
-            outputs[month] = self.out_proj(message.reshape(n, h))
+            outputs[start:stop] = self.out_proj(message.reshape(chunk, n, h))
+
+            lag_mass_chunk = hidden_seq.new_zeros(
+                (chunk * n, self.num_heads, len(self.lags))
+            )
             for lag_id in range(len(self.lags)):
                 selected = lag_ids == lag_id
                 if selected.any():
-                    lag_mass[month, :, :, lag_id].index_add_(
+                    lag_mass_chunk[:, :, lag_id].index_add_(
                         0, destinations[selected], weights[selected]
                     )
-            entropy_by_candidate = -(weights.clamp_min(1e-12) * weights.clamp_min(1e-12).log())
-            entropy_sum = hidden_seq.new_zeros((n, self.num_heads))
+            lag_mass[start:stop] = lag_mass_chunk.reshape(
+                chunk, n, self.num_heads, len(self.lags)
+            )
+            entropy_by_candidate = -(
+                weights.clamp_min(1e-12) * weights.clamp_min(1e-12).log()
+            )
+            entropy_sum = hidden_seq.new_zeros((chunk * n, self.num_heads))
             entropy_sum.index_add_(0, destinations, entropy_by_candidate)
-            entropy[month] = entropy_sum.mean(-1)
+            entropy[start:stop] = entropy_sum.reshape(chunk, n, self.num_heads).mean(-1)
 
         diagnostics = {"lag_mass": lag_mass, "entropy": entropy,
                        "lags": torch.as_tensor(self.lags, device=hidden_seq.device)}
