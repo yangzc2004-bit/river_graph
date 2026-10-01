@@ -1,0 +1,37 @@
+{
+  "model_name": "source_similarity_et_support_calibrated",
+  "target_analyte": "doc",
+  "transform": "log1p",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+  "mask_sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91",
+  "validation_artifact": "experiments/phase4_transfer/spatial_adaptation/fewshot_calibration_v1_5seed/validation.csv",
+  "validation_sha256": "d5eb7e83a276f968c77ac1c70101a83db37ff642ad438f97a8bed27cf9375f3f",
+  "script": "scripts/run_spatial_fewshot_calibration.py",
+  "script_sha256": "334af323728941641d495bf4621c04bdf6f701bbc52d748eb6fed416f6086f7a",
+  "source_selector": "scripts/run_spatial_source_selection.py",
+  "source_selector_sha256": "7b013ff2cf8c3ed5cf5efb9b45fb0d6670aa3a8567916d253712f88f83125560",
+  "k": 5,
+  "alpha": 0.5,
+  "n_estimators": 120,
+  "min_samples_leaf": 4,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "support_rule": "five evenly spaced target-station cells",
+  "prediction_files": {
+    "ensemble_mean.parquet": "1c87f44c05d6977651c33917574d61e24e0157cfbf13d0d0482d7fadbb411db1",
+    "ensemble_median.parquet": "6a2c1151f4e9d996df914bed1ae8df3391df0cfbea937fed3429af6325227acb",
+    "predictions_seed42.parquet": "79de5de3644a9d99ef24ab9882d4a6df9330e976d057248f11bf5c2056ec7d82",
+    "predictions_seed43.parquet": "d7bb67f57b2fd0b9859bf1b98bb07404e7590d6f113667465ac09900b085e8d9",
+    "predictions_seed44.parquet": "37f15b002f94ab69cb90a8ebbbd37ab5e66ee21754e9477fb53c5b211a131065",
+    "predictions_seed45.parquet": "2f968db1d48cd0dc98be8269a650c0d1d055bb8921ac0f95bf0d14667f5e3e36",
+    "predictions_seed46.parquet": "483a82a4a8f1aa47ea4afb1ed4312322fdd0c8c918e672a3d4f134d7cbadd1d4"
+  },
+  "config_hash": "3ef45b452c29b9f15ee4f89160ee8bc3dd73201e4cc2c217f0e50572e861b867"
+}
