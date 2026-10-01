@@ -60,12 +60,42 @@ def main() -> None:
             "rmse": float(np.sqrt(np.square(frame["y_true"] - frame["y_pred"]).mean())),
         }), include_groups=False)
     metrics.to_csv(args.out_dir / "metrics.csv", index=False)
+    ensemble_rows: list[pd.DataFrame] = []
+    ensemble_metrics: list[dict] = []
+    for mask, frame in all_products.groupby("mask"):
+        pivot = frame.pivot(index="cell", columns="seed", values="y_pred")
+        truth = frame.drop_duplicates("cell").set_index("cell")["y_true"]
+        for method, prediction in (("mean", pivot.mean(axis=1)), ("median", pivot.median(axis=1))):
+            product = pd.DataFrame({
+                "cell": prediction.index.to_numpy(),
+                "y_true": truth.loc[prediction.index].to_numpy(),
+                "y_pred": prediction.to_numpy(),
+                "mask": mask,
+                "model_name": "DOC_validation_selected_hybrid_ensemble",
+                "ensemble": method,
+                "n_seeds": pivot.shape[1],
+            })
+            ensemble_rows.append(product)
+            error = product["y_true"] - product["y_pred"]
+            ensemble_metrics.append({
+                "mask": mask,
+                "ensemble": method,
+                "n_seeds": pivot.shape[1],
+                "n": len(product),
+                "mae": float(np.abs(error).mean()),
+                "rmse": float(np.sqrt(np.square(error).mean())),
+            })
+    pd.concat(ensemble_rows, ignore_index=True).to_parquet(
+        args.out_dir / "ensemble_test_predictions.parquet", index=False
+    )
+    pd.DataFrame(ensemble_metrics).to_csv(args.out_dir / "ensemble_metrics.csv", index=False)
     (args.out_dir / "README.md").write_text(
         "# DOC validation-selected hybrid product\n\n"
         "Temporal products use a log-space affine stack fit on validation "
         "predictions only. Spatial products use the validation-selected "
         "ExtraTrees context expert. Test labels are retained only for the "
-        "reported metrics.\n"
+        "reported metrics. Seed predictions are also combined with mean and "
+        "median ensembles without using test labels.\n"
     )
     print(metrics.to_string(index=False))
 
