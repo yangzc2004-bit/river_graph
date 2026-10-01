@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from numbers import Real
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
 from torch import nn
 
 from river_graph.experiments.graph_upgrade_v2 import GraphUpgradeModel
@@ -27,6 +28,7 @@ from river_graph.experiments.temporal_h2x import (
 FIT_ROLES = ("train", "context")
 TEST_ROLES = ("train", "val", "context")
 LAGS = (1, 3, 6, 12)
+FOREST_BACKENDS = ("random_forest", "extra_trees")
 
 
 def role_visible(split: dict, roles: Iterable[str], shape: tuple) -> np.ndarray:
@@ -155,6 +157,9 @@ class RFArtifacts:
     target_sd: float
     target_transform: str
     context_oof_z: np.ndarray | None = None
+    forest_backend: str = "random_forest"
+    forest_min_samples_leaf: int = 1
+    forest_max_features: float | str | None = 1.0
 
     def predict_std(self, dataset: dict, split: dict, roles: Iterable[str]) -> tuple:
         shape = dataset["y"].shape
@@ -169,8 +174,49 @@ class RFArtifacts:
         return inverse_target(torch.as_tensor(z * self.target_sd + self.target_mu), self.target_transform).numpy()
 
 
+def _forest(backend: str, *, n_estimators: int, n_jobs: int, seed: int,
+            min_samples_leaf: int, max_features: float | str | None):
+    _validate_forest_settings(backend, min_samples_leaf, max_features)
+    cls = RandomForestRegressor if backend == "random_forest" else ExtraTreesRegressor
+    return cls(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed,
+               min_samples_leaf=min_samples_leaf, max_features=max_features)
+
+
+def _validate_forest_settings(backend: str, min_samples_leaf: int,
+                              max_features: float | str | None) -> None:
+    """Validate settings shared by fitted and cached forest artifacts.
+
+    Keeping this check before sklearn construction gives a deterministic error
+    for malformed experiment configurations instead of a backend-specific
+    failure several minutes into OOF fitting.
+    """
+    if backend not in FOREST_BACKENDS:
+        raise ValueError(f"unknown forest backend: {backend}")
+    if not isinstance(min_samples_leaf, (int, np.integer)) or min_samples_leaf < 1:
+        raise ValueError("min_samples_leaf must be a positive integer")
+    if max_features is None:
+        return
+    if isinstance(max_features, str):
+        if max_features not in ("sqrt", "log2"):
+            raise ValueError("max_features must be a fraction, sqrt, log2, or None")
+        return
+    if isinstance(max_features, Real) and not isinstance(max_features, bool):
+        # sklearn accepts a positive integer feature count or a fraction in
+        # (0, 1].  The public CLI currently emits fractions; retain integer
+        # support for direct Python callers.
+        if isinstance(max_features, (int, np.integer)):
+            if max_features < 1:
+                raise ValueError("integer max_features must be positive")
+        elif not (0 < float(max_features) <= 1):
+            raise ValueError("fraction max_features must be in (0, 1]")
+        return
+    raise ValueError("invalid max_features")
+
+
 def fit_oof_fold(dataset: dict, split: dict, held_stations: np.ndarray, *,
-                 target_transform: str, seed: int, n_estimators: int, n_jobs: int) -> tuple:
+                 target_transform: str, seed: int, n_estimators: int, n_jobs: int,
+                 forest_backend: str = "random_forest", min_samples_leaf: int = 1,
+                 max_features: float | str | None = 1.0) -> tuple:
     """Fit a fold without using its targets, including in target statistics."""
     t = dataset["y"].shape[1]
     train = np.asarray(split["train"], dtype=np.int64)
@@ -182,15 +228,19 @@ def fit_oof_fold(dataset: dict, split: dict, held_stations: np.ndarray, *,
                                   include_network=True)
     y = target_values(dataset, target_transform).ravel()
     # Trees fit directly in log1p/raw units; thus no held-label normalizer.
-    local = RandomForestRegressor(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed)
-    context = RandomForestRegressor(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed)
+    local = _forest(forest_backend, n_estimators=n_estimators, n_jobs=n_jobs, seed=seed,
+                    min_samples_leaf=min_samples_leaf, max_features=max_features)
+    context = _forest(forest_backend, n_estimators=n_estimators, n_jobs=n_jobs, seed=seed,
+                      min_samples_leaf=min_samples_leaf, max_features=max_features)
     local.fit(x_local[view["train"]], y[view["train"]])
     context.fit(x_context[view["train"]], y[view["train"]])
     return held, local.predict(x_local[held]), context.predict(x_context[held])
 
 
 def fit_rf_artifacts(dataset: dict, split: dict, *, target_transform: str, seed: int,
-                     n_estimators: int = 200, n_jobs: int = 4) -> RFArtifacts:
+                     n_estimators: int = 200, n_jobs: int = 4,
+                     forest_backend: str = "random_forest", min_samples_leaf: int = 1,
+                     max_features: float | str | None = 1.0) -> RFArtifacts:
     y = target_values(dataset, target_transform)
     train = np.asarray(split["train"], dtype=np.int64)
     ref = torch.as_tensor(y.ravel()[train])
@@ -198,7 +248,8 @@ def fit_rf_artifacts(dataset: dict, split: dict, *, target_transform: str, seed:
     forests = []
     for network in (False, True):
         x = build_rf_features(dataset, split, FIT_ROLES, target_transform=target_transform, include_network=network)
-        rf = RandomForestRegressor(n_estimators=n_estimators, n_jobs=n_jobs, random_state=seed)
+        rf = _forest(forest_backend, n_estimators=n_estimators, n_jobs=n_jobs, seed=seed,
+                     min_samples_leaf=min_samples_leaf, max_features=max_features)
         rf.fit(x[train], y.ravel()[train])
         forests.append(rf)
     folds = station_folds(train, y.shape[1], seed)
@@ -207,12 +258,15 @@ def fit_rf_artifacts(dataset: dict, split: dict, *, target_transform: str, seed:
     for stations in folds:
         cells, local_pred, context_pred = fit_oof_fold(
             dataset, split, stations, target_transform=target_transform,
-            seed=seed, n_estimators=n_estimators, n_jobs=n_jobs)
+            seed=seed, n_estimators=n_estimators, n_jobs=n_jobs,
+            forest_backend=forest_backend, min_samples_leaf=min_samples_leaf,
+            max_features=max_features)
         local_oof.ravel()[cells] = local_pred
         context_oof.ravel()[cells] = context_pred
     if not np.isfinite(local_oof.ravel()[train]).all() or not np.isfinite(context_oof.ravel()[train]).all():
         raise ValueError("OOF coverage incomplete")
-    return RFArtifacts(*forests, local_oof, folds, mu, sd, target_transform, context_oof)
+    return RFArtifacts(*forests, local_oof, folds, mu, sd, target_transform, context_oof,
+                       forest_backend, min_samples_leaf, max_features)
 
 
 def residual_inputs(builder, inputs, visible, model):
@@ -237,7 +291,9 @@ class LocalTransportKGML:
                  dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None,
                  spatial_variant="baseline", message_feature_mode="all",
                  base_variant="local", temporal_operator="gru",
-                 attention_heads=2, attention_dropout=0.1, lookback=12):
+                 attention_heads=2, attention_dropout=0.1, lookback=12,
+                 forest_backend="random_forest", forest_min_samples_leaf=1,
+                 forest_max_features: float | str | None = 1.0):
         if analyte not in TARGET_TRANSFORMS or edge_direction not in ("upstream", "both"):
             raise ValueError("invalid analyte/direction")
         if edge_set not in ("river", "empty") or min(max_epochs, patience, n_estimators, hidden, chunk_months) < 1:
@@ -246,6 +302,10 @@ class LocalTransportKGML:
         self.edge_direction, self.edge_set = edge_direction, edge_set
         self.max_epochs, self.patience = max_epochs, patience
         self.n_estimators, self.n_jobs = n_estimators, n_jobs
+        _validate_forest_settings(forest_backend, forest_min_samples_leaf, forest_max_features)
+        self.forest_backend = forest_backend
+        self.forest_min_samples_leaf = int(forest_min_samples_leaf)
+        self.forest_max_features = forest_max_features
         self.hidden, self.dropout, self.lr = hidden, dropout, lr
         self.chunk_months, self.epoch_callback = chunk_months, epoch_callback
         if temporal_operator not in ("gru", "gru_attention", "gru_attention_river"):
@@ -273,6 +333,13 @@ class LocalTransportKGML:
 
     def initialize(self, dataset: dict, split: dict, rf: RFArtifacts):
         """Build the zero-residual model; also supports a real initialization test."""
+        artifact_backend = getattr(rf, "forest_backend", "random_forest")
+        artifact_leaf = getattr(rf, "forest_min_samples_leaf", 1)
+        artifact_features = getattr(rf, "forest_max_features", 1.0)
+        if (artifact_backend != self.forest_backend
+                or int(artifact_leaf) != self.forest_min_samples_leaf
+                or artifact_features != self.forest_max_features):
+            raise ValueError("RF artifact settings do not match model settings")
         torch.manual_seed(self.seed)
         self.dataset, self.split, self.rf = dataset, split, rf
         self.inputs = build_temporal_inputs(dataset, split, target_transform=TARGET_TRANSFORMS[self.analyte],
@@ -300,7 +367,10 @@ class LocalTransportKGML:
     def fit(self, dataset: dict, split: dict, rf: RFArtifacts | None = None) -> None:
         if rf is None:
             rf = fit_rf_artifacts(dataset, split, target_transform=TARGET_TRANSFORMS[self.analyte],
-                                  seed=self.seed, n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+                                  seed=self.seed, n_estimators=self.n_estimators, n_jobs=self.n_jobs,
+                                  forest_backend=self.forest_backend,
+                                  min_samples_leaf=self.forest_min_samples_leaf,
+                                  max_features=self.forest_max_features)
         self.initialize(dataset, split, rf)
         _n, t = self.inputs.y_model.shape
         train, val = (np.asarray(split.get(r, []), dtype=np.int64) for r in ("train", "val"))

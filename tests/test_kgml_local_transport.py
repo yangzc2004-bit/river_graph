@@ -1,6 +1,7 @@
 """Contracts for the Local--Transport KGML pilot."""
 
 import numpy as np
+import pytest
 import torch
 
 from river_graph.models.kgml_local_transport import (
@@ -62,6 +63,28 @@ def test_oof_rf_is_complete_and_does_not_use_test_labels():
     assert np.isfinite(first.context_oof_z.reshape(-1)[train]).all()
     np.testing.assert_array_equal(first.context_oof_z.reshape(-1)[train],
                                   second.context_oof_z.reshape(-1)[train])
+
+
+def test_extra_trees_backend_is_recorded_and_matches_model_settings():
+    data, split = toy_bundle()
+    rf = fit_rf_artifacts(data, split, target_transform="log1p", seed=42,
+                          n_estimators=3, n_jobs=1,
+                          forest_backend="extra_trees", min_samples_leaf=2,
+                          max_features="sqrt")
+    assert rf.forest_backend == "extra_trees"
+    assert rf.forest_min_samples_leaf == 2
+    assert rf.forest_max_features == "sqrt"
+    model = LocalTransportKGML(seed=42, edge_set="empty", max_epochs=1,
+                               patience=1, n_estimators=3, n_jobs=1, hidden=8,
+                               chunk_months=12, forest_backend="extra_trees",
+                               forest_min_samples_leaf=2,
+                               forest_max_features="sqrt")
+    model.initialize(data, split, rf)
+    mismatch = LocalTransportKGML(seed=42, edge_set="empty", max_epochs=1,
+                                  patience=1, n_estimators=3, n_jobs=1, hidden=8,
+                                  chunk_months=12)
+    with pytest.raises(ValueError, match="RF artifact settings"):
+        mismatch.initialize(data, split, rf)
 
 
 def test_context_base_uses_context_predictions_before_residual_training():
