@@ -139,7 +139,8 @@ def freeze_runtime(root):
 
 def rf_bundle(root, dataset, split, config):
     key = {k: config[k] for k in ("analyte", "mask", "seed", "dataset_sha256", "mask_sha256",
-                                 "target_transform", "n_estimators", "n_jobs", "runtime_snapshot_hash")}
+                                 "target_transform", "n_estimators", "n_jobs", "runtime_snapshot_hash",
+                                 "forest_backend", "forest_min_samples_leaf", "forest_max_features")}
     path = root / "rf_bundles" / f"{config['analyte']}__{config['mask']}__seed{config['seed']}"
     path.mkdir(parents=True, exist_ok=True)
     artifact = path / "forests.joblib"
@@ -150,7 +151,10 @@ def rf_bundle(root, dataset, split, config):
             raise ValueError("RF bundle mismatch")
         return joblib.load(artifact), artifact
     rf = fit_rf_artifacts(dataset, split, target_transform=config["target_transform"],
-                          seed=config["seed"], n_estimators=config["n_estimators"], n_jobs=config["n_jobs"])
+                          seed=config["seed"], n_estimators=config["n_estimators"], n_jobs=config["n_jobs"],
+                          forest_backend=config["forest_backend"],
+                          min_samples_leaf=config["forest_min_samples_leaf"],
+                          max_features=config["forest_max_features"])
     joblib.dump(rf, artifact, compress=3)
     train = split["train"]
     folds = np.full(dataset["y"].shape[0], -1)
@@ -310,6 +314,9 @@ def run_one(root, data, split, cfg, rf):
             temporal_operator=cfg.get("temporal_operator", "gru"),
             attention_heads=cfg.get("attention_heads", 2),
             attention_dropout=cfg.get("attention_dropout", 0.1),
+            forest_backend=cfg.get("forest_backend", "random_forest"),
+            forest_min_samples_leaf=cfg.get("forest_min_samples_leaf", 1),
+            forest_max_features=cfg.get("forest_max_features", 1.0),
             lookback=cfg.get("lookback", 12), **settings)
         model.fit(data, split, rf=rf)
         epochs = model.epochs_run
@@ -375,6 +382,9 @@ def main():
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--n-estimators", type=int, default=200)
     parser.add_argument("--n-jobs", type=int, default=4)
+    parser.add_argument("--forest-backend", choices=("random_forest", "extra_trees"), default="random_forest")
+    parser.add_argument("--forest-min-samples-leaf", type=int, default=1)
+    parser.add_argument("--forest-max-features", default="1.0")
     parser.add_argument("--hidden", type=int, default=64)
     parser.add_argument("--chunk-months", type=int, default=64)
     parser.add_argument("--torch-threads", type=int, default=4)
@@ -395,11 +405,17 @@ def main():
         print(f"Verified {len(rows)} completed runs")
         return
     torch.set_num_threads(args.torch_threads)
+    try:
+        forest_max_features = float(args.forest_max_features)
+    except ValueError:
+        forest_max_features = args.forest_max_features
     snapshot = freeze_runtime(args.out_dir)
     manifest = {"matrix": expected, "runtime_snapshot_hash": snapshot,
                 "max_epochs": args.max_epochs, "patience": args.patience, "n_estimators": args.n_estimators,
                 "n_jobs": args.n_jobs, "torch_threads": args.torch_threads, "chunk_months": args.chunk_months,
-                "hidden": args.hidden}
+                "hidden": args.hidden, "forest_backend": args.forest_backend,
+                "forest_min_samples_leaf": args.forest_min_samples_leaf,
+                "forest_max_features": forest_max_features}
     manifest_path = args.out_dir / "execution_manifest.json"
     if manifest_path.exists() and json.loads(manifest_path.read_text()) != manifest:
         raise ValueError("batch configuration changed")
@@ -415,6 +431,9 @@ def main():
                     "source_mask_path": str(source), "source_mask_sha256": sha256_file(source),
                     "runtime_snapshot_hash": snapshot, "n_estimators": args.n_estimators, "n_jobs": args.n_jobs,
                     "max_epochs": args.max_epochs, "patience": args.patience, "hidden": args.hidden,
+                    "forest_backend": args.forest_backend,
+                    "forest_min_samples_leaf": args.forest_min_samples_leaf,
+                    "forest_max_features": forest_max_features,
                     "layers": 2, "dropout": .1, "lr": .001, "lookback": 12,
                     "chunk_months": args.chunk_months, "torch_threads": args.torch_threads,
                     "message_feature_mode": args.message_feature_mode,
