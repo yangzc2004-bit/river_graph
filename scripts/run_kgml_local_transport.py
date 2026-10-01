@@ -62,7 +62,8 @@ ALL_MASKS = MASKS + EXTRA_MASKS + tuple(CUSTOM_MASKS)
 ARMS = ("rf_local", "rf_context", "h2x_t", "residual_upstream", "residual_both", "residual_nomsg",
         "residual_msgdelta", "residual_msgnull", "residual_msgdual", "residual_additive",
         "residual_context_nomsg", "residual_context_msgdelta", "residual_context_both",
-        "residual_attention", "residual_attention_nomsg")
+        "residual_attention", "residual_attention_nomsg",
+        "residual_attention_river", "residual_attention_river_nomsg")
 K1_ARMS = ARMS[:6]
 EXTRA_RUNTIME = ("scripts/run_ladder.py", "scripts/run_kgml_local_transport.py",
                  "scripts/analyze_kgml_local_transport.py", "scripts/analyze_kgml_source_isolation.py",
@@ -308,7 +309,8 @@ def run_one(root, data, split, cfg, rf):
             base_variant=cfg["base_variant"],
             temporal_operator=cfg.get("temporal_operator", "gru"),
             attention_heads=cfg.get("attention_heads", 2),
-            attention_dropout=cfg.get("attention_dropout", 0.1), **settings)
+            attention_dropout=cfg.get("attention_dropout", 0.1),
+            lookback=cfg.get("lookback", 12), **settings)
         model.fit(data, split, rf=rf)
         epochs = model.epochs_run
         checkpoint = {"state_dict": model.model.state_dict(), "target_mu": rf.target_mu,
@@ -439,11 +441,17 @@ def main():
                                                             "residual_context_both") else "upstream",
                     "edge_set": "empty" if arm in ("residual_nomsg", "residual_msgnull",
                                                       "residual_context_nomsg",
-                                                      "residual_attention_nomsg") else "river"}
+                                                      "residual_attention_nomsg",
+                                                      "residual_attention_river_nomsg") else "river"}
                     cfg.update({
-                        "temporal_operator": ("gru_attention" if arm in
+                        "temporal_operator": ("gru_attention_river" if arm in
+                                               ("residual_attention_river", "residual_attention_river_nomsg")
+                                               else "gru_attention" if arm in
                                                ("residual_attention", "residual_attention_nomsg")
                                                else "gru"),
+                        "lookback": (13 if arm in
+                                      ("residual_attention_river", "residual_attention_river_nomsg")
+                                      else 12),
                         "attention_heads": 2,
                         "attention_dropout": 0.1,
                     })

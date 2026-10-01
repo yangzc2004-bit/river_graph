@@ -18,6 +18,7 @@ import torch.nn.functional as F
 from torch import nn
 
 from river_graph.models.hydro import TransportGCNImputer
+from river_graph.models.river_attention import RiverLagAttention
 from river_graph.models.temporal import TemporalTransportGCNImputer
 
 
@@ -596,6 +597,49 @@ class ObservationAwareAttentionTemporalTransportGCNImputer(
         # after they open, the attention parameters train normally.
         fused = memory + delta
         return self.spatial.predict_from_hidden(fused)
+
+
+class RiverLagAttentionTemporalTransportGCNImputer(
+    ObservationAwareAttentionTemporalTransportGCNImputer
+):
+    """M1 plus sparse upstream edge--lag attention before temporal memory."""
+
+    def __init__(self, spatial, *, lookback: int = 13,
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none", attention_heads: int = 2,
+                 attention_dropout: float = 0.1):
+        super().__init__(spatial, lookback=lookback,
+                         temporal_hidden=temporal_hidden,
+                         chunk_months=chunk_months,
+                         history_ablation=history_ablation,
+                         attention_heads=attention_heads,
+                         attention_dropout=attention_dropout)
+        edge_dim = spatial.convs[0].gate_up[0].in_features
+        self.river_attention = RiverLagAttention(
+            temporal_hidden, edge_dim, num_heads=attention_heads,
+            dropout=attention_dropout,
+        )
+        self.river_residual = nn.Linear(temporal_hidden, temporal_hidden)
+        nn.init.zeros_(self.river_residual.weight)
+        nn.init.zeros_(self.river_residual.bias)
+        self.last_river_attention_diagnostics = None
+
+    def forward_sequence(self, x_seq, edge_index, edge_attr, env_raw=None,
+                         *, age_seq=None):
+        if self.history_ablation == "hydro_only":
+            x_seq = x_seq.clone()
+            x_seq[:, :, 8:10] = 0.0
+        hidden = self.encode_months(x_seq, edge_index, edge_attr, env_raw)
+        support_seq = torch.stack([x_seq[..., 9], x_seq[..., -2], x_seq[..., -1]], -1)
+        river, diagnostics = self.river_attention(
+            hidden, edge_index, edge_attr, x_seq=x_seq,
+            support_seq=support_seq, return_diagnostics=True,
+        )
+        self.last_river_attention_diagnostics = {
+            key: value.detach() for key, value in diagnostics.items()
+        }
+        hidden = hidden + self.river_residual(river)
+        return self._temporal_windows(hidden, age_seq, support_seq)
 
 
 class MessageOnlyTemporalTransportImputer(ObservationAwareTemporalTransportGCNImputer):

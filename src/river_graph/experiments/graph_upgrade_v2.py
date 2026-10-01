@@ -36,6 +36,7 @@ from river_graph.models.graph_upgrade import (
     ObservationAwareMultiScaleTemporalTransportImputer,
     ObservationAwareTemporalTransportGCNImputer,
     ObservationGatedTransportGCNImputer,
+    RiverLagAttentionTemporalTransportGCNImputer,
 )
 from river_graph.models.hydro import TransportGCNImputer
 
@@ -220,12 +221,16 @@ class GraphUpgradeModel:
             raise ValueError(f"unknown spatial variant: {spatial_variant}")
         if message_feature_mode not in ("all", "target_only", "hydro_ecology"):
             raise ValueError("invalid message feature mode")
-        if temporal_operator not in ("gru", "gru_attention"):
-            raise ValueError("temporal_operator must be 'gru' or 'gru_attention'")
-        if temporal_operator == "gru_attention" and mechanism != "m1":
-            raise ValueError("gru_attention currently supports mechanism='m1' only")
-        if temporal_operator == "gru_attention" and spatial_variant in ("msgonly", "msgdual"):
-            raise ValueError("gru_attention is not available for message-only source-isolation variants")
+        if temporal_operator not in ("gru", "gru_attention", "gru_attention_river"):
+            raise ValueError("invalid temporal_operator")
+        if temporal_operator in ("gru_attention", "gru_attention_river") and mechanism != "m1":
+            raise ValueError("attention temporal operators currently support mechanism='m1' only")
+        if temporal_operator in ("gru_attention", "gru_attention_river") and spatial_variant in ("msgonly", "msgdual"):
+            raise ValueError("attention temporal operators are not available for message-only variants")
+        if temporal_operator == "gru_attention_river" and edge_direction != "upstream":
+            raise ValueError("river attention requires edge_direction='upstream'")
+        if temporal_operator == "gru_attention_river" and lookback < 13:
+            raise ValueError("river attention requires lookback >= 13 for the 12-month lag")
         if mechanism == "m2" and spatial_variant != "baseline":
             raise ValueError("lagged transport currently supports only the baseline spatial trunk")
         self.mechanism = mechanism
@@ -301,6 +306,8 @@ class GraphUpgradeModel:
             # training or prediction) means all existing visibility and
             # masking code is shared with the historical GRU implementation.
             cls = ObservationAwareAttentionTemporalTransportGCNImputer
+        elif self.temporal_operator == "gru_attention_river":
+            cls = RiverLagAttentionTemporalTransportGCNImputer
         if self.spatial_variant in ("msgonly", "msgdual"):
             if self.mechanism != "m1":
                 raise ValueError("message-only source isolation uses M1 memory")
@@ -309,7 +316,7 @@ class GraphUpgradeModel:
                     temporal_hidden=self.temporal_hidden, chunk_months=self.chunk_months,
                     **({"attention_heads": self.attention_heads,
                         "attention_dropout": self.attention_dropout}
-                       if self.temporal_operator == "gru_attention" else {}),
+                       if self.temporal_operator in ("gru_attention", "gru_attention_river") else {}),
                     **({"lag_mode": self.lag_mode} if self.mechanism == "m2" else {}))
         model._edge_index, model._edge_attr = edge_index, edge_attr
         # Observation support features can remain matched between river and

@@ -237,7 +237,7 @@ class LocalTransportKGML:
                  dropout=0.1, lr=1e-3, chunk_months=64, epoch_callback=None,
                  spatial_variant="baseline", message_feature_mode="all",
                  base_variant="local", temporal_operator="gru",
-                 attention_heads=2, attention_dropout=0.1):
+                 attention_heads=2, attention_dropout=0.1, lookback=12):
         if analyte not in TARGET_TRANSFORMS or edge_direction not in ("upstream", "both"):
             raise ValueError("invalid analyte/direction")
         if edge_set not in ("river", "empty") or min(max_epochs, patience, n_estimators, hidden, chunk_months) < 1:
@@ -248,13 +248,16 @@ class LocalTransportKGML:
         self.n_estimators, self.n_jobs = n_estimators, n_jobs
         self.hidden, self.dropout, self.lr = hidden, dropout, lr
         self.chunk_months, self.epoch_callback = chunk_months, epoch_callback
-        if temporal_operator not in ("gru", "gru_attention"):
-            raise ValueError("temporal_operator must be 'gru' or 'gru_attention'")
+        if temporal_operator not in ("gru", "gru_attention", "gru_attention_river"):
+            raise ValueError("invalid temporal_operator")
         if attention_heads < 1 or attention_dropout < 0 or attention_dropout >= 1:
             raise ValueError("invalid attention settings")
         self.temporal_operator = temporal_operator
         self.attention_heads = int(attention_heads)
         self.attention_dropout = float(attention_dropout)
+        if lookback < 1 or (temporal_operator == "gru_attention_river" and lookback < 13):
+            raise ValueError("invalid temporal lookback")
+        self.lookback = int(lookback)
         if spatial_variant not in ("baseline", "msgonly", "msgdual"):
             raise ValueError("invalid spatial_variant")
         self.spatial_variant = spatial_variant
@@ -274,7 +277,7 @@ class LocalTransportKGML:
         self.dataset, self.split, self.rf = dataset, split, rf
         self.inputs = build_temporal_inputs(dataset, split, target_transform=TARGET_TRANSFORMS[self.analyte],
                                             env_encoder=True, context_mode=self.context_mode)
-        self.builder = GraphUpgradeModel(mechanism="m1", seed=self.seed, lookback=12,
+        self.builder = GraphUpgradeModel(mechanism="m1", seed=self.seed, lookback=self.lookback,
             hidden=self.hidden, temporal_hidden=self.hidden, layers=2, dropout=self.dropout,
             target_transform=TARGET_TRANSFORMS[self.analyte], env_encoder=True,
             edge_direction=self.edge_direction, edge_set=self.edge_set, feature_edge_set="river",
@@ -398,6 +401,12 @@ class LocalTransportKGML:
                            "temporal_seasonal_mass": seasonal.T,
                            "temporal_observed_mass": observed_mass.T,
                            "temporal_history_valid": valid.astype(np.int8).sum(axis=1)[:, None].repeat(weights.shape[1], axis=1).T})
+        river_diagnostics = getattr(self.model, "last_river_attention_diagnostics", None)
+        if river_diagnostics is not None:
+            lag_mass = river_diagnostics["lag_mass"].numpy()
+            result["river_attention_entropy"] = river_diagnostics["entropy"].numpy().T
+            for lag_id, lag in enumerate(tuple(int(x) for x in river_diagnostics["lags"].tolist())):
+                result[f"river_lag_mass_{lag}"] = lag_mass[..., lag_id].mean(axis=2).T
         return result
 
     def predict(self, visible_roles=TEST_ROLES) -> np.ndarray:
