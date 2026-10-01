@@ -83,3 +83,30 @@ def test_river_lag_attention_only_activates_available_lags():
     # no mass in the 3-month bucket and all reported mass is finite.
     assert torch.isfinite(diagnostics["lag_mass"]).all()
     assert torch.count_nonzero(diagnostics["lag_mass"][:3, :, :, 2]) == 0
+
+
+def test_river_lag_attention_chunking_is_numerically_stable():
+    hidden, edge_index, edge_attr, support = _toy_inputs()
+    # Chunking changes only the batching strategy, not the candidate set or
+    # destination-wise normalization.
+    torch.manual_seed(402)
+    small = RiverLagAttention(
+        8, 5, num_heads=2, lags=(0, 1, 3), dropout=0.0, chunk_months=1
+    ).eval()
+    large = RiverLagAttention(
+        8, 5, num_heads=2, lags=(0, 1, 3), dropout=0.0, chunk_months=16
+    ).eval()
+    large.load_state_dict(small.state_dict())
+    with torch.no_grad():
+        out_small, diag_small = small(
+            hidden, edge_index, edge_attr, support_seq=support,
+            return_diagnostics=True,
+        )
+        out_large, diag_large = large(
+            hidden, edge_index, edge_attr, support_seq=support,
+            return_diagnostics=True,
+        )
+    torch.testing.assert_close(out_small, out_large, atol=1e-6, rtol=1e-6)
+    torch.testing.assert_close(
+        diag_small["lag_mass"], diag_large["lag_mass"], atol=1e-6, rtol=1e-6
+    )
