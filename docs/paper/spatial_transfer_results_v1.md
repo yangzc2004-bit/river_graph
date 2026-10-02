@@ -63,6 +63,8 @@ opening a better learner family.
 * Support-residual mechanism and shuffle comparison:
   `fewshot_residual_paired_v1/analysis/spatial_fewshot_residual.png`.
 * Station heterogeneity: `adapter_comparison_v1/station_mechanism.png`.
+* River-network spatial map of station-level K=5 gains:
+  `station_transfer_map_v1/station_transfer_map.png`.
 
 ## Scope of the claim
 
