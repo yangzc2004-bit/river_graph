@@ -1,0 +1,29 @@
+Tool: built-in image_gen.imagegen
+Asset: doc_hybrid_architecture_v1.png
+Role: illustrative architecture. No experimental data represented.
+Final context expert and local base are distinct forests; the selected temporal residual expert uses a self-node encoder and observation-aware GRU, no edge message passing or attention.
+
+Prompt:
+Use case: infographic-diagram.
+A precise publication-quality modular model architecture figure for a scientific paper on reconstructing sparse river dissolved organic carbon (DOC). White background, Transformer-paper style blocks with upward information flow, parallel branches, skip connections, circular addition node, fine orthogonal arrows. Flat vector-like, no gradients, no perspective, no decorative river map. Clear large English sans-serif text and exact readable equations. Landscape around 1.4:1. Colors: context blue #235B80, temporal branch orange #D08043, output teal #277F80, neutral charcoal. Restrained Nature-like visual polish.
+
+This figure depicts an ACTUAL hybrid: a fixed ExtraTrees CONTEXT expert, and a separate ExtraTrees LOCAL base plus an observation-aware GRU residual expert. Their FULL predictions combine by validation-fitted affine fusion IN LOG SPACE. No attention, no QKV, no multi-head blocks. No graph messages in the selected version. Do NOT confuse the context expert with the local base.
+
+Draw three labeled panels:
+LEFT, panel a heading "Environmental-context expert". Bottom blue input rectangle "Environment + visible DOC context". Arrow up to blue rectangle "Selected ExtraTrees" / "300 trees". Arrow up to "Context prediction C". Small note beside arrow "Frozen after fitting". This branch is simple and narrow.
+
+CENTER-RIGHT, panel b heading "Observation-aware residual expert". Bottom large pale-orange input rectangle "Hydrology · ecology · visible observation history". Split upward into TWO PARALLEL PATHS:
+- a narrow LEFT path enters blue-outline block "Local ExtraTrees base" / "B in log space" and then bypasses the neural stack, heading directly to a small circular "+" near the top of this panel.
+- a wider RIGHT path enters three stacked orange rectangles bottom to top: "Ecological + node encoder" / "2 layers · 64 units"; then "Observation-aware GRU" / "12 months · 64 units"; then "Residual head" / "Δ". The GRU has a small curved recurrent loop on its right. Small input annotation beside its stack: "Age · visibility · support". The node encoder uses a self-node path, not edge messages; put small subordinate note "Self-node configuration". Residual head arrow goes into the SAME "+" that receives the blue local-base bypass.
+- Above the plus draw a small block "Inverse log transform" followed by "Residual-expert prediction R".
+- A small dashed-outline training-only callout outside the main stack reads "Station-blocked OOF residuals". Its dashed arrow points to the neural residual stack and is labeled "Training target". Keep it separate from inference arrows. OOF = out of fold; no need spell out.
+- Above local plus or adjacent short formula "log-scale estimate = B + Δ".
+Must clearly show the residual Δ added to LOCAL B, never to context C directly.
+
+Across the TOP ABOVE panels a and b: outputs C and R feed a wide TEAL block titled "Validation-fitted affine fusion", with a second line exact equation:
+"z = β₀ + β_C log(1 + C) + β_R log(1 + R)"
+Arrow up to topmost white/teal box "Reconstructed DOC" with smaller formula "max(0, exp(z) − 1)".
+The two arrows going into the fusion block should come explicitly from Context prediction C and Residual-expert prediction R. Do not have extra input arrows bypassing their predictors.
+Add one slim neutral footer strip with accurate text:
+"Temporal scenarios: affine fusion   |   Random gaps and unmonitored stations: context expert"
+This communicates the actual scenario-specific deployment. No performance numbers, no K-shot branch, no false claim of end-to-end tree training, no physical transport claim. Do not add complexity not specified. Prioritize scientific accuracy, legibility, generous spacing, and clean noncrossing connections.

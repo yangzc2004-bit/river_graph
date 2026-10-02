@@ -1,96 +1,204 @@
 \documentclass[11pt]{article}
+% DOC HYBRID MANUSCRIPT: main method plus separate spatial-adaptation extension.
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern,microtype}
-\usepackage{amsmath,amssymb,booktabs,array,xcolor}
-\usepackage{tikz,pgfplots}
-\usepackage{graphicx}
-\usetikzlibrary{arrows.meta,positioning}
-\pgfplotsset{compat=1.18}
+\usepackage{amsmath,amssymb,booktabs,array,xcolor,graphicx}
 \usepackage{caption,placeins}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \definecolor{riverblue}{HTML}{235B80}
 \definecolor{supportorange}{HTML}{D08043}
-\definecolor{ink}{HTML}{263743}
 \captionsetup{font=small,labelfont=bf}
 \setlength{\emergencystretch}{2em}
-% BEGIN GENERATED NUMBERS
-\newcommand{\MainDelta}{$-0.442$}
-\newcommand{\MainDeltaCI}{$[-1.026, -0.089]$}
-\newcommand{\MacroDelta}{$-0.419$}
-\newcommand{\ImprovedStations}{36}
-\newcommand{\MedianStationGain}{3.39}
-\newcommand{\BiasGainCorrelation}{0.92}
-\newcommand{\ShuffleMAE}{2.736}
-% END GENERATED NUMBERS
-\title{Few target observations improve river DOC reconstruction:\\regional prediction with station residual calibration}
+\title{Reconstructing sparse river dissolved organic carbon with environmental prediction and observation-aware residual learning}
 \author{Zhaochen Yang\\[2pt]\small Working manuscript --- October 2026}
 \date{}
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Reconstructing river dissolved organic carbon (DOC) at poorly monitored stations requires transferring information across catchments while accounting for differences in local concentration levels. We develop a two-stage reconstruction approach that combines a regional tree ensemble with a small target-station residual correction. The regional model learns from 40 environmentally similar source stations; one, three, or five target observations then calibrate its predictions without refitting the model. On 43 held-out stations in a 357-station river-network cohort, five observations per station reduce mean absolute error from 2.466 to 2.023 mg/L, a 17.93\% decrease on the same 2,316 query cells. The paired, station-resampled interval for the cell-weighted difference is \MainDeltaCI\ mg/L. The correction improves \ImprovedStations\ of 43 stations, with substantial variation in benefit. The monotonic support curve and a station-shuffle diagnostic show the value of matching local corrections to their target stations; alternative tree learners give no further improvement. The study provides a practical way to combine regional prediction with sparse local measurements for historical water-quality reconstruction.
+Sparse and irregular monitoring limits the reconstruction of river dissolved organic carbon (DOC), particularly when observations are missing for extended periods or entire stations. Environmental machine learning supplies strong background predictions, but its errors can retain information associated with the available observation history. We propose a hybrid reconstruction framework that combines an environmental-context tree predictor with an observation-aware temporal residual expert. The latter learns station-blocked out-of-fold errors of a local tree model using ecological features, observation age, support indicators, and recurrent memory. A validation-fitted combination integrates the two experts for temporal gaps, while a context-only configuration serves random gaps and unmonitored stations. Across a 357-station river cohort and five training seeds, the temporal hybrid reduces MAE from 1.047 to 0.887~mg/L for unobserved periods and from 1.016 to 0.784~mg/L for observation-assisted periods, improvements of 15.3\% and 22.9\% over the selected ExtraTrees context predictor. It also improves over the complete temporal residual expert, supporting complementary prediction roles. A separate spatial-adaptation experiment shows that five observations per target station reduce regional-model MAE by 17.9\% on a fixed query. These results establish the value of combining environmental prediction with residual temporal learning for sparse DOC reconstruction, while identifying cross-station transfer and high-concentration events as priorities for further development.
 \end{abstract}
-\paragraph{Keywords:} dissolved organic carbon; sparse monitoring; spatial transfer; residual calibration; river water quality
+\paragraph{Keywords:} dissolved organic carbon; sparse monitoring; water-quality reconstruction; residual learning; recurrent neural network; spatial adaptation
 
 \section{Introduction}
-River water chemistry connects watershed conditions with downstream ecological environments. Yet monitoring records are uneven across stations, constituents, and time. The CAMELS-Chem data compilation illustrates both the opportunities created by combining hydroclimatic and chemistry records and the changing sampling coverage of individual solutes \citep{sterle2024}. Reconstructing these gaps can make historical records more useful for comparing catchments and examining water-quality variability. This requires particular care at stations whose DOC observations were absent from model fitting.
+River dissolved organic carbon connects terrestrial carbon sources with downstream aquatic environments. Its concentration varies with watershed properties, hydrological conditions, and biogeochemical processing, with substantial differences among regions \citep{yang2017}. Reconstructing DOC records can support analysis of long-term carbon dynamics and comparison among catchments. Recent work has demonstrated the value of combining machine learning with environmental and satellite information to recover river organic-carbon patterns over large areas and extended periods \citep{tian2025}. These applications require predictions at locations and times where direct chemical measurements are unavailable.
 
-Regionalization transfers information from observed catchments to less observed locations using environmental similarity or relationships between catchment attributes and hydrological response \citep{song2022}. Learning methods offer complementary representations: tree ensembles fit nonlinear predictor--response relationships \citep{geurts2006,breiman2001}, while recurrent models can combine temporal inputs with catchment attributes \citep{kratzert2019}. These approaches provide a regional starting point. They still leave an operational question: how should a model use a handful of target-station measurements once those measurements become available?
+The observation problem is persistent. Water chemistry is often sampled less continuously and less consistently across sites than meteorology or streamflow, as illustrated by large-sample chemistry compilations \citep{sterle2024}. A river monitoring record can contain isolated gaps, prolonged interruptions, partially observed later periods, and stations with little or no target chemistry. Each case leaves a different set of information available for reconstruction. A nearby measurement may help with a short gap, whereas an unmonitored station must rely more heavily on environmental similarity and observations elsewhere.
 
-We address that question by separating regional prediction from station-level calibration. A model fitted on environmentally similar source stations supplies an initial DOC reconstruction. A shrunken mean residual, calculated from a small support set at the target station, adjusts its concentration level in log-transformed space. The same regional predictions and query cells are retained at every support budget. The comparison therefore isolates what is gained by adding local measurements to a fixed regional model.
+Existing methods provide complementary strengths. Temporal interpolation and seasonal summaries offer simple local references when surrounding observations exist. Stream-network geostatistics represent hydrological distance and flow connectivity, extending spatial prediction beyond straight-line proximity \citep{verhoef2006}. Environmental machine learning, including random forests and extremely randomized trees, can represent nonlinear associations among predictors \citep{breiman2001,geurts2006}. Such models can also use manually constructed lags and neighboring-observation summaries; their predictive ability is therefore a demanding baseline for a new temporal method. Recurrent graph models already combine spatial and temporal representations for missing-data reconstruction \citep{cini2022}, while observation-aware recurrent models use missingness masks and elapsed observation time to inform memory updates \citep{che2018}.
 
-The contribution is a transparent reconstruction strategy and an empirical decomposition of its performance: a nested support curve on previously withheld stations, a comparison with alternative tree learners, and station-level diagnostics of where calibration helps or fails. The study tests sparse local adaptation within a known river-network cohort; the temporal graph model remains a separate component of the wider project.
+The remaining methodological question concerns how these information sources should share the reconstruction task. A strong environmental predictor can explain much of the background variation, leaving errors that may depend on observation history. Asking a neural model to predict the complete DOC signal requires it to relearn that background as well as any remaining dynamics. Conversely, a tree model supplied with a fixed set of lags may not capture all useful relationships in an irregular observation sequence. This motivates a division of prediction into an environmental reference and a temporal correction, followed by a combination that can retain useful information from both.
+
+We develop an environmental-context and observation-aware residual reconstruction framework for DOC. A fixed tree model provides a local reference for training a recurrent residual expert. Station-blocked out-of-fold predictions define its training targets, so residual learning is based on predictions at withheld training stations rather than the tree model's in-sample fit. Observation age, recent support, ecological descriptors, and hydroclimatic inputs inform the recurrent correction. A separate environmental-context expert supplies a strong prediction using visible local and river-network summaries, and the two complete expert predictions are combined on validation data.
+
+This study makes three contributions. First, we introduce a hybrid DOC reconstruction method that combines environmental prediction with observation-aware temporal residual learning, trained on station-blocked out-of-fold errors. Second, we demonstrate the complementary value of its environmental and temporal predictors through comparisons with strong tree baselines and matched component experiments across distinct monitoring gaps. Third, we develop and evaluate a sparse station-calibration extension, showing how a small local sample can improve regional predictions at poorly monitored stations. Together, these contributions connect a practical reconstruction method with evidence about the information needed to recover sparse DOC records.
 
 \section{Materials and methods}
-\subsection{Cohort and evaluation population}
-The ST357 cohort contains 357 stations, 324 directed river-network edges, and 654 monthly positions, from April 1972 to September 2026. The current experiment concerns DOC concentration, expressed in mg/L. The station-holdout split contains 43 target stations with 2,531 observed station-month cells. Five observed months per target station are reserved as support candidates, leaving 2,316 query cells. All reported support levels use this identical query set. These counts describe observed cells available for evaluation, not the complete station-by-month reconstruction grid.
 
-Model fitting excludes target-station DOC labels. The setting allows hydroclimatic measurements, ecological descriptors, and network connectivity at the target stations to be known. The station-holdout design addresses a different prediction problem from randomly masking individual records, a distinction emphasized by work on cross-validation for structured ecological data \citep{roberts2017}. This is one outer station split within ST357, rather than a separate external basin.
+\subsection{River cohort and reconstruction tasks}
+We use a Mississippi River basin cohort of 357 stream stations connected by 324 directed river-network edges. The monthly grid spans April 1972 to September 2026, comprising 654 months and 233,478 station-month positions. Only 22,571 positions (9.67\%) contain observed DOC, illustrating the sparsity of the reconstruction problem. The present study focuses on DOC concentration in mg/L. Dynamic covariates are water temperature and discharge with availability indicators. Static inputs describe station location and ecological regime. DOC targets are transformed as $z=\log(1+y)$, where $y$ denotes concentration.
 
-\subsection{Regional source selection and prediction}
-For each station we construct a descriptor from temperature and discharge summaries (mean, standard deviation, 10th, 50th, and 90th percentiles, and observation fractions), coordinates, ecological regime variables, graph degrees, and sums of incoming edge attributes. Descriptors are standardized across the known station cohort without reading DOC labels. The 40 source stations with the smallest squared Euclidean descriptor distance supply fitting records for each target-specific regional model. Source-pool size was selected using an internal station holdout.
+The four evaluation scenarios represent different monitoring gaps (Table~\ref{tab:scenarios}). Random gaps withhold observed station-month cells. Unobserved periods withhold target observations in a later time segment. Observation-assisted periods retain designated observations as context in that segment. Unmonitored stations withhold the target record at a group of stations. We use one existing split per scenario and five training seeds, 42--46. Splits are held constant across the compared methods. Spatially and temporally structured evaluation follows the principle of matching a split to its intended prediction setting \citep{roberts2017}.
 
-The retained source model is an ExtraTrees regressor \citep{geurts2006} with 120 trees, minimum leaf size four, all predictors eligible at each split, and seeds 42--46. Predictors include temperature and discharge with visibility flags, month sine/cosine terms, coordinates, ecological variables, visible same-month DOC context summaries, and target-history lag channels. The context summaries include global, upstream, and downstream visible values and support fractions. Thus, restricting the fitting pool to 40 stations does not restrict all contextual input to those 40 stations. This regional model uses explicit network summaries and should not be described as purely local or graph-free.
+\begin{table}[htbp]\centering\small
+\caption{Evaluation tasks. Counts are unique query cells and contributing stations within each scenario. The same cells can occur in different scenarios.}
+\label{tab:scenarios}
+% BEGIN GENERATED SCENARIOS
+\begin{tabular}{>{\raggedright\arraybackslash}p{4.3cm}rr}\toprule
+Scenario & Query cells & Stations\\\midrule
+Random gaps & 4,514 & 355\\
+Unobserved periods & 2,223 & 69\\
+Observation-assisted periods & 1,778 & 67\\
+Unmonitored stations & 2,531 & 43\\
+\bottomrule\end{tabular}
+% END GENERATED SCENARIOS
+\end{table}
 
-Training features use source training and designated context labels; final inference may additionally use source validation labels under the existing prediction policy. Target-station DOC remains hidden when the base predictions are generated. Source selection uses descriptor statistics across the historical record, making this a reconstruction setting with available covariates rather than a test of forward prediction from information available at a single historical date.
+During model fitting and validation inference, target inputs contain only training and designated context observations. Validation labels enter early stopping and model combination, but not the input features. Terminal inference additionally permits validation observations as context; the evaluated query labels remain hidden. Current hydrological covariates are assumed available. The task is reconstruction of missing DOC under specified information availability, rather than forecasting future hydrology.
 
-\subsection{Nested target support and residual calibration}
-For each target station, the support candidates are selected from its sorted observed months without inspecting DOC values. The ordered candidates are the first, middle, last, first-quartile, and third-quartile positions, using the integer indices of an equally spaced five-position grid. The first $K$ candidates define the nested support set $\mathcal S_i^{(K)}$, for $K\in\{0,1,3,5\}$. All five candidates remain excluded from evaluation even when fewer are opened. Since support can occur after some query months, the task is retrospective reconstruction.
+\subsection{An environmental-context predictor}
+The context predictor $C_{it}$ uses 39 features for station $i$ and month $t$: temperature and discharge with their visibility flags, seasonal sine/cosine terms, coordinates, 13 regime descriptors, six visible-DOC context summaries, and 12 local lag features. The context summaries contain global, upstream, and downstream visible DOC means and support fractions. Means are calculated in log-transformed target space and exclude the query cell. The local lags describe observations at one, three, six, and twelve months, including availability.
 
-Let $z_{i,t}=\log(1+y_{i,t})$ and let $\hat z^{\rm reg}_{i,t}$ be the fixed regional prediction. For $K>0$, the station residual and calibrated prediction are
+All context forests contain 300 trees. For each seed and scenario, validation MAE selects among six candidates: random forests with minimum leaf sizes one or two, and ExtraTrees variants using all-feature or square-root-feature split selection and minimum leaf sizes one, two, or four. All selected context experts are ExtraTrees: leaf size four in the temporal scenarios, leaf size two for random gaps, and leaf sizes one or two for unmonitored stations. A fixed 300-tree random forest with leaf size one is retained as an additional baseline on the same features, seeds, and query cells.
+
+This predictor already uses explicit temporal and river-context information. Its comparison with the hybrid therefore measures the added value of the learned residual expert and combination, beyond an environmental model that already has engineered history and neighborhood features.
+
+\subsection{An observation-aware temporal residual expert}
+\subsubsection{Local reference and out-of-fold residual targets}
+A separate local forest defines the reference for residual learning. It is an ExtraTrees model with 300 trees, minimum leaf size four, and all features available at each split. Its 40 predictors retain environmental and lag information but replace the six network-context columns with seven strictly historical local features: the most recent value, log observation age, an availability flag, and observation counts over the preceding one, three, six, and twelve months. This local reference $B$ is distinct from the selected context expert $C$.
+
+We partition training stations into five folds. For each fold, the local forest is fitted on the other four folds, and all target observations at the withheld stations, including context observations, are hidden from its input construction. Let $B_{it}^{\mathrm{OOF}}$ be the resulting prediction in log space. The neural target is
+\begin{equation}
+ r_{it}^{\mathrm{OOF}}=\frac{z_{it}-B_{it}^{\mathrm{OOF}}}{\sigma_{\mathrm{train}}},
+ \label{eq:oof}
+\end{equation}
+where $\sigma_{\mathrm{train}}$ is the standard deviation of transformed training labels. The neural branch uses the corresponding fold-specific observation view. This construction gives the branch an error signal from station withholding rather than residuals from an in-sample forest fit.
+
+\subsubsection{Observation-aware memory}
+The neural branch combines a two-layer ecological encoder with a two-layer, 64-unit node encoder. The ecological encoder maps nine regime variables through two 32-unit layers. Monthly node inputs contain hydroclimatic values and masks, season, location, visible DOC and its availability, hydro-regime descriptors, and observation-support features. The latter include the last visible value, log age, an ever-observed flag, support fractions at four time scales, and upstream support. Downstream support is zero in the selected residual configuration.
+
+For each prediction month, a 12-month window is processed by an observation-aware GRU with 64 hidden units. Inspired by observation-decay approaches \citep{che2018}, the hidden state is attenuated before its recurrent update:
 \begin{align}
- \bar r_i^{(K)}&=\frac{1}{K}\sum_{s\in\mathcal S_i^{(K)}}\left[z_{i,s}-\hat z^{\rm reg}_{i,s}\right],\\
- \hat y_{i,t}^{(K)}&=\max\left\{0,\exp\left(\hat z^{\rm reg}_{i,t}+\alpha_K\bar r_i^{(K)}\right)-1\right\}.
+ \gamma_{it}&=\exp\{-\operatorname{ReLU}(W_d q_{it}+b_d)\},\\
+ h_{it}&=\operatorname{GRUCell}([e_{it},v_t],\,\gamma_{it}\odot h_{i,t-1}),
 \end{align}
-For $K=0$ the correction is zero. The coefficients $(\alpha_1,\alpha_3,\alpha_5)=(0.25,0.50,0.75)$ are inherited unchanged from the earlier 300-tree internal station-holdout adapter analysis, which considered $\alpha\in\{0,0.25,0.50,0.75,1\}$. They are applied here to the frozen 120-tree product without a new parameter search. The base model is not refitted, and support labels enter only this residual calculation. In concentration space, the correction scales $1+\hat y^{\rm reg}$ by $\exp(\alpha_K\bar r_i^{(K)})$ before applying the lower bound. It adjusts concentration level, not the timing of events.
+where $e_{it}$ is the encoded monthly state, $v_t$ indicates valid history, and $q_{it}$ contains scaled log observation age, an observation-availability indicator, upstream support, and a zero downstream-support channel. Each window starts from zero recurrent state, and padded positions make no recurrent update. Input windows end at the prediction month. Visible observations at the current month may enter support features; hidden query values cannot.
+
+The residual expert uses a self-node encoder without learned edge messages or an attention operator. River connectivity enters through explicit observation-support features. Separate message and lag-attention controls examine the potential additional value of learned river propagation.
+
+\subsubsection{Residual prediction and training}
+A zero-initialized scalar head maps the final hidden state to a standardized residual $d_{\theta,it}$. Using a local forest refitted on all training cells, the complete residual-expert prediction is
+\begin{equation}
+ R_{it}=\max\{0,\exp(B_{it}+\sigma_{\mathrm{train}}d_{\theta,it})-1\}.
+ \label{eq:residual}
+\end{equation}
+At initialization, the correction is zero and this expert equals its local reference. The forest is fixed throughout neural training.
+
+Training minimizes mean squared error on the standardized out-of-fold residuals. Five station folds contribute to one accumulated optimizer step per epoch. We use Adam with learning rate $10^{-3}$, gradient-norm clipping at one, dropout 0.1, at most 20 epochs, and early-stopping patience five. Completed temporal runs stop after 15--16 epochs. Early stopping evaluates the complete local-reference-plus-residual prediction. Target and dynamic-input scaling are based on training cells; static descriptor scaling uses the known station cohort. The prediction applies a lower bound of zero after inverse transformation, with no upper-quantile clipping.
+
+\subsection{Combining the two complete experts}
+For temporal scenarios, the candidate outputs are context-only, residual-expert-only, a geometric blend, and a log-affine combination. The latter is
+\begin{align}
+ \hat z_{it}&=\beta_0+\beta_C\log(1+C_{it})+\beta_R\log(1+R_{it}),\\
+ \hat y_{it}&=\max\{0,\exp(\hat z_{it})-1\}.
+ \label{eq:fusion}
+\end{align}
+Unconstrained least squares fits the affine coefficients on validation predictions. The geometric-blend weight is selected on a grid with step 0.005. Raw-scale validation MAE selects the candidate output. All ten temporal seed--scenario combinations select the affine form. Its weights combine complete expert predictions and are neither attention weights nor physical coefficients.
+
+Random gaps and unmonitored stations use the context expert directly under the existing scenario-specific configuration. These two routes are specified by the implementation, rather than inferred by a learned routing network. Their final outputs therefore equal the context baseline. Figure~\ref{fig:architecture} shows the evaluated architecture and its deployment by scenario.
 
 \begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=.68\textheight,keepaspectratio]{figures/regional_calibration_modular_architecture_v4.png}
-\caption{Model architecture with a fixed regional predictor and a sparse residual adapter. The left branch aggregates 120 parallel trees fitted on 40 environmentally similar source stations. Its prediction follows a direct path to the addition node and a second path to residual calculation at support months. The right branch computes the mean observed-minus-predicted residual and applies fixed shrinkage; it involves no model refitting. The two branches combine in $\log(1+\mathrm{DOC})$ space before inverse transformation and nonnegative clipping. At $K=0$ the correction is zero. Target support enters only the adapter, and query labels enter only evaluation.}
-\label{fig:framework}\end{figure}
+\includegraphics[width=\linewidth,height=.65\textheight,keepaspectratio]{figures/doc_hybrid_architecture_v1.png}
+\caption{\textbf{Environmental prediction and observation-aware residual learning.} The context expert $C$ and local reference $B$ are separate tree models. The temporal branch learns out-of-fold residuals relative to $B$, producing the complete expert $R$ after correction and inverse transformation. Validation-fitted affine fusion combines $C$ and $R$ for temporal scenarios. Random gaps and unmonitored stations use $C$. The selected encoder has a self-node configuration; learned river messages and attention are not part of this product. Dashed arrows indicate training supervision.}
+\label{fig:architecture}
+\end{figure}
 
-\subsection{Comparisons and statistical summaries}
-The primary loss is MAE over the 2,316 query cells, averaged across five training seeds. We average losses, rather than calculating the error of an averaged prediction. RMSE is reported alongside it; log-space MAE is retained in the accompanying prediction product. Station-level MAE weights query months equally within a station, and the station-macro summary then weights stations equally. These are distinct summaries when record lengths differ.
+\subsection{Separate spatial-adaptation extension}
+We also examine whether sparse target observations can improve regional reconstruction at unmonitored stations. This experiment uses a separate regional ExtraTrees product with 120 trees and 40 source stations selected for each target by environmental similarity. Source descriptors combine hydroclimatic summaries, ecology, coordinates, and network attributes. Selection and descriptor scaling use available covariates, not target DOC labels. Its predictors include the visible DOC-context features described above.
 
-For paired confidence intervals, we first average losses across seeds at each cell, then resample 43 whole stations with replacement. Every sampled station contributes all its query cells, including multiplicity, and each replicate recomputes the cell-weighted MAEs and their difference. We use 5,000 resamples. Seed dispersion is reported separately; repeated seeds do not add independent stations.
+At each of 43 target stations, five observed months are reserved as support candidates: the first, middle, last, first-quartile, and third-quartile positions of the observed record. Nested prefixes give $K=0,1,3,5$ support budgets. All five candidates are excluded from evaluation at every budget, leaving the same 2,316 query cells. A shrunken mean support residual adjusts the fixed regional prediction:
+\begin{align}
+ \bar r_i^{(K)}&=\frac{1}{K}\sum_{s\in\mathcal S_i^{(K)}}
+       [z_{is}-\hat z_{is}^{\mathrm{reg}}],\\
+ \hat y_{it}^{(K)}&=\max\{0,\exp(\hat z_{it}^{\mathrm{reg}}+
+                      \alpha_K\bar r_i^{(K)})-1\}.
+\end{align}
+The correction is zero for $K=0$. The coefficients for $K=1,3,5$ are 0.25, 0.50, and 0.75, inherited unchanged from an earlier internal station-validation analysis. The base predictions remain fixed.
 
-A shuffle diagnostic permutes the fitted $K=5$ station corrections across the 43 target stations, retaining the original query predictions. We use one predetermined permutation per seed at each support level (five in total per level) and average their MAEs. This is a descriptive mismatch diagnostic, not a permutation significance test. Station bias versus improvement is a descriptive analysis: both quantities use query errors and therefore do not provide an independent test of an ecological mechanism.
+Support can follow a query month, and station descriptors summarize the available historical record. This extension evaluates retrospective station reconstruction. Its source-model configuration and query set differ from the main hybrid experiment; it evaluates sparse calibration rather than the performance of a jointly trained hybrid-plus-adapter model.
 
-We also inspect a three-seed comparison of ExtraTrees, random forest, and histogram gradient boosting under the same regional selection protocol. Internal validation chose random forest in that later learner comparison. Its outer result is reported as selected; all three scores are shown to document the outcome. The outer split has been examined during multiple development rounds, so these comparisons are development evidence rather than a fresh confirmatory or external test.
+\subsection{Evaluation and component comparisons}
+Primary performance is MAE on hidden DOC cells. RMSE, $R^2$, log-space MAE, and training-derived Q90 tail MAE provide complementary summaries. Reported metrics average the five individual seed metrics; they are not the errors of a seed-ensemble prediction. The main table compares the fixed random-forest context model, validation-selected ExtraTrees context model, and final hybrid. In temporal scenarios, the complete residual expert is additionally compared on identical query cells.
+
+For paired intervals, absolute errors are averaged across seeds at each cell, then whole stations are resampled 5,000 times. Each sampled station contributes all query cells, preserving the main cell-weighted estimand within each replicate. Intervals are reported for the hybrid-minus-context MAE difference and relative reduction. Seed variation is summarized separately. Q90 groups with fewer than 20 distinct cells are marked as small-sample diagnostics.
+
+The spatial extension uses the same paired station-resampling principle. A descriptive station-shuffle diagnostic assigns fitted corrections to different target stations, using one fixed permutation per seed and support budget. Model development has repeatedly used these outer splits. Thus the reported evaluation quantifies performance on the existing development tasks; independent station partitions and external basins remain the next tests of generalization.
 
 \FloatBarrier
 \section{Results}
-\subsection{Five target observations reduce DOC reconstruction error}
-The primary MAE decreases from 2.466 mg/L without target support to 2.320, 2.160, and 2.023 mg/L at $K=1$, 3, and 5, respectively (Table~\ref{tab:kcurve}). Five observations per station reduce error by 17.93\%. The matching cell-weighted paired difference is \MainDelta\ mg/L, with a station-resampled 95\% interval of \MainDeltaCI\ mg/L. The station-equal difference is \MacroDelta\ mg/L; it is a complementary summary rather than the point estimate underlying the main table.
+
+\subsection{The hybrid improves reconstruction across unobserved periods}
+The environmental-context predictor is a strong baseline across all four scenarios (Table~\ref{tab:main}). Combining it with the temporal residual expert reduces MAE from 1.047 to 0.887~mg/L in unobserved periods and from 1.016 to 0.784~mg/L in observation-assisted periods. These changes correspond to improvements of 15.3\% and 22.9\%, respectively. Both temporal scenarios improve across all five seeds.
+
+The station-resampled 95\% interval for the MAE difference is $[-0.262,-0.050]$~mg/L in unobserved periods and $[-0.307,-0.159]$~mg/L in observation-assisted periods. Corresponding relative-improvement intervals are 4.7--25.0\% and 17.2--27.9\% (Figure~\ref{fig:performance}). The gains therefore persist when stations are resampled within each existing split.
 
 \begin{table}[htbp]\centering\small
-\caption{Reconstruction on a fixed query. Errors average per-seed losses over the same 2,316 cells. SD describes five-seed variation; the intervals in the text resample stations.}
-\label{tab:kcurve}
-% BEGIN GENERATED MAIN TABLE
+\caption{Five-seed reconstruction performance. MAE and RMSE are in mg/L. The hybrid equals the ExtraTrees context route in random gaps and unmonitored stations.}
+\label{tab:main}
+% BEGIN GENERATED MAIN RESULTS
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.5cm}rrrrr}\toprule
+Scenario & \shortstack{RF\\MAE} & \shortstack{ET\\MAE} & \shortstack{Hybrid\\MAE} & \shortstack{Hybrid\\RMSE} & \shortstack{Hybrid\\$R^2$}\\\midrule
+Random gaps & 1.452 & 1.436 & 1.436 & 6.626 & 0.384\\
+Unobserved periods & 1.070 & 1.047 & 0.887 & 1.404 & 0.470\\
+Observation-assisted periods & 1.051 & 1.016 & 0.784 & 1.228 & 0.587\\
+Unmonitored stations & 2.687 & 2.545 & 2.545 & 5.330 & 0.455\\
+\bottomrule\end{tabular}
+% END GENERATED MAIN RESULTS
+\end{table}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\linewidth]{figures/doc_hybrid_performance.pdf}
+\caption{\textbf{Performance by monitoring gap.} \textbf{a}, Mean individual-seed MAE for matched context baselines and the hybrid; error bars show seed SD. \textbf{b}, Relative improvement over selected ExtraTrees with paired station-bootstrap 95\% intervals. Zero gain in random gaps and unmonitored stations reflects the context-only route. Counts refer to unique query cells within each scenario.}
+\label{fig:performance}
+\end{figure}
+
+Random-gap MAE is 1.436~mg/L and unmonitored-station MAE is 2.545~mg/L, identical to the context expert by construction. These cases establish the retained baseline performance of the deployed configuration, rather than an increment from neural correction. Averaging losses across all scenario-cell occurrences gives hybrid MAE 1.475~mg/L, compared with 1.545 for ExtraTrees and 1.593 for the fixed random forest. The 11,046 scenario-cell occurrences include 8,150 distinct cells because scenarios overlap; this pooled summary is descriptive, and the scenario-specific comparisons carry the main inference.
+
+\subsection{The two complete experts supply complementary predictions}
+The learned correction improves its matched local reference in both temporal scenarios (Table~\ref{tab:components}). In unobserved periods, MAE decreases from 1.148~mg/L for the local forest to 0.946 for the complete residual expert, a 17.6\% reduction. In observation-assisted periods, it decreases from 0.973 to 0.795~mg/L, an 18.3\% reduction. All five seeds improve in each comparison. This directly establishes the added value of the trained neural residual branch relative to its own base.
+
+The complete residual expert also outperforms context ExtraTrees, whose MAEs are 1.047 and 1.016~mg/L. Affine fusion further reduces error to 0.887 and 0.784~mg/L, gains of 6.2\% and 1.4\% relative to the complete residual expert. All five seeds favor fusion in each comparison.
+
+\begin{table}[htbp]\centering\small
+\caption{Matched temporal component comparison. The local base is the forest corrected by the neural branch; the context expert is a separate forest. The complete residual expert includes its local base and correction. Values are mean individual-seed MAEs on identical query cells.}
+\label{tab:components}
+% BEGIN GENERATED COMPONENTS
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.7cm}rrrr}\toprule
+Scenario & Local base & Context & Residual expert & Hybrid\\\midrule
+Unobserved periods & 1.148 & 1.047 & 0.946 & 0.887\\
+Observation-assisted periods & 0.973 & 1.016 & 0.795 & 0.784\\
+\bottomrule\end{tabular}
+% END GENERATED COMPONENTS
+\end{table}
+
+This sequence supports the complementary roles of the two complete predictors: the residual expert supplies complementary predictions, and the environmental-context expert still supplies information that improves their combined prediction. It does not isolate the individual contribution of every observation-age feature or identify a physical transport process. Earlier matched river-message and lag-attention controls gave little additional DOC improvement over self-node residual models, motivating the selected configuration. The main performance result is consequently attributed to the evaluated residual-expert combination.
+
+\subsection{Overall accuracy and high-concentration performance differ}
+Improvements in temporal MAE are accompanied by higher $R^2$: from 0.384 to 0.470 in unobserved periods and from 0.428 to 0.587 in observation-assisted periods. RMSE decreases from 1.514 to 1.404~mg/L and from 1.446 to 1.228~mg/L, respectively. These changes extend the temporal gain beyond one loss metric.
+
+High-concentration errors show a different pattern (Appendix~\ref{app:tail}). The two temporal Q90 groups contain only 12 and seven distinct query cells. The hybrid changes tail MAE from 6.759 to 6.712~mg/L in unobserved periods and from 6.862 to 7.129~mg/L in observation-assisted periods. These small groups do not establish improved extreme-value reconstruction. For random gaps, selected ExtraTrees improves MAE slightly over the fixed random forest but has higher RMSE (6.626 versus 6.287~mg/L), further illustrating the importance of reporting more than average absolute error.
+
+\subsection{Sparse local calibration improves a separate spatial reconstruction}
+In the regional station-adaptation experiment, MAE decreases from 2.466~mg/L without target support to 2.320, 2.160, and 2.023~mg/L with one, three, and five observations per station (Table~\ref{tab:support}; Figure~\ref{fig:support}). Five observations yield a 17.9\% reduction on the unchanged query. The paired MAE difference is $-0.442$~mg/L, with a station-resampled 95\% interval of $[-1.026,-0.089]$~mg/L.
+
+\begin{table}[htbp]\centering\small
+\caption{Sparse station calibration in the separate regional experiment. Five seeds share 43 target stations and 2,316 fixed query cells. This baseline and query differ from Table~\ref{tab:main}.}
+\label{tab:support}
+% BEGIN GENERATED SUPPORT RESULTS
 \begin{tabular}{rrrrr}\toprule
 $K$ & MAE (mg/L) & Seed SD & RMSE (mg/L) & Reduction (\%)\\\midrule
 0 & 2.466 & 0.007 & 5.390 & 0.00\\
@@ -98,461 +206,130 @@ $K$ & MAE (mg/L) & Seed SD & RMSE (mg/L) & Reduction (\%)\\\midrule
 3 & 2.160 & 0.011 & 4.746 & 12.41\\
 5 & 2.023 & 0.008 & 4.412 & 17.93\\
 \bottomrule\end{tabular}
-% END GENERATED MAIN TABLE
+% END GENERATED SUPPORT RESULTS
 \end{table}
 
 \begin{figure}[htbp]\centering
-% BEGIN GENERATED K FIGURE
-\begin{tikzpicture}\begin{axis}[width=.85\linewidth,height=5.8cm,
-xlabel={Support observations per station ($K$)},ylabel={DOC MAE (mg/L)},
-xmin=-.2,xmax=5.2,ymin=1.95,ymax=2.55,xtick={0,1,3,5},
-axis lines=left,ymajorgrids,grid style={gray!20},tick label style={font=\small}]
-\addplot+[riverblue,thick,mark=*,error bars/.cd,y dir=both,y explicit] coordinates {
-(0,2.46557887) +- (0,0.00724344)
-(1,2.32000913) +- (0,0.01342069)
-(3,2.15972279) +- (0,0.01099178)
-(5,2.02348607) +- (0,0.00849497)
-};
-\end{axis}\end{tikzpicture}
-% END GENERATED K FIGURE
-\caption{The support curve uses a fixed regional model and a fixed query. Error bars show one standard deviation of MAE across five seeds, not a confidence interval over stations.}
-\label{fig:kcurve}\end{figure}
+\includegraphics[width=\linewidth]{figures/doc_spatial_support_v2.pdf}
+\caption{\textbf{The value of sparse target observations.} The regional model remains fixed as the nested support budget increases. Error bars describe five-seed SD. Support may occur after query months, so the task is historical reconstruction.}
+\label{fig:support}
+\end{figure}
 
-\subsection{Benefit varies across target stations}
-Calibration improves \ImprovedStations\ of 43 target stations. The median station-level relative reduction is \MedianStationGain\%, compared with 17.93\% for the pooled query. The two summaries differ because a reduction pooled over all cells gives greater weight to longer records and larger absolute errors. The map in Figure~\ref{fig:map} displays both improvements and deteriorations from the same five-seed product as the main table.
+Calibration improves 36 of 43 stations. The median station-level relative reduction is 3.39\%, smaller than the pooled 17.9\%, indicating heterogeneous benefits and different weighting of station records (Figure~\ref{fig:station}). With five observations, assigning the station corrections to different targets increases mean MAE to 2.736~mg/L. This descriptive shuffle shows the importance of matching corrections to their own station; it does not identify the ecological cause of each station's bias.
 
 \begin{figure}[htbp]\centering
-% BEGIN GENERATED MAP FIGURE
-\begin{tikzpicture}\begin{axis}[width=.98\linewidth,height=8.3cm,
-xlabel={East--west distance from center (km)},
-ylabel={North--south distance from center (km)},
-xmin=-1600,xmax=1800,ymin=-1150,ymax=1350,axis equal image,
-axis lines=left,tick label style={font=\scriptsize},
-legend style={font=\scriptsize,draw=none,at={(.99,.02)},anchor=south east}]
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1424.292343,470.156264) (1369.734634,413.285630)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1369.734634,413.285630) (1360.663583,297.070456)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1327.888948,390.348302) (1338.767678,388.265053)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1338.767678,388.265053) (1360.663583,297.070456)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1367.018005,362.559682) (1360.663583,297.070456)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1401.666111,322.309705) (1360.663583,297.070456)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1422.016495,256.881670) (1436.878970,279.679256)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1429.337404,276.008727) (1436.878970,279.679256)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1427.656414,271.348741) (1436.878970,279.679256)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1436.878970,279.679256) (1360.663583,297.070456)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1360.663583,297.070456) (1355.237528,291.875551)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1352.979981,297.717093) (1325.179682,288.905113)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1355.237528,291.875551) (1325.179682,288.905113)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1360.337654,205.457362) (1357.091786,276.700475)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1328.374132,210.426468) (1357.091786,276.700475)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1358.061442,249.691252) (1357.091786,276.700475)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1412.011345,239.378230) (1364.391723,260.873790)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1412.913501,238.766189) (1364.391723,260.873790)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1364.391723,260.873790) (1357.091786,276.700475)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1357.091786,276.700475) (1325.179682,288.905113)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1325.179682,288.905113) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1304.356273,336.410430) (1311.920692,310.870744)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1311.920692,310.870744) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1279.178856,255.049030) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1257.248935,254.761184) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1177.672711,221.191394) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1182.614099,228.467530) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1329.583074,-70.703374) (1300.487061,-9.597897)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1300.487061,-9.597897) (1218.902052,41.802003)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1261.731997,-14.669903) (1218.902052,41.802003)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1218.902052,41.802003) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1170.529619,128.895524) (1170.167143,128.432178)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1169.957047,129.655248) (1170.421600,128.973152)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1170.421600,128.973152) (1170.167143,128.432178)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1170.167143,128.432178) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1170.199972,128.374439) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1200.030731,-82.716121) (1198.900602,-84.768493)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1198.900602,-84.768493) (1183.389460,-83.518428)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1183.389460,-83.518428) (1154.779819,-48.121029)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1154.779819,-48.121029) (1162.657367,-6.812395)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1162.657367,-6.812395) (1135.647931,42.872909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1135.647931,42.872909) (813.626086,-80.993198)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1004.923852,83.931813) (813.626086,-80.993198)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1032.769950,176.854014) (813.626086,-80.993198)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1107.262298,-84.555434) (1026.286581,-56.980699)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1089.113547,-86.747791) (1026.286581,-56.980699)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1083.133342,-96.039343) (1026.286581,-56.980699)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1026.286581,-56.980699) (968.774595,-28.567187)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(968.774595,-28.567187) (958.031302,-4.314359)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(973.141121,-21.585991) (958.031302,-4.314359)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(958.031302,-4.314359) (813.626086,-80.993198)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(813.626086,-80.993198) (615.532556,-176.474521)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(713.269843,155.601526) (703.614962,-65.594701)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(830.301053,138.831809) (832.746931,132.558614)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(832.746931,132.558614) (821.556825,98.853298)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(846.522301,120.893180) (836.894014,119.464839)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(836.894014,119.464839) (821.556825,98.853298)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(892.151357,28.907170) (797.570864,3.318632)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(797.570864,3.318632) (733.996467,-22.704361)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(834.699535,3.757677) (733.996467,-22.704361)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(733.996467,-22.704361) (703.614962,-65.594701)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(703.614962,-65.594701) (615.532556,-176.474521)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(672.690310,-178.009654) (615.532556,-176.474521)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(615.532556,-176.474521) (614.258609,-179.237693)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(863.032398,129.211432) (797.570864,3.318632)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1197.952265,-270.663895) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1170.939481,-291.620327) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1163.075586,-289.104308) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1192.376038,-224.166238) (1147.108757,-239.631264)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1147.108757,-239.631264) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1273.109571,-143.937480) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1106.145510,-297.245361) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1203.274182,-146.640875) (1122.948312,-209.347225)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(1122.948312,-209.347225) (973.133494,-378.792841)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(973.133494,-378.792841) (662.174837,-191.254407)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(871.322952,-427.793187) (662.174837,-191.254407)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(662.174837,-191.254407) (615.532556,-176.474521)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(127.634710,759.737430) (212.172444,684.440190)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(95.151547,709.402322) (212.172444,684.440190)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(212.172444,684.440190) (249.176811,643.116201)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(211.536099,675.621461) (249.176811,643.116201)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(20.995824,659.490655) (159.473849,576.484139)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(167.434750,557.399307) (155.780191,570.576765)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(155.780191,570.576765) (156.730265,575.677001)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(156.730265,575.677001) (159.473849,576.484139)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(159.473849,576.484139) (158.829374,578.841388)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(158.829374,578.841388) (186.592851,635.228033)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(186.592851,635.228033) (249.176811,643.116201)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(213.105537,648.710907) (249.176811,643.116201)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(249.176811,643.116201) (274.137014,623.953788)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(360.119508,806.499406) (289.947333,792.534737)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(289.947333,792.534737) (262.081961,717.042929)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(262.081961,717.042929) (274.137014,623.953788)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(274.137014,623.953788) (476.296441,324.430107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(493.780190,799.529278) (490.389141,798.292039)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(490.389141,798.292039) (486.221625,799.290279)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(488.708363,796.772366) (486.221625,799.290279)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(486.221625,799.290279) (476.296441,324.430107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(386.904487,426.070618) (476.296441,324.430107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(452.072362,358.650185) (476.296441,324.430107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(476.296441,324.430107) (486.316268,9.610537)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(305.216315,432.879643) (453.000086,321.452909)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(453.000086,321.452909) (486.316268,9.610537)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(526.452509,475.367066) (528.693382,475.838474)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(194.241601,420.603720) (326.090257,319.886410)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(193.771878,392.113383) (197.544298,396.634300)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(197.544298,396.634300) (234.198962,372.322767)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(234.198962,372.322767) (326.090257,319.886410)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(326.090257,319.886410) (403.030001,252.972978)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(364.416065,298.696051) (403.030001,252.972978)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(276.349154,450.665761) (291.424798,399.099768)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(267.152320,439.290093) (291.424798,399.099768)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(291.424798,399.099768) (310.415565,386.332989)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(310.415565,386.332989) (347.855123,349.423427)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(304.627762,367.807452) (347.855123,349.423427)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(368.137005,335.345170) (398.889292,284.033497)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(398.889292,284.033497) (403.030001,252.972978)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(403.030001,252.972978) (486.316268,9.610537)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(397.618800,205.406011) (486.316268,9.610537)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(340.346286,199.741438) (486.316268,9.610537)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(696.202330,272.442662) (607.343697,283.362549)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(684.829069,254.539490) (607.343697,283.362549)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(670.080060,344.498090) (676.573408,344.605138)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(676.573408,344.605138) (656.318927,306.844317)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(658.797557,322.711551) (656.318927,306.844317)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(656.318927,306.844317) (607.343697,283.362549)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(649.408970,331.482308) (648.978097,308.692182)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(648.978097,308.692182) (607.343697,283.362549)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(607.343697,283.362549) (585.171090,281.341831)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(634.565771,379.400182) (600.844490,289.217382)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(600.844490,289.217382) (585.171090,281.341831)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(585.171090,281.341831) (457.921128,91.723857)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(540.403392,180.891624) (457.921128,91.723857)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(630.019527,140.478833) (511.023269,141.911699)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(511.023269,141.911699) (457.921128,91.723857)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(457.921128,91.723857) (461.412562,84.079199)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(461.412562,84.079199) (486.316268,9.610537)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(486.316268,9.610537) (578.209346,-177.310720)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(432.429285,-403.623038) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(425.875238,-430.026124) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-1181.700706,898.720985) (-1186.119191,920.862922)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-959.366864,889.843524) (-629.534993,1044.210684)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-720.437588,974.451760) (-687.042583,1025.400192)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-687.042583,1025.400192) (-629.534993,1044.210684)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-625.848388,1105.143193) (-629.534993,1044.210684)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-629.534993,1044.210684) (-573.518781,1037.234996)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-1095.933604,754.621791) (-1154.954079,776.790790)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-1154.954079,776.790790) (-963.710049,824.378614)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-998.282846,791.756817) (-963.710049,824.378614)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-963.710049,824.378614) (-820.642188,857.692896)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-958.790793,706.437617) (-820.642188,857.692896)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-855.036641,858.872215) (-820.642188,857.692896)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-821.240213,825.436420) (-829.704741,856.919477)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-829.704741,856.919477) (-820.642188,857.692896)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-820.642188,857.692896) (-758.168841,865.011098)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-818.543575,801.427115) (-804.197192,855.463109)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-804.197192,855.463109) (-758.168841,865.011098)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-758.168841,865.011098) (-707.150542,904.873143)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-888.939450,707.259095) (-850.045334,720.262632)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-856.534740,725.820472) (-850.045334,720.262632)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-850.045334,720.262632) (-843.109283,734.231940)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-843.109283,734.231940) (-814.900859,761.121277)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-820.865784,730.694576) (-820.423253,749.165481)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-820.423253,749.165481) (-814.900859,761.121277)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-814.900859,761.121277) (-707.150542,904.873143)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-792.760936,727.785260) (-796.796417,778.787902)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-796.796417,778.787902) (-707.150542,904.873143)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-826.668851,570.251464) (-774.752317,716.729109)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-805.776646,656.839113) (-774.752317,716.729109)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-774.752317,716.729109) (-713.175491,863.549138)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-748.647428,651.979416) (-735.524318,666.558935)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-735.524318,666.558935) (-735.380544,697.819728)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-735.380544,697.819728) (-713.175491,863.549138)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-713.175491,863.549138) (-707.150542,904.873143)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-707.150542,904.873143) (-611.082071,992.663340)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-671.406681,858.217444) (-611.082071,992.663340)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-611.082071,992.663340) (-573.518781,1037.234996)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-573.518781,1037.234996) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-562.691526,1041.448924) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-521.568811,1042.803391) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-506.418794,995.876721) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-457.017799,1021.772619) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-463.701476,1010.635909) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-457.511674,986.739635) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-577.953202,866.849524) (-544.538286,977.152131)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-620.972047,916.882024) (-604.590084,934.674622)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-604.590084,934.674622) (-544.538286,977.152131)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-544.538286,977.152131) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-488.930180,973.694690) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-488.602922,978.215509) (-408.726482,957.296766)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-408.726482,957.296766) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-511.691054,934.917721) (-479.700948,921.588050)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-479.700948,921.588050) (-424.735911,934.189050)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-447.336963,926.109720) (-424.735911,934.189050)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-437.915479,923.188824) (-424.735911,934.189050)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-499.296683,945.842199) (-480.950959,947.004679)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-480.950959,947.004679) (-447.619855,935.801954)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-447.619855,935.801954) (-424.735911,934.189050)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-424.735911,934.189050) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-429.884630,940.086221) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-417.273554,939.147990) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-401.339323,930.926000) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-384.455160,933.714706) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-411.082937,916.607679) (-398.525073,912.191328)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-398.525073,912.191328) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-397.292696,908.101491) (-367.493237,878.369529)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-367.493237,878.369529) (-362.259990,860.542038)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-528.697042,894.979760) (-378.986254,881.207859)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-535.068853,913.568679) (-378.986254,881.207859)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-378.986254,881.207859) (-362.259990,860.542038)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-362.259990,860.542038) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-527.200965,858.925624) (-502.531448,844.055809)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-516.566015,849.272760) (-502.531448,844.055809)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-502.531448,844.055809) (-379.055606,830.307513)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-459.729890,804.765770) (-379.055606,830.307513)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-379.055606,830.307513) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-542.876100,812.032818) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-743.205733,537.300522) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-715.694529,553.409701) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-688.927692,540.287464) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-739.085366,603.412489) (-565.659757,635.645729)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-720.540938,624.174343) (-565.659757,635.645729)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-605.284147,631.062756) (-591.790950,649.471008)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-591.790950,649.471008) (-565.659757,635.645729)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-565.659757,635.645729) (-521.821861,616.281777)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-521.821861,616.281777) (-347.324914,605.814061)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-347.324914,605.814061) (-207.522347,454.886342)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-207.522347,454.886342) (-174.510948,428.414751)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-174.510948,428.414751) (-113.637291,430.698272)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-272.211510,425.485394) (-113.637291,430.698272)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-113.637291,430.698272) (6.416716,251.181984)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-45.843735,426.776192) (6.416716,251.181984)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(2.295120,329.659614) (6.416716,251.181984)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(18.092365,293.738937) (6.416716,251.181984)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(6.416716,251.181984) (97.724742,84.373012)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-880.995001,217.152399) (-875.157023,223.673498)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-873.859643,219.658075) (-875.157023,223.673498)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-875.157023,223.673498) (-191.883881,210.812594)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-884.993722,226.598908) (-879.852820,227.025634)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-879.852820,227.025634) (-191.883881,210.812594)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-840.160183,76.657480) (-834.118999,77.498904)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-834.118999,77.498904) (-770.273838,108.673080)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-765.332831,104.107833) (-770.273838,108.673080)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-770.273838,108.673080) (-767.925863,122.654114)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-767.773174,120.739113) (-767.925863,122.654114)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-754.668626,139.526747) (-723.510599,191.341295)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-806.993563,178.134435) (-751.878714,176.873682)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-751.878714,176.873682) (-723.510599,191.341295)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-800.569875,194.819353) (-723.510599,191.341295)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-776.246800,224.832265) (-723.510599,191.341295)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-743.787301,247.741446) (-725.379993,194.938446)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-725.379993,194.938446) (-723.510599,191.341295)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-723.510599,191.341295) (-636.896243,177.505740)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-636.896243,177.505740) (-191.883881,210.812594)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-399.657020,246.105689) (-191.883881,210.812594)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-191.883881,210.812594) (-27.211761,229.349062)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-375.118812,318.401191) (-27.211761,229.349062)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-188.212148,255.459878) (-27.211761,229.349062)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-106.709606,281.612951) (-27.211761,229.349062)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-45.024171,284.909249) (-23.722287,255.027414)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-23.722287,255.027414) (-27.211761,229.349062)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-27.211761,229.349062) (-13.216410,224.055341)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-13.216410,224.055341) (97.724742,84.373012)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(30.016127,178.098013) (97.724742,84.373012)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(97.724742,84.373012) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-96.939850,40.136898) (-66.169069,7.135385)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-96.718272,-9.815610) (-66.169069,7.135385)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-66.169069,7.135385) (30.242183,7.471188)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-51.315152,11.517907) (30.242183,7.471188)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-99.246983,193.176497) (-50.002570,116.318836)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-50.002570,116.318836) (-49.210334,26.532107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-85.642162,109.482017) (-49.210334,26.532107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-37.892428,75.920692) (-49.210334,26.532107)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-49.210334,26.532107) (30.242183,7.471188)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-14.604562,7.210226) (30.242183,7.471188)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(30.242183,7.471188) (89.484454,-1.344029)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(40.077712,58.078553) (51.459811,8.508182)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(51.459811,8.508182) (89.484454,-1.344029)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(63.932135,-9.593408) (89.484454,-1.344029)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(89.484454,-1.344029) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(122.835903,-11.339347) (124.601640,-3.795414)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(117.673770,-9.561475) (120.406774,-5.936668)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(120.406774,-5.936668) (120.684029,-5.527732)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(120.684029,-5.527732) (124.601640,-3.795414)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(124.601640,-3.795414) (128.479859,7.537317)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(120.452009,4.601447) (122.744234,5.322727)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(122.744234,5.322727) (126.840216,5.080049)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(125.665741,4.772661) (126.840216,5.080049)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(126.840216,5.080049) (128.479859,7.537317)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(128.479859,7.537317) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(131.804835,13.554223) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(139.318619,3.164586) (146.640757,12.551358)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(141.345984,5.471508) (146.640757,12.551358)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(143.054063,4.143741) (146.640757,12.551358)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(142.895926,7.541337) (146.640757,12.551358)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(143.506351,10.670054) (146.640757,12.551358)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(145.952225,10.922131) (146.640757,12.551358)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(146.640757,12.551358) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(233.402162,74.674796) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(275.121541,64.903187) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(267.191970,-151.873524) (270.575504,-141.756776)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(270.575504,-141.756776) (330.198617,-57.475134)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(330.198617,-57.475134) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(348.130964,-152.903982) (352.837508,-112.329013)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(352.837508,-112.329013) (395.565537,-22.369031)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(395.565537,-22.369031) (578.209346,-177.310720)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-810.083538,193.589311) (-800.569875,194.819353)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(172.499703,-323.636647) (178.715236,-319.860646)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(182.164202,-326.154767) (179.043514,-320.038899)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(192.504283,-309.081068) (184.423658,-301.750391)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(184.423658,-301.750391) (178.503116,-306.815081)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(212.882243,-283.312451) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(236.476242,-279.642489) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(233.664507,-337.063889) (292.696563,-330.285138)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(266.062977,-331.634247) (292.696563,-330.285138)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(290.193522,-332.156790) (292.696563,-330.285138)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(292.696563,-330.285138) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(295.908525,-334.961575) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(340.615632,-327.502948) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(462.627538,-173.032877) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(403.708240,-195.897902) (428.387201,-468.849536)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-892.898643,70.281851) (-784.062839,-29.238888)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-784.062839,-29.238888) (-777.930725,-35.566825)};
-\addplot[gray!25,thin,no marks,forget plot] coordinates {(-134.930097,-106.885519) (-125.015229,-123.223106)};
-\addplot[only marks,mark=*,gray!35,mark size=.65pt,forget plot] coordinates {(1424.292343,470.156264) (1369.734634,413.285630) (1327.888948,390.348302) (1338.767678,388.265053) (1367.018005,362.559682) (1401.666111,322.309705) (1422.016495,256.881670) (1429.337404,276.008727) (1427.656414,271.348741) (1436.878970,279.679256) (1360.663583,297.070456) (1352.979981,297.717093) (1355.237528,291.875551) (1360.337654,205.457362) (1328.374132,210.426468) (1358.061442,249.691252) (1412.011345,239.378230) (1412.913501,238.766189) (1364.391723,260.873790) (1357.091786,276.700475) (1325.179682,288.905113) (1304.356273,336.410430) (1311.920692,310.870744) (1279.178856,255.049030) (1257.248935,254.761184) (1177.672711,221.191394) (1182.614099,228.467530) (1329.583074,-70.703374) (1300.487061,-9.597897) (1261.731997,-14.669903) (1218.902052,41.802003) (1170.529619,128.895524) (1169.957047,129.655248) (1170.421600,128.973152) (1170.167143,128.432178) (1170.199972,128.374439) (1200.030731,-82.716121) (1198.900602,-84.768493) (1183.389460,-83.518428) (1154.779819,-48.121029) (1162.657367,-6.812395) (1135.647931,42.872909) (1004.923852,83.931813) (1032.769950,176.854014) (1107.262298,-84.555434) (1089.113547,-86.747791) (1083.133342,-96.039343) (1026.286581,-56.980699) (968.774595,-28.567187) (973.141121,-21.585991) (958.031302,-4.314359) (813.626086,-80.993198) (713.269843,155.601526) (830.301053,138.831809) (832.746931,132.558614) (846.522301,120.893180) (836.894014,119.464839) (821.556825,98.853298) (787.820635,131.030289) (892.151357,28.907170) (797.570864,3.318632) (834.699535,3.757677) (733.996467,-22.704361) (703.614962,-65.594701) (672.690310,-178.009654) (615.532556,-176.474521) (614.258609,-179.237693) (863.032398,129.211432) (1197.952265,-270.663895) (1170.939481,-291.620327) (1163.075586,-289.104308) (1192.376038,-224.166238) (1147.108757,-239.631264) (1273.109571,-143.937480) (1106.145510,-297.245361) (1203.274182,-146.640875) (1122.948312,-209.347225) (973.133494,-378.792841) (871.322952,-427.793187) (662.174837,-191.254407) (127.634710,759.737430) (95.151547,709.402322) (212.172444,684.440190) (211.536099,675.621461) (20.995824,659.490655) (167.434750,557.399307) (155.780191,570.576765) (156.730265,575.677001) (159.473849,576.484139) (158.829374,578.841388) (186.592851,635.228033) (213.105537,648.710907) (249.176811,643.116201) (360.119508,806.499406) (289.947333,792.534737) (262.081961,717.042929) (274.137014,623.953788) (493.780190,799.529278) (490.389141,798.292039) (490.493905,802.476827) (488.805342,804.272664) (488.708363,796.772366) (486.221625,799.290279) (386.904487,426.070618) (452.072362,358.650185) (476.296441,324.430107) (305.216315,432.879643) (453.000086,321.452909) (526.452509,475.367066) (528.693382,475.838474) (194.241601,420.603720) (193.771878,392.113383) (197.544298,396.634300) (234.198962,372.322767) (326.090257,319.886410) (364.416065,298.696051) (276.349154,450.665761) (267.152320,439.290093) (291.424798,399.099768) (310.415565,386.332989) (304.627762,367.807452) (347.855123,349.423427) (354.789872,343.352026) (368.137005,335.345170) (398.889292,284.033497) (403.030001,252.972978) (397.618800,205.406011) (340.346286,199.741438) (696.202330,272.442662) (684.829069,254.539490) (670.080060,344.498090) (676.573408,344.605138) (658.797557,322.711551) (656.318927,306.844317) (649.408970,331.482308) (648.978097,308.692182) (607.343697,283.362549) (634.565771,379.400182) (600.844490,289.217382) (585.171090,281.341831) (540.403392,180.891624) (630.019527,140.478833) (511.023269,141.911699) (457.921128,91.723857) (461.412562,84.079199) (486.316268,9.610537) (578.209346,-177.310720) (432.429285,-403.623038) (425.875238,-430.026124) (428.387201,-468.849536) (478.545250,-609.673833) (440.836484,-904.965091) (-1181.700706,898.720985) (-1186.119191,920.862922) (-959.366864,889.843524) (-720.437588,974.451760) (-687.042583,1025.400192) (-625.848388,1105.143193) (-629.534993,1044.210684) (-1095.933604,754.621791) (-1154.954079,776.790790) (-998.282846,791.756817) (-963.710049,824.378614) (-958.790793,706.437617) (-855.036641,858.872215) (-821.240213,825.436420) (-829.704741,856.919477) (-820.642188,857.692896) (-818.543575,801.427115) (-804.197192,855.463109) (-758.168841,865.011098) (-888.939450,707.259095) (-856.534740,725.820472) (-850.045334,720.262632) (-843.109283,734.231940) (-820.865784,730.694576) (-820.423253,749.165481) (-814.900859,761.121277) (-792.760936,727.785260) (-796.796417,778.787902) (-826.668851,570.251464) (-805.776646,656.839113) (-774.752317,716.729109) (-748.647428,651.979416) (-735.524318,666.558935) (-735.380544,697.819728) (-713.175491,863.549138) (-707.150542,904.873143) (-671.406681,858.217444) (-611.082071,992.663340) (-573.518781,1037.234996) (-562.691526,1041.448924) (-521.568811,1042.803391) (-506.418794,995.876721) (-457.017799,1021.772619) (-463.701476,1010.635909) (-457.511674,986.739635) (-577.953202,866.849524) (-620.972047,916.882024) (-604.590084,934.674622) (-544.538286,977.152131) (-488.930180,973.694690) (-488.602922,978.215509) (-408.726482,957.296766) (-511.691054,934.917721) (-479.700948,921.588050) (-447.336963,926.109720) (-437.915479,923.188824) (-499.296683,945.842199) (-480.950959,947.004679) (-447.619855,935.801954) (-424.735911,934.189050) (-429.884630,940.086221) (-417.273554,939.147990) (-401.339323,930.926000) (-384.455160,933.714706) (-411.082937,916.607679) (-398.525073,912.191328) (-397.292696,908.101491) (-367.493237,878.369529) (-528.697042,894.979760) (-535.068853,913.568679) (-378.986254,881.207859) (-362.259990,860.542038) (-527.200965,858.925624) (-516.566015,849.272760) (-502.531448,844.055809) (-459.729890,804.765770) (-379.055606,830.307513) (-542.876100,812.032818) (-743.205733,537.300522) (-715.694529,553.409701) (-688.927692,540.287464) (-739.085366,603.412489) (-720.540938,624.174343) (-605.284147,631.062756) (-591.790950,649.471008) (-565.659757,635.645729) (-521.821861,616.281777) (-347.324914,605.814061) (-207.522347,454.886342) (-174.510948,428.414751) (-272.211510,425.485394) (-113.637291,430.698272) (-45.843735,426.776192) (2.295120,329.659614) (18.092365,293.738937) (6.416716,251.181984) (-880.995001,217.152399) (-873.859643,219.658075) (-875.157023,223.673498) (-884.993722,226.598908) (-879.852820,227.025634) (-840.160183,76.657480) (-834.118999,77.498904) (-765.332831,104.107833) (-770.273838,108.673080) (-767.773174,120.739113) (-767.925863,122.654114) (-787.583095,123.927566) (-754.668626,139.526747) (-806.993563,178.134435) (-751.878714,176.873682) (-800.569875,194.819353) (-776.246800,224.832265) (-743.787301,247.741446) (-725.379993,194.938446) (-723.510599,191.341295) (-636.896243,177.505740) (-399.657020,246.105689) (-191.883881,210.812594) (-375.118812,318.401191) (-188.212148,255.459878) (-106.709606,281.612951) (-45.024171,284.909249) (-23.722287,255.027414) (-27.211761,229.349062) (-13.216410,224.055341) (30.016127,178.098013) (97.724742,84.373012) (-96.939850,40.136898) (-96.718272,-9.815610) (-66.169069,7.135385) (-51.315152,11.517907) (-99.246983,193.176497) (-50.002570,116.318836) (-85.642162,109.482017) (-37.892428,75.920692) (-49.210334,26.532107) (-14.604562,7.210226) (30.242183,7.471188) (40.077712,58.078553) (51.459811,8.508182) (63.932135,-9.593408) (89.484454,-1.344029) (122.835903,-11.339347) (117.673770,-9.561475) (120.406774,-5.936668) (120.684029,-5.527732) (124.601640,-3.795414) (120.452009,4.601447) (122.744234,5.322727) (125.665741,4.772661) (126.840216,5.080049) (128.479859,7.537317) (131.804835,13.554223) (139.318619,3.164586) (141.345984,5.471508) (143.054063,4.143741) (142.895926,7.541337) (143.506351,10.670054) (145.952225,10.922131) (146.640757,12.551358) (233.402162,74.674796) (275.121541,64.903187) (267.191970,-151.873524) (270.575504,-141.756776) (330.198617,-57.475134) (348.130964,-152.903982) (352.837508,-112.329013) (395.565537,-22.369031) (-817.621658,186.867500) (-817.791899,187.259415) (-816.726603,187.487190) (-810.083538,193.589311) (172.499703,-323.636647) (178.715236,-319.860646) (182.164202,-326.154767) (179.043514,-320.038899) (192.504283,-309.081068) (184.423658,-301.750391) (178.503116,-306.815081) (212.882243,-283.312451) (236.476242,-279.642489) (233.664507,-337.063889) (266.062977,-331.634247) (290.193522,-332.156790) (292.696563,-330.285138) (295.908525,-334.961575) (340.615632,-327.502948) (462.627538,-173.032877) (403.708240,-195.897902) (-892.898643,70.281851) (-784.062839,-29.238888) (-777.930725,-35.566825) (-759.481705,-44.696304) (-134.930097,-106.885519) (-125.015229,-123.223106) (-176.773216,-124.572602) (-139.528852,-357.201326) (123.813996,-204.136928) (126.116042,-262.384445) (97.125519,-341.256892) (-755.915482,-337.696603) (-637.991200,-377.111683) (31.548435,-466.690418) (31.553869,-461.072590)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.704pt] coordinates {(156.730265,575.677001)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=5.018pt] coordinates {(486.221625,799.290279)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=2.709pt] coordinates {(305.216315,432.879643)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.590pt] coordinates {(453.000086,321.452909)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.391pt] coordinates {(194.241601,420.603720)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.510pt] coordinates {(696.202330,272.442662)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.078pt] coordinates {(684.829069,254.539490)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=4.148pt] coordinates {(634.565771,379.400182)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.538pt] coordinates {(630.019527,140.478833)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=2.671pt] coordinates {(486.316268,9.610537)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.817pt] coordinates {(578.209346,-177.310720)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.316pt] coordinates {(-829.704741,856.919477)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.048pt] coordinates {(-888.939450,707.259095)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.077pt] coordinates {(-796.796417,778.787902)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=3.234pt] coordinates {(-748.647428,651.979416)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.179pt] coordinates {(-707.150542,904.873143)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.639pt] coordinates {(-671.406681,858.217444)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=1.741pt] coordinates {(-573.518781,1037.234996)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.236pt] coordinates {(-506.418794,995.876721)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.873pt] coordinates {(-457.017799,1021.772619)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.874pt] coordinates {(-463.701476,1010.635909)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.989pt] coordinates {(-604.590084,934.674622)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=1.891pt] coordinates {(-544.538286,977.152131)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.640pt] coordinates {(-424.735911,934.189050)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.174pt] coordinates {(-397.292696,908.101491)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.854pt] coordinates {(-362.259990,860.542038)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.671pt] coordinates {(-516.566015,849.272760)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.232pt] coordinates {(-459.729890,804.765770)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=4.013pt] coordinates {(-542.876100,812.032818)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.195pt] coordinates {(-880.995001,217.152399)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=2.637pt] coordinates {(-879.852820,227.025634)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=4.519pt] coordinates {(-743.787301,247.741446)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.220pt] coordinates {(-45.024171,284.909249)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=4.342pt] coordinates {(-51.315152,11.517907)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.302pt] coordinates {(-99.246983,193.176497)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=1.646pt] coordinates {(117.673770,-9.561475)};
-\addplot[only marks,forget plot,supportorange,mark=triangle*,mark size=3.326pt] coordinates {(120.406774,-5.936668)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.761pt] coordinates {(122.744234,5.322727)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.667pt] coordinates {(142.895926,7.541337)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.225pt] coordinates {(143.506351,10.670054)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=3.704pt] coordinates {(146.640757,12.551358)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.274pt] coordinates {(330.198617,-57.475134)};
-\addplot[only marks,forget plot,riverblue,mark=*,mark size=2.119pt] coordinates {(348.130964,-152.903982)};
-\addlegendimage{only marks,mark=*,riverblue}\addlegendentry{Improvement}
-\addlegendimage{only marks,mark=triangle*,supportorange}\addlegendentry{Deterioration}
-\node[anchor=north west,font=\scriptsize,align=left] at (rel axis cs:0,1) {Lambert equal-area projection\\center: $96^{\circ}$W, $39^{\circ}$N};
-\end{axis}\end{tikzpicture}
-% END GENERATED MAP FIGURE
-\caption{Station-level response to five support observations. Blue circles indicate lower MAE, and orange triangles indicate higher MAE; size scales with the absolute percentage change. Grey points show the station cohort, with straight graph links for geographic context rather than mapped river reaches.}
-\label{fig:map}\end{figure}
-
-Larger absolute baseline bias is associated with a larger absolute MAE reduction (Pearson $r=\BiasGainCorrelation$; Figure~\ref{fig:bias}). This is consistent with the calibration correcting station-level offsets, but the shared baseline in both axes contributes to their association. The correlation falls to 0.57 when the station with the largest baseline bias is omitted; the rank correlation across all stations is 0.49. The descriptive shuffle diagnostic directly perturbs that matching: with station corrections reassigned, mean $K=5$ MAE is \ShuffleMAE\ mg/L, compared with 2.023 mg/L for the matched corrections. These permutations describe sensitivity to station matching, not a further independent test set.
-
-\begin{figure}[htbp]\centering
-% BEGIN GENERATED BIAS FIGURE
-\begin{tikzpicture}\begin{axis}[width=.85\linewidth,height=6.1cm,
-xlabel={Absolute mean baseline bias (mg/L)},ylabel={MAE reduction (mg/L)},
-xmin=0,ymin=-1,axis lines=left,ymajorgrids,grid style={gray!20},
-tick label style={font=\small}]
-\addplot[gray,dashed,no marks] coordinates {(0,0)(30,0)};
-\addplot[only marks,mark=*,riverblue,mark size=2pt] coordinates {
-(0.136127,0.003328) (2.831083,2.239369) (0.657024,-0.140230) (1.116075,0.454472) (0.874068,0.056013) (1.049298,0.355378) (0.679898,0.026090) (2.083191,0.945857) (0.330798,0.058705) (0.063619,-0.065110) (0.334392,0.004764) (1.541046,0.202895) (0.474728,0.097086) (0.375940,0.047761) (2.357122,-0.680616) (0.403480,0.044203) (0.805870,0.005484) (2.729802,-0.013574) (0.732614,0.167036) (2.807174,0.421316) (1.140717,0.019171) (0.635641,0.070991) (0.788477,-0.032316) (0.310931,0.004831) (5.499746,1.168771) (0.547525,0.190388) (3.128875,0.008281) (2.771792,0.169354) (18.472282,7.321289) (1.253303,0.330473) (0.783997,-0.110750) (3.963711,2.257963) (0.867466,0.069357) (1.195458,0.901752) (0.118976,0.097844) (0.025322,0.001763) (0.385848,-0.251868) (1.208311,0.616763) (0.728296,0.337120) (0.498168,0.175645) (0.413858,0.367784) (0.218023,0.038681) (0.620563,0.023159)
-};\end{axis}\end{tikzpicture}
-% END GENERATED BIAS FIGURE
-\caption{Descriptive relationship between absolute baseline bias and calibration gain. Each point is a target station, using seed-averaged errors. Both axes contain the baseline error, so the association should not be interpreted as independent causal evidence.}
-\label{fig:bias}\end{figure}
-
-\subsection{Alternative learners do not improve the regional result}
-The three-seed regional comparison gives $K=5$ MAEs of 2.024 mg/L for ExtraTrees, 2.048 for random forest, and 2.086 for histogram gradient boosting. Random forest, selected by the internal split, therefore does not outperform the existing ExtraTrees reconstruction on the outer query. Gradient boosting gives identical predictions across its three seeds in this configuration; those repeats add no new stochastic evidence. The five-seed ExtraTrees value of 2.023 mg/L remains the reference result.
-
-The main comparison isolates adaptation within the regional model. A matched quantitative comparison with the project's local--transport neural model remains a separate analysis; numerical summaries not traceable to their prediction products are excluded from this manuscript.
+\includegraphics[width=\linewidth]{figures/doc_station_response_v2.pdf}
+\caption{\textbf{Spatial heterogeneity in calibration benefit.} Five-observation station responses from the same regional product used in Table~\ref{tab:support}. Marker size encodes the magnitude of relative MAE change. The projected station coordinates are real; connecting lines represent graph links rather than mapped river-channel geometry.}
+\label{fig:station}
+\end{figure}
 
 \FloatBarrier
 \section{Discussion}
-\subsection{Local measurements complement regional prediction}
-The experiment shows that a small number of target DOC measurements can improve a regional reconstruction without fitting new model weights. Its useful operation is simple: compare observed and predicted concentrations at the same support months, then apply a shrunken correction to the remaining record. Subtracting the base prediction at each support month helps distinguish a station offset from the time-specific base prediction.
+\subsection{Environmental prediction and temporal correction address different parts of the task}
+The results support a practical division of labor in sparse DOC reconstruction. An environmental-context forest supplies a strong reference using nonlinear environmental relationships and engineered observation summaries. The recurrent residual expert is trained to address errors left by a local environmental prediction. Fusing their complete outputs improves temporal reconstruction beyond either expert alone.
 
-This decomposition gives regional models and local monitoring complementary roles. Environmental similarity supplies the initial model, while target measurements correct part of the station mismatch. The result aligns with the broader use of catchment attributes to represent heterogeneous hydrological behavior \citep{kratzert2019}, although this study has not isolated a causal role for individual ecological or hydrological predictors. A constant correction also cannot repair event timing, changing sources, or time-varying concentration--discharge relationships; those remain candidates for further model improvement.
+This design gives residual learning a specific role. Instead of requiring the recurrent network to estimate every part of DOC variation, the local forest anchors its prediction and the neural branch learns a correction. The out-of-fold construction makes this correction depend on errors at withheld training stations, reducing reliance on the forest's fitted training residuals. Observation-aware memory provides a way to encode the changing availability of historical information. Our component comparison establishes complementarity at the expert level; it does not yet isolate whether elapsed observation time, ecological encoding, or recurrent state contributes most to that complementarity.
 
-\subsection{Implications for spatiotemporal graph modeling}
-The broader project uses an ecological encoder, time memory, and directed river messages in a local--transport neural model. The present spatial experiment suggests a concrete target for that model: predicting the residual pattern that remains after regional context and sparse station calibration. Explicit network context is already present in the regional tree inputs. Demonstrating an additional graph benefit will therefore require comparing matched inputs and identifying which errors the learned message pathway resolves. The current spatial result does not by itself establish a transport mechanism.
+The methodological contribution is the organization and training of these complementary tasks for sparse DOC reconstruction. Tree ensembles, recurrent memory, observation decay, and residual modeling each have precedents. Their integration here is evaluated against tree models that already receive explicit lags and river-context features, making the observed temporal improvement a substantive prediction comparison rather than a consequence of withholding history from the baseline.
 
-\subsection{Limits of transfer and monitoring interpretation}
-The study evaluates DOC on a single station holdout within the known ST357 cohort. Five support observations are a per-station budget (215 observations in total), selected across each station's historical record. The result therefore concerns retrospective reconstruction after those observations are available, not a forecast before they are collected. Station descriptors also use the available historical covariates. Inference at a genuinely new basin or under prospective data availability needs a separate evaluation.
+\subsection{Different monitoring gaps call for different information}
+A station with a missing later record and a station with no target history present different learning problems. In the former, observations and hydroclimatic covariates can inform a time-dependent correction. In the latter, the model must transfer relationships across stations with different concentration levels and environmental conditions. The selected temporal hybrid improves the first task, whereas its deployed spatial route retains the context predictor.
 
-The station bootstrap reflects heterogeneity within this chosen holdout; it neither accounts for all dependence between connected stations nor removes the effect of repeated model development against the same outer split. Replication across independent station groups, support schedules, and basins is the next empirical requirement for a broader transfer claim. Finally, the wide range of station responses means that a pooled gain alone is insufficient for deciding where extra sampling is most valuable. The current work has not established an active-monitoring policy.
+The station-adaptation extension addresses a complementary spatial question. A small support set provides direct information about the target concentration level, and a station-specific correction improves the regional prediction without refitting its weights. The improvement across most held-out stations shows practical value, while its wide distribution shows that a small local sample does not help all stations equally. These findings motivate a future model that combines residual temporal learning and sparse spatial adaptation within one jointly evaluated workflow. The current experiments establish the two pieces separately.
+
+\subsection{River connectivity remains an opportunity for model development}
+River-network geostatistics and graph imputation methods provide established ways to exploit relational structure \citep{verhoef2006,cini2022}. Explicit river-context summaries provide a strong source of spatial information in our context predictor. The earlier local-base message and lag-attention variants produced little additional improvement over their matched self-node residual controls. Their incremental value relative to the final selected context expert remains to be established.
+
+The present DOC controls did not establish a reproducible increment from the tested learned river messages or lag attention. This finding helps focus future development: stronger transport representation needs to add information beyond explicit context, potentially through flow-conditioned travel times, source--sink states, or better observations along connected reaches. Concentration predictions alone do not identify mass transport; process constraints would additionally require suitable flow, volume, and source information. The residual formulation offers a natural place to test such additions because their value can be measured against an explicit environmental reference.
+
+\subsection{Limitations and next steps}
+The first priority is stronger generalization evidence. The cohort supplies one repeatedly examined split for each monitoring scenario. Validation observations are used for early stopping, fusion fitting, and candidate selection, and the same outer tasks have informed development. The station-bootstrap intervals quantify variation within those tasks, not performance in an independent basin. New station partitions and a geographically separate basin should test the frozen model and combination.
+
+A second priority is peak reconstruction. Improved overall MAE does not guarantee improved high-DOC predictions, and the temporal tail groups here are particularly small. Higher-frequency records and event-focused evaluation would help determine whether the remaining errors arise from sampling, missing environmental drivers, or the loss function. Monthly reconstruction also cannot recover submonthly events that are absent from the observation record.
+
+A third priority is unifying spatial adaptation with temporal residual learning. The current station correction is constant in log space; it adjusts concentration level but cannot repair incorrect event timing or time-varying bias. Its retrospective support selection also differs from prospective monitoring. A unified evaluation should preserve fixed queries while comparing historical calibration, strictly earlier support, and new-station deployment. Finally, concentration reconstruction can support carbon assessment, but estimates of DOC loads require discharge and a separate accounting of predictive uncertainty. Calibrated prediction intervals remain an additional product to develop for the selected hybrid.
 
 \section{Conclusion}
-Regional prediction combined with sparse station calibration improves historical DOC reconstruction at held-out stations. On a fixed 2,316-cell query, five observations per station reduce MAE from 2.466 to 2.023 mg/L. The result identifies a practical source of predictive improvement: using local measurements to correct the regional concentration baseline. It also sets a clear target for further spatiotemporal graph development---explaining the variation that remains after this correction.
+We developed and evaluated an environmental-context and observation-aware residual framework for sparse river DOC reconstruction. On the existing temporal holdouts, combining the two complete experts reduces MAE by 15.3\% and 22.9\% relative to selected ExtraTrees context predictions, with further improvement over the residual expert alone. These results show that a strong environmental reference and learned residual dynamics can supply complementary predictive information.
 
-\section*{Data and code availability}
-Prediction products and analysis code are available in the local project repository; a public release has not yet been specified. The primary input is the frozen \texttt{regional\_residual\_product\_v1} prediction table. The unified numerical and figure analysis is \texttt{manuscript\_evidence\_v2}, generated by \texttt{scripts/analyze\_spatial\_manuscript\_evidence.py}. The three empirical plots contain numeric coordinates within the LaTeX source. The architecture schematic is supplied as a separate image asset alongside the source.
+Spatial transfer remains the harder task. A separate experiment demonstrates that five target observations can reduce regional reconstruction error by 17.9\%, providing a practical extension toward poorly monitored stations. The next advances should join these capabilities under a common evaluation, strengthen high-concentration reconstruction, and establish performance in new station groups and basins.
 
-\begin{thebibliography}{9}\small
-\bibitem[Sterle et~al.(2024)]{sterle2024} Sterle, G., Perdrial, J., Kincaid, D. W., et~al. (2024). CAMELS-Chem: augmenting CAMELS (Catchment Attributes and Meteorology for Large-sample Studies) with atmospheric and stream water chemistry data. \emph{Hydrology and Earth System Sciences}, 28, 611--630. \url{https://doi.org/10.5194/hess-28-611-2024}.
-\bibitem[Song et~al.(2022)]{song2022} Song, Z., Xia, J., Wang, G., She, D., Hu, C., and Hong, S. (2022). Regionalization of hydrological model parameters using gradient boosting machine. \emph{Hydrology and Earth System Sciences}, 26, 505--524. \url{https://doi.org/10.5194/hess-26-505-2022}.
-\bibitem[Geurts et~al.(2006)]{geurts2006} Geurts, P., Ernst, D., and Wehenkel, L. (2006). Extremely randomized trees. \emph{Machine Learning}, 63, 3--42. \url{https://doi.org/10.1007/s10994-006-6226-1}.
-\bibitem[Breiman(2001)]{breiman2001} Breiman, L. (2001). Random forests. \emph{Machine Learning}, 45, 5--32. \url{https://doi.org/10.1023/A:1010933404324}.
-\bibitem[Kratzert et~al.(2019)]{kratzert2019} Kratzert, F., Klotz, D., Shalev, G., Klambauer, G., Hochreiter, S., and Nearing, G. (2019). Towards learning universal, regional, and local hydrological behaviors via machine learning applied to large-sample datasets. \emph{Hydrology and Earth System Sciences}, 23, 5089--5110. \url{https://doi.org/10.5194/hess-23-5089-2019}.
-\bibitem[Roberts et~al.(2017)]{roberts2017} Roberts, D. R., Bahn, V., Ciuti, S., et~al. (2017). Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure. \emph{Ecography}, 40, 913--929. \url{https://doi.org/10.1111/ecog.02881}.
+\section*{Data, code, and figure availability}
+The current manuscript is supported by local prediction products and reproducible analysis scripts. Main hybrid results are recomputed by \texttt{analyze\_doc\_hybrid\_manuscript.py}; spatial-extension results are recomputed by \texttt{analyze\_spatial\_manuscript\_evidence.py}. The scripts retain the source model, split, and prediction references used in each comparison. A public data and code release has not yet been assigned a persistent identifier. Figure~\ref{fig:architecture} is an AI-assisted architecture schematic checked against the implemented model. All empirical plots are generated from saved numerical predictions.
+
+\appendix
+\section{Tail diagnostics and implementation details}\label{app:tail}
+Table~\ref{tab:tail} records the high-concentration comparison without treating repeated predictions across seeds as additional observations. Thresholds are estimated from training labels separately for each scenario.
+
+\begin{table}[htbp]\centering\small
+\caption{Training-derived Q90 tail MAE (mg/L). Asterisks indicate fewer than 20 unique query cells.}
+\label{tab:tail}
+% BEGIN GENERATED TAIL RESULTS
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.8cm}rrrr}\toprule
+Scenario & Threshold & Cells & ET MAE & Hybrid MAE\\\midrule
+Random gaps & 10.00 & 431 & 6.748 & 6.748\\
+Unobserved periods & 11.00 & 12* & 6.759 & 6.712\\
+Observation-assisted periods & 11.00 & 7* & 6.862 & 7.129\\
+Unmonitored stations & 9.40 & 510 & 6.906 & 6.906\\
+\bottomrule\end{tabular}
+% END GENERATED TAIL RESULTS
+\end{table}
+
+The temporal expert uses nine ecological encoder inputs, 14 base monthly channels, and nine observation-aware channels before ecological embedding. The node representation has width 64 and the ecological embedding width 32. The self-node encoder is inherited from the graph implementation; excluding edge messages leaves the node transformation and explicit upstream-support feature intact. Residual targets, input visibility, and the terminal expert combination are defined by Equations~\ref{eq:oof}--\ref{eq:fusion}. Reproduction should use the selected product settings described here, rather than earlier temporal models with different prediction clipping or training budgets.
+
+\begin{thebibliography}{99}
+\bibitem{yang2017}
+Yang, Q., Zhang, X., Xu, X., and Asrar, G.~R. (2017).
+An analysis of terrestrial and aquatic environmental controls of riverine dissolved organic carbon in the conterminous United States.
+\emph{Water}, 9, 383.
+\url{https://doi.org/10.3390/w9060383}.
+
+\bibitem{tian2025}
+Tian, S., Sha, A., Luo, Y., et al. (2025).
+A novel framework for river organic carbon retrieval through satellite data and machine learning.
+\emph{ISPRS Journal of Photogrammetry and Remote Sensing}, 221, 109--123.
+\url{https://doi.org/10.1016/j.isprsjprs.2025.01.028}.
+
+\bibitem{sterle2024}
+Sterle, G., Perdrial, J., Kincaid, D.~W., et al. (2024).
+CAMELS-Chem: augmenting CAMELS (Catchment Attributes and Meteorology for Large-sample Studies) with atmospheric and stream water chemistry data.
+\emph{Hydrology and Earth System Sciences}, 28, 611--630.
+\url{https://doi.org/10.5194/hess-28-611-2024}.
+
+\bibitem{verhoef2006}
+Ver Hoef, J.~M., Peterson, E., and Theobald, D. (2006).
+Spatial statistical models that use flow and stream distance.
+\emph{Environmental and Ecological Statistics}, 13, 449--464.
+\url{https://doi.org/10.1007/s10651-006-0022-8}.
+
+\bibitem{breiman2001}
+Breiman, L. (2001).
+Random forests.
+\emph{Machine Learning}, 45, 5--32.
+\url{https://doi.org/10.1023/A:1010933404324}.
+
+\bibitem{geurts2006}
+Geurts, P., Ernst, D., and Wehenkel, L. (2006).
+Extremely randomized trees.
+\emph{Machine Learning}, 63, 3--42.
+\url{https://doi.org/10.1007/s10994-006-6226-1}.
+
+\bibitem{cini2022}
+Cini, A., Marisca, I., and Alippi, C. (2022).
+Filling the G\_ap\_s: multivariate time series imputation by graph neural networks.
+\emph{International Conference on Learning Representations}.
+\url{https://openreview.net/forum?id=kOu3-S3wJ7}.
+
+\bibitem{che2018}
+Che, Z., Purushotham, S., Cho, K., Sontag, D., and Liu, Y. (2018).
+Recurrent neural networks for multivariate time series with missing values.
+\emph{Scientific Reports}, 8, 6085.
+\url{https://doi.org/10.1038/s41598-018-24271-9}.
+
+\bibitem{roberts2017}
+Roberts, D.~R., Bahn, V., Ciuti, S., et al. (2017).
+Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure.
+\emph{Ecography}, 40, 913--929.
+\url{https://doi.org/10.1111/ecog.02881}.
 \end{thebibliography}
 \end{document}

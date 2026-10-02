@@ -43,6 +43,11 @@ def block(source, name, body):
 
 
 def main():
+    if "DOC HYBRID MANUSCRIPT" in TEX.read_text():
+        from refresh_doc_hybrid_manuscript import main as refresh_hybrid
+
+        refresh_hybrid()
+        return
     data = pd.read_csv(EVIDENCE / "main_results.csv").sort_values("k")
     station = pd.read_csv(EVIDENCE / "station_gain.csv", dtype={"site_no": str})
     stats = json.loads((EVIDENCE / "station_summary.json").read_text())

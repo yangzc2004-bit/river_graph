@@ -1,6 +1,11 @@
 # Spatial transfer: unified manuscript evidence
 
-This revision reconciles all primary tables and figures to the frozen
+This note supports the spatial-adaptation extension of the revised DOC hybrid
+manuscript. The main temporal hybrid results are in
+`experiments/phase4_transfer/kgml_local_transport_v1/manuscript_evidence_v1/`;
+the two experiments use different predictors and query sets.
+
+This revision reconciles all spatial-extension tables and figures to the frozen
 120-tree regional ExtraTrees product (source pool 40; seeds 42–46). It
 supersedes the mixed-product summaries in v1. No model was retrained and no
 prediction was changed.
@@ -74,18 +79,21 @@ comparison; it does not establish that KGML adaptation fails.
 - Analysis: `scripts/analyze_spatial_manuscript_evidence.py`
 - Tables, figures and correction note:
   `experiments/phase4_transfer/spatial_adaptation/manuscript_evidence_v2/`
-- Figure/number injection: `scripts/refresh_spatial_manuscript.py`
+- Figure/number injection: `scripts/refresh_doc_hybrid_manuscript.py`
+  (`scripts/refresh_spatial_manuscript.py` forwards to this entry point for the
+  current hybrid manuscript).
 - Manuscript: `docs/paper/latex/spatial_transfer_draft_v1.tex`
 
 ```bash
 PYTHONPATH=.:scripts uv run --no-sync python scripts/analyze_spatial_manuscript_evidence.py
-uv run --no-sync python scripts/refresh_spatial_manuscript.py
+uv run --no-sync python scripts/refresh_doc_hybrid_manuscript.py
 ```
 
-The three empirical plots embed vector coordinates directly in the manuscript.
-Figure 1 is the image-generated architecture schematic in
-`docs/paper/latex/figures/regional_calibration_modular_architecture_v4.png`; its generation
-and revision prompts are saved alongside it. Compile with the adjacent `figures/`
+The three empirical plots are exported as vector PDFs and included in the manuscript.
+The revised Figure 1 is the image-generated hybrid architecture schematic in
+`docs/paper/latex/figures/doc_hybrid_architecture_v1.png`; its generation
+prompt is saved alongside it. Historical regional-calibration schematics remain
+in that directory. Compile with the adjacent `figures/`
 directory present. The desktop single-file compiler cannot load that asset, so
 the complete PDF was exported with the bundled local Tectonic engine
 and all pages were visually checked. The numerical results are unchanged.
