@@ -51,6 +51,12 @@ forms, auxiliary pH/conductivity profiles, or alternative value-blind support
 schedules did not produce a reliable improvement over the regional residual
 adapter.
 
+We also compared three regional tree learners under the same nested selection
+and support-adaptation protocol. The selected random forest reached 2.048 MAE
+on the outer paired query; ExtraTrees reached 2.024 and histogram gradient
+boosting 2.086. This reproduces the existing ExtraTrees result rather than
+opening a better learner family.
+
 ## Recommended figure set
 
 * Main K curve and station bootstrap: `regional_residual_product_v1/k_curve.png`.
@@ -65,4 +71,3 @@ under a fixed E3 holdout. It supports conditional transfer with a small amount
 of target-station support. It does not establish that river messages are
 universally necessary or that the correction is a prospective forecast before
 the support observations are collected.
-

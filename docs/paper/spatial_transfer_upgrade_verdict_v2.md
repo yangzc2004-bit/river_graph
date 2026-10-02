@@ -53,6 +53,15 @@ therefore not directly comparable with the original paired-query K=5 score
 (2.023). Recent, seasonal and flow-quantile schedules did not provide a
 credible improvement, so support scheduling is closed for this round.
 
+A final learner check kept the source pool, support set and residual adapter
+fixed while comparing ExtraTrees, random forest and histogram gradient
+boosting. Internal station-heldout selection chose random forest, but on the
+outer paired query its three-seed mean MAE was 2.048; ExtraTrees was 2.024 and
+histogram gradient boosting was 2.086. The ExtraTrees result is therefore a
+replication of the existing 2.02 result, not a new performance gain. The
+learner search is closed: changing the tree ensemble does not remove the
+remaining spatial-transfer error.
+
 The result is a spatial adaptation result, not evidence that a deeper GNN is
 needed. The useful operation is learning a target-station correction after the
 source model has supplied a regional prediction.
@@ -104,6 +113,7 @@ not the next priority because their spatial-transfer gain is not established.
 * `experiments/phase4_transfer/spatial_adaptation/fewshot_residual_methods_v1/`
 * `experiments/phase4_transfer/spatial_adaptation/cross_analyte_source_v3_k_session_30/`
 * `experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/`
+* `experiments/phase4_transfer/spatial_adaptation/regional_learner_comparison_v1/`
 * `experiments/phase4_transfer/spatial_adaptation/adapter_comparison_v1/station_mechanism.png`
 
 The product directory is the recommended source for the paper tables and
