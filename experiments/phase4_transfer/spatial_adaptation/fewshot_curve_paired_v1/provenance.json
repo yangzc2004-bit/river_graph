@@ -1,0 +1,116 @@
+{
+  "experiment": "fewshot_curve_paired_v1",
+  "purpose": "fixed-query retrospective sparse spatial DOC reconstruction",
+  "code": {
+    "runner": {
+      "path": "scripts/run_spatial_fewshot_curve.py",
+      "sha256": "281a2c86ae1134c8d0aa8966c40311b42a21cfca3fda703148a7770d91d97692"
+    },
+    "analysis": {
+      "path": "scripts/analyze_spatial_fewshot_curve.py",
+      "sha256": "8d5e68102ace9817ba6cf0eb3fcf12e26aaecf9c729303850992c9c3ef56de6b"
+    },
+    "support_module": {
+      "path": "src/river_graph/experiments/spatial_fewshot.py",
+      "sha256": "287a6f2e9503aa48468a82a0e909a11008bb0551ad868c0bde9043a760141c0c"
+    },
+    "source_model_module": {
+      "path": "scripts/run_spatial_source_selection.py",
+      "sha256": "7b013ff2cf8c3ed5cf5efb9b45fb0d6670aa3a8567916d253712f88f83125560"
+    }
+  },
+  "data": {
+    "dataset": {
+      "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+      "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0"
+    },
+    "mask": {
+      "path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+      "sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91"
+    },
+    "target_analyte": "doc",
+    "target_transform": "log1p",
+    "descriptor_scaling": "all unlabeled station profiles, including held-out target stations (transductive covariate scaling)"
+  },
+  "configuration": {
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "n_estimators": 300,
+    "source_neighbours": 40,
+    "min_samples_leaf": 4,
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "selected_alpha": {
+      "0": 0.0,
+      "1": 0.25,
+      "3": 0.5,
+      "5": 0.5
+    },
+    "support_schedule": "first, middle, last, first-quarter, third-quarter; nested prefixes",
+    "paired_query_cells": 2316,
+    "support_cells_by_k": {
+      "0": 0,
+      "1": 43,
+      "3": 129,
+      "5": 215
+    },
+    "target_role": "outer E3 test",
+    "selection": "mean MAE over nested internal station-heldout validation"
+  },
+  "leakage_statement": "Source forests are fitted without target-station support; support labels are used only for target evaluation features and station-level correction; query labels are evaluation-only.",
+  "outputs": [
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/analysis/curve_summary.csv",
+      "sha256": "0551d1a252c309d7c45aad09971708b897b25dbc95b860d96a148333064a6b9b"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/analysis/paired_improvement.csv",
+      "sha256": "af9a197c1eb0e0ace0d7039d387d38c3b07ad1f81add493ac6aaec5ca60e38c4"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/analysis/spatial_fewshot_curve.pdf",
+      "sha256": "170677376347486adb726635017a3590feb22242073d8ec1e0010ac935721dbb"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/analysis/spatial_fewshot_curve.png",
+      "sha256": "be58bead96f5e1608995dd548f120b77e035c0fa1b0eb030560cd2a96d7d0d56"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/analysis/support_shuffle.csv",
+      "sha256": "ddcd83b9ee9913ae4f75ea2c994919d79af2d0ffad4e9b498d991b1fc763073a"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/query_manifest.json",
+      "sha256": "ab871ac35588d01931548795527c649dc64e81491008ba4fed962d321c506563"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/selected_alpha.csv",
+      "sha256": "88053d96280f666de13fef5482f4f2926078e6639afccf47db102114a8d35a13"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/test_all_alphas.csv",
+      "sha256": "3c06c040a0d6ed527284ecca483713547c33478a48f7da32d9671256e30cd32f"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/test_predictions.parquet",
+      "sha256": "b9243708d8236b0d8e04f8ad89b2fcec9971f8ea4419551940ecdc386709ffc9"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/test_selected.csv",
+      "sha256": "4ea4951624f66fbd4cf128d118aeda692c926456475ab9af00fce24c6651e246"
+    },
+    {
+      "path": "experiments/phase4_transfer/spatial_adaptation/fewshot_curve_paired_v1/validation.csv",
+      "sha256": "19a3d3dab37350c9879a4de570c9676e64d3ec170a687ff1ad80af233100333b"
+    }
+  ]
+}
