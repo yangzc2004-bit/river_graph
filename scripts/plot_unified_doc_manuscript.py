@@ -148,7 +148,7 @@ def main_figure(data: dict, output: Path, show_partitions: bool) -> None:
     pad = max(1, (hi - lo) * .09)
     right.set(xlim=(lo - pad, hi + pad), ylim=(3.55, -.55),
               yticks=range(4), yticklabels=[row[1] for row in COMPARISONS],
-              xlabel="Relative MAE reduction (%)", title="Paired improvement")
+              xlabel="Relative MAE reduction (%)", title="Paired comparisons")
     right.xaxis.set_major_locator(MaxNLocator(4))
     right.tick_params(axis="y", length=0, pad=6, labelsize=7.8)
     right.spines["left"].set_visible(False)
@@ -175,7 +175,7 @@ def station_figure(data: dict, output: Path) -> None:
             ax.scatter(part.relative_gain_pct.to_numpy()[selected], rank[selected],
                        s=12, marker=marker, color=color, alpha=.72, linewidth=0)
         ax.axvline(0, color=GREY, linewidth=.8)
-        ax.set(title=title, xlabel="Station MAE reduction (%)", ylim=(0, len(part) + 2))
+        ax.set(title=title, xlabel="Station MAE reduction (%)", ylim=(-2, len(part) + 3))
         ax.xaxis.set_major_locator(MaxNLocator(4))
         ax.yaxis.set_major_locator(MaxNLocator(5, integer=True))
         ax.grid(axis="x", color="#EEF0F2", linewidth=.45)
@@ -203,7 +203,8 @@ def write_captions(data: dict, output: Path, show_partitions: bool) -> None:
         "predictions as target observations increase from K = 0 to 5. Dashed lines show each "
         "predictor's uncalibrated K = 0 reference. Bold trajectories average training seeds within "
         "each partition, then weight partitions equally." + split_note + " **b,** Paired relative "
-        "MAE reductions; positive values favor the first predictor or K = 5. Points and 95% intervals "
+        "MAE reductions; positive values favor the first predictor or K = 5, while negative values "
+        "indicate higher error. Points and 95% intervals "
         "are the existing paired estimates and 5,000-resample joint station-bootstrap intervals. "
         "The same station receives the same resampling multiplicity across partitions, retaining "
         "repeated-station dependence and cell weighting within each partition. "

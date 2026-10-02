@@ -64,8 +64,12 @@ for paired uncertainty intervals, preserving repeated-station dependence.
 
 Show partition consistency and station-level responses, including environmental
 novelty and visible upstream support. A context-only fusion selection must be
-reported as such. Calibration gains alone do not establish a neural contribution;
-the comparison with calibrated ExtraTrees answers that question directly.
+reported as such. Calibration gains alone do not establish a neural contribution.
+The comparison with calibrated ExtraTrees measures the benefit of the complete
+hybrid workflow. The supplementary context-only affine and
+context-plus-local-forest controls described in `context_affine_control.md`
+assess how much benefit remains beyond global recalibration and combining two
+environmental predictors.
 
 The three-epoch, 20-tree smoke run checks execution and serialization only. The
 nine-fit confirmation batch supplies the scientific results and manuscript

@@ -81,3 +81,33 @@ It writes `confirmation/flow_analysis/`; insufficient discharge records remain
 explicit rather than disappearing from the comparison. No model is refitted.
 The plotting command writes publication PDF/PNG figures and captions under
 `confirmation/analysis/manuscript_figures/`.
+
+## Completed study
+
+All nine fits are complete: three station partitions by three training seeds.
+They cover 172 distinct test stations and 10,520 distinct fixed query cells
+(12,865 cell occurrences across partitions). The principal MAEs are:
+
+| Predictor | No target observations | Five target observations |
+|---|---:|---:|
+| Environmental ExtraTrees | 1.9028 | 1.6094 |
+| Environmental–temporal hybrid | 2.0015 | 1.6261 |
+
+Five-observation calibration improves both models in every partition: 15.42%
+for ExtraTrees and 18.76% for the hybrid. The calibrated hybrid does not establish
+an additional MAE advantage over equally calibrated ExtraTrees. Without support,
+its error is 5.19% higher. The full paired intervals are in
+`confirmation/analysis/primary_comparisons.csv`.
+
+The supplementary affine-context and two-forest controls show that transferring
+the fitted output combination is a priority for further improvement. The trained
+recurrent residual adds only a small spatial increment relative to combining the
+two forests, and that increment changes direction with the support budget.
+These results do not replace the earlier positive temporal reconstruction results.
+
+Both prediction arms remain available through the saved interface. Their fitted
+forests, recurrent weights and full-grid component products are retained locally
+in each run directory. Git records the compact query products, configurations,
+analysis and manuscript figures; the larger forest packages and full grids are
+local training artifacts. The manuscript is
+`docs/paper/latex/spatial_transfer_draft_v1.tex` with a compiled PDF beside it.

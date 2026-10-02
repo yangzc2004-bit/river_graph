@@ -1,0 +1,72 @@
+{
+  "config": {
+    "experiment": "unified_doc_spatial_v1",
+    "split_seed": 143,
+    "seed": 42,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "runtime_snapshot_hash": "cad3dd95d94a8933675a95a1ab946034d9725b0e81f55af084a73d430e3d21d3",
+    "started_at": "2026-10-02T18:30:09.494497+00:00",
+    "n_estimators": 300,
+    "max_epochs": 20,
+    "patience": 5,
+    "n_jobs": 4,
+    "torch_threads": 2,
+    "hidden": 64,
+    "chunk_months": 64,
+    "temporal": "observation_aware_gru",
+    "lookback": 12,
+    "base_variant": "local",
+    "edge_set": "empty",
+    "edge_direction": "upstream",
+    "forest_backend": "extra_trees",
+    "forest_min_samples_leaf": 4,
+    "forest_max_features": 1.0,
+    "dropout": 0.1,
+    "lr": 0.001,
+    "inference_roles": [
+      "train"
+    ],
+    "target_transform": "log1p",
+    "target_analyte": "doc",
+    "context_candidates": [
+      "et_leaf4",
+      "et_leaf2",
+      "et_leaf1",
+      "et_sqrt"
+    ],
+    "fusion_selection": "source-validation MAE: context, temporal, geometric, log-affine",
+    "calibration_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "calibration": "separate alpha by arm and K",
+    "support_policy": "retrospective; all five candidate labels excluded from fixed query",
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "query_cells": 3907,
+    "q90_threshold_train": 10.0
+  },
+  "config_hash": "67e3174b9145bb34bd0b34de43d7f13b8b9016b4bf523a38d767e0ceafe01492",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "runtime_snapshot_hash": "cad3dd95d94a8933675a95a1ab946034d9725b0e81f55af084a73d430e3d21d3",
+  "run_identity_sha256": "76d1b48e39838da2d751ed94568825e116c3363c49ab96ff10770204f080f37c",
+  "prediction_sha256": "507b5dc5e2928b81a97518be93944efbdfbca43444a2079363d9579c05666ea1",
+  "model_files": {
+    "forests.joblib": "a446dd132713837b3b9f0aa7b050288aa42df4e008a5ee4fab16bf1168ed1eec",
+    "context.joblib": "6e13530be7bc5ed6162f59f69162f5008175540a30277a5c295474c4f6984fa5",
+    "residual.pt": "480c369bb29282bc5af02f0795c1e2343fc574ffb8c68c38020d8dcdc4f4bfde",
+    "model.json": "9b4f954349d3b054c4c16d10c89ee8d6d73bc1c5216ecc0520b9b2d9426932a8",
+    "adapter.json": "9692e444bcc9ba3b325eacce1d2281a0b5c39792b8bc77af6c04a5b03c77c153"
+  }
+}
