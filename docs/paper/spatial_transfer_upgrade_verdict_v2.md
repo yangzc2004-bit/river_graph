@@ -29,6 +29,16 @@ its three-seed outer mean was 2.024, effectively identical to the existing
 40-station residual adapter. Enlarging or shrinking the source pool is not the
 remaining bottleneck.
 
+## KGML integration check
+
+The same support correction was applied to the existing five-seed KGML
+full-grid predictions, with alpha chosen from the internal held-out stations
+before the outer evaluation. KGML improved from an outer E3 MAE of about 2.823
+at K=0 to about 2.544 at K=5. This confirms that support calibration also helps
+the graph model, but the resulting model is still weaker than the source
+regional expert plus support adapter (about 2.024). The graph-message variant
+did not separate from the no-message KGML baseline in this spatial test.
+
 The result is a spatial adaptation result, not evidence that a deeper GNN is
 needed. The useful operation is learning a target-station correction after the
 source model has supplied a regional prediction.
