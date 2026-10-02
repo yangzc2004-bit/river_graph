@@ -65,8 +65,19 @@ uv run python scripts/run_ladder.py --experiment unified-doc-spatial
 uv run python scripts/run_ladder.py --experiment unified-doc-spatial --verify-only
 uv run python scripts/analyze_unified_doc_spatial.py
 uv run python scripts/analyze_unified_doc_affine_control.py
+uv run python scripts/analyze_unified_doc_flow.py
+uv run python scripts/plot_unified_doc_manuscript.py
 ```
 
 The analysis commands require all nine completed runs by default. During a live
 batch, `--allow-partial` creates interim analysis separately. The paper uses the
 completed batch and the supplementary component controls.
+
+`analyze_unified_doc_flow.py` adds descriptive discharge-variability and DOC
+record-availability strata, using training-station tertiles and saved
+seed-averaged station responses. Record availability counts observed months;
+it does not change the equal K-support budget or open target history inputs.
+It writes `confirmation/flow_analysis/`; insufficient discharge records remain
+explicit rather than disappearing from the comparison. No model is refitted.
+The plotting command writes publication PDF/PNG figures and captions under
+`confirmation/analysis/manuscript_figures/`.
