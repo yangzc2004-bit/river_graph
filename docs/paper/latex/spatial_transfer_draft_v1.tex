@@ -1,0 +1,121 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype}
+\usepackage{amsmath,amssymb,graphicx,booktabs,array,siunitx,xcolor}
+\usepackage{caption,float,placeins}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{figures/}}
+\sisetup{detect-all,group-separator={,},output-decimal-marker={.}}
+\title{Spatial adaptation of sparse river water-quality reconstruction with regional experts and target-station residual calibration}
+\author{Zhaochen Yang\\[2pt]\small Draft manuscript --- October 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Sparse river monitoring creates a spatial-transfer problem: a model trained on observed stations must reconstruct a target station whose concentration baseline is not known. We separate this problem into regional dynamics transfer and target-station calibration. A source-regional ExtraTrees expert is trained with the target stations held out, and a station-specific residual correction is estimated from a small number of target observations. On a fixed 43-station spatial holdout from the 357-station ST357 river network, mean absolute error falls from 2.466 mg/L with no target support to 2.023 mg/L with five support observations, a 17.93\% reduction. The gain is station-specific: 34 of 43 held-out stations improve, and shuffled residual corrections remove the benefit. Applying the same correction to the existing graph model helps but remains weaker than the regional expert, while alternative tree learners do not improve the result. The evidence supports conditional spatial adaptation rather than a universal graph-superiority claim.
+\end{abstract}
+\paragraph{Keywords:} river monitoring; spatial transfer; few-shot adaptation; dissolved organic carbon; water-quality reconstruction; ecological machine learning
+
+\section{Introduction}
+River monitoring networks are spatially sparse even when their historical records are long. A model can therefore perform well at stations represented during training and still fail when transferred to an unmonitored station. The difficulty is not only a missing time series. Target stations can have persistent concentration offsets caused by local sources, channel morphology, or unmeasured watershed conditions. A regional model may transfer seasonal and hydrologic variation while missing this station-specific baseline.
+
+We study whether a small number of observations at a new station can repair this mismatch. The central design separates two operations. A regional expert learns shared dynamics from source stations. A target-station residual adapter then corrects the regional prediction using $K$ observed target cells, while the query cells remain fixed across all $K$ values. This gives a direct spatial adaptation curve rather than a comparison confounded by different test sets.
+
+Our contribution is an empirical and methodological decomposition of sparse spatial reconstruction. We show that (i) regionalization improves the zero-support starting point, (ii) a simple station residual correction produces a large and monotonic few-shot gain, (iii) the gain is concentrated at stations with large baseline bias, and (iv) the current directed graph branch does not yet provide a stable advantage over the regional explicit-feature expert in this spatial holdout.
+
+\section{Materials and methods}
+\subsection{Study cohort and spatial holdout}
+The ST357 cohort contains 357 stations, 324 river-network edges, and 654 monthly time points. We predict dissolved organic carbon (DOC) in log1p space. The E3 spatial holdout contains 43 target stations and 2,531 observed station-month cells. Five target observations per station are reserved as support candidates before any query score is calculated. The primary comparison uses the same 2,316 query cells at $K\in\{0,1,3,5\}$.
+
+The target stations are excluded from source-model fitting. Temperature, discharge, seasonal terms, station coordinates, ecological descriptors, observation support features, and the target's visible historical information are available according to the frozen spatial-transfer protocol. Query labels are used only for the final evaluation.
+
+\subsection{Regional expert and station residual adapter}
+For a target station $i$ and month $t$, the regional expert gives a log1p prediction $\hat z^{\mathrm{reg}}_{i,t}$. The support observations provide a station residual estimate
+\begin{equation}
+ \bar r_i^{(K)} = \frac{1}{K}\sum_{s\in\mathcal S_i^{(K)}}\left(z_{i,s}-\hat z^{\mathrm{reg}}_{i,s}\right),
+\end{equation}
+where $\mathcal S_i^{(K)}$ is the nested support set. The adapted prediction is
+\begin{equation}
+ \hat z_{i,t}^{(K)}=\hat z^{\mathrm{reg}}_{i,t}+\alpha_K\bar r_i^{(K)}.
+\end{equation}
+The shrinkage coefficients are selected on an internal station-heldout block and then fixed for the outer E3 evaluation: $\alpha_1=0.25$, $\alpha_3=0.50$, and $\alpha_5=0.75$. Predictions are transformed back to concentration units only after adaptation.
+
+The regional expert is an ExtraTrees regressor fit independently for each target station using a fixed source pool selected without target query labels. We also evaluate the existing Local--Transport KGML product, which separates a local prediction from a directed graph residual. The KGML comparison uses the same support correction after prediction. No graph or learner variant is selected from the outer query labels.
+
+\subsection{Evaluation}
+The primary metric is concentration-space MAE on the fixed paired query. Secondary metrics are RMSE, $R^2$, transformed-space MAE, and station-level changes. Station-clustered bootstrap intervals use the 43 target stations as resampling units. To test whether the correction is genuinely station-specific, support residuals are shuffled across target stations while preserving the number of support observations.
+
+\section{Results}
+\subsection{Few-shot spatial adaptation}
+The regional expert has a paired-query MAE of 2.466 mg/L without target support. Adding one, three, and five observations reduces MAE to 2.320, 2.160, and 2.023 mg/L, respectively (Table~\ref{tab:kcurve}). The five-observation correction reduces error by 17.93\% relative to $K=0$. The station-clustered bootstrap difference at $K=5$ is $-0.419$ mg/L with a 95\% interval of $[-0.820,-0.141]$.
+
+\begin{table}[H]
+\centering
+\caption{DOC spatial-transfer curve on the fixed 2,316-cell paired query.}
+\label{tab:kcurve}
+\begin{tabular}{rrr}
+\toprule
+Target support $K$ & MAE (mg/L) & Relative reduction (\%)\\
+\midrule
+0 & 2.466 & 0.00\\
+1 & 2.320 & 5.90\\
+3 & 2.160 & 12.41\\
+5 & \textbf{2.023} & \textbf{17.93}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The gain is heterogeneous across stations. Thirty-four of the 43 held-out stations improve at $K=5$, with a median station-level reduction of 2.5\%. The absolute no-support station bias is strongly associated with the later $K=5$ MAE reduction (correlation approximately 0.92). Shuffling residual corrections across stations removes the improvement, supporting the interpretation that the adapter calibrates a station-specific concentration level rather than merely benefiting from more exposed labels.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/spatial_k_curve.pdf}{\includegraphics[width=0.96\linewidth]{spatial_k_curve.pdf}}{\fbox{\parbox{0.9\linewidth}{Figure asset: spatial K-curve. The source PDF is stored with the manuscript figures.}}}
+\caption{DOC MAE as target-station support increases from zero to five observations.}
+\label{fig:kcurve}
+\end{figure}
+
+\subsection{Spatial pattern of gains}
+Figure~\ref{fig:map} overlays the 43 held-out stations on the ST357 river network. Most target stations move toward lower error after five support observations, but several remain difficult or become worse. This pattern is consistent with local state being only partially identifiable from a small support set.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/station_transfer_map.pdf}{\includegraphics[width=0.96\linewidth]{station_transfer_map.pdf}}{\fbox{\parbox{0.9\linewidth}{Figure asset: station transfer map. The source PDF is stored with the manuscript figures.}}}
+\caption{Station-level benefit of five target observations. Colors show the relative MAE reduction from $K=0$ to $K=5$; point size reflects the number of query months.}
+\label{fig:map}
+\end{figure}
+
+\subsection{Graph and learner comparisons}
+The existing five-seed Local--Transport KGML product has an outer E3 MAE of approximately 2.823 mg/L at $K=0$. The same support correction reduces it to approximately 2.544 mg/L, confirming that support calibration also helps the graph model. It remains weaker than the source-regional expert with residual calibration (2.023 mg/L), and directed-message and no-message variants do not separate reliably in this spatial holdout.
+
+Under the same source pool and nested selection protocol, ExtraTrees, random forest, and histogram gradient boosting reach outer $K=5$ MAEs of 2.024, 2.048, and 2.086 mg/L, respectively. The existing five-seed ExtraTrees product is 2.023 mg/L. Thus, replacing the tree learner does not provide a new performance gain.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/station_mechanism.pdf}{\includegraphics[width=0.96\linewidth]{station_mechanism.pdf}}{\fbox{\parbox{0.9\linewidth}{Figure asset: station mechanism plot. The source PDF is stored with the manuscript figures.}}}
+\caption{Station mechanism: larger baseline bias is associated with larger benefit from target-station residual calibration.}
+\label{fig:mechanism}
+\end{figure}
+
+\section{Discussion}
+The results support a two-layer view of spatial reconstruction. A source-regional model transfers temporal and hydroclimatic variation, but it cannot identify a target station's persistent local offset before any target observations are available. A few support observations provide a low-dimensional calibration that repairs this offset without retraining the regional model.
+
+The spatial graph remains useful as a structured comparison and a future route for residual transport, but the current evidence does not support claiming that river messages are necessary or universally beneficial. The strongest result is instead conditional: spatial adaptation becomes effective when a regional expert is paired with target-station calibration. This also explains why adding more static geomorphology, more elaborate source selection, or alternative tree learners did not materially improve the outer result.
+
+The main limitation is that the outer experiment is a DOC reconstruction study on one ST357 spatial holdout. The $K$ curve quantifies the value of target support under this monitoring design; it does not establish prospective forecast skill before support observations are collected. Replication across additional analytes, basins, and support schedules is needed before generalizing the transfer curve.
+
+\section{Conclusion}
+Sparse spatial water-quality reconstruction benefits from separating regional dynamics from local station calibration. On the ST357 E3 holdout, five target observations reduce DOC MAE by 17.93\%, and the gain is concentrated at stations with large zero-support bias. The current graph model benefits from the same calibration but does not yet outperform the explicit regional expert. The practical and scientific next step is therefore to model the missing local state and test when directed transport adds information beyond that calibrated regional baseline.
+
+\section*{Data and code availability}
+The paired predictions, support curves, spatial map, and analysis scripts are maintained in the project repository. The primary products are in \path{experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/}; the learner comparison is in \path{experiments/phase4_transfer/spatial_adaptation/regional_learner_comparison_v1/}.
+
+\begin{thebibliography}{9}
+\bibitem{kipf2017} Kipf, T. N. and Welling, M. (2017). Semi-supervised classification with graph convolutional networks. ICLR.
+\bibitem{hamilton2017} Hamilton, W. L., Ying, R., and Leskovec, J. (2017). Inductive representation learning on large graphs. NeurIPS, 30.
+\bibitem{reichstein2019} Reichstein, M. et al. (2019). Deep learning and process understanding for data-driven Earth system science. Nature, 566, 195--208.
+\bibitem{sun2021} Sun, A. Y. et al. (2021). Explore spatio-temporal learning of large sample hydrology using graph neural networks. Water Resources Research, 57, e2021WR030394.
+\end{thebibliography}
+\end{document}
