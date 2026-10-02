@@ -96,6 +96,8 @@ def main() -> None:
     for original, destination in [
         (HYBRID / "doc_hybrid_performance.pdf", "doc_hybrid_performance.pdf"),
         (HYBRID / "doc_spatial_support_publication.pdf", "doc_spatial_support_v2.pdf"),
+        (HYBRID / "doc_spatial_support_publication.png", "doc_spatial_support_v2.png"),
+        (HYBRID / "doc_spatial_support_publication.svg", "doc_spatial_support_v2.svg"),
         (HYBRID / "doc_station_response_publication.pdf", "doc_station_response_v2.pdf"),
     ]:
         shutil.copyfile(original, TEX.parent / "figures" / destination)
@@ -105,7 +107,7 @@ def main() -> None:
     if r"\end{document}" not in source:
         raise ValueError("Incomplete LaTeX document")
     TEX.write_text(source)
-    print(f"Refreshed five tables and three empirical figure assets: {TEX}")
+    print(f"Refreshed five tables and three empirical figures with available export formats: {TEX}")
 
 
 if __name__ == "__main__":

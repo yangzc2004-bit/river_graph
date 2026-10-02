@@ -173,55 +173,71 @@ def plot_spatial_publication_copies(out: Path) -> set[Path]:
     stations = pd.read_csv(SPATIAL / "station_gain.csv", dtype={"site_no": str})
     nodes = pd.read_csv("data/processed/graph_nodes_graphfix_st357.csv", dtype={"site_no": str})
     edges = pd.read_csv("data/processed/graph_edges_graphfix_st357.csv", dtype=str)
-    blue, orange, grey = "#235B80", "#D08043", "#7B8288"
+    blue, orange = "#235B80", "#D08043"
     style = {
         "font.size": 8.5, "axes.labelsize": 8.5, "axes.titlesize": 9.0,
         "xtick.labelsize": 8, "ytick.labelsize": 8, "legend.fontsize": 8,
     }
     with plt.rc_context(style):
-        fig, axes = plt.subplots(1, 3, figsize=(6.5, 3.5))
-        fig.subplots_adjust(left=0.075, right=0.985, top=0.87, bottom=0.30, wspace=0.48)
-        axes[0].errorbar(summary.k, summary.mae, yerr=summary.seed_mae_sd,
-                         fmt="o-", markersize=4, color=blue, capsize=2.5, linewidth=1.3)
-        for row in summary.itertuples():
-            axes[0].annotate(f"{row.mae:.3f}", (row.k, row.mae),
-                             xytext=(9 if row.k == 0 else 0, 7),
-                             textcoords="offset points", ha="center", fontsize=8)
-        axes[0].set(ylabel="DOC MAE (mg/L)", title="a  Adaptation", ylim=(1.92, 2.60))
-        axes[1].errorbar(summary.k, summary.reduction_pct,
-                         yerr=np.vstack([summary.reduction_pct - summary.reduction_lo,
-                                         summary.reduction_hi - summary.reduction_pct]),
-                         fmt="o-", markersize=4, color=orange, capsize=2.5, linewidth=1.3)
-        axes[1].axhline(0, color=grey, linewidth=0.7)
-        axes[1].set(ylabel="MAE reduction (%)", title="b  Paired improvement")
-        pooled = shuffle.groupby(["k", "condition"]).mae.mean().reset_index()
-        for condition, color, marker, label in (
-            ("true_support", blue, "o", "Correct station"),
-            ("shuffled_support", grey, "s", "Shuffled station"),
+        fig, axes = plt.subplots(1, 2, figsize=(6.5, 3.3),
+                                 gridspec_kw={"width_ratios": [1.65, 1]})
+        fig.subplots_adjust(left=0.09, right=0.985, top=0.85, bottom=0.22, wspace=0.32)
+        ax = axes[0]
+        baseline = float(summary.mae.iloc[0])
+        ax.plot([0, 5.12], [baseline, baseline], color="#969CA0",
+                linestyle=(0, (1.3, 2.4)), linewidth=0.9)
+        ax.errorbar(summary.k, summary.mae, yerr=summary.seed_mae_sd,
+                     fmt="o-", markersize=4.5, color=blue, capsize=2.5,
+                     elinewidth=0.9, linewidth=1.5, zorder=3)
+        shuffled = shuffle.loc[shuffle.condition.eq("shuffled_support")].groupby("k", as_index=False).agg(
+            mae=("mae", "mean"), seed_sd=("mae", "std"),
+        )
+        ax.errorbar(shuffled.k, shuffled.mae, yerr=shuffled.seed_sd,
+                     fmt="s--", markersize=4.3, color=orange, markerfacecolor="white",
+                     markeredgewidth=1.1, capsize=2.5, elinewidth=0.9, linewidth=1.2, zorder=3)
+        true_final = float(summary.loc[summary.k.eq(5), "mae"].iloc[0])
+        shuffled_final = float(shuffled.loc[shuffled.k.eq(5), "mae"].iloc[0])
+        for value, label, color in (
+            (shuffled_final, "Shuffled station", "#333333"),
+            (baseline, "No support", "#6A7075"),
+            (true_final, "Correct station", "#333333"),
         ):
-            part = pooled.loc[pooled.condition.eq(condition)]
-            axes[2].plot(part.k, part.mae, marker=marker, color=color, label=label,
-                         linewidth=1.3, markersize=4)
-        axes[2].axhline(summary.mae.iloc[0], color=orange, linestyle="--",
-                        linewidth=1, label="No support")
-        axes[2].set(ylabel="DOC MAE (mg/L)", title="c  Station matching", ylim=(1.92, 2.89))
-        for ax in axes:
-            ax.set_xlabel("Support observations (K)")
-            ax.set_xticks([0, 1, 3, 5] if ax is not axes[2] else [1, 3, 5])
-            ax.grid(axis="y", color="#E3E5E7", linewidth=0.5)
-            ax.set_axisbelow(True)
-            title = ax.get_title()
-            ax.set_title("")
-            ax.set_title(title, loc="left", pad=10)
-        handles, labels = axes[2].get_legend_handles_labels()
-        fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.54, 0.12),
-                   ncol=3, frameon=False, fontsize=8.5, handlelength=1.6, columnspacing=1.5)
-        fig.text(0.075, 0.025,
-                 "a: five-seed SD. b: 95% station-bootstrap CI (43 stations).\n"
-                 "c: one fixed station permutation per seed and K; descriptive diagnostic.",
-                 fontsize=8, color="#555555", linespacing=1.35)
-        for suffix in ("pdf", "png"):
-            fig.savefig(out / f"doc_spatial_support_publication.{suffix}", dpi=300, facecolor="white")
+            ax.text(5.35, value, f"{label}\n{value:.3f}", color=color,
+                    fontsize=8, va="center", linespacing=1.4)
+        ax.set(xlabel="Target observations per station, K", ylabel="DOC MAE (mg L$^{-1}$)",
+               xlim=(-0.25, 7.5), ylim=(1.90, 2.93), xticks=[0, 1, 3, 5],
+               yticks=[2.0, 2.2, 2.4, 2.6, 2.8])
+        ax.spines["bottom"].set_bounds(0, 5)
+        ax.set_axisbelow(True)
+        ax.text(-0.12, 1.08, "a", transform=ax.transAxes, fontsize=10, fontweight="bold")
+        ax.set_title("Station-specific calibration", loc="left", pad=15,
+                     fontsize=9, fontweight="normal")
+
+        ax = axes[1]
+        effects = summary.loc[summary.k.gt(0)].sort_values("k")
+        positions = np.arange(len(effects))
+        ax.axvline(0, color="#92989D", linestyle=(0, (2, 3)), linewidth=0.8)
+        ax.errorbar(effects.reduction_pct, positions,
+                     xerr=np.vstack([effects.reduction_pct - effects.reduction_lo,
+                                     effects.reduction_hi - effects.reduction_pct]),
+                     fmt="o", markersize=4.5, color=blue, capsize=3,
+                     elinewidth=1.2, markeredgewidth=1, zorder=3)
+        for ypos, effect in zip(positions, effects.reduction_pct, strict=True):
+            ax.annotate(f"{effect:.1f}%", (effect, ypos), xytext=(0, 10),
+                        textcoords="offset points", ha="center", color="#333333", fontsize=8.5)
+        ax.set(xlabel="MAE reduction (%)", xlim=(-5, 34), ylim=(2.55, -0.55),
+               xticks=[0, 10, 20, 30], yticks=positions,
+               yticklabels=[f"K = {int(k)}" for k in effects.k])
+        ax.tick_params(axis="y", length=0, pad=8)
+        ax.spines["left"].set_visible(False)
+        ax.text(-0.19, 1.08, "b", transform=ax.transAxes, fontsize=10, fontweight="bold")
+        ax.set_title("Paired improvement", loc="left", pad=15,
+                     fontsize=9, fontweight="normal")
+        fig.text(0.09, 0.055, "43 stations  ·  2,316 fixed query cells  ·  5 training seeds",
+                 fontsize=8, color="#6A7075")
+        with plt.rc_context({"pdf.fonttype": 42, "svg.fonttype": "none"}):
+            for suffix in ("pdf", "png", "svg"):
+                fig.savefig(out / f"doc_spatial_support_publication.{suffix}", dpi=300, facecolor="white")
         plt.close(fig)
 
         def project(lon, lat):
