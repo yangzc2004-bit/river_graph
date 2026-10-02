@@ -46,6 +46,13 @@ outer regional score was 2.469, while the fixed K=5 residual adapter was about
 2.020. Source regionalization and support correction are the useful
 components; the first hard gate formulation adds no gain.
 
+Value-blind support schedules were checked as a final low-cost extension.
+Fixed evenly spread support remained best, but its common-query score (1.984)
+uses a smaller query after taking the union of all candidate schedules and is
+therefore not directly comparable with the original paired-query K=5 score
+(2.023). Recent, seasonal and flow-quantile schedules did not provide a
+credible improvement, so support scheduling is closed for this round.
+
 The result is a spatial adaptation result, not evidence that a deeper GNN is
 needed. The useful operation is learning a target-station correction after the
 source model has supplied a regional prediction.
