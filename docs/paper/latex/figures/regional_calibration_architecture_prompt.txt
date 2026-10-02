@@ -1,0 +1,33 @@
+Generation tool: built-in image_gen.imagegen
+Final asset: regional_calibration_architecture_v3.png
+Role: illustrative model architecture, not empirical data.
+This schematic depicts the regional ExtraTrees and station-calibration manuscript, not the separate temporal GNN.
+
+Initial generation prompt:
+Use case: infographic-diagram.
+Asset type: Figure 1 model architecture for a scientific water-quality reconstruction manuscript.
+Create a polished publication-quality scientific architecture illustration with the restrained clarity typical of Nature research figures. Original design, no journal logo. Wide landscape canvas approximately 2:1, preferably 3000 pixels or wider. Pure white background, crisp flat vector-like shapes, generous whitespace, precise thin arrows, dark charcoal sans-serif type, blue #235B80 for the fixed regional prediction path, orange #D08043 for target observation calibration, muted teal only for the final output. No shadows, no 3D, no gradients, no stock clip art, no decoration. Text large enough to read when printed at 170 mm width. Align panels on a clean grid. All labels in English, spell exactly. 
+Scientific model: a regional ExtraTrees base predictor with a target-station mean-residual correction in log(1+DOC) space. This is NOT a neural network. Do not invent GNN, GRU, attention, message passing, or conservation constraints.
+
+Composition: three labeled panels a, b, c left to right, roughly equal widths. Each panel has a short bold heading.
+Panel a heading "River-network observations". Show an elegant miniature branching river network with five blue source-station dots and one orange hollow target-station ring. Treat as schematic, not a real map. Below it two neatly stacked feature cards:
+"Station descriptors" with smaller text "Ecology · hydroclimate · location"
+and "Monthly predictors" with smaller text "Hydrology · season · visible DOC context".
+An arrow labelled "Environmental similarity" links station descriptors to the top of panel b. A separate arrow links Monthly predictors to the model in b. Source measurements are denoted by short label "Source DOC". Target observations must NOT connect to model fitting.
+
+Panel b heading "Regional base prediction". Upper compact box "40 similar source stations". Below a larger blue-outline box with a restrained three-tree icon and labels "ExtraTrees" and "120 trees". Clearly show the selected source stations feeding the fixed tree model. The monthly predictors also feed this box. The output under the box is "Base prediction" with simple math "z_base". A tiny subordinate label beneath says "z = log(1 + DOC)". Model parameters stay fixed during target calibration. Show a horizontal arrow carrying "z_base" toward panel c's final combination.
+
+Panel c heading "Target-station calibration". Top orange box "K target observations" with "K = 0, 1, 3, 5" beneath, and a tiny sequence of five orange dots illustrating sparse support. A second input to the residual calculation comes from panel b's base prediction, labelled "At support months". Below, orange box "Mean support residual" with exact short equation "r = mean(z_obs − z_base)". Next small orange box "Shrinkage" with "Δ = α_K r". Below, a junction with + receives blue z_base from panel b and orange Δ from above. Connect this junction to a teal-outline output box "DOC reconstruction" containing "z_final = z_base + Δ" and smaller line "Inverse log transform". Under it a very small neutral label "Fixed query cells".
+Prefer clean orthogonal arrow routes, never arrows crossing text. Labels must be accurate and readable. Visually distinguish source DOC used to fit ExtraTrees from target support used only for calibration. Avoid quantitative result plots, synthetic performance data, accuracy percentages or uncertainty intervals; this figure is architecture only. No overall title banner; panel headings are enough.
+
+Revision 1 prompt:
+Edit this scientific architecture figure. Preserve the entire layout, river illustration, colors, font sizes and all existing labels, except for the following precise scientific corrections:
+1. The blue arrow labelled "Environmental similarity" starting at "Station descriptors" currently goes into the ExtraTrees box. Reroute that one arrow vertically through the empty left gutter of panel b and make it terminate at the LEFT edge of the TOP box "40 similar source stations". It selects source stations, not tree predictions. Keep its label near the source. The separate Monthly predictors arrow must keep going into ExtraTrees.
+2. Change the small blue box on panel c from "At support months" / "z_base" to "Base at support months" / "z_base", keeping its incoming role to the residual calculation. This is the same base prediction evaluated at support months, not a second model.
+3. Inside the orange Shrinkage box, retain "Δ = α_K r" and add one concise small line "K = 0: Δ = 0" beneath it; enlarge that box slightly if needed while retaining clean spacing.
+4. Add small line "per target station" beneath the "40 similar source stations" title above the dots, shrinking the dots spacing if necessary.
+No other changes. Keep text accurately spelled, arrows precise, no overlapping labels. Pure white background, restrained professional publication style.
+
+Final revision prompt:
+Make ONE tiny correction to this architecture figure, keeping all other pixels, labels, layout, colors and scientific content unchanged.
+The blue line coming from "Station descriptors", labelled "Environmental similarity", incorrectly FORKS to two destinations. Keep only the branch that goes UP the narrow gutter and RIGHT into the top box "40 similar source stations". DELETE the short redundant branch that goes right from the fork, turns up briefly, and points directly into the LEFT edge of the large ExtraTrees box at its mid-height. This means erasing only that short branch and its arrowhead, restoring pure white background there. Do NOT remove or change the separate bottom arrow from "Monthly predictors" into the bottom-left of ExtraTrees. Do NOT add anything. Only remove the redundant mid-height arrow entering the left edge of ExtraTrees.

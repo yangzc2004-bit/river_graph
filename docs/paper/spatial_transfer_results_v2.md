@@ -82,5 +82,10 @@ PYTHONPATH=.:scripts uv run --no-sync python scripts/analyze_spatial_manuscript_
 uv run --no-sync python scripts/refresh_spatial_manuscript.py
 ```
 
-The manuscript embeds vector plots and their coordinates directly, so it
-needs no external picture files to compile in the desktop LaTeX editor.
+The three empirical plots embed vector coordinates directly in the manuscript.
+Figure 1 is the image-generated architecture schematic in
+`docs/paper/latex/figures/regional_calibration_architecture_v3.png`; its generation
+and revision prompts are saved alongside it. Compile with the adjacent `figures/`
+directory present. The desktop single-file compiler cannot load that asset, so
+the complete eight-page PDF was exported with the bundled local Tectonic engine
+and all pages were visually checked. The numerical results are unchanged.

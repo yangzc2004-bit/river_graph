@@ -1,9 +1,9 @@
-"""Embed verified numbers and vector plots into the standalone spatial draft.
+"""Embed verified numbers and vector plots into the spatial draft.
 
 Run after analyze_spatial_manuscript_evidence.py. This edits only marked
 generated blocks, preserving the manuscript prose, and requires no TeX engine
-to generate the numeric figures. Both the desktop editor and local Tectonic
-can compile the resulting single-file source without image dependencies.
+to generate the numeric figures. The architecture illustration is a separate
+image asset; compile locally with access to the adjacent figures directory.
 """
 from __future__ import annotations
 
@@ -120,8 +120,11 @@ def main():
             coordinates(np.abs(station.bias_k0), station.mae_reduction),
             r"};\end{axis}\end{tikzpicture}"]
     source = block(source, "BIAS FIGURE", "\n".join(bias))
-    if "IfFileExists" in source or "includegraphics" in source:
-        raise ValueError("Draft must contain all its graphics in the standalone source")
+    if "IfFileExists" in source:
+        raise ValueError("Draft must not silently substitute missing figures")
+    for asset in re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", source):
+        if not (TEX.parent / asset).is_file():
+            raise FileNotFoundError(f"Missing manuscript figure: {asset}")
     TEX.write_text(source)
     print(f"Updated numbers and three data figures in {TEX}")
 
