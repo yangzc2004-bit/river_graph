@@ -103,3 +103,10 @@ not the next priority because their spatial-transfer gain is not established.
 * `experiments/phase4_transfer/spatial_adaptation/source_geomorph_v1/`
 * `experiments/phase4_transfer/spatial_adaptation/fewshot_residual_methods_v1/`
 * `experiments/phase4_transfer/spatial_adaptation/cross_analyte_source_v3_k_session_30/`
+* `experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/`
+* `experiments/phase4_transfer/spatial_adaptation/adapter_comparison_v1/station_mechanism.png`
+
+The product directory is the recommended source for the paper tables and
+predictions. It keeps the full 2,531-cell E3 table while evaluating the main
+K curve on the fixed 2,316-cell paired query. The mechanism figure shows that
+the largest K=5 gains occur at stations with the largest zero-support bias.
