@@ -1,0 +1,49 @@
+{
+  "experiment": "fewshot_residual_paired_v1",
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "alpha_values": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "selected_alpha": {
+    "0": 0.0,
+    "1": 0.25,
+    "3": 0.5,
+    "5": 0.75
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "n_estimators": 300,
+  "target_role": "outer E3 test",
+  "query_cells_by_k": {
+    "0": 2316,
+    "1": 2316,
+    "3": 2316,
+    "5": 2316
+  },
+  "support_cells_by_k": {
+    "0": 0,
+    "1": 43,
+    "3": 129,
+    "5": 215
+  },
+  "paired_query_cells": 2316,
+  "reserved_support_cells": 215,
+  "support_schedule": "first, middle, last, first-quarter, third-quarter; nested prefixes",
+  "selection": "mean MAE over nested internal station-heldout validation",
+  "calibration": "station mean of log1p support label minus log1p source-model prediction, multiplied by K-specific alpha",
+  "source_fit": "one K=0 source regional model per target station; support labels are hidden when generating support predictions"
+}

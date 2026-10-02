@@ -1,0 +1,130 @@
+{
+  "experiment": "fewshot_residual_paired_v1",
+  "description": "Fixed-query E3 spatial few-shot transfer using station-level support residual calibration.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "alpha_values": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "n_estimators": 300,
+  "min_samples_leaf": 4,
+  "paired_query_cells": 2316,
+  "support_cells_by_k": {
+    "0": 0,
+    "1": 43,
+    "3": 129,
+    "5": 215
+  },
+  "calibration": "mean log1p support residual: log1p(y_support) - log1p(base_support_prediction); alpha selected on nested internal station-heldout validation.",
+  "support_predictions": "generated with target support hidden; no query labels used.",
+  "files": {
+    "dataset": {
+      "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+      "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0"
+    },
+    "mask": {
+      "path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+      "sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91"
+    },
+    "runner": {
+      "path": "scripts/run_spatial_fewshot_residual.py",
+      "sha256": "131c0777763fd8bdd66769872bedd4309769bc571ebc152b7045c2d76b6e30f2"
+    },
+    "analysis_script": {
+      "path": "scripts/analyze_spatial_fewshot_residual.py",
+      "sha256": "a0545c582eb89e2174e1d66ca4a8429293ac730601d0adea28542abd837c2325"
+    },
+    "shared_source_selection": {
+      "path": "scripts/run_spatial_source_selection.py",
+      "sha256": "7b013ff2cf8c3ed5cf5efb9b45fb0d6670aa3a8567916d253712f88f83125560"
+    },
+    "shared_support_protocol": {
+      "path": "src/river_graph/experiments/spatial_fewshot.py",
+      "sha256": "287a6f2e9503aa48468a82a0e909a11008bb0551ad868c0bde9043a760141c0c"
+    }
+  },
+  "outputs": [
+    {
+      "path": "analysis/curve_summary.csv",
+      "sha256": "8a08fb59cd63df7705e4598fa03542eae2d05da81e73df559f3909adf763eec6",
+      "bytes": 459
+    },
+    {
+      "path": "analysis/paired_improvement.csv",
+      "sha256": "ffabd7b7b69fd5c3b45cdcb25dde45ddd46cbec0ae719d6511b942ab788aab37",
+      "bytes": 452
+    },
+    {
+      "path": "analysis/spatial_fewshot_residual.pdf",
+      "sha256": "97aafbbe720ecb88e07360aa195c03b5a04335e350ab6205c9afce05d23a4fcc",
+      "bytes": 31329
+    },
+    {
+      "path": "analysis/spatial_fewshot_residual.png",
+      "sha256": "75aecf4d740125a19305f3a5ce3f857f72160b223bd9c2d107a7c4bd25a05644",
+      "bytes": 178338
+    },
+    {
+      "path": "analysis/support_residual_shuffle.csv",
+      "sha256": "803bfa550f01efe1e075754ca1388031e959a21899209c5c3a3fd4c15b6e8caf",
+      "bytes": 1175
+    },
+    {
+      "path": "fewshot_residual_verdict_v1.md",
+      "sha256": "caa6f5108f97d76a09611767f916d1b4ce76d6ecb7919ed70b607300e32aae08",
+      "bytes": 3273
+    },
+    {
+      "path": "query_manifest.json",
+      "sha256": "b58d8cb14fb9a45fe7d48ad14d56059b68c849fde037f1c3dcd2141f5865b35b",
+      "bytes": 1022
+    },
+    {
+      "path": "selected_alpha.csv",
+      "sha256": "a70c4022d53b83452925dd6446075fb0194229fab43ac188d15b6ef6bcc85ece",
+      "bytes": 113
+    },
+    {
+      "path": "support_predictions.parquet",
+      "sha256": "c46fbee29685d1ac3db28e7390a2b985dde79ea13289a6af9e44ac8f05ffbd98",
+      "bytes": 33904
+    },
+    {
+      "path": "test_all_alphas.csv",
+      "sha256": "bc3308030e60d46e033c502a87b94cb2d497ca5305f6ce27bf1a38050062270f",
+      "bytes": 21826
+    },
+    {
+      "path": "test_predictions.parquet",
+      "sha256": "1c1866d583b6cc6ab83a45f653c93f05135f7ce32ad1ec53ae47f277d134d12a",
+      "bytes": 2431560
+    },
+    {
+      "path": "test_selected.csv",
+      "sha256": "241f94869b8f9b99f2bf7b23a97c2e048a12a38f5b62596c210bbbba06b93a69",
+      "bytes": 4588
+    },
+    {
+      "path": "validation.csv",
+      "sha256": "8242ddb93f7b09942fdc96ae24f00c3dcfcacf45522b10600b76278995ef5c93",
+      "bytes": 21131
+    }
+  ],
+  "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "platform": "macOS-26.6-arm64-arm-64bit"
+}
