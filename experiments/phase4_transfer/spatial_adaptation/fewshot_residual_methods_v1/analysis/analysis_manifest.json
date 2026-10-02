@@ -1,0 +1,50 @@
+{
+  "experiment": "fewshot_residual_methods_v1",
+  "selection": "internal validation only",
+  "outer_scored": "selected method per K plus pre-existing mean residual control",
+  "candidate_set": [
+    "mean_a0.25",
+    "mean_a0.5",
+    "mean_a0.75",
+    "mean_a1",
+    "median_a0.25",
+    "median_a0.5",
+    "median_a0.75",
+    "median_a1",
+    "huber_a0.25",
+    "huber_a0.5",
+    "huber_a0.75",
+    "huber_a1",
+    "affine_l1",
+    "affine_l10",
+    "affine_l100",
+    "seasonal_l1",
+    "seasonal_l10",
+    "seasonal_l100"
+  ],
+  "development_extension": "candidate methods were specified after the prior outer mean result was observed; this is an extension for method development",
+  "selected_methods": {
+    "1": {
+      "method": "huber",
+      "alpha": 0.25,
+      "regularization": null,
+      "method_label": "huber_a0.25",
+      "validation_mae": 1.8903646400075889
+    },
+    "3": {
+      "method": "mean",
+      "alpha": 0.5,
+      "regularization": null,
+      "method_label": "mean_a0.5",
+      "validation_mae": 1.7705421806023711
+    },
+    "5": {
+      "method": "seasonal",
+      "alpha": 1.0,
+      "regularization": 1.0,
+      "method_label": "seasonal_l1",
+      "validation_mae": 1.7512598051848176
+    }
+  },
+  "test_candidate_enumeration": "disabled"
+}

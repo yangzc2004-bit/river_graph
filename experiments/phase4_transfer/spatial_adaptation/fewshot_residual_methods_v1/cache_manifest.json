@@ -1,0 +1,39 @@
+{
+  "experiment": "fewshot_residual_methods_v1",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "n_estimators": 300,
+  "min_samples_leaf": 4,
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "outer_query_cells": 2316,
+  "outer_support_cells_by_k": {
+    "0": 0,
+    "1": 43,
+    "3": 129,
+    "5": 215
+  },
+  "cache_columns": [
+    "stage",
+    "seed",
+    "k",
+    "role",
+    "cell",
+    "station",
+    "month",
+    "base_pred"
+  ],
+  "label_policy": "cache contains no target labels; support labels are read only by the validation scoring and final selected-method evaluation",
+  "source_fit": "one K=0 source regional model per target station; target support is hidden while generating query and support predictions",
+  "selection_policy": "candidate and regularization selection uses internal validation only; outer test is scored only for the selected candidate and the pre-existing mean-residual control",
+  "development_extension": "candidate methods were specified after the previous outer mean result was observed; this is a development extension, not a new primary endpoint test"
+}

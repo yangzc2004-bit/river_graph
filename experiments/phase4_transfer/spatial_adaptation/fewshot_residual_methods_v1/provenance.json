@@ -1,0 +1,112 @@
+{
+  "experiment": "fewshot_residual_methods_v1",
+  "description": "Development comparison of support residual location, affine and seasonal calibrators.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "outer_query_cells": 2316,
+  "outer_support_cells_by_k": {
+    "0": 0,
+    "1": 43,
+    "3": 129,
+    "5": 215
+  },
+  "candidate_selection": "nested internal validation only",
+  "outer_scoring": "validation-selected method and prior mean residual control only",
+  "development_extension": "candidate set specified after prior outer mean result was observed",
+  "files": {
+    "dataset": {
+      "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+      "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0"
+    },
+    "mask": {
+      "path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+      "sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91"
+    },
+    "cache_runner": {
+      "path": "scripts/cache_spatial_residual_methods.py",
+      "sha256": "6afd358a5f21e71d8ce464f2dfdfbf70776d30a3f66478d78017d12eb9699f66"
+    },
+    "analysis_runner": {
+      "path": "scripts/analyze_spatial_residual_methods.py",
+      "sha256": "9d5a5e647a8bfd149509b3add9412ba8cf648905ce911fc988fae7bb9de5a6f6"
+    },
+    "candidate_module": {
+      "path": "src/river_graph/experiments/spatial_residual_methods.py",
+      "sha256": "c352719e631340be843a1fcedf4fff1f8704886a94c2b5052c5ae9fdb5a4d1b3"
+    },
+    "support_protocol": {
+      "path": "src/river_graph/experiments/spatial_fewshot.py",
+      "sha256": "287a6f2e9503aa48468a82a0e909a11008bb0551ad868c0bde9043a760141c0c"
+    }
+  },
+  "outputs": [
+    {
+      "path": "analysis/analysis_manifest.json",
+      "sha256": "64f6362201b192e78e6de97ebf201e761e067c2cc64ac22939351a1f3e73506c",
+      "bytes": 1277
+    },
+    {
+      "path": "analysis/residual_method_curve.pdf",
+      "sha256": "659c2c16d1ce27108d9705f9d42285ba99caf09f93f6f474891553e0d0813955",
+      "bytes": 23903
+    },
+    {
+      "path": "analysis/residual_method_curve.png",
+      "sha256": "a1aeb88a6837fba0570c69dee80b456c38b6c7e44ab7f0e3a17ddeac42804432",
+      "bytes": 81651
+    },
+    {
+      "path": "analysis/selected_methods.json",
+      "sha256": "a5518834487c7d5df7a1233d0ce29f55a30937a95d623ae6d143f84f6de7a737",
+      "bytes": 480
+    },
+    {
+      "path": "analysis/test_selected_and_control.csv",
+      "sha256": "7ca509c6b7ba1e7d4aac8ffc65d48c8d027fc3def30378f48a193a4191af8253",
+      "bytes": 2115
+    },
+    {
+      "path": "analysis/test_selected_and_control_predictions.parquet",
+      "sha256": "7c0c108741a25887869bae47f1dc827d8433616b13c52b0f8249505d63554a24",
+      "bytes": 814685
+    },
+    {
+      "path": "analysis/test_summary.csv",
+      "sha256": "5d4448acae0e4c8340b9cd14837bd164cd79b8f5a4f4ba73d549834fba985061",
+      "bytes": 428
+    },
+    {
+      "path": "analysis/validation_candidates.csv",
+      "sha256": "fe70223376517ddd2203395dca34f7717fa520259ed8af2e8317c239dae4ff8b",
+      "bytes": 14184
+    },
+    {
+      "path": "base_predictions.parquet",
+      "sha256": "c8e4a9978c92c701a27c12c55c8aac19e89d13982e12332ebe951c79f74bfd50",
+      "bytes": 571580
+    },
+    {
+      "path": "cache_manifest.json",
+      "sha256": "4a5bc8a6ae09786cd21a76760bcbff5dd582a05ac27479477a79aea3cec6fed6",
+      "bytes": 1106
+    },
+    {
+      "path": "methods_verdict_v1.md",
+      "sha256": "64825f00c9c7e967309b61cb6acf5bdaacf5aeb23c2f1cbe3b19dbb5da8802ce",
+      "bytes": 2597
+    }
+  ],
+  "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "platform": "macOS-26.6-arm64-arm-64bit"
+}

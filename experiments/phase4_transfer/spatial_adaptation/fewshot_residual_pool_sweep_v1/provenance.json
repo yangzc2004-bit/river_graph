@@ -1,0 +1,86 @@
+{
+  "experiment": "fewshot_residual_pool_sweep_v1",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "pool_values": [
+    20,
+    40,
+    80,
+    160
+  ],
+  "alpha_values": [
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "outer_query_cells": 2316,
+  "selection": "internal E3 validation only",
+  "outer_scored": "selected pool/alpha and pre-existing k40 mean-residual control",
+  "development_extension": "specified after previous outer residual result was observed",
+  "files": {
+    "dataset": {
+      "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+      "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0"
+    },
+    "mask": {
+      "path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+      "sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91"
+    },
+    "runner": {
+      "path": "scripts/run_spatial_residual_pool_sweep.py",
+      "sha256": "f259dfdfbde78a97b2ce64bc3dfd02096d3cb2b135465c4c469b352c2465137c"
+    },
+    "support_protocol": {
+      "path": "src/river_graph/experiments/spatial_fewshot.py",
+      "sha256": "287a6f2e9503aa48468a82a0e909a11008bb0551ad868c0bde9043a760141c0c"
+    }
+  },
+  "outputs": [
+    {
+      "path": "analysis/outer_selected_summary.csv",
+      "sha256": "794752542841da54c9e5867933d7b675f9c89c7c1e0450132646b34232cffc7c",
+      "bytes": 99
+    },
+    {
+      "path": "analysis/validation_pool_summary.csv",
+      "sha256": "d8a5f6e880be5c6d59c32c1f9cb25ce96c8ff4d524d018eaa841630c7dde329e",
+      "bytes": 821
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "49366c34a1936a189ab9a12aa0ba02b1df727927a8c31f3a4f0978712bdf8500",
+      "bytes": 487
+    },
+    {
+      "path": "pool_sweep_verdict_v1.md",
+      "sha256": "910537738433b3eedb1454dd02be98425cc3c6b03fe9da23bd9ed8d6af3c1475",
+      "bytes": 1895
+    },
+    {
+      "path": "selected_pool.json",
+      "sha256": "42752208e1746d2b6ace6ec551a253fed076094e80c9d47b96ead67af0485bd5",
+      "bytes": 76
+    },
+    {
+      "path": "test_selected_and_control.csv",
+      "sha256": "efa6affd48d327891bd8a8a4c9cd47f179e8cd4c2d02dbf2432f3ae9818a30c2",
+      "bytes": 613
+    },
+    {
+      "path": "test_selected_and_control_predictions.parquet",
+      "sha256": "740024fe29f084a6348b817828ef965253b3aa26c39f66517d85e1c7fb5a005a",
+      "bytes": 111323
+    },
+    {
+      "path": "validation_pool_candidates.csv",
+      "sha256": "37e10dd7face1f340aedd09b7746d9884363c0c5e42d0832806a6257e9185d32",
+      "bytes": 7799
+    }
+  ],
+  "python": "3.12.14 (main, Aug 12 2026, 13:57:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "platform": "macOS-26.6-arm64-arm-64bit"
+}
