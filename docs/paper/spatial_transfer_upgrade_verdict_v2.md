@@ -39,6 +39,13 @@ the graph model, but the resulting model is still weaker than the source
 regional expert plus support adapter (about 2.024). The graph-message variant
 did not separate from the no-message KGML baseline in this spatial test.
 
+A small support-aware regional gate was also tested using the existing KGML and
+regional predictions. Internal station-heldout validation selected the
+regional expert for both K=0 and K=5; the gate itself was not selected. The
+outer regional score was 2.469, while the fixed K=5 residual adapter was about
+2.020. Source regionalization and support correction are the useful
+components; the first hard gate formulation adds no gain.
+
 The result is a spatial adaptation result, not evidence that a deeper GNN is
 needed. The useful operation is learning a target-station correction after the
 source model has supplied a regional prediction.
