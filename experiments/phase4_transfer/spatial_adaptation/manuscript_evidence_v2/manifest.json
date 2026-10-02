@@ -1,0 +1,32 @@
+{
+  "source_product": "experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1",
+  "model": "regional ExtraTrees, 120 trees, source pool 40",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "query_cells": 2316,
+  "stations": 43,
+  "primary_estimand": "cell-weighted MAE, averaged losses over five seeds",
+  "bootstrap": "5000 whole-station paired draws; per-draw cell weights and denominator",
+  "station_statistics": "mean of per-seed losses, not loss of ensemble-mean prediction",
+  "shuffle": "one station-residual permutation per seed/K; RNG 9100 + 17*seed + K; descriptive diagnostic",
+  "no_retraining": true,
+  "experiment_status": "development extension after E3 results were seen",
+  "inputs": {
+    "experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/paired_query_predictions.parquet": "708d860f15dd8254f3fdd510e390ce2ed29e0de248147d12cdf75e7790a040f5",
+    "experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/e3_full_grid.parquet": "bd390b8cca201a7a9f7b52344b67adaab3bc77f2bb214df2bc11ff38a426c6cf",
+    "experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/k_curve_summary.csv": "78aad896fee263e68a86c2c94f206c72f1da24a5783cd05387d8b7eea2fda4dc",
+    "experiments/phase4_transfer/spatial_adaptation/regional_residual_product_v1/spec.json": "d65ad64a8e3dfa618ef3a412c40718856ef5190d5a0ae76b7b6e9025d8c4b80a",
+    "data/processed/graph_nodes_graphfix_st357.csv": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+    "data/processed/graph_edges_graphfix_st357.csv": "ded7298533657cc847b532897a5396f65061f788682019963c33c908932ee012",
+    "data/processed/mississippi_graph_graphfix_st357.pt": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0"
+  },
+  "code": {
+    "/Users/yzccc/river_graph/scripts/analyze_spatial_manuscript_evidence.py": "d44d7e48300915b230934d18438efc36cc30a0cc4acf907539baff429c71fed6",
+    "src/river_graph/experiments/spatial_comparison.py": "d1920278aaef24487ee165a021d0cccae5a35be31188d40a31c72f73a6c26dbd"
+  }
+}

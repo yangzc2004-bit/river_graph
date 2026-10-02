@@ -1,5 +1,7 @@
 # Spatial-transfer results for the DOC reconstruction paper
 
+> Evidence update (2026-10-02): this historical summary mixes the 120-tree main product with 300-tree station diagnostics and a station-equal interval. Use [the unified results](spatial_transfer_results_v2.md) and `manuscript_evidence_v2/` for the current manuscript. Its K5 MAE remains 2.023 mg/L; the matching cell-weighted difference is −0.442 (95% CI [−1.026, −0.089]), and 36/43 stations improve. Previously quoted KGML calibration numbers await prediction-level verification.
+
 ## Main result
 
 We evaluated a source-regional ExtraTrees expert on the frozen E3 spatial
