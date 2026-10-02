@@ -237,7 +237,12 @@ def plot_spatial_publication_copies(out: Path) -> set[Path]:
                  fontsize=8, color="#6A7075")
         with plt.rc_context({"pdf.fonttype": 42, "svg.fonttype": "none"}):
             for suffix in ("pdf", "png", "svg"):
-                fig.savefig(out / f"doc_spatial_support_publication.{suffix}", dpi=300, facecolor="white")
+                destination = out / f"doc_spatial_support_publication.{suffix}"
+                fig.savefig(destination, dpi=300, facecolor="white")
+                if suffix == "svg":
+                    destination.write_text(
+                        "\n".join(line.rstrip() for line in destination.read_text().splitlines()) + "\n"
+                    )
         plt.close(fig)
 
         def project(lon, lat):
