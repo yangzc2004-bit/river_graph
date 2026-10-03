@@ -51,6 +51,11 @@ def load_runner() -> ModuleType:
 
 
 def main() -> None:
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-regime-residual-v1"]:
+        from run_doc_regime_residual_v1 import main as regime_residual_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        regime_residual_main()
+        return
     if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-ecological-transfer-v2"]:
         from run_doc_ecological_transfer_v2 import main as support_transfer_main
         sys.argv = [sys.argv[0], *sys.argv[3:]]

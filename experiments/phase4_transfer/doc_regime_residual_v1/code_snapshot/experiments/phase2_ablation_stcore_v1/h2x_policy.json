@@ -1,0 +1,24 @@
+{
+  "version": "h2x_policy_v1",
+  "frozen_at": "2026-09-24",
+  "role": "Treatment integrity policy for the H2X primary treatment. Bound into configs/phase2_ablation_stcore_v1.json via policy_config.h2x_policy_sha256 and checked fail-closed by scripts/run2b_executor.py. Scope: which inputs may enter any Phase-2 arm. Endpoints stay in docs/paper/primary_endpoints.json; this file never changes a scientific endpoint.",
+  "treatment_statement": "The H2X primary treatment is river-graph transport with the ecological context encoder over the full frozen information set, trained with the frozen training budget and the frozen multi-seed ensemble. Everything outside this statement is a different arm or a forbidden input.",
+  "frozen_information_set": [
+    "dynamic hydro (temp + availability, discharge + availability)",
+    "month sin/cos",
+    "lat/lon",
+    "13-col standardized regime block (hydro in node input, cols 4:13 in the encoder)",
+    "visible-DOC field under obs_mask = train U val U context (test DOC never visible)",
+    "river graph (edge_index + edge_attr) for GNN arms only"
+  ],
+  "hard_input_exclusions": [
+    "explicit network distance (km or hop) from the target cell to monitored stations as a model input feature",
+    "k-nearest geographic neighbour coordinates or neighbour-distance features as model inputs",
+    "target-basin mean pooling of labels outside the frozen visibility rule",
+    "any 'nearest' / distance-to-nearest-station input feature used as a model predictor",
+    "query/test ground-truth DOC in any form (feature, pool, aggregate, selection rule at prediction time)"
+  ],
+  "allow_nearest_distance_km_max": null,
+  "exclusion_enforcement": "run2b_executor verifies the policy hash and the arm feature contract before dispatch; tests/test_phase2_controls.py and tests/test_phase2_2c_policy.py pin the contract; audits re-check sidecars. Distance-to-nearest is allowed only as an evaluation-side covariate (e.g. per-station UNEVAW context), never as a predictor input.",
+  "note": "Recreated 2026-09-24 after the previous policy file was lost in an external session rollback; this file is canonical from this date and is bound by hash everywhere."
+}

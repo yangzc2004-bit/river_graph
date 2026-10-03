@@ -21,6 +21,13 @@ See [latest results and reproduction](experiments/phase4_transfer/doc_ecological
 and [product roles](experiments/phase4_transfer/doc_ecological_transfer_v2/PRODUCTS.md).
 The sections below retain the earlier model evolution and historical benchmark.
 
+The subsequent [regime-readout experiment](experiments/phase4_transfer/doc_regime_residual_v1/completion.md)
+adds direct ecology and predicted-concentration conditioning to the existing
+GRU residual. Its compact concentration head reduces Q90 error by 2.06% at K0
+and 0.75% at K5 versus the prior interaction model, with a small ordinary-error
+and false-high cost. The support-aware ecological model remains the strongest
+overall model above; the tail candidate is retained separately.
+
 ## Scientific question
 
 USGS DOC monitoring is sparse and irregular: in the Mississippi River Basin,
