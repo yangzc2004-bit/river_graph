@@ -3,6 +3,24 @@
 **Topology-aware Graph Neural Networks for Reconstructing Sparse Dissolved
 Organic Carbon Observations in the Mississippi River Basin**
 
+## Current DOC spatial-transfer development
+
+The active model combines ecological/context prediction, a recurrent residual
+expert and target-station support adaptation on the **357-station ST-only
+cohort** (654 months, 22,571 observed station-months). The latest integration
+uses source-station ecological residual memory and learns its mixing weight
+separately for each support budget from source validation.
+
+Across three station partitions and three seeds, the ecological affine model
+has MAE **1.8092 mg/L at K=0** and **1.5799 mg/L at K=5**, compared with 1.8352
+and 1.5816 for its preceding interaction model. The K0 improvement is 1.42%;
+the much smaller K5 difference has a paired interval spanning zero. K-shot
+support is retrospective, and these partitions are development data.
+
+See [latest results and reproduction](experiments/phase4_transfer/doc_ecological_transfer_v2/completion.md)
+and [product roles](experiments/phase4_transfer/doc_ecological_transfer_v2/PRODUCTS.md).
+The sections below retain the earlier model evolution and historical benchmark.
+
 ## Scientific question
 
 USGS DOC monitoring is sparse and irregular: in the Mississippi River Basin,
@@ -82,7 +100,7 @@ comparable with full-coverage models; see
 This table mixes aggregation levels and is kept only as a historical reference.
 r40/r60 come from this batch and are **not** part of the 5-seed refresh.
 
-### Multi-seed refresh (current main result)
+### Historical multi-seed refresh
 
 H1/H2/H2X refreshed with 5 training seeds × 8 key masks = 120 runs. Values are
 the mean over the 5 training seeds; the ± is the **standard deviation across

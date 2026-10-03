@@ -1,0 +1,82 @@
+{
+  "experiment": "doc_ecological_transfer_v2",
+  "split_seed": 143,
+  "seed": 44,
+  "started_at": "2026-10-03T13:41:36.386915+00:00",
+  "runtime_snapshot_hash": "3d87f1100b3dabf65729d89178e1ed1b84bd19f7011838eaaaf00d6cf1715f67",
+  "prior_run": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed44",
+  "prior_completion_hash": "cb9b583b44f6f9cb05411ef3f7a11b6b6f7c27b280a5f577a72d12be95551751",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed44",
+  "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed44",
+  "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed44",
+  "source_completion_hash": "19f4f4d4f8279d8e0338b1c8fd95face880de423c372c0c35dceceb3c5398084",
+  "basis_completion_hash": "5503b0a0335869cf0f6bf9d1fffd4bb4369d11ca93c12758a8bca06ce34d6107",
+  "oof_completion_hash": "5651ad47eb0511d85830c0e4605861cb0700d03e068999d9e1c6d66b1642e2a9",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+  "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "q90_threshold_train": 10.0,
+  "query_cells": 3907,
+  "target_analyte": "doc",
+  "inference_roles": [
+    "train"
+  ],
+  "models": [
+    "interaction_constant",
+    "interaction_gru_tuned_anchor",
+    "global_bias_constant",
+    "global_bias_gru_tuned_anchor",
+    "ecological_bias_constant",
+    "ecological_bias_gru_tuned_anchor",
+    "global_affine_constant",
+    "global_affine_gru_tuned_anchor",
+    "ecological_affine_constant",
+    "ecological_affine_gru_tuned_anchor"
+  ],
+  "arms": [
+    "global_bias",
+    "ecological_bias",
+    "global_affine",
+    "ecological_affine"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "profile_files": {
+    "global_bias": "1b4fda9e5ad9d2fbcddf82069d45d9c38cbaa83d25d850c8a8b57a51ca1fc6da",
+    "ecological_bias": "6e0c300f123cd6d42af8b7194589791d61487b1f896d554b27fe9807427aa011",
+    "global_affine": "e8a6bb5e3554e8e34c81f911cc2f6f909e282bd18d9388bc518d6d022b37e3f6",
+    "ecological_affine": "3c40e2b36af06faa28a200a318603f0468ce7aea2b2bed3c113b4d2e714aeae2"
+  },
+  "profile_fitting": "none; frozen v1 memories",
+  "gamma_grid": [
+    0,
+    0.25,
+    0.5,
+    1
+  ],
+  "alpha_grid": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "ridge_grid": [
+    0.1,
+    1,
+    10,
+    "infinity"
+  ],
+  "mixing": "context + (1-gamma)*(interaction-context) + gamma*memory",
+  "gamma_k0": "locked to frozen v1 source-validation choice",
+  "gamma_kpositive": "joint gamma/alpha/ridge by source-validation adapted native query MAE",
+  "selection_role": "source_validation",
+  "support_basis": "unchanged frozen v4 GRU",
+  "torch_threads": 2,
+  "study_role": "development after seeing v1 support-level results"
+}
