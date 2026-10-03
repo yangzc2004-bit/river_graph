@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import copy
+import importlib.util
 import inspect
 import io
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -175,3 +177,122 @@ def test_nonfinite_and_invalid_shapes_are_rejected():
         fit_model(model, args)
     with pytest.raises(FloatingPointError, match="nonfinite"):
         model._combine(torch.ones(1), torch.tensor([float("inf")]), 1.)
+
+
+def test_optional_extra_head_starts_at_exact_context_and_requires_aligned_features():
+    _, args, temporal, decay = fixture(epochs=0)
+    model = NativeTemporalResidual(temporal, decay, epochs=0, extra_dim=2)
+    for inputs in (args[0], args[4]):
+        inputs["extra"] = np.ones((*inputs["age"].shape, 2))
+    assert model.head.in_features == 6
+    assert torch.count_nonzero(model.head.weight) == 0
+    np.testing.assert_array_equal(model.predict_delta(args[0]), np.zeros_like(args[1]))
+    np.testing.assert_array_equal(model.predict(args[0], args[1]), args[1])
+    fit_model(model, args)
+    assert model.to_dict()["config"]["extra_dim"] == 2
+    assert model.to_payload()["version"] == 1
+    missing = {key: value for key, value in args[0].items() if key != "extra"}
+    with pytest.raises(ValueError, match="required"):
+        model.predict(missing, args[1])
+    malformed = {**args[0], "extra": np.ones((3, 12, 2))}
+    with pytest.raises(ValueError, match="extra inputs"):
+        model.predict_delta(malformed)
+    with pytest.raises(ValueError, match="extra_dim"):
+        NativeTemporalResidual(temporal, decay, extra_dim=-1)
+
+
+def test_current_extra_features_can_explain_signal_missing_from_recurrent_input():
+    _, args, temporal, decay = fixture(epochs=0)
+    model = NativeTemporalResidual(
+        temporal, decay, extra_dim=2, epochs=8, patience=3, batch_size=12,
+        learning_rate=1e-3, head_learning_rate=.1)
+    rng = np.random.default_rng(704)
+    for inputs, truth in ((args[0], args[2]), (args[4], args[6])):
+        inputs["encoded"][:] = 0
+        numeric = rng.uniform(-1, 1, inputs["age"].shape)
+        inputs["extra"] = np.stack([numeric, np.ones_like(numeric)], axis=-1)
+        truth[:] = 3 + 1.3 * numeric
+    fit_model(model, args)
+    assert model.best_epoch_ > 0 and model.selected_scale_ > 0
+    assert model.head.weight[0, model.hidden_size] > .5
+    assert model.validation_metrics_["validation_mae"] < .2
+    full = model.predict_delta(args[4])
+    control = copy.deepcopy(args[4])
+    control["extra"][..., 0] = 0  # Preserve the freshness flag in column one.
+    ablated = model.predict_delta(control)
+    np.testing.assert_allclose(
+        full - ablated, args[4]["extra"][..., 0] * float(model.head.weight[0, model.hidden_size].detach()),
+        atol=1e-13)
+
+
+def test_extra_is_queried_at_its_own_month_and_does_not_read_labels():
+    _, args, temporal, decay = fixture(epochs=0)
+    model = NativeTemporalResidual(temporal, decay, epochs=0, extra_dim=2)
+    rng = np.random.default_rng(27)
+    for inputs in (args[0], args[4]):
+        inputs["extra"] = rng.normal(size=(*inputs["age"].shape, 2))
+    with torch.no_grad():
+        model.head.weight[0, -2:] = torch.tensor([.3, -.2])
+    before = model.predict_delta(args[0], batch_size=7)
+    changed = copy.deepcopy(args[0])
+    changed["extra"][:, 8:] += 100
+    after = model.predict_delta(changed, batch_size=7)
+    np.testing.assert_array_equal(after[:, :8], before[:, :8])
+    assert not np.allclose(after[:, 8:], before[:, 8:])
+    changed = copy.deepcopy(args[0])
+    changed["extra"][1, 5, 0] += 10
+    after = model.predict_delta(changed, batch_size=7)
+    unaffected = np.ones_like(after, dtype=bool)
+    unaffected[1, 5] = False
+    np.testing.assert_array_equal(after[unaffected], before[unaffected])
+    assert after[1, 5] - before[1, 5] == pytest.approx(3.)
+
+
+def test_extra_fit_is_invariant_to_withheld_labels_and_payload_reloads():
+    _, original, temporal, decay = fixture(epochs=0)
+    rng = np.random.default_rng(27)
+    for inputs in (original[0], original[4]):
+        inputs["extra"] = rng.normal(size=(*inputs["age"].shape, 2))
+    changed = copy.deepcopy(original)
+    a = NativeTemporalResidual(temporal, decay, epochs=1, extra_dim=2, head_learning_rate=.05)
+    b = NativeTemporalResidual(temporal, decay, epochs=1, extra_dim=2, head_learning_rate=.05)
+    original[2][~original[3]] = np.nan
+    original[6][~original[7]] = np.nan
+    changed[2][~changed[3]] = -1e300
+    changed[6][~changed[7]] = np.inf
+    fit_model(a, original)
+    fit_model(b, changed)
+    assert a.to_dict() == b.to_dict()
+    np.testing.assert_array_equal(a.predict_delta(original[4]), b.predict_delta(original[4]))
+    restored = NativeTemporalResidual.from_payload(a.to_payload())
+    assert restored.extra_dim == 2 and restored.to_dict() == a.to_dict()
+    np.testing.assert_array_equal(restored.predict(original[4], original[5]),
+                                  a.predict(original[4], original[5]))
+
+
+_OLD_NATIVE_ROOT = Path("experiments/phase4_transfer/doc_tail_residual_v1")
+_OLD_NATIVE_CODE = _OLD_NATIVE_ROOT / "code_snapshot/src/river_graph/models/native_temporal_residual.py"
+_OLD_NATIVE_WEIGHTS = _OLD_NATIVE_ROOT / "runs/split142_seed42/native_mae.pt"
+
+
+@pytest.mark.skipif(not (_OLD_NATIVE_CODE.exists() and _OLD_NATIVE_WEIGHTS.exists()),
+                    reason="saved original native-residual code and checkpoint are unavailable")
+def test_zero_extra_replays_actual_v1_checkpoint_and_preserves_summary_exactly():
+    spec = importlib.util.spec_from_file_location("frozen_native_residual_reference", _OLD_NATIVE_CODE)
+    reference_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reference_module)
+    payload = torch.load(_OLD_NATIVE_WEIGHTS, map_location="cpu", weights_only=True)
+    old = reference_module.NativeTemporalResidual.from_payload(payload)
+    new = NativeTemporalResidual.from_payload(payload)
+    assert new.extra_dim == 0
+    assert new.to_dict() == old.to_dict() == payload["summary"]
+    assert "extra_dim" not in new.to_dict()["config"]
+    assert "extra_dim" not in new.to_payload()["config"]
+    rng = np.random.default_rng(18)
+    inputs = {"encoded": rng.normal(size=(2, 17, new.hidden_size)).astype(np.float32),
+              "age": rng.uniform(0, 2, (2, 17)).astype(np.float32),
+              "support": rng.uniform(0, 1, (2, 17, 3)).astype(np.float32)}
+    base = rng.uniform(0, 8, (2, 17))
+    np.testing.assert_array_equal(new.predict_delta(inputs, batch_size=7),
+                                  old.predict_delta(inputs, batch_size=7))
+    np.testing.assert_array_equal(new.predict(inputs, base), old.predict(inputs, base))

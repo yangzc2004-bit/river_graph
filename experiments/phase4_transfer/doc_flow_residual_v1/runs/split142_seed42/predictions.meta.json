@@ -1,0 +1,133 @@
+{
+  "config": {
+    "experiment": "doc_flow_residual_v1",
+    "split_seed": 142,
+    "seed": 42,
+    "started_at": "2026-10-03T12:01:41.287002+00:00",
+    "runtime_snapshot_hash": "9c184d38d2ab9b5ec5640679154838c736628d69337d0ec5ef4e9dd4595ed9b2",
+    "prior_run": "experiments/phase4_transfer/doc_tail_residual_v1/runs/split142_seed42",
+    "prior_completion_hash": "fe33a742dc9059b9ce2977c7ed17f8ece6edb2edd97091d5af546435bc14db7a",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split142_seed42",
+    "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split142_seed42",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split142_seed42",
+    "source_completion_hash": "07a71822b9990b2552ee211da73a8e2df5765fb92a216655d36189425dc83ec9",
+    "basis_completion_hash": "0896e5bef1e17343e3e4c492ae679cc93ea81b2e27ab75f2a6e2550edd240e17",
+    "oof_completion_hash": "ffefd0935da47eab15550e6df83ba26dbb1de9cb5df9d2a982ae1ac02a1a9917",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "q90_threshold_train": 9.851500511169434,
+    "query_cells": 3975,
+    "target_analyte": "doc",
+    "residual_scale": "native mg/L",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_tuned_anchor",
+      "flow_freshness_constant",
+      "flow_freshness_gru_tuned_anchor",
+      "flow_values_constant",
+      "flow_values_gru_tuned_anchor"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "learning_rate": 0.0001,
+    "head_learning_rate": 0.001,
+    "batch_size": 512,
+    "gradient_clip_norm": 1,
+    "arms": [
+      "flow_freshness",
+      "flow_values"
+    ],
+    "tail_weight": 2.0,
+    "residual_scales": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "extra_dim": 10,
+    "flow_definition": {
+      "version": 1,
+      "age_cap_months": 12,
+      "history_months": 12,
+      "min_history_observations": 3,
+      "feature_names": [
+        "flow_relative_anomaly",
+        "flow_relative_anomaly_valid",
+        "flow_change_1",
+        "flow_change_1_valid",
+        "flow_change_3",
+        "flow_change_3_valid",
+        "flow_past12_observed_fraction",
+        "flow_age_capped",
+        "flow_age_valid",
+        "flow_current_valid"
+      ],
+      "value_feature_indices": [
+        0,
+        2,
+        4
+      ],
+      "freshness_feature_indices": [
+        1,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_feature_indices": [
+        1,
+        3,
+        5,
+        8,
+        9
+      ]
+    },
+    "epoch_selection": "source-validation K0 pooled query MAE; epoch0 included",
+    "support_basis": "frozen v4 GRU; same for all arms",
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "dbe52027ada8ed51d0f2b067f2f2e852387998bb73d41a20ca0e16e59fd859ef",
+  "runtime_snapshot_hash": "9c184d38d2ab9b5ec5640679154838c736628d69337d0ec5ef4e9dd4595ed9b2",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "881d8fa73d61ac1b275e1c1682a18d894386ebfd80b6c936071ceb2a7ea5e4bb",
+  "prediction_sha256": "2e57d04ff483fafffc7ba5e27192580dc997f6d1a5ca26bf03155e67adc06071",
+  "model_files": {
+    "adapters.json": "04353f4c1453c08f005fa4646ac030b3c65d7f3e5e20e01e598bf58760f45725",
+    "flow_features.json": "9e889aad1ccb9c497927ec1f399b12cdd120e86881421f37c759c6abd434ca6c",
+    "flow_freshness.pt": "0976bc8d360ab2f987e525a34d51a9e509fd24618727b141e272b337a93b8870",
+    "flow_freshness.json": "76f911789ede6368c2e1fe7873a7d534a6ef2426a6ec60a93a688bb327f5e336",
+    "flow_values.pt": "a548d5a4da34f8954e384e62f1d41cab8537bf151f66887c966ce3ca71465f9a",
+    "flow_values.json": "6f0fe3a25b6e13ca99394153ec3eb203ad8a6bf484ba5662bc9619f2ef364454"
+  },
+  "rows": 95400,
+  "selection_role": "source_validation"
+}

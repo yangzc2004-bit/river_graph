@@ -1,0 +1,115 @@
+{
+  "experiment": "doc_flow_residual_v1",
+  "split_seed": 144,
+  "seed": 43,
+  "started_at": "2026-10-03T12:02:56.085635+00:00",
+  "runtime_snapshot_hash": "9c184d38d2ab9b5ec5640679154838c736628d69337d0ec5ef4e9dd4595ed9b2",
+  "prior_run": "experiments/phase4_transfer/doc_tail_residual_v1/runs/split144_seed43",
+  "prior_completion_hash": "1cbfae091512c9e043b22bb3d69384d5fa593eca39f42e336b82b6c54ec96422",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split144_seed43",
+  "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split144_seed43",
+  "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split144_seed43",
+  "source_completion_hash": "7e7f0664b1ce2f0fe45e4fced080ea13f9ebe38645e22e2cdd4fa884f814a662",
+  "basis_completion_hash": "1b4ec5ab5af6ca93a442bfa029d6cdeee1e1cabd7533ade27ac0bd3cf4596563",
+  "oof_completion_hash": "8c29c736774eeaad35c5064c16cde4614313c8e8581241c08824930a18fc988c",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "query_cells": 4983,
+  "target_analyte": "doc",
+  "residual_scale": "native mg/L",
+  "inference_roles": [
+    "train"
+  ],
+  "models": [
+    "context_constant",
+    "context_gru_tuned_anchor",
+    "flow_freshness_constant",
+    "flow_freshness_gru_tuned_anchor",
+    "flow_values_constant",
+    "flow_values_gru_tuned_anchor"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "lookback": 12,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.0001,
+  "head_learning_rate": 0.001,
+  "batch_size": 512,
+  "gradient_clip_norm": 1,
+  "arms": [
+    "flow_freshness",
+    "flow_values"
+  ],
+  "tail_weight": 2.0,
+  "residual_scales": [
+    0,
+    0.25,
+    0.5,
+    1
+  ],
+  "extra_dim": 10,
+  "flow_definition": {
+    "version": 1,
+    "age_cap_months": 12,
+    "history_months": 12,
+    "min_history_observations": 3,
+    "feature_names": [
+      "flow_relative_anomaly",
+      "flow_relative_anomaly_valid",
+      "flow_change_1",
+      "flow_change_1_valid",
+      "flow_change_3",
+      "flow_change_3_valid",
+      "flow_past12_observed_fraction",
+      "flow_age_capped",
+      "flow_age_valid",
+      "flow_current_valid"
+    ],
+    "value_feature_indices": [
+      0,
+      2,
+      4
+    ],
+    "freshness_feature_indices": [
+      1,
+      3,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "flag_feature_indices": [
+      1,
+      3,
+      5,
+      8,
+      9
+    ]
+  },
+  "epoch_selection": "source-validation K0 pooled query MAE; epoch0 included",
+  "support_basis": "frozen v4 GRU; same for all arms",
+  "alpha_grid": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "ridge_grid": [
+    0.1,
+    1,
+    10,
+    "infinity"
+  ],
+  "torch_threads": 2,
+  "study_role": "development on previously evaluated station partitions"
+}
