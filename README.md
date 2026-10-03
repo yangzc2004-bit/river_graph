@@ -36,6 +36,15 @@ matched historical information; K5 neural–tree differences remain unresolved.
 The daily-head model remains the main K5 candidate. K-shot support is
 retrospective, and these partitions are development data.
 
+A subsequent [station-support basis refresh](experiments/phase4_transfer/doc_daily_hydro_support_basis_v1/completion.md)
+reads the selected current hidden states through the unchanged two-dimensional
+adaptation projection. With three support readings, direct daily-head and
+current-input MAE improve **1.45%/1.41%**, primarily in ordinary DOC and one
+station partition. All refreshed K5 overall estimates worsen; K0/K1 are
+unchanged. The main candidate remains the daily model with its existing
+support basis. The next focused training experiment updates only the 128
+support-readout parameters while keeping the prediction trunk fixed.
+
 See [latest results and reproduction](experiments/phase4_transfer/doc_daily_hydro_residual_v1/completion.md)
 and [product roles](experiments/phase4_transfer/doc_daily_hydro_residual_v1/PRODUCTS.md).
 The [preceding ecological integration](experiments/phase4_transfer/doc_ecological_transfer_v2/completion.md)

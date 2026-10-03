@@ -51,6 +51,11 @@ def load_runner() -> ModuleType:
 
 
 def main() -> None:
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-daily-hydro-support-basis-v1"]:
+        from run_doc_daily_hydro_support_basis_v1 import main as run_support_basis
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        run_support_basis()
+        return
     if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-daily-hydro-memory-v1"]:
         from run_doc_daily_hydro_memory_v1 import main as daily_memory_main
         sys.argv = [sys.argv[0], *sys.argv[3:]]
