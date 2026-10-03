@@ -23,10 +23,18 @@ K0 overall improvement remains uncertain. A subsequent
 reuses the monthly expert when all numerical daily descriptors are invalid.
 Integrated K0 MAE becomes **1.7944 mg/L** (0.51% lower than daily, interval
 includes zero), but K5 worsens to **1.5714 mg/L**. Missing-input K0 behavior
-improves while daily remains the main K5 candidate. The next iteration puts
-daily hydrologic history inside the existing GRU and adds a tree benchmark with
-the same information. K-shot support is retrospective, and
-these partitions are development data.
+improves while daily remains the main K5 candidate.
+
+The completed [hydrologic-memory experiment](experiments/phase4_transfer/doc_daily_hydro_memory_v1/completion.md)
+fits 27 recurrent models and 18 matched tree probes. Feeding daily information
+through the causal 12-month GRU history yields integrated K0/K5 MAE
+**1.7974/1.5676 mg/L**. History improves K0 by **0.58%** over the same-size
+current-input projection (paired interval excludes zero), but its difference
+from the retained daily-head-only model is uncertain, and K5 does not improve.
+The integrated history model improves K0 by **2.79%** over the tree probe with
+matched historical information; K5 neural–tree differences remain unresolved.
+The daily-head model remains the main K5 candidate. K-shot support is
+retrospective, and these partitions are development data.
 
 See [latest results and reproduction](experiments/phase4_transfer/doc_daily_hydro_residual_v1/completion.md)
 and [product roles](experiments/phase4_transfer/doc_daily_hydro_residual_v1/PRODUCTS.md).
