@@ -28,6 +28,15 @@ and 0.75% at K5 versus the prior interaction model, with a small ordinary-error
 and false-high cost. The support-aware ecological model remains the strongest
 overall model above; the tail candidate is retained separately.
 
+The [encoder-adaptation comparison](experiments/phase4_transfer/doc_encoder_residual_v1/completion.md)
+then updates the existing final self layer and ecological encoder together with
+the residual GRU. At a matched 30-epoch budget, K0 MAE falls from 1.8436 to
+1.8299 mg/L (0.74%). A [matched duration extension](experiments/phase4_transfer/doc_encoder_budget_v1/completion.md)
+shows that longer optimization also helps the frozen control. The updated
+integrated model improves K0 Q90 error by 2.43% versus the current overall
+model, but raises ordinary errors and false-high rates; the overall model
+above remains the reference. All fits stop before the new 60-epoch ceiling.
+
 ## Scientific question
 
 USGS DOC monitoring is sparse and irregular: in the Mississippi River Basin,
