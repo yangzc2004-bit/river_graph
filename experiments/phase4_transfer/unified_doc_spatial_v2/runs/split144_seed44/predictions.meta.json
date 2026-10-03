@@ -1,0 +1,85 @@
+{
+  "config": {
+    "experiment": "unified_doc_spatial_v2",
+    "split_seed": 144,
+    "seed": 44,
+    "started_at": "2026-10-03T10:32:01.404412+00:00",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+    "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split144_seed44",
+    "source_completion_hash": "6737fc4cb124ce62d479723358addbf5ce74d65416fd8512d766948d779a9427",
+    "source_model_files": {
+      "support_predictions.meta.json": "899474cbc9a95a7704a9f15cf81214c5ee327964d046ea8f11bb18e2e80f180b",
+      "model.json": "41d7aad829daa7538927125dd55b50e4c6363838d787f609b005de9d598a4463",
+      "config.json": "1faa4f46fd40bfd556d84de7286d530376ba079eb1fcbee64aa123a4188c2022",
+      "adapter.json": "18c505fb5b5ff32be7b15a443ef6c3d7d35ff7d2adc858e27b7340e6d88aad71",
+      "forests.joblib": "078e637de353f13524b7d1e8c9c9d155305a23529936754ceedb61c50c4aef20",
+      "support_predictions.parquet": "dd200220655f4b7681b8b9b51647116e4588982249db177542e6fc933c62ef27",
+      "fitted_model.meta.json": "6210125d103d422dd82c76a3007e374c2047215795dc0fcf3e047fad4a45bbea",
+      "predictions.meta.json": "04dcd7f9efefa9069dab65d8c10ab807413e05e46c16119a18eacd8591541c5c",
+      "full_grid.meta.json": "20f5014b2355e5dadc84eb6f3864de96de0d256b412a7d6eacc896172b7b7dce",
+      "residual.pt": "dd8269498b8dfac8bf0b0d43f4606e1833a03108d4bca16f506c65ad161eda2b",
+      "training_trace.csv": "b5b00337904dcdbeafaf27096e4ffc2de2798cfd3f1ed7796d79ffb291df826b",
+      "context.joblib": "dbb3060315c3055917f353a328b892ec1ae846e2215731459c6852ef1a50cba7",
+      "predictions.parquet": "3eadd14a0f18dd32af5a0f991a6aa41371e834fa961063a0dace44fd291bcfe0",
+      "full_grid.parquet": "9eb50662883e6e8cf73e0da6530920e4ec8820a2ca375c3322542cb88334a36f"
+    },
+    "runtime_snapshot_hash": "d0d49e91a8b68285d78cd5965afeb7e729ab98c16264662b911cfbc781af9309",
+    "target_analyte": "doc",
+    "target_transform": "log1p",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_shape",
+      "context_tree_shape",
+      "fusion_constant",
+      "fusion_gru_shape",
+      "fusion_tree_shape"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "q90_threshold_train": 10.0,
+    "query_cells": 4983,
+    "basis_components": 2,
+    "basis": "source-only station-centered whitened PCA; held-station input views",
+    "fusion": "station-blocked conditional meta-CV; identity, convex, identity-centered ridge",
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "study_role": "development on previously evaluated station partitions",
+    "expert_retraining": false,
+    "torch_threads": 2
+  },
+  "config_hash": "62f2fdacafc36032a3b46ffd9553feec61c84a2b572be414a967c74d2ca969fc",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "runtime_snapshot_hash": "d0d49e91a8b68285d78cd5965afeb7e729ab98c16264662b911cfbc781af9309",
+  "run_identity_sha256": "d557362adb3d4572154c31ee6a9e86a9588e2f3eb0accff4eb425adf2bde05ce",
+  "prediction_sha256": "a5b09c9999f1d3373b38cd15fd9dd750f647ff53f1e35f6b7f1857fff435fdc3",
+  "model_files": {
+    "fusion.json": "66e1d7c51e8bc341131f34648d93482b8a5fe55d4c5f704eb9dc896b7237ce3f",
+    "adapters.json": "da1cbd95c39de65be4757254767de5232403419ab01d1177aaf50f0c4e38404b",
+    "bases.json": "a7569b8ef946cf2ce5835da17a7a50126f2f8a78078a6634b881eb9ebcb8aae4",
+    "representations.npz": "50fd504ce0fcb619c09e28731bb537533126508490b600f4f3c94e7934acfc7e"
+  },
+  "rows": 119592,
+  "selection_role": "source_validation"
+}

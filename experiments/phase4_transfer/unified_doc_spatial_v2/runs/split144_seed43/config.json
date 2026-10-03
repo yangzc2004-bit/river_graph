@@ -1,0 +1,69 @@
+{
+  "experiment": "unified_doc_spatial_v2",
+  "split_seed": 144,
+  "seed": 43,
+  "started_at": "2026-10-03T10:31:44.064589+00:00",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split144_seed43",
+  "source_completion_hash": "7e7f0664b1ce2f0fe45e4fced080ea13f9ebe38645e22e2cdd4fa884f814a662",
+  "source_model_files": {
+    "support_predictions.meta.json": "00bf1a1792d8bf6fbec331b8034b54b3f5c30095bef0931ad95b06f5685e6454",
+    "model.json": "0b755513bac8e6ef83bc99ecb0c71ae581103ef2581b3e80a8e87a2265686fe0",
+    "config.json": "4a533bb5166160c366eff465294c6ff1c7eaca76494abb4b65bab9803d0445b7",
+    "adapter.json": "6d79c376582f7279713a7ad3ca3932663e4feb02fd887ddcda53ce2a2b7eefa4",
+    "forests.joblib": "b5c05477e9353981ae1a7464a50328f6f25e2a0efa8f8b30328059b51fcc0421",
+    "support_predictions.parquet": "40a1a73b6d21820f56d5d96bc785105b49b85531993ebc3f18a4a9d4db54fbd5",
+    "fitted_model.meta.json": "50ab6d95230b1228d93ec68d7f7d2627ee40fd34913c4e236fd9dc223433c21e",
+    "predictions.meta.json": "16fe907bbaee79c2be4df0cb4508d4805ceaa008536a35a3a1484593910a8ab5",
+    "full_grid.meta.json": "da068a0b143f2351432e9547d958d2f3adf75d124ee1fc381ccec7a2dbf65224",
+    "residual.pt": "5d861a8c933c3cc6e5296c50ef3b75082189ec193fa78a7198535085f126b2be",
+    "training_trace.csv": "b27af8f69788611c144a90f734eed827aa6a81092f320df95fef22e9fdc0f72f",
+    "context.joblib": "c1b1ea94f47dfb585b421062e4c174db19895e98f43284352dbb764404b94e81",
+    "predictions.parquet": "dd9ac1d5dc801f96b6c75e09481357ba28402e75470b10190883fbddc09ec17c",
+    "full_grid.parquet": "c95c1946684419530988b63c1e698ef57af6288d68da8787dd116e8f129b6ba1"
+  },
+  "runtime_snapshot_hash": "d0d49e91a8b68285d78cd5965afeb7e729ab98c16264662b911cfbc781af9309",
+  "target_analyte": "doc",
+  "target_transform": "log1p",
+  "inference_roles": [
+    "train"
+  ],
+  "models": [
+    "context_constant",
+    "context_gru_shape",
+    "context_tree_shape",
+    "fusion_constant",
+    "fusion_gru_shape",
+    "fusion_tree_shape"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "q90_threshold_train": 10.0,
+  "query_cells": 4983,
+  "basis_components": 2,
+  "basis": "source-only station-centered whitened PCA; held-station input views",
+  "fusion": "station-blocked conditional meta-CV; identity, convex, identity-centered ridge",
+  "alpha_grid": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "ridge_grid": [
+    0.1,
+    1,
+    10,
+    "infinity"
+  ],
+  "study_role": "development on previously evaluated station partitions",
+  "expert_retraining": false,
+  "torch_threads": 2
+}
