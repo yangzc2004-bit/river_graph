@@ -9,16 +9,24 @@ The active model combines ecological/context prediction, a recurrent residual
 expert and target-station support adaptation on the **357-station ST-only
 cohort** (654 months, 22,571 observed station-months). The latest integration
 uses source-station ecological residual memory and learns its mixing weight
-separately for each support budget from source validation.
+separately for each support budget from source validation. Its newest performance
+candidate adds within-month daily discharge descriptors to the existing neural
+readout, while retaining the same forest, encoder, GRU and support basis.
 
-Across three station partitions and three seeds, the ecological affine model
-has MAE **1.8092 mg/L at K=0** and **1.5799 mg/L at K=5**, compared with 1.8352
-and 1.5816 for its preceding interaction model. The K0 improvement is 1.42%;
-the much smaller K5 difference has a paired interval spanning zero. K-shot
-support is retrospective, and these partitions are development data.
+Across three station partitions and three seeds, the daily-hydrology integrated
+candidate has MAE **1.8035 mg/L at K=0** and **1.5650 mg/L at K=5**. At K5 it
+improves **1.51%** over the matched monthly control and **0.94%** over the
+preceding ecological-affine model (1.5799 mg/L); both paired station intervals
+exclude zero. High-DOC Q90 error also falls by **1.40%** versus that reference.
+K0 overall improvement remains uncertain, and cells without sufficient daily
+flow remain the next development focus. K-shot support is retrospective, and
+these partitions are development data.
 
-See [latest results and reproduction](experiments/phase4_transfer/doc_ecological_transfer_v2/completion.md)
-and [product roles](experiments/phase4_transfer/doc_ecological_transfer_v2/PRODUCTS.md).
+See [latest results and reproduction](experiments/phase4_transfer/doc_daily_hydro_residual_v1/completion.md)
+and [product roles](experiments/phase4_transfer/doc_daily_hydro_residual_v1/PRODUCTS.md).
+The [preceding ecological integration](experiments/phase4_transfer/doc_ecological_transfer_v2/completion.md)
+has K0/K5 MAE 1.8092/1.5799 mg/L, improving the prior interaction model's
+zero-observation error by 1.42%; its small K5 difference was uncertain.
 The sections below retain the earlier model evolution and historical benchmark.
 
 The subsequent [regime-readout experiment](experiments/phase4_transfer/doc_regime_residual_v1/completion.md)
@@ -26,7 +34,7 @@ adds direct ecology and predicted-concentration conditioning to the existing
 GRU residual. Its compact concentration head reduces Q90 error by 2.06% at K0
 and 0.75% at K5 versus the prior interaction model, with a small ordinary-error
 and false-high cost. The support-aware ecological model remains the strongest
-overall model above; the tail candidate is retained separately.
+overall model at that stage; the tail candidate is retained separately.
 
 The [encoder-adaptation comparison](experiments/phase4_transfer/doc_encoder_residual_v1/completion.md)
 then updates the existing final self layer and ecological encoder together with
@@ -35,7 +43,7 @@ the residual GRU. At a matched 30-epoch budget, K0 MAE falls from 1.8436 to
 shows that longer optimization also helps the frozen control. The updated
 integrated model improves K0 Q90 error by 2.43% versus the current overall
 model, but raises ordinary errors and false-high rates; the overall model
-above remains the reference. All fits stop before the new 60-epoch ceiling.
+at that stage remains the reference. All fits stop before the new 60-epoch ceiling.
 
 The [four-loss comparison](experiments/phase4_transfer/doc_selective_residual_v2/completion.md)
 completes 72 fits across initial and extended common budgets. An ordinary-DOC
@@ -43,7 +51,7 @@ overprediction penalty lowers integrated K5 MAE to **1.5727 mg/L**, improving
 1.01% over its matched tail-weighted control and 0.46% over the earlier overall
 reference (the latter interval spans zero). K0 does not improve. Removing tail
 emphasis reduces false-high rates while weakening high-DOC recovery, and equal
-station weighting worsens K5. The previous overall model remains the reference;
+station weighting worsens K5. The previous overall model remained the reference;
 the new support-adapted candidate and all negative comparisons are retained.
 
 ## Scientific question
