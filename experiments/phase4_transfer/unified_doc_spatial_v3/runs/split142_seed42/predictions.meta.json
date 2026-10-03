@@ -1,0 +1,111 @@
+{
+  "config": {
+    "experiment": "unified_doc_spatial_v3",
+    "split_seed": 142,
+    "seed": 42,
+    "started_at": "2026-10-03T10:45:59.903995+00:00",
+    "runtime_snapshot_hash": "5eeee3050707bc210240e02fbdd8b4f721919f7b4bfe49a185b34ee6c08a7fc6",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split142_seed42",
+    "source_completion_hash": "07a71822b9990b2552ee211da73a8e2df5765fb92a216655d36189425dc83ec9",
+    "source_model_files": {
+      "support_predictions.meta.json": "ec89ef413355ae0dbb022e24d0823e1651d96d4b0e1bb2107b9f8a9935317771",
+      "model.json": "6244f7c8bf76063651bf2814c9efde6f3793a151da5b5ba105058cb45d53450f",
+      "config.json": "2fb0e279d9feb49834c752ec0737868a9f2c97fbf9a62ccd7ac6d28f562abb1d",
+      "adapter.json": "d856ce792e290dea32134fb4b5047d44c2757aa03482c2e522cd28bee4f2f628",
+      "forests.joblib": "bbec0aab0153a03a943ee3a118ea45234a5a14817c8bc97fbce6836254976b8d",
+      "support_predictions.parquet": "0b1949b77ac1e03c12cc929ad2917e0c87e314d80f62ffb336f9ce9d61a9fd9f",
+      "fitted_model.meta.json": "5c931f251e109fd424983a8d2958b22cf43093a5f431e3df7ac9588d9c3363d4",
+      "predictions.meta.json": "c4caddc6112c31bd8dec803f7ba98fa2ec66de2a36a9391b3294fb09988cef3b",
+      "full_grid.meta.json": "b5f4d1660c6f19c3dbf8a941c885881e3e8bbe75def6e9e82e12445b65a4587d",
+      "residual.pt": "be468783fc07376e5307d2dfc896053bad41d004cf5801bf457b44a908f4f36c",
+      "training_trace.csv": "d3eded3cb904ac6aff2667036b2946e29764ed153e40867d5f4d12dce4176538",
+      "context.joblib": "7b189186bb8442de7869d54e5ee69aa31ad223ec0bbdc735ae58b4da5bb63a96",
+      "predictions.parquet": "9c4827d716678cb007f560b04c6d587dd4545a20b7d2a6ff84e44b8df7d2f1bf",
+      "full_grid.parquet": "bd3d3700d8d011ea7c24781fd5b85ec4effddd7701a9132b3fab1ded060a9ec6"
+    },
+    "fusion_run": "experiments/phase4_transfer/unified_doc_spatial_v2/runs/split142_seed42",
+    "fusion_completion_hash": "8788a4d45826e367d56b74bdb44ee53ac282a8e2338fafb3ab31472f42e41e42",
+    "target_analyte": "doc",
+    "target_transform": "log1p",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_pca",
+      "context_gru_episodic",
+      "context_tree_pca",
+      "context_tree_episodic",
+      "fusion_constant",
+      "fusion_gru_pca",
+      "fusion_gru_episodic",
+      "fusion_tree_pca",
+      "fusion_tree_episodic"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "q90_threshold_train": 9.851500511169434,
+    "query_cells": 3975,
+    "basis_dimensions": 16,
+    "projection_dimensions": 2,
+    "epochs": 100,
+    "patience": 15,
+    "learning_rate": 0.01,
+    "batch_size": 32,
+    "optimizer": "Adam with row-orthonormal projection retraction",
+    "training_ridge": [
+      1,
+      10
+    ],
+    "training_K": [
+      3,
+      5
+    ],
+    "training_alpha": 1,
+    "training_loss": "raw query MAE, equal source station, K and ridge",
+    "epoch_selection": "source-validation pooled query MAE, equal K and ridge; epoch0 included",
+    "final_alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "final_ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "backbone_retraining": false,
+    "context_oof_folds": 5,
+    "n_jobs": 2,
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "676652a1830dc1e91594e73f04e466cc22f5120d762f6fb46acfa18c15164cdd",
+  "runtime_snapshot_hash": "5eeee3050707bc210240e02fbdd8b4f721919f7b4bfe49a185b34ee6c08a7fc6",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "deb973cb2fbfacd5485d2508acbbb293c1e5fb166c298c12651b186c4793b21d",
+  "prediction_sha256": "57a5ef6e86352c2fba81defe160a08bd77a107a368cf5f64d0a98ab61f5a2419",
+  "model_files": {
+    "fusion.json": "b9ce1379dfc7555edbfa8dc2f581970dd61e30a9eb46afbd9fd3a0c018937043",
+    "adapters.json": "4f4547ddeb54f7cfce2c9980ec69b99a811951ff4f2a08508eccdb7c7e70b930",
+    "gru_projector.json": "f0eb9bb8805d3cdb07bd77bfc1c5551a3d01786ac97dcb28325ac6d155127204",
+    "tree_projector.json": "d7f59eef358f3e6419d320326b3934912a9cef10fb386e87c48e8e49bc492144",
+    "representations.npz": "f152a4dc82b3dba738e967e8af6f0c4a42eec6afd6d59e7d0ea0b1fd0676ca1f",
+    "source_oof.npz": "4ee60596ac0d85b19cc91ec4b74724139d36504d3b414d34f15e31def2fbdc4d",
+    "oof_folds.json": "5b034314b489e8ece103942f4e22d575da40db417873604b233ee8549d962131"
+  },
+  "rows": 159000,
+  "selection_role": "source_validation"
+}
