@@ -1,0 +1,77 @@
+{
+  "experiment": "doc_tail_residual_v1",
+  "split_seed": 144,
+  "seed": 44,
+  "started_at": "2026-10-03T11:23:35.184998+00:00",
+  "runtime_snapshot_hash": "0d211d994bacbc20668bbdb25df1736d2df3244ca49c9e48342fa972fb543408",
+  "prior_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split144_seed44",
+  "prior_completion_hash": "ade1e7ab7b553d56fa9b50078814f3b1d22abded37e1adffca837c2a7448856f",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split144_seed44",
+  "source_completion_hash": "6737fc4cb124ce62d479723358addbf5ce74d65416fd8512d766948d779a9427",
+  "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split144_seed44",
+  "oof_completion_hash": "769af96343168e2f5a6ad18bbe79153c6f9f3539b74f27e5361baf4e15a10041",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "query_cells": 4983,
+  "target_analyte": "doc",
+  "residual_scale": "native mg/L",
+  "inference_roles": [
+    "train"
+  ],
+  "models": [
+    "context_constant",
+    "context_gru_tuned_anchor",
+    "native_mae_constant",
+    "native_mae_gru_tuned_anchor",
+    "native_tail_constant",
+    "native_tail_gru_tuned_anchor"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "lookback": 12,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.0001,
+  "head_learning_rate": 0.001,
+  "batch_size": 512,
+  "gradient_clip_norm": 1,
+  "arms": {
+    "native_mae": 1.0,
+    "native_tail": 2.0
+  },
+  "residual_scales": [
+    0,
+    0.25,
+    0.5,
+    1
+  ],
+  "epoch_selection": "source-validation K0 pooled query MAE; epoch0 included",
+  "trainable": [
+    "original GRUCell",
+    "observation_decay",
+    "zero-initialized scalar head"
+  ],
+  "support_basis": "frozen v4 GRU; same basis for every arm",
+  "alpha_grid": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "ridge_grid": [
+    0.1,
+    1,
+    10,
+    "infinity"
+  ],
+  "torch_threads": 2,
+  "study_role": "development on previously evaluated station partitions"
+}

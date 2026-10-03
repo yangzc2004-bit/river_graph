@@ -1,0 +1,94 @@
+{
+  "config": {
+    "experiment": "doc_tail_residual_v1",
+    "split_seed": 143,
+    "seed": 43,
+    "started_at": "2026-10-03T11:22:59.899742+00:00",
+    "runtime_snapshot_hash": "0d211d994bacbc20668bbdb25df1736d2df3244ca49c9e48342fa972fb543408",
+    "prior_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed43",
+    "prior_completion_hash": "61318f21cc0400b167a5ace3e76c15e7e48294d075128837e2b0d4589a38c14b",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed43",
+    "source_completion_hash": "abc91dcfa61c8ce21d15024af5f286ad5a2ea63923fae37c68a6da706a68e211",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed43",
+    "oof_completion_hash": "389460a585edbfecf563c09f8b1688f02df5f133c0e95b38d06ccb972fb77b2d",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "query_cells": 3907,
+    "target_analyte": "doc",
+    "residual_scale": "native mg/L",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_tuned_anchor",
+      "native_mae_constant",
+      "native_mae_gru_tuned_anchor",
+      "native_tail_constant",
+      "native_tail_gru_tuned_anchor"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "learning_rate": 0.0001,
+    "head_learning_rate": 0.001,
+    "batch_size": 512,
+    "gradient_clip_norm": 1,
+    "arms": {
+      "native_mae": 1.0,
+      "native_tail": 2.0
+    },
+    "residual_scales": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "epoch_selection": "source-validation K0 pooled query MAE; epoch0 included",
+    "trainable": [
+      "original GRUCell",
+      "observation_decay",
+      "zero-initialized scalar head"
+    ],
+    "support_basis": "frozen v4 GRU; same basis for every arm",
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "9b5170fb136c074066c4f35eb9faadde1802f7b3ba0b9c74bc3e2e360917bfac",
+  "runtime_snapshot_hash": "0d211d994bacbc20668bbdb25df1736d2df3244ca49c9e48342fa972fb543408",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "a88b49e0ec86f330bef3d891055da28ccdbe244e7dfe033104340aebb6d2c210",
+  "prediction_sha256": "cbbc4b2b99a90927dcf695e25ec867db22773295afe782ba8d3440b6cd9481c1",
+  "model_files": {
+    "adapters.json": "4790ea955885ac4e9ce3b32ead6fd373d0bf2380d74b22febaddbdd0a60fbf10",
+    "native_mae.pt": "f0e55491b339f398edb51beca9fe9dd98e9657a454b73568ffd6b36d0cdcc4ca",
+    "native_mae.json": "5f09fb812114226c186800f820869bbf770610745eb132b4122bb5ab0232971a",
+    "native_tail.pt": "e435df53cdab9cbf82018a1689cb1a72c7dccf9e20fe958036f9612f2d120b84",
+    "native_tail.json": "d9ee29e6990d2fda4d841cc94f3be2de8665630d5144d5866ec7be907352a772"
+  },
+  "rows": 93768,
+  "selection_role": "source_validation"
+}

@@ -1,0 +1,7 @@
+feature_group,environmental_context_forest,M1_GRU,implication
+Current temperature/discharge and their masks,yes,"yes, each month in the window",Already present; simply adding current hydro again is not a new information source.
+Target DOC lags 1/3/6/12,explicit,through visible DOC and memory,"RF lag columns refer to DOC, not lagged hydro."
+Hydro lags 1 and 3,not explicit,available implicitly in 12-month GRU window,Explicit changes could simplify their use by a small residual head.
+Hydro lag 12 / same month last year,not explicit,outside current t-11...t window,Add with separate availability flags if testing seasonal hydro changes.
+Within-station flow relative anomaly,not explicit,not explicitly normalized within station,A causal previous-12-month reference removes large between-station flow scale differences.
+Hydro observation age and trailing support,current masks only,current masks in each month,M1 age/count features describe DOC observations; add hydro freshness only if needed.

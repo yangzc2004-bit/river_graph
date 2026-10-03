@@ -1,0 +1,97 @@
+{
+  "role": "descriptive reused source-validation hydro diagnostic; no model fitting or outer-test labels",
+  "model": "fusion_gru_tuned_anchor_k5",
+  "residual_sign": "prediction_minus_observation",
+  "seed_aggregation": "mean predictions, signed errors and absolute losses separately per partition-cell",
+  "summary_weighting": "equal partitions; feature quantiles are reported per partition",
+  "hydro_definitions": {
+    "shape": [
+      357,
+      654,
+      2
+    ],
+    "channels": [
+      "temperature",
+      "discharge"
+    ],
+    "negative_observed_discharge_cells": 2,
+    "temperature_unit": "degrees Celsius",
+    "discharge_unit": "cubic feet per second",
+    "lag_definition": "calendar lag, not most recent observed value",
+    "change_definition": "temperature difference; discharge difference of signed log1p(cfs)",
+    "past12_anomaly": "current minus mean of prior 12 calendar months, requiring >=3 observed months",
+    "flow_anomaly_scaling": "divide by prior-12 mean absolute discharge; unit invariant; preserve signed flow",
+    "observation_age": "months since latest observed hydro at or before current month; NaN if never observed",
+    "hydro_invalid_policy": "x_mask false is missing, never zero or carried-forward"
+  },
+  "files": [
+    {
+      "path": "/Users/yzccc/river_graph/scripts/diagnose_doc_tail_hydro_v1.py",
+      "sha256": "4464bede6c59797ccac083425675e531c682b1a35cce274604bee357226929f1"
+    },
+    {
+      "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+      "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_tail_residual_v1/data_audit/audit.md",
+      "sha256": "95a51054041cd1c6ad0d22449e338fc1d8a336bd9f68c39a761dfa342e29c6c0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_tail_residual_v1/data_audit/top20_trace.csv",
+      "sha256": "b8211df726c1c8f18a51b3014f5aced8ee0a7ac04e598849f527bbd75cc7be86"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+      "sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+      "sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+      "sha256": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v4/diagnostics/validation_queries.meta.json",
+      "sha256": "b1e80b1aee0c89f21901c902c7af8478ccb36bc542d32721a22ffeea06c38479"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v4/diagnostics/validation_queries.parquet",
+      "sha256": "646be19c54a771442db76738c0c9f4361a4c8225f384b64b7d2184d4e24c2923"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split142_seed42/config.json",
+      "sha256": "c82047054a0df1a0f5541a8323be1fb8b9eb7e2cfb39500ff7131dd43e6e9b77"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed42/config.json",
+      "sha256": "836135754a50c5bef8c7d21f6817238880d4d3225f7b6ed36e6dee6498558290"
+    },
+    {
+      "path": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split144_seed42/config.json",
+      "sha256": "42371ce7b0805ba5e54d7434c8f16641c17df137122732494da420a08b86703b"
+    },
+    {
+      "path": "scripts/build_dataset.py",
+      "sha256": "0ae25a00bb78ccacf0edf7c8ca58d1b80a5548792b218b39369c74c80ea679ca"
+    },
+    {
+      "path": "src/river_graph/dataset.py",
+      "sha256": "67942ce768d4c7561ed9607b9dfc5c08679ad319a50afbfe7c5824dfa719236a"
+    },
+    {
+      "path": "src/river_graph/experiments/graph_upgrade_v2.py",
+      "sha256": "673e469a6346f503e2c1c953dea7c6d8ef75d8d53ed745dee85d22872f28ac40"
+    },
+    {
+      "path": "src/river_graph/experiments/temporal_h2x.py",
+      "sha256": "51aabbe2a05a9a53f9db6d961a876ea5bf8420e4c94df178d8d2d088a3682558"
+    },
+    {
+      "path": "src/river_graph/models/kgml_local_transport.py",
+      "sha256": "0bd150ec8f884a151b367725341023cd1ccd3d8d8d41c282c78fa81dae6a7d68"
+    }
+  ]
+}

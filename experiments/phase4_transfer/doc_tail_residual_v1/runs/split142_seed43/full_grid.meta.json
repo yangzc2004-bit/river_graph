@@ -1,0 +1,94 @@
+{
+  "config": {
+    "experiment": "doc_tail_residual_v1",
+    "split_seed": 142,
+    "seed": 43,
+    "started_at": "2026-10-03T11:22:14.529228+00:00",
+    "runtime_snapshot_hash": "0d211d994bacbc20668bbdb25df1736d2df3244ca49c9e48342fa972fb543408",
+    "prior_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split142_seed43",
+    "prior_completion_hash": "e96da94d2a0f9c4543f60d982314ae92714ba6ad3ce12a20eac1c8107bd9c741",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split142_seed43",
+    "source_completion_hash": "f2f84bcf64fd36f17fa6968d015eaef4bf9b89453431d56b7defffbf721a04d0",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split142_seed43",
+    "oof_completion_hash": "e08d14041d23226129e6bcbe4dbe90d20d5f1d4a64bd59fbab2c7694b3847f03",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "q90_threshold_train": 9.851500511169434,
+    "query_cells": 3975,
+    "target_analyte": "doc",
+    "residual_scale": "native mg/L",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_tuned_anchor",
+      "native_mae_constant",
+      "native_mae_gru_tuned_anchor",
+      "native_tail_constant",
+      "native_tail_gru_tuned_anchor"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "learning_rate": 0.0001,
+    "head_learning_rate": 0.001,
+    "batch_size": 512,
+    "gradient_clip_norm": 1,
+    "arms": {
+      "native_mae": 1.0,
+      "native_tail": 2.0
+    },
+    "residual_scales": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "epoch_selection": "source-validation K0 pooled query MAE; epoch0 included",
+    "trainable": [
+      "original GRUCell",
+      "observation_decay",
+      "zero-initialized scalar head"
+    ],
+    "support_basis": "frozen v4 GRU; same basis for every arm",
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "105a1e1dbe483dde9e36fcc14245a732b2b54570ecb2b5eafa15e7c17808ec00",
+  "runtime_snapshot_hash": "0d211d994bacbc20668bbdb25df1736d2df3244ca49c9e48342fa972fb543408",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "8f039284d6236b58a24876409be307086b28136e2e798df99d8f63303d09936b",
+  "prediction_sha256": "882d4addb48b2be1ff36ab353f8d1e9c9a948db7039ba6d85b602bda6610b184",
+  "model_files": {
+    "adapters.json": "e08ee46fd4b4ad43a976b2717912124e17b661683b2b43a0b02fe14b0c8c1845",
+    "native_mae.pt": "c86fa4d5f1bb678cd9a751ba89fed41257e6d2cc26fd274a67e1765f5c64a468",
+    "native_mae.json": "73a988a9361d5cf7049bdc126af1a8262336f65e714471bb2d24ee9804cc4227",
+    "native_tail.pt": "0a0e5399b2960c337891a73aeca2fa829cb209b479a28be1e6f5490e8637702b",
+    "native_tail.json": "e94da241a7d0b62e8b1f303ff5dc9e90b385101b0aea528ef695d627ba31c957"
+  },
+  "rows": 233478,
+  "selection_role": "source_validation"
+}
