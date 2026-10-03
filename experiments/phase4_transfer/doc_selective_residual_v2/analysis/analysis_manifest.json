@@ -1,0 +1,2742 @@
+{
+  "analysis_script": "/Users/yzccc/river_graph/scripts/analyze_doc_selective_residual_v1.py",
+  "analysis_script_sha256": "06b92bf37f98574085dd08799a707aa086fa9f89c550d1dce32c92f1da524685",
+  "bootstrap_draws": 5000,
+  "models": [
+    "context_constant",
+    "context_gru_tuned_anchor",
+    "tail2_constant",
+    "tail2_gru_tuned_anchor",
+    "mae_constant",
+    "mae_gru_tuned_anchor",
+    "selective_constant",
+    "selective_gru_tuned_anchor",
+    "station_constant",
+    "station_gru_tuned_anchor",
+    "tail2_integrated_constant",
+    "tail2_integrated_gru_tuned_anchor",
+    "mae_integrated_constant",
+    "mae_integrated_gru_tuned_anchor",
+    "selective_integrated_constant",
+    "selective_integrated_gru_tuned_anchor",
+    "station_integrated_constant",
+    "station_integrated_gru_tuned_anchor",
+    "prior_encoder_constant",
+    "prior_encoder_gru_tuned_anchor",
+    "prior_encoder_integrated_constant",
+    "prior_encoder_integrated_gru_tuned_anchor",
+    "prior_ecological_affine_constant",
+    "prior_ecological_affine_gru_tuned_anchor"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "expected_epochs": 120,
+  "budget_reference_root": "experiments/phase4_transfer/doc_selective_residual_v1",
+  "reference_epochs": 60,
+  "budget_comparison_count": 24,
+  "comparison_count": 60,
+  "sources": [
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/config.json",
+      "sha256": "4b4f9ad2ec7be18b6cf21cc89eb25f48d21ddf87d75364de574c81769f09174f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/predictions.meta.json",
+      "sha256": "805e1ce76d15c41cece698b658fc0ba2b34ad601c818dfc201c88e70a506d982"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/adapters.json",
+      "sha256": "c92b9994296170ab1cd3b414627154f0b29077b1b3c6178bacda6b7a3fdcfae3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/mixers.json",
+      "sha256": "883158c16a246c3e5929ebdc59bf51b567eec35fbc47dec0e7099a66f2375091"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/feature_definition.json",
+      "sha256": "78b91108823f318f1af3c2231714d00e537aa0f5f49571b7b0e2d1c9df992708"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/tail2.pt",
+      "sha256": "539286d18de931c5e608c86c3925c150e53c348e0a9665c5f864c87d89b12b59"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/tail2.json",
+      "sha256": "30594beb8169d385b75280f2f92b67ee22c528e48afa1b1e0ef60020f36d1e75"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/mae.pt",
+      "sha256": "d4504e72ea57db805554d99945a9be40e03ae2b2f409eed2eeae463e88676e44"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/mae.json",
+      "sha256": "2acfd946993424124c2c2d2e47a4d7cfeaae31cc04dd0f3e19d7920e2261a897"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/selective.pt",
+      "sha256": "f414ba1f6722a99ea52930c64d7416a24f8f2c0defaf4136d779adb119dc34e3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/selective.json",
+      "sha256": "6b7b0a679c46091769ed4c32188db88ef5ce65bd660d043719ba8416e6831136"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/station.pt",
+      "sha256": "3254cccfb1895653a7b7b251e48bf8e8c5d58ae593e343db4e49704546d83650"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/station.json",
+      "sha256": "e013b6292649de56022b540a2c88c56fc4be02704c32a02ba7483706c7cc8e6a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/predictions.parquet",
+      "sha256": "824d5d118461792a603f72ce2da0f08220cc2c3d490d8f13ce15ebca98e682da"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/complete.json",
+      "sha256": "63d62684ec18f6ec5cecd93d73bb5b6187a96ee4b3dc7c9d2894ce00720e2fa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/config.json",
+      "sha256": "1d493f34f8edf439b45b99a0a68bb28af6cccdde539e9ace7888462ccf131def"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/predictions.meta.json",
+      "sha256": "40dbad85143b557f850cb4dafcfc392f6b8099ff85cbe95fb6e3087e7f88a740"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/adapters.json",
+      "sha256": "3051e3c82fce3bac248c583edc0e9bdac729d4f514d49d3df063e04811f5fdcf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/mixers.json",
+      "sha256": "3ba57e5603fb6744a5d696789a53f6e49d9b4303aaaa9dfa39fbb2654ea18bc9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/feature_definition.json",
+      "sha256": "78b91108823f318f1af3c2231714d00e537aa0f5f49571b7b0e2d1c9df992708"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/frozen.pt",
+      "sha256": "2538b321012a58985ff24754cc0745709a0e8531a4db1ae0910f5b5ae0ee7b3c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/frozen.json",
+      "sha256": "8aae6ad9407364fe28baa2da58ae5944a27bc0d883a779a011f6ace7398a73a6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self.pt",
+      "sha256": "3522106fb60f71b139ec33fd90c97eaee1895cdd53c2951d77f02294e9c6c5ec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self.json",
+      "sha256": "b8f6b20bac763f6db1c805fcee56f9ff16c53b9e4cdcdb34063b644275a19651"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self_ecology.pt",
+      "sha256": "a573a11d27455498f9a20be4fdb7c7b887d6c110c83b215404dc8b57edb4ea3c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self_ecology.json",
+      "sha256": "9cf7a03c0ff24e0a5b73c0e7c796732de75a7366a6eb84a3133b57393cc12d78"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/predictions.parquet",
+      "sha256": "13df341585defb94d6773da6b69cd7832239b50e6636e4d7a2588a596a33398d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/complete.json",
+      "sha256": "0b96eaa9e68fb5ea9b7ccdfbbaea14a361a7c704307ba8640382dc87b7173968"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split142_seed42/ecological_affine.json",
+      "sha256": "ed716b6510a89880ef88bdaba2aa36d3aea9e8f01fef8e260ca4b71dc42c3ed8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/feature_definition.json",
+      "sha256": "78b91108823f318f1af3c2231714d00e537aa0f5f49571b7b0e2d1c9df992708"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/tail2.json",
+      "sha256": "30594beb8169d385b75280f2f92b67ee22c528e48afa1b1e0ef60020f36d1e75"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/mae.json",
+      "sha256": "2acfd946993424124c2c2d2e47a4d7cfeaae31cc04dd0f3e19d7920e2261a897"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/selective.json",
+      "sha256": "6b7b0a679c46091769ed4c32188db88ef5ce65bd660d043719ba8416e6831136"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/station.json",
+      "sha256": "e013b6292649de56022b540a2c88c56fc4be02704c32a02ba7483706c7cc8e6a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self_ecology.json",
+      "sha256": "9cf7a03c0ff24e0a5b73c0e7c796732de75a7366a6eb84a3133b57393cc12d78"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/adapters.json",
+      "sha256": "c92b9994296170ab1cd3b414627154f0b29077b1b3c6178bacda6b7a3fdcfae3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed42/mixers.json",
+      "sha256": "883158c16a246c3e5929ebdc59bf51b567eec35fbc47dec0e7099a66f2375091"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/config.json",
+      "sha256": "82d3dc40c3dfb891e80460917d480a2e24b096c8a2184dab51530ba1400966a1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/predictions.meta.json",
+      "sha256": "ba7004c6c31169f5335be3608446df26a2e6f2ec0a84b2320729e32a752688d5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/adapters.json",
+      "sha256": "5c8c7c7258b2e4de8f2f571a8b411f3dc38f10e2c589ef0786dde8d8af67ea8c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/mixers.json",
+      "sha256": "4447361defb326c2d5032cecf86932c2eb0e165bc7b5d3577743e6116b9e4a71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/feature_definition.json",
+      "sha256": "1061dc87d35f03d52a7e58765734667e661cae20a01240017fbadb5ef9ff6aa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/tail2.pt",
+      "sha256": "b3091b220add37e5582ef9a721f555bfd66bfce477187d1da38ec3ffb3e48881"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/tail2.json",
+      "sha256": "63b1b35a69c50b427ad0a1859c62b396659d26cfd24d13306f6f5f8c33b7e085"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/mae.pt",
+      "sha256": "4c7d0e811233a978ea911e60fc800616e7c26319a31de2ed3883cac40b52f806"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/mae.json",
+      "sha256": "61e7ab21b3dad078158a3ceb17a93b29c270cf4c80664555933516006ff5beef"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/selective.pt",
+      "sha256": "630fc073fca404e34d5ee9f0f9eb065498de2e46bca7745fec00c11864f8816d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/selective.json",
+      "sha256": "f1da7b3196c33f6a68c5270051a278ff0bc2935594f44d2040dbfe24bcea45fb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/station.pt",
+      "sha256": "2560dc1851b4e0599895f3b9ccdbb44b48c9facad998f13fbd83e340b9ff5bc5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/station.json",
+      "sha256": "44684d3cc361182b9b3c9843f0a0dbd32522d58d9a43391e6988882827669e30"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/predictions.parquet",
+      "sha256": "642d4b0ac70e8dea027638747c68e5fe52dce1ecc397c8d02a0cb72cb4c284da"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/complete.json",
+      "sha256": "0dd88f8f2d0928fda9f34cc62046cad4aa8eece1bf5d22b8745444586848aaf0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/config.json",
+      "sha256": "0d2fe987ea5f495978d2f9553fff66adb820aaa8fad8a194bcefb6e818179616"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/predictions.meta.json",
+      "sha256": "7c62c93fbe00261d5712f1010ffe02d96f82983da390659a27e3581f8fb5290e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/adapters.json",
+      "sha256": "6e2c93ab393f33e6b83e5bd7919bad4f8ac66845edc5c4ad53278980e60d96f3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/mixers.json",
+      "sha256": "6e84c546c18c185124cb82511dc6fc337dd5327ae527f40380dcd421c25e7a2a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/feature_definition.json",
+      "sha256": "1061dc87d35f03d52a7e58765734667e661cae20a01240017fbadb5ef9ff6aa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/frozen.pt",
+      "sha256": "2f3c54141c56fb714645cba241804c06a2dc050e461bb6c497e46c7cef295bbb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/frozen.json",
+      "sha256": "81294f44ce6aa5c2326a919c8e55a17e735f7c9497fb9a5d25f83b22babfc010"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self.pt",
+      "sha256": "c839eb3da247cbf2f350d7c2a429b687c8656adc7184545a0a420d7857990672"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self.json",
+      "sha256": "c283270fc7c50e3ed9d3f1d13bb15e891ba58954c5df56fc0de534c857a3ba25"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self_ecology.pt",
+      "sha256": "8189d56a5769c501c7ec50d7d46d75c26c5f4b57dd5b2f87294dc272ab1f3a94"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self_ecology.json",
+      "sha256": "772c5f7c6b1ae1c80dfb46b5d272442cc024496e0d1cd97bbf66c94ed4263e7e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/predictions.parquet",
+      "sha256": "e9a8ca71add4cfbe0b72ef0b27503902163018f301ad4c3fd3232960e7bb750d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/complete.json",
+      "sha256": "1e4a722896ecadc4c14a1d341bf25d0f28e407908a30d792fd42c4c14b2a44d1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split142_seed43/ecological_affine.json",
+      "sha256": "20159824af3c3ca19f2b0ea38a6e93c666664f1a66fd0f09bac7e3373a81f5f9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/feature_definition.json",
+      "sha256": "1061dc87d35f03d52a7e58765734667e661cae20a01240017fbadb5ef9ff6aa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/tail2.json",
+      "sha256": "63b1b35a69c50b427ad0a1859c62b396659d26cfd24d13306f6f5f8c33b7e085"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/mae.json",
+      "sha256": "61e7ab21b3dad078158a3ceb17a93b29c270cf4c80664555933516006ff5beef"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/selective.json",
+      "sha256": "f1da7b3196c33f6a68c5270051a278ff0bc2935594f44d2040dbfe24bcea45fb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/station.json",
+      "sha256": "44684d3cc361182b9b3c9843f0a0dbd32522d58d9a43391e6988882827669e30"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self_ecology.json",
+      "sha256": "772c5f7c6b1ae1c80dfb46b5d272442cc024496e0d1cd97bbf66c94ed4263e7e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/adapters.json",
+      "sha256": "5c8c7c7258b2e4de8f2f571a8b411f3dc38f10e2c589ef0786dde8d8af67ea8c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed43/mixers.json",
+      "sha256": "4447361defb326c2d5032cecf86932c2eb0e165bc7b5d3577743e6116b9e4a71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/config.json",
+      "sha256": "14340265d92178d17641765caddb191b76384ed72f606e4a580bc53ca8f870c9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/predictions.meta.json",
+      "sha256": "09de2cec3a298af51a9acdfece294160beb2e9c39fcafaf17814447c1391d3aa"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/adapters.json",
+      "sha256": "ccf81ee248a0660ddb15b68dfbfd10aa91a7e4d3428bf2fbc27494f832d22455"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/mixers.json",
+      "sha256": "29fce62a1a0df3dc2e244b7d621cf3e87cac67388400ce9b19849c976b922529"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/feature_definition.json",
+      "sha256": "99e1ea3fb563216daa91aaf76bf252610e242d32e7582b5b5062f07bb84b2ef3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/tail2.pt",
+      "sha256": "34522d0f7b5774b29989a4af792ff74b0e41d39cd5e43f146f5e71b92362193d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/tail2.json",
+      "sha256": "80ae0995d74cb239c764440f884c8ce8729e7afba5cae1e0f475bee6190f6263"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/mae.pt",
+      "sha256": "451d533392a79412ebc3d07a33b589a81da97f67a19339308a7bb2bd4e33cfdf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/mae.json",
+      "sha256": "e362b2ab9678e05f40b53a2a70ea9bda39399d4f09919f7606c66632d13df1bd"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/selective.pt",
+      "sha256": "5c92e38d980e796355842ce9c09fcf9991921527a3de405a97f117517f7fae18"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/selective.json",
+      "sha256": "0efe5e517995e33f54a5076155212461090bf8438ab638b724afe80c963b93ed"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/station.pt",
+      "sha256": "5f27831c30f59f85d17f2fea0d3c11567671ed817369241736b501c9bdb47ecb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/station.json",
+      "sha256": "2d084c901fa212ca8ccf526cd591c0728d5951cbd9f89630041f1c51d7db3a17"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/predictions.parquet",
+      "sha256": "41717a97c00a2c57f9f05702e574a98214d45c50ea82a53435b96a5b8495472d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/complete.json",
+      "sha256": "b612ecf87e47b928e051f8e5603e58348ab2898098a56506c61e157716de233b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/config.json",
+      "sha256": "308daab605a2b747ff1493744b7ff770099beef5473f087b2d29a818df43182a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/predictions.meta.json",
+      "sha256": "1d17cf03c8f96e39d4098a59e222b455d08df70b0232e0070303e9c3a0362fde"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/adapters.json",
+      "sha256": "8bc1238aa0a4d9ba5936b4b772d479fb7f5770037e63a456a22c3fb936860c61"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/mixers.json",
+      "sha256": "d5be65a5caccac94451065da4d636cb3c547cdd19e6ffcdddbc6647defcf7c7f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/feature_definition.json",
+      "sha256": "99e1ea3fb563216daa91aaf76bf252610e242d32e7582b5b5062f07bb84b2ef3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/frozen.pt",
+      "sha256": "3aeb03af8d06bffdc430071702b736acfdf3b7766371adf36aab9650e54cd185"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/frozen.json",
+      "sha256": "b61eaf1085377d3aa4296e94a0876e11e41c19e87f2b695862c96e52f9c7a5d6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self.pt",
+      "sha256": "51f3af181aa9ecda497cd488f52219b0100354d8f3e91de3cdf1b59dc5ffaead"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self.json",
+      "sha256": "23235801fa42119716f480f4aadf4f05f4011afb3b97c191c151f7860032981b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self_ecology.pt",
+      "sha256": "f5709f45892a4c713ad6167bb2ed1755cf9e68f0dc49e94e08ebeace793cd4ca"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self_ecology.json",
+      "sha256": "f6ab467546ce3785fc4597573ae9354664f464f76c87b657ec6687f9a66aeaa5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/predictions.parquet",
+      "sha256": "cc9b0a0f27a358fa5da3e8121a6cd373119a921c925f6f6db007a26e592155b7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/complete.json",
+      "sha256": "47e5aa8a0e71db17bf527e78399cd451e990797f892b630ec42ce232c3cb820f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split142_seed44/ecological_affine.json",
+      "sha256": "c546683ffcf3fecf37b1e79f39c712e769c7899573e535faab3c43aeb36974db"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/feature_definition.json",
+      "sha256": "99e1ea3fb563216daa91aaf76bf252610e242d32e7582b5b5062f07bb84b2ef3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/tail2.json",
+      "sha256": "80ae0995d74cb239c764440f884c8ce8729e7afba5cae1e0f475bee6190f6263"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/mae.json",
+      "sha256": "e362b2ab9678e05f40b53a2a70ea9bda39399d4f09919f7606c66632d13df1bd"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/selective.json",
+      "sha256": "0efe5e517995e33f54a5076155212461090bf8438ab638b724afe80c963b93ed"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/station.json",
+      "sha256": "2d084c901fa212ca8ccf526cd591c0728d5951cbd9f89630041f1c51d7db3a17"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self_ecology.json",
+      "sha256": "f6ab467546ce3785fc4597573ae9354664f464f76c87b657ec6687f9a66aeaa5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/adapters.json",
+      "sha256": "ccf81ee248a0660ddb15b68dfbfd10aa91a7e4d3428bf2fbc27494f832d22455"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split142_seed44/mixers.json",
+      "sha256": "29fce62a1a0df3dc2e244b7d621cf3e87cac67388400ce9b19849c976b922529"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/config.json",
+      "sha256": "876d474cfee3b82f0c3a0c02be4cf209b2a51df9d34fb375d7ac58f34f747faa"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/predictions.meta.json",
+      "sha256": "9bce89289faad2cab38cb9bcc5e933ae1ef01edd19cf317cd83811cfc06eb2e2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/adapters.json",
+      "sha256": "d41410cf4d78db1983805768c7c44860f2ee54d2be8041ae81162778c3b4eeb4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/mixers.json",
+      "sha256": "1a920225a128ee0cd675385b6d53303833b673aa7c8f9abb93f945e11b08f5a5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/feature_definition.json",
+      "sha256": "6a95fbb03eb16d8a4c822a6f959bc39c737c2fddcad364da05183feeaf896c9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/tail2.pt",
+      "sha256": "d056a54c6f1a1833e3fa888162c4876deff18bde094942c01d3ff60694c7b3c0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/tail2.json",
+      "sha256": "a40c6355239f9d08687fb685b16f23b646c09683b2fe4a46600da880692ce6f5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/mae.pt",
+      "sha256": "b797b30165ce172e6b35d51ee38f8f3701acaca0ff96542921955657db18c60b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/mae.json",
+      "sha256": "309272754a08ae21dd64a54433aff03cb574f137d65542df50144c6a2893bde2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/selective.pt",
+      "sha256": "691aae78524d1658a6b3d8f513c92da4230f40eeb1bc3df7271bd38dff59c24a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/selective.json",
+      "sha256": "147a350127ca4d537dcae187139e6d164ae6fdba5c817440e35b40f8e6ea4859"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/station.pt",
+      "sha256": "84c10b3d05988c5440e65bb117bbf9a396fadee36b32bb9c655bc6ae0d721995"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/station.json",
+      "sha256": "478281ec9fa5568183064b82db0b3bfbcc17228c61a3b6a987442a73f74729e7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/predictions.parquet",
+      "sha256": "ecf22ae06ced4b81bfa7c657cbbbc713e0e3618cbc80bf9b3afaa8f46c44ec48"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/complete.json",
+      "sha256": "765d410957b8cffc77387560166d4c3caabaefe07eabdaae0eb5271a986ef3ab"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/config.json",
+      "sha256": "82a343b12760cd2e59e08b263f57160d014036341ab5d713fc89b31ff67e8ce7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/predictions.meta.json",
+      "sha256": "717e07de1068ada2097b8fb57d0fa1eafde4401bda096e4a7dc043b3fe78dc5a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/adapters.json",
+      "sha256": "9555b63c2dc0cf579507b6ac7b6d8676de10d4018df3aeb3b1e58384156be57e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/mixers.json",
+      "sha256": "ff77b56cd277e3ddb1a78181edaa91c7b238301a3d3327ce39a4a6557fbdaf66"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/feature_definition.json",
+      "sha256": "6a95fbb03eb16d8a4c822a6f959bc39c737c2fddcad364da05183feeaf896c9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/frozen.pt",
+      "sha256": "f645b37ef6e4628b60ddc568b339378fe1f01d3a75057a696139a8673a1e3efe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/frozen.json",
+      "sha256": "53e4bbc4446b2fdf30250f5f7304b4b735009ca893a1276b9e969e90daa7c156"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self.pt",
+      "sha256": "bdc57d8d4db05d54e7bf6fac527799e05256061ee4bef6237db7df764c04ab62"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self.json",
+      "sha256": "99c21539e686959377aa0d0f5e648cd2afe362fcb97ec0b19f9631e25f48f98b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self_ecology.pt",
+      "sha256": "7eb476135bb820a99acd89c1a1e2fdc0da48e85a3f318d614f7db26526a729fc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self_ecology.json",
+      "sha256": "7578957e8a66eeefa634cbf2a7358ffb6ff1d9e5842f59e818bdf4a21cb042c3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/predictions.parquet",
+      "sha256": "71e51ecfea241adb3b0672205d0fa56618b507446e285998859a4a9b47cfb39e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/complete.json",
+      "sha256": "cb72d3c157d0e6755453d0e333a52c7ed121c27e443d65fe38bb65f7c12dcebb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed42/ecological_affine.json",
+      "sha256": "bfe71f10907ab02328a9892b583cb295c526f106758e8f0dbb978fde43d07b0d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/feature_definition.json",
+      "sha256": "6a95fbb03eb16d8a4c822a6f959bc39c737c2fddcad364da05183feeaf896c9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/tail2.json",
+      "sha256": "a40c6355239f9d08687fb685b16f23b646c09683b2fe4a46600da880692ce6f5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/mae.json",
+      "sha256": "309272754a08ae21dd64a54433aff03cb574f137d65542df50144c6a2893bde2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/selective.json",
+      "sha256": "147a350127ca4d537dcae187139e6d164ae6fdba5c817440e35b40f8e6ea4859"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/station.json",
+      "sha256": "478281ec9fa5568183064b82db0b3bfbcc17228c61a3b6a987442a73f74729e7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self_ecology.json",
+      "sha256": "7578957e8a66eeefa634cbf2a7358ffb6ff1d9e5842f59e818bdf4a21cb042c3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/adapters.json",
+      "sha256": "d41410cf4d78db1983805768c7c44860f2ee54d2be8041ae81162778c3b4eeb4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed42/mixers.json",
+      "sha256": "1a920225a128ee0cd675385b6d53303833b673aa7c8f9abb93f945e11b08f5a5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/config.json",
+      "sha256": "e25efdd8c500816b259cec90d9d365e74118c77121501fb81c05b80a8a558174"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/predictions.meta.json",
+      "sha256": "70dc28c0f6d4bad21afe7fa15b23d2fcdf00b73dd196ad789f41813a858ee8bf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/adapters.json",
+      "sha256": "232747acef8e152fc6423d756ae572d94f254de145b1615c375223980a9d6090"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/mixers.json",
+      "sha256": "469b61d3b9e2d3109d907a48fa2d55f324b1f26c8e5cd5432e6652f0428f0bbe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/feature_definition.json",
+      "sha256": "3c8565945f84118123cbe0d5b52045421480ecaccf871612f9b947d87365cb39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/tail2.pt",
+      "sha256": "a0ca119889654f9691a8147aaea9603804dd373cfa60af518a705c951e00366b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/tail2.json",
+      "sha256": "778245e2bb412e9dbca961549eeaaed2b8eb92ebf4a6cca16ce9ff2dacddbd8f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/mae.pt",
+      "sha256": "0dbe844f192dc76ce2e23149116e366bfee650214904eda0b6f49d36961a4d41"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/mae.json",
+      "sha256": "7f22546d394020df6b9d56217afa78f970c94232802ec16450b7896bea1e1e77"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/selective.pt",
+      "sha256": "c6082a145d40eeadf555699b9313a5d081f368b895dc72f6042897eafe9a36a8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/selective.json",
+      "sha256": "357cd76d4b540cfc041ab0c560ce6039233fb520336d176623e62e90c97657cb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/station.pt",
+      "sha256": "73a37435d2304a771c541d06026b5599c943911d5997e1405dfa201531eee1d0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/station.json",
+      "sha256": "f4198760a7b32f47a73824013298c7520c06b77968caec3fce77bbb92ae61757"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/predictions.parquet",
+      "sha256": "9aac8033d9103eea920a1d26723a82047e1bf2b81da951071bad94b8158e3369"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/complete.json",
+      "sha256": "ef00df531d3c79b4540bc275bc86faf107456d8d245f3469168b519b2f22cc4f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/config.json",
+      "sha256": "85fd25361a533a4661d9a4d156d5397d195c33a9ed8f76b6cb09f187c84c7b35"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/predictions.meta.json",
+      "sha256": "df5c47882a6f8c7d8a94a7f4999c4d87ade6c961085753b80f5854d4edcef970"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/adapters.json",
+      "sha256": "db2d850438a88d39188e2992ce242b8780669e25803aa48f2bce01b432999bfc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/mixers.json",
+      "sha256": "4fffb26fdb5a54fa74bfd3405295b532422e68697de28631ef87d36fcec1b2f2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/feature_definition.json",
+      "sha256": "3c8565945f84118123cbe0d5b52045421480ecaccf871612f9b947d87365cb39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/frozen.pt",
+      "sha256": "600c0748d21a5636516e942abb908cd3ae428499ef197f8d1a5cd72f719e6cd6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/frozen.json",
+      "sha256": "09a7aee9f2e6473bf8527d807bc9aade3093ff700b75af9f8eb368b3f52bdb84"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self.pt",
+      "sha256": "5275098f44690b8a59ec0c33f06d5d661424b4eec49d1bb29aa327ce9ca12a49"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self.json",
+      "sha256": "b71dced431c94fedfa89fec8371cdafa8c4ff6d30cbde1e94187a6cdfebcbb00"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self_ecology.pt",
+      "sha256": "5819c01699fd4411d7076104815cae19590d22cd483af165682600110b987cd8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self_ecology.json",
+      "sha256": "3cf5862b196e187268201bf3a5c92644897ad1200396c0e1849abfdb3291797b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/predictions.parquet",
+      "sha256": "7d755cd02dac025f5d9373d96e7c33f395a9bd9e3102496bbdf070ad30365440"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/complete.json",
+      "sha256": "15e43dd632b117a70a1eee65f699fbf44823896e16dfcde1a37352a194ae62fc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed43/ecological_affine.json",
+      "sha256": "b827249acd58d5876f7dd8f51cd220b2fd6dd51703623eadd8fabd6e63f34d88"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/feature_definition.json",
+      "sha256": "3c8565945f84118123cbe0d5b52045421480ecaccf871612f9b947d87365cb39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/tail2.json",
+      "sha256": "778245e2bb412e9dbca961549eeaaed2b8eb92ebf4a6cca16ce9ff2dacddbd8f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/mae.json",
+      "sha256": "7f22546d394020df6b9d56217afa78f970c94232802ec16450b7896bea1e1e77"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/selective.json",
+      "sha256": "357cd76d4b540cfc041ab0c560ce6039233fb520336d176623e62e90c97657cb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/station.json",
+      "sha256": "f4198760a7b32f47a73824013298c7520c06b77968caec3fce77bbb92ae61757"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self_ecology.json",
+      "sha256": "3cf5862b196e187268201bf3a5c92644897ad1200396c0e1849abfdb3291797b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/adapters.json",
+      "sha256": "232747acef8e152fc6423d756ae572d94f254de145b1615c375223980a9d6090"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed43/mixers.json",
+      "sha256": "469b61d3b9e2d3109d907a48fa2d55f324b1f26c8e5cd5432e6652f0428f0bbe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/config.json",
+      "sha256": "6210ee239ad5dc962446a25ff021710e07a4fb756c718b2c8222c3d7334fa148"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/predictions.meta.json",
+      "sha256": "cb2be0969d170576d62240f8edb56c05801f21ee6bd3103ef3e8c3f5db5daa23"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/adapters.json",
+      "sha256": "fb6d8a886b0eb52bd9a0594f938618d9b6f116fb18f0d813dee1e37bd4819e83"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/mixers.json",
+      "sha256": "833bb2532c09a2e16318ecf5fb7e50bd089eab4a30b33122580f12b4011706d2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/feature_definition.json",
+      "sha256": "773f0d62c4284ff57404d5e7cbed6bd8109281c780b81977f456ae5859743755"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/tail2.pt",
+      "sha256": "dd8a56e721b6873bde203b9fee8ca8355106bac60da3f0053cbd587d9987c527"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/tail2.json",
+      "sha256": "6fe8cbf44d3b4e797930b0dfaccc027b9b7c1edd58272b2dc99de35fafd88dee"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/mae.pt",
+      "sha256": "8cc369d58c031a618759e30d2eaaec2809137fd119d1fb752dc2ac290c9b3f7c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/mae.json",
+      "sha256": "a21a8b29ecf75c17491458ced76ae77bc24ba37d325a21ff9bef19296718ded0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/selective.pt",
+      "sha256": "0f2ac2e5c348d16c483845d0f457e7c09f29d100809c5e0778c94abc955fd6e4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/selective.json",
+      "sha256": "66fd14bb6a80db9ec6cf7b3c02754b7d757fed9e0f1bd5e1ad74619fe4d51d45"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/station.pt",
+      "sha256": "1f3d9861cebda990a5e713b0a511a775a8d0c90d52552d2ad4a333e19a99b08a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/station.json",
+      "sha256": "3ca7d412b16c5bf0856d146f82a525d1de5c302fb1473efde3adb59a243262c1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/predictions.parquet",
+      "sha256": "8f2ec2adffb07ddba101abe5502e90acacd1f329936b94bb7cf307f71295c344"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/complete.json",
+      "sha256": "321ddfd97a8ce3c41241e892e18c8ef558856f3da76e5837dc7803e825758018"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/config.json",
+      "sha256": "6c4a85cc70ee7775f27dcb991ac9898dec09eaed3ab7be2d29439be0e95a98fb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/predictions.meta.json",
+      "sha256": "dc4238ca8cc21ab7bf2d0e40e9b5602615a81a0005c9e89d6cef658d0a858dd2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/adapters.json",
+      "sha256": "1fd5bfc03e3a25e2703a52dc1ab8070e47abd6a924fa1d8aeb8b99b6c93300f1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/mixers.json",
+      "sha256": "d2c4c31980ce709a96ddd584edb505f6e529f64c0ca95a94f2281786adbad402"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/feature_definition.json",
+      "sha256": "773f0d62c4284ff57404d5e7cbed6bd8109281c780b81977f456ae5859743755"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/frozen.pt",
+      "sha256": "1965e2199c48d3a2c87ff32a81505614b316fee4de0dc7828c8afc6c450f1781"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/frozen.json",
+      "sha256": "b0dfcbd38aa1dbfc1396241bfebafdb8042c546755688a3af43e6440c8632798"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self.pt",
+      "sha256": "42bf05beee0bd855c69e25124e115fb27a8ed9088604cacd8670a169c553746e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self.json",
+      "sha256": "da82adb7d7fc70b1dae9a7546520625c39b4e59897677a06858d2ade6f1614e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self_ecology.pt",
+      "sha256": "9fff363824bcb1bd06ff97c4e72066b2783cdba0a000a0c97b2956d6bff8c0d6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self_ecology.json",
+      "sha256": "d36e7a67c3636515eb0de04903b18e0b39f5c23e9e12a0490355643b03c81773"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/predictions.parquet",
+      "sha256": "4b8fa25f7f6df76d5c35423955a4950a868da55c728258cc6ecdc958473cbe45"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/complete.json",
+      "sha256": "d64e2c2e59f2fd63fec75e737537b5ea1d48a00f12f87f2572a1d17088bc345f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed44/ecological_affine.json",
+      "sha256": "3c40e2b36af06faa28a200a318603f0468ce7aea2b2bed3c113b4d2e714aeae2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/feature_definition.json",
+      "sha256": "773f0d62c4284ff57404d5e7cbed6bd8109281c780b81977f456ae5859743755"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/tail2.json",
+      "sha256": "6fe8cbf44d3b4e797930b0dfaccc027b9b7c1edd58272b2dc99de35fafd88dee"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/mae.json",
+      "sha256": "a21a8b29ecf75c17491458ced76ae77bc24ba37d325a21ff9bef19296718ded0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/selective.json",
+      "sha256": "66fd14bb6a80db9ec6cf7b3c02754b7d757fed9e0f1bd5e1ad74619fe4d51d45"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/station.json",
+      "sha256": "3ca7d412b16c5bf0856d146f82a525d1de5c302fb1473efde3adb59a243262c1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self_ecology.json",
+      "sha256": "d36e7a67c3636515eb0de04903b18e0b39f5c23e9e12a0490355643b03c81773"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/adapters.json",
+      "sha256": "fb6d8a886b0eb52bd9a0594f938618d9b6f116fb18f0d813dee1e37bd4819e83"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split143_seed44/mixers.json",
+      "sha256": "833bb2532c09a2e16318ecf5fb7e50bd089eab4a30b33122580f12b4011706d2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/config.json",
+      "sha256": "35be6978d1026423c7dccbe5e85c30a3f65df78e5ec6bde3c3bbc0ce876d4c43"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/predictions.meta.json",
+      "sha256": "264df6794487b15514a1f6ef430ef130311270a1b2d9c9d31219fea6e2956402"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/adapters.json",
+      "sha256": "40e0eae4bbbbc4bd68045116fda5670567eec1b5c9cdd4fcf93a91bb18068175"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/mixers.json",
+      "sha256": "e1c41368fc72ba575949c5b8536df7ecc5d607d2a24f1ded93e98bca4825d877"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/feature_definition.json",
+      "sha256": "1f020eb4b3c11f58ce522b6e43d3ba2513dab934653370a034ed498a259a5ba5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/tail2.pt",
+      "sha256": "01d04ba2295dd40397600e25a85ab3b317dbf1c9ebc59bbcad7edc131be88659"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/tail2.json",
+      "sha256": "fabbcece25e688b5148ea7a6a84046925f96c058151ec336fd5896e183f9ea7c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/mae.pt",
+      "sha256": "f529e3e677251d3cc3218a657c2bf0dfa2cc418f167c8d1c36f49dec1a4b9291"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/mae.json",
+      "sha256": "4980371b47210796b7e51e33f661875f3d031a4b134cf387bbacfc93b46c39a9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/selective.pt",
+      "sha256": "aeb70ba1e9575580129131fc6443f9f71d340a45414b2f13b396f24b574b44d6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/selective.json",
+      "sha256": "68d0753df84ce2fc74db00abf26dd741a704e7850ba15b130e47001267117a8f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/station.pt",
+      "sha256": "fa0e442adac44dd5a1fa4cbc995fdd8297ad0c6a7e7c0eabc254cd998f1bb608"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/station.json",
+      "sha256": "524fe25e3226fc868b6738d2c87504dffa11d1648ff5fedad964b65f7821ebf3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/predictions.parquet",
+      "sha256": "626097a43d263162d71f04d721bf44febf290045f0fc01be851d2e2453ab7a15"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/complete.json",
+      "sha256": "46ff9dc0036de8363af08a33e4f380b03ea9e1d796cd3c32adf3a0a86cea08e9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/config.json",
+      "sha256": "e4fdfe88e837eaa7bb4a8a734bfa052aa191fd6b2c8058980257df795e756700"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/predictions.meta.json",
+      "sha256": "083c0447f87892f7d96df5e30de4eac0de64a40f0259a067129ee711ada077fe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/adapters.json",
+      "sha256": "88165cb0d531d4111633ad3e85200e3e1144d9da760c332c180bb8275afb53d5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/mixers.json",
+      "sha256": "ce2967f82e548b54350b151ce8234cf862d68ed186e9bc5b09a7aee6f7940d2a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/feature_definition.json",
+      "sha256": "1f020eb4b3c11f58ce522b6e43d3ba2513dab934653370a034ed498a259a5ba5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/frozen.pt",
+      "sha256": "70f440660591860f2a084f3e7e305d74dfdd258b14fd27ff6d0c12f760cc2ea6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/frozen.json",
+      "sha256": "a1ba4ae9b833a8c2cc71ecdb4fdc1f6083fc570dd2e6a4599c24b5faedce5402"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self.pt",
+      "sha256": "5c2c9d0bab4042c284d1fc9302e3ce3852a9242dbeb2c0a65e6bae8f496c9e1d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self.json",
+      "sha256": "cde5f2a3cded7a898f26b293f79396ca602c297a65ed440cf8e52c89fa961112"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self_ecology.pt",
+      "sha256": "f64d3e4fea8d892420b5f8180c49b6574151a7b784c07b3e60d0e5d2d6baacbd"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self_ecology.json",
+      "sha256": "31e8b535c6e451cb8d80ddb7ae391bc13204498c86fa28ccd351605cdaff7cf5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/predictions.parquet",
+      "sha256": "9c7ecd04ffc967de90824ff55607d12c03969b1301041fabebaad9f3b0e25ec8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/complete.json",
+      "sha256": "083d4b0b0563737247561a47e1ecb229364a6294c0b8b9fda88978c507c08c4c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split144_seed42/ecological_affine.json",
+      "sha256": "23ef1f8d386020c141f4fe696605a544ce39809ab1eb0ce1f719036f152742a5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/feature_definition.json",
+      "sha256": "1f020eb4b3c11f58ce522b6e43d3ba2513dab934653370a034ed498a259a5ba5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/tail2.json",
+      "sha256": "fabbcece25e688b5148ea7a6a84046925f96c058151ec336fd5896e183f9ea7c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/mae.json",
+      "sha256": "4980371b47210796b7e51e33f661875f3d031a4b134cf387bbacfc93b46c39a9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/selective.json",
+      "sha256": "68d0753df84ce2fc74db00abf26dd741a704e7850ba15b130e47001267117a8f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/station.json",
+      "sha256": "524fe25e3226fc868b6738d2c87504dffa11d1648ff5fedad964b65f7821ebf3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self_ecology.json",
+      "sha256": "31e8b535c6e451cb8d80ddb7ae391bc13204498c86fa28ccd351605cdaff7cf5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/adapters.json",
+      "sha256": "40e0eae4bbbbc4bd68045116fda5670567eec1b5c9cdd4fcf93a91bb18068175"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed42/mixers.json",
+      "sha256": "e1c41368fc72ba575949c5b8536df7ecc5d607d2a24f1ded93e98bca4825d877"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/config.json",
+      "sha256": "e394ab2f79861927cb66828b87fde309cbf19a4a26f3725927809baeeb0fd4f0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/predictions.meta.json",
+      "sha256": "f5cd835344c392f2ca96af99ea09a0c837aa268c4cc66866d0a214fc75a3b5b2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/adapters.json",
+      "sha256": "14cb4bdc8cc55943d22b91a54384fdca70fe5731051546876b47165e37fd29cc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/mixers.json",
+      "sha256": "51e8d9ef16448a3cefb0f3bdb6ec30c7b5039361214f4a0bb10d5c5b3f6fc82e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/feature_definition.json",
+      "sha256": "22c4d1831b97203154324a68e6f734d8d16f1affc06c62ad18be956a0feab415"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/tail2.pt",
+      "sha256": "322f2709e9975456f032d38868b61bd12d6a9b4883a1086bc9d3bfc3bf968b13"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/tail2.json",
+      "sha256": "4bb06fe3325e76e5af717919d01dfc1555cb91b853952e8a2624ebd674042713"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/mae.pt",
+      "sha256": "e77041d6983bb4c1550322bafa0da287e6a79c7ba9ec0a0cfbb1cb71b74a933a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/mae.json",
+      "sha256": "4e075e1ee30f6971ebdc0d819bc4d8439b88bba5bbfa57cd0948691d18511635"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/selective.pt",
+      "sha256": "d98361f5ba944a601e1ec7acb8b570a518d2f53dc0e2a52bd79eefa625dab586"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/selective.json",
+      "sha256": "31be4bdb176fdeb2daf779e720c7b7580609ba939db3446d931d2b9476d85c63"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/station.pt",
+      "sha256": "8db41340a092401942cfd503a6ac17fbb3c96c044a88870549d5593da560814e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/station.json",
+      "sha256": "ae697aaddc9c6a97b7403e43b7afa0112e9b1a3e101c3ca94acec260c1e09526"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/predictions.parquet",
+      "sha256": "39d35d45720af4ce6b1273f87990417d3f1369f1d41aa0df27376fd701566d93"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/complete.json",
+      "sha256": "67767653e9cd66bd71a817153ec030208a7e6ad11106395ab6efef6e5fe77f0c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/config.json",
+      "sha256": "e8a5eb2d6c7ecbc974e183edc83f4e0fd27ba6cd4646b0a529b062699b465d18"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/predictions.meta.json",
+      "sha256": "983a03bea2c0ecbfbc8c2e7a845f178a4f5b8e298f5fc1747dc1c4cf963e53c4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/adapters.json",
+      "sha256": "5f619e260bf016c1854a662eb221d89abd7d7b73289369c300fd9d9f50139798"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/mixers.json",
+      "sha256": "043a37c0ab887d6b20c480a320a49a70fa13499193139758c995dfd7f6a73407"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/feature_definition.json",
+      "sha256": "22c4d1831b97203154324a68e6f734d8d16f1affc06c62ad18be956a0feab415"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/frozen.pt",
+      "sha256": "11efefb83b5f41c9e09454ad4e67b6113ea1da38894e247211e8856e1fc2134d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/frozen.json",
+      "sha256": "7a518d8cd1c7f674d3f236f359cdeaed8e22bfc74850455f9192d0028c61dfec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self.pt",
+      "sha256": "f6b737cfc4a0c83544df4cd387bf31fdd5b262c7640d614ff6a14bdb3cb4535f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self.json",
+      "sha256": "893f933080078f7b88aa5dba431371a894ce9b2b87f262abfb16b0eae9145fce"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self_ecology.pt",
+      "sha256": "78630c6e0564d179928cbeda0bb7fbf31235c52af1a35c374ce81bf1edabebe7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self_ecology.json",
+      "sha256": "cddf1029ddc2e4f5b922a5548b3069155119ab26a377d79fd5c39e60514857d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/predictions.parquet",
+      "sha256": "cc22caad6df988af789f4089e2228ddaa20b5b2e4fe54741c39de252a5f428c6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/complete.json",
+      "sha256": "fe7d273574e9ac5d6a5f1bb6c338450f5336bfb3e16077e52cd961cf8bd9e6d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split144_seed43/ecological_affine.json",
+      "sha256": "190c5457513c50ac86678bc81b8110d0bf1b078355015f4f6104d7dada59312b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/feature_definition.json",
+      "sha256": "22c4d1831b97203154324a68e6f734d8d16f1affc06c62ad18be956a0feab415"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/tail2.json",
+      "sha256": "4bb06fe3325e76e5af717919d01dfc1555cb91b853952e8a2624ebd674042713"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/mae.json",
+      "sha256": "4e075e1ee30f6971ebdc0d819bc4d8439b88bba5bbfa57cd0948691d18511635"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/selective.json",
+      "sha256": "31be4bdb176fdeb2daf779e720c7b7580609ba939db3446d931d2b9476d85c63"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/station.json",
+      "sha256": "ae697aaddc9c6a97b7403e43b7afa0112e9b1a3e101c3ca94acec260c1e09526"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self_ecology.json",
+      "sha256": "cddf1029ddc2e4f5b922a5548b3069155119ab26a377d79fd5c39e60514857d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/adapters.json",
+      "sha256": "14cb4bdc8cc55943d22b91a54384fdca70fe5731051546876b47165e37fd29cc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed43/mixers.json",
+      "sha256": "51e8d9ef16448a3cefb0f3bdb6ec30c7b5039361214f4a0bb10d5c5b3f6fc82e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/config.json",
+      "sha256": "62055d25495e2839f101343999a61d4c978e47e21ec965a0ad3cf701b8a47b59"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/predictions.meta.json",
+      "sha256": "67489d05c1a807a107ea0710708567a803297f6abd9ed5e9ef348b8dd8b8db41"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/adapters.json",
+      "sha256": "00795a3f84a8871538da7c018b30b5938331c8c34643402bbf7881455f856134"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/mixers.json",
+      "sha256": "c11fc605e3726db1fa4fc438492e913d3a7037d77e73e58ffc09683d509ac8e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/feature_definition.json",
+      "sha256": "49d4f18a1b41c710536b3fa16714a272e3d9a52a7f794a7fd06517a4a7872c71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/tail2.pt",
+      "sha256": "9caca6fe50c5a0b15cdd8cc450a34b09d8ab814cba01c9e0f71b811a325a7272"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/tail2.json",
+      "sha256": "8aa409e39f67160d8ba57a40661aeee4a60e0f2f6f569138c437e60e717a0d1c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/mae.pt",
+      "sha256": "7aa6d2906c11192bc2c98e11f7fef0e71b1662107ec2b1ee970dc6630e591a66"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/mae.json",
+      "sha256": "11aa73bce0da3a62ba80c2f8b0fdbd9bc6a7c38d733cc6a3a97fd3dd148c4ac4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/selective.pt",
+      "sha256": "dc92031bd4a871902dace5c9392afcf0710d8b7d381180b84c1997daa1c37d93"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/selective.json",
+      "sha256": "9698c8dec1ecb95ec44b0562edea88b8c8b810912ba42e1b2caf803bd0b61c49"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/station.pt",
+      "sha256": "bc6f7b0aab986808b4128563485b9f1df1975a9d8f6612852b9f94b9147fa479"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/station.json",
+      "sha256": "76374c130ced6ab3f56a8d7deb68293d6ecf54c748527258d39993e3069223d8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/predictions.parquet",
+      "sha256": "e5c89a9b1a38405c47a951b77b86f095b91a57d24a5e0d8d07bf40e2eb67a290"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/complete.json",
+      "sha256": "9a1fd4797bb7ffa26729f40d911ad1f434050002156ad078099f55112c17d62d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/config.json",
+      "sha256": "024b2abda0e08bb0a82e4a7ea0572b8a29ae18c261674e3e64a42747b5267f68"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/predictions.meta.json",
+      "sha256": "1ba761b02d4e32f76a5134459759bce60fdfb01417825bea2e35afc81b276d23"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/adapters.json",
+      "sha256": "61389499ff824460b8cc3cb023298c7411e95ee69e973ea995d58f24816da3ac"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/mixers.json",
+      "sha256": "aee0b2fafc23d6b3829374d2503aba3826c9a857feed638a2b0b4eb6999ae5d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/feature_definition.json",
+      "sha256": "49d4f18a1b41c710536b3fa16714a272e3d9a52a7f794a7fd06517a4a7872c71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/frozen.pt",
+      "sha256": "84b024218e0755e69ae457277fd31e5f298080c1db1a0a8291bdaf076bbfad5c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/frozen.json",
+      "sha256": "85ded17f248c22de0ab088271f2e0cfdd787b7e7ab7ebe9a6dcc83519e5c8e9c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self.pt",
+      "sha256": "3754c9b10e80efcf0eef22c391b196a7027343bce388b3cce23f2ab4f5380abe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self.json",
+      "sha256": "59df3a5a42de4c9ba7d877022b17ce8227570eb48b70ca7b7c4805ab618422f9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self_ecology.pt",
+      "sha256": "cb6eeb37d8ceb5f3a09347277e7664d1ff2a39c8440a287c7025ef1275650984"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self_ecology.json",
+      "sha256": "b9869840f5f3075545500bdbccb320affbe6593eefb144661b9e96f789cf46b8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/predictions.parquet",
+      "sha256": "1b5c6bdbc3ae65c3849ce8af9d31029b9d3762c1629396f249a92590381fde2b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/complete.json",
+      "sha256": "6ffb35cbe396164c65a459c707242dafb03600df3597f5d46552b67c5774e6a7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split144_seed44/ecological_affine.json",
+      "sha256": "1728187b418bedbf20824f9527b22ddf980d56086bde22df695ba804d1ba2809"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/feature_definition.json",
+      "sha256": "49d4f18a1b41c710536b3fa16714a272e3d9a52a7f794a7fd06517a4a7872c71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/tail2.json",
+      "sha256": "8aa409e39f67160d8ba57a40661aeee4a60e0f2f6f569138c437e60e717a0d1c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/mae.json",
+      "sha256": "11aa73bce0da3a62ba80c2f8b0fdbd9bc6a7c38d733cc6a3a97fd3dd148c4ac4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/selective.json",
+      "sha256": "9698c8dec1ecb95ec44b0562edea88b8c8b810912ba42e1b2caf803bd0b61c49"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/station.json",
+      "sha256": "76374c130ced6ab3f56a8d7deb68293d6ecf54c748527258d39993e3069223d8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self_ecology.json",
+      "sha256": "b9869840f5f3075545500bdbccb320affbe6593eefb144661b9e96f789cf46b8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/adapters.json",
+      "sha256": "00795a3f84a8871538da7c018b30b5938331c8c34643402bbf7881455f856134"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v2/runs/split144_seed44/mixers.json",
+      "sha256": "c11fc605e3726db1fa4fc438492e913d3a7037d77e73e58ffc09683d509ac8e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/config.json",
+      "sha256": "a94a55fe91b0481c85a6e2b841ef50df902233ea27076f81aeb004049dbd40b5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/predictions.meta.json",
+      "sha256": "00ea504936dea82f48bd810fa88bbdd8b85299c1baac409c3ca780975150fb10"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/adapters.json",
+      "sha256": "08baefe341ee50912763fc5854f0e5aa9ea67b310da1586567d23fe2f32faf17"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/mixers.json",
+      "sha256": "69394c49a409221196332a3cd27170c05e15d7c574895c69075eb578a2263d5e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/feature_definition.json",
+      "sha256": "78b91108823f318f1af3c2231714d00e537aa0f5f49571b7b0e2d1c9df992708"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/tail2.pt",
+      "sha256": "13afbfa86cd66b276fba54c00d2afcc8bf94735686389e025eff659ed2da280d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/tail2.json",
+      "sha256": "d15e70a97fef318b209119c56cd8adf514300fd1a1ea9d119e1d7ee9c6f85160"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/mae.pt",
+      "sha256": "4c858d8f3c5831b456e2b84de6bc562b9b9d1b0a73dee7b78a80d6baaeaafa02"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/mae.json",
+      "sha256": "1bc23955ddb48f7c62fafa1ee3e9c6eeeb6be3a703e547254deb5712bbf7d759"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/selective.pt",
+      "sha256": "ba913266323d853339ab67c0b2807f935e8c7b79a634159c61ea2c26ed6e49ab"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/selective.json",
+      "sha256": "ebde70c43787a99f6ecfaeb191a530486505b0b49954ca4428acdcb9ea19ab72"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/station.pt",
+      "sha256": "5894865c04dcefb35eb3662d5da05de598612b3fbfd490dd40ee29da91b01e5e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/station.json",
+      "sha256": "3d3f5172cade43a657c4b4fa534d6865faf5f34c1e528aa316f724681ceefff6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/predictions.parquet",
+      "sha256": "ee9361e1cc662162d8e8467522432b3191d3bdbf0791aac92f03acd3113641e8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/complete.json",
+      "sha256": "2ec1c88203e5a660cef9c5f5ea5e9fab07de5a74d1b513a724278d79b5e4538e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/config.json",
+      "sha256": "1d493f34f8edf439b45b99a0a68bb28af6cccdde539e9ace7888462ccf131def"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/predictions.meta.json",
+      "sha256": "40dbad85143b557f850cb4dafcfc392f6b8099ff85cbe95fb6e3087e7f88a740"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/adapters.json",
+      "sha256": "3051e3c82fce3bac248c583edc0e9bdac729d4f514d49d3df063e04811f5fdcf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/mixers.json",
+      "sha256": "3ba57e5603fb6744a5d696789a53f6e49d9b4303aaaa9dfa39fbb2654ea18bc9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/feature_definition.json",
+      "sha256": "78b91108823f318f1af3c2231714d00e537aa0f5f49571b7b0e2d1c9df992708"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/frozen.pt",
+      "sha256": "2538b321012a58985ff24754cc0745709a0e8531a4db1ae0910f5b5ae0ee7b3c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/frozen.json",
+      "sha256": "8aae6ad9407364fe28baa2da58ae5944a27bc0d883a779a011f6ace7398a73a6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self.pt",
+      "sha256": "3522106fb60f71b139ec33fd90c97eaee1895cdd53c2951d77f02294e9c6c5ec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self.json",
+      "sha256": "b8f6b20bac763f6db1c805fcee56f9ff16c53b9e4cdcdb34063b644275a19651"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self_ecology.pt",
+      "sha256": "a573a11d27455498f9a20be4fdb7c7b887d6c110c83b215404dc8b57edb4ea3c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self_ecology.json",
+      "sha256": "9cf7a03c0ff24e0a5b73c0e7c796732de75a7366a6eb84a3133b57393cc12d78"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/predictions.parquet",
+      "sha256": "13df341585defb94d6773da6b69cd7832239b50e6636e4d7a2588a596a33398d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/complete.json",
+      "sha256": "0b96eaa9e68fb5ea9b7ccdfbbaea14a361a7c704307ba8640382dc87b7173968"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split142_seed42/ecological_affine.json",
+      "sha256": "ed716b6510a89880ef88bdaba2aa36d3aea9e8f01fef8e260ca4b71dc42c3ed8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/feature_definition.json",
+      "sha256": "78b91108823f318f1af3c2231714d00e537aa0f5f49571b7b0e2d1c9df992708"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/tail2.json",
+      "sha256": "d15e70a97fef318b209119c56cd8adf514300fd1a1ea9d119e1d7ee9c6f85160"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/mae.json",
+      "sha256": "1bc23955ddb48f7c62fafa1ee3e9c6eeeb6be3a703e547254deb5712bbf7d759"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/selective.json",
+      "sha256": "ebde70c43787a99f6ecfaeb191a530486505b0b49954ca4428acdcb9ea19ab72"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/station.json",
+      "sha256": "3d3f5172cade43a657c4b4fa534d6865faf5f34c1e528aa316f724681ceefff6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed42/last_self_ecology.json",
+      "sha256": "9cf7a03c0ff24e0a5b73c0e7c796732de75a7366a6eb84a3133b57393cc12d78"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/adapters.json",
+      "sha256": "08baefe341ee50912763fc5854f0e5aa9ea67b310da1586567d23fe2f32faf17"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed42/mixers.json",
+      "sha256": "69394c49a409221196332a3cd27170c05e15d7c574895c69075eb578a2263d5e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/config.json",
+      "sha256": "ec7c7acf86e40ee36b3b46c9ab8dc49b66bc03ff7e892ebbf963616e443ebffa"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/predictions.meta.json",
+      "sha256": "54e902cb7d884d3f637c172d6b8ffbc8c8a73119ea8d7ed2fcf4399946f488d5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/adapters.json",
+      "sha256": "5c8c7c7258b2e4de8f2f571a8b411f3dc38f10e2c589ef0786dde8d8af67ea8c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/mixers.json",
+      "sha256": "4447361defb326c2d5032cecf86932c2eb0e165bc7b5d3577743e6116b9e4a71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/feature_definition.json",
+      "sha256": "1061dc87d35f03d52a7e58765734667e661cae20a01240017fbadb5ef9ff6aa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/tail2.pt",
+      "sha256": "a5bc4b61089cf5f48681cb37476e8e43ec8ad5af6e0110aef434ffcb82be26b7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/tail2.json",
+      "sha256": "88641fbffc345d2b02043f4f4544d2cad2c713c52b2a25ed75f9065b4cf0aa84"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/mae.pt",
+      "sha256": "df567627e1ac09fdc65908bb3bee26965b21b21d7354d526436fa173608a3c9b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/mae.json",
+      "sha256": "04da4918ca80a86ce64e9df606d7db338cae278a3706073ee178e906c24befb8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/selective.pt",
+      "sha256": "784e70496f70507cff513f648079f2c25fe6e8706590c3c6185c075b22e57959"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/selective.json",
+      "sha256": "b0b83b641a0d82f0cf06b6d3b57c0279f1b7c947e0d43b382894fd35daba4b7c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/station.pt",
+      "sha256": "312660f7aad9d50d35eaeb429e49ce471653dca31a201584db2fac6134527fc9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/station.json",
+      "sha256": "caf02e3fc6bea33f8026ab205d8e7847f0032ac48ed8740544e132e140f511a1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/predictions.parquet",
+      "sha256": "642d4b0ac70e8dea027638747c68e5fe52dce1ecc397c8d02a0cb72cb4c284da"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/complete.json",
+      "sha256": "3d46bf3c17b9d73ab6b93405c95b4d19080d636f0a22eb8bb7c49c061c968908"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/config.json",
+      "sha256": "0d2fe987ea5f495978d2f9553fff66adb820aaa8fad8a194bcefb6e818179616"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/predictions.meta.json",
+      "sha256": "7c62c93fbe00261d5712f1010ffe02d96f82983da390659a27e3581f8fb5290e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/adapters.json",
+      "sha256": "6e2c93ab393f33e6b83e5bd7919bad4f8ac66845edc5c4ad53278980e60d96f3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/mixers.json",
+      "sha256": "6e84c546c18c185124cb82511dc6fc337dd5327ae527f40380dcd421c25e7a2a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/feature_definition.json",
+      "sha256": "1061dc87d35f03d52a7e58765734667e661cae20a01240017fbadb5ef9ff6aa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/frozen.pt",
+      "sha256": "2f3c54141c56fb714645cba241804c06a2dc050e461bb6c497e46c7cef295bbb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/frozen.json",
+      "sha256": "81294f44ce6aa5c2326a919c8e55a17e735f7c9497fb9a5d25f83b22babfc010"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self.pt",
+      "sha256": "c839eb3da247cbf2f350d7c2a429b687c8656adc7184545a0a420d7857990672"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self.json",
+      "sha256": "c283270fc7c50e3ed9d3f1d13bb15e891ba58954c5df56fc0de534c857a3ba25"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self_ecology.pt",
+      "sha256": "8189d56a5769c501c7ec50d7d46d75c26c5f4b57dd5b2f87294dc272ab1f3a94"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self_ecology.json",
+      "sha256": "772c5f7c6b1ae1c80dfb46b5d272442cc024496e0d1cd97bbf66c94ed4263e7e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/predictions.parquet",
+      "sha256": "e9a8ca71add4cfbe0b72ef0b27503902163018f301ad4c3fd3232960e7bb750d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/complete.json",
+      "sha256": "1e4a722896ecadc4c14a1d341bf25d0f28e407908a30d792fd42c4c14b2a44d1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split142_seed43/ecological_affine.json",
+      "sha256": "20159824af3c3ca19f2b0ea38a6e93c666664f1a66fd0f09bac7e3373a81f5f9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/feature_definition.json",
+      "sha256": "1061dc87d35f03d52a7e58765734667e661cae20a01240017fbadb5ef9ff6aa2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/tail2.json",
+      "sha256": "88641fbffc345d2b02043f4f4544d2cad2c713c52b2a25ed75f9065b4cf0aa84"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/mae.json",
+      "sha256": "04da4918ca80a86ce64e9df606d7db338cae278a3706073ee178e906c24befb8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/selective.json",
+      "sha256": "b0b83b641a0d82f0cf06b6d3b57c0279f1b7c947e0d43b382894fd35daba4b7c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/station.json",
+      "sha256": "caf02e3fc6bea33f8026ab205d8e7847f0032ac48ed8740544e132e140f511a1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed43/last_self_ecology.json",
+      "sha256": "772c5f7c6b1ae1c80dfb46b5d272442cc024496e0d1cd97bbf66c94ed4263e7e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/adapters.json",
+      "sha256": "5c8c7c7258b2e4de8f2f571a8b411f3dc38f10e2c589ef0786dde8d8af67ea8c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed43/mixers.json",
+      "sha256": "4447361defb326c2d5032cecf86932c2eb0e165bc7b5d3577743e6116b9e4a71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/config.json",
+      "sha256": "2a171d712fdb157d3ad54ec9118fab0d7b8e8677f773d5b1b0b009c05e96da75"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/predictions.meta.json",
+      "sha256": "97e7defc7e56086eb173b6c90a4589d1fdb080254d5d9c9c004bf954b6b5e7ba"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/adapters.json",
+      "sha256": "10fc02870c82fab2b8e9851f4a86d44156a14839fb0969f4157cc272af2fe663"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/mixers.json",
+      "sha256": "4b07b0a8a5e86b8fa9afc176b0f5d123f8e51aaf159a1899747d3277c7dd56e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/feature_definition.json",
+      "sha256": "99e1ea3fb563216daa91aaf76bf252610e242d32e7582b5b5062f07bb84b2ef3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/tail2.pt",
+      "sha256": "b333688b8949218de0237321ef250af597b09c58509a0547c9884750579b8393"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/tail2.json",
+      "sha256": "47f345aa2ec36bc903df5dd640b6631daeb25f22d9acdb1fceb1aa693e241fe7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/mae.pt",
+      "sha256": "243ed2eb8102bf6df70d5c32fbd6f40680bfd81421230478f1bd702209ce09f0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/mae.json",
+      "sha256": "4d1027f3650d620b32d8eef6a78b5e38e28b21234ddcec0742df3931d6d6b301"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/selective.pt",
+      "sha256": "d12525341dd8be085129e63e9f0684cd31455aecbc440243b01538f21ed192ff"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/selective.json",
+      "sha256": "8fc602a3eac49bdcd652326cd8344a73eacc394612ca065d2bb69dbfbd83c396"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/station.pt",
+      "sha256": "85f8baa2ef0a5f717f2ed56a99503d939373f812231791fccd39a1827f5da27d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/station.json",
+      "sha256": "a03d373db1d19f6e9eb0df095998e93776e4d8c8ffe4a25096c1c40f5a99cfa9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/predictions.parquet",
+      "sha256": "01f324768ea369893e4bcaa660b54eaf3cca2b3f1933132d95c92a16c6445ca0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/complete.json",
+      "sha256": "3125f507fbd77b7721f8bd2d080e9e4719998959519694beb7010279660f724c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/config.json",
+      "sha256": "308daab605a2b747ff1493744b7ff770099beef5473f087b2d29a818df43182a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/predictions.meta.json",
+      "sha256": "1d17cf03c8f96e39d4098a59e222b455d08df70b0232e0070303e9c3a0362fde"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/adapters.json",
+      "sha256": "8bc1238aa0a4d9ba5936b4b772d479fb7f5770037e63a456a22c3fb936860c61"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/mixers.json",
+      "sha256": "d5be65a5caccac94451065da4d636cb3c547cdd19e6ffcdddbc6647defcf7c7f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/feature_definition.json",
+      "sha256": "99e1ea3fb563216daa91aaf76bf252610e242d32e7582b5b5062f07bb84b2ef3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/frozen.pt",
+      "sha256": "3aeb03af8d06bffdc430071702b736acfdf3b7766371adf36aab9650e54cd185"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/frozen.json",
+      "sha256": "b61eaf1085377d3aa4296e94a0876e11e41c19e87f2b695862c96e52f9c7a5d6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self.pt",
+      "sha256": "51f3af181aa9ecda497cd488f52219b0100354d8f3e91de3cdf1b59dc5ffaead"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self.json",
+      "sha256": "23235801fa42119716f480f4aadf4f05f4011afb3b97c191c151f7860032981b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self_ecology.pt",
+      "sha256": "f5709f45892a4c713ad6167bb2ed1755cf9e68f0dc49e94e08ebeace793cd4ca"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self_ecology.json",
+      "sha256": "f6ab467546ce3785fc4597573ae9354664f464f76c87b657ec6687f9a66aeaa5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/predictions.parquet",
+      "sha256": "cc9b0a0f27a358fa5da3e8121a6cd373119a921c925f6f6db007a26e592155b7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/complete.json",
+      "sha256": "47e5aa8a0e71db17bf527e78399cd451e990797f892b630ec42ce232c3cb820f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split142_seed44/ecological_affine.json",
+      "sha256": "c546683ffcf3fecf37b1e79f39c712e769c7899573e535faab3c43aeb36974db"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/feature_definition.json",
+      "sha256": "99e1ea3fb563216daa91aaf76bf252610e242d32e7582b5b5062f07bb84b2ef3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/tail2.json",
+      "sha256": "47f345aa2ec36bc903df5dd640b6631daeb25f22d9acdb1fceb1aa693e241fe7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/mae.json",
+      "sha256": "4d1027f3650d620b32d8eef6a78b5e38e28b21234ddcec0742df3931d6d6b301"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/selective.json",
+      "sha256": "8fc602a3eac49bdcd652326cd8344a73eacc394612ca065d2bb69dbfbd83c396"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/station.json",
+      "sha256": "a03d373db1d19f6e9eb0df095998e93776e4d8c8ffe4a25096c1c40f5a99cfa9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split142_seed44/last_self_ecology.json",
+      "sha256": "f6ab467546ce3785fc4597573ae9354664f464f76c87b657ec6687f9a66aeaa5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/adapters.json",
+      "sha256": "10fc02870c82fab2b8e9851f4a86d44156a14839fb0969f4157cc272af2fe663"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split142_seed44/mixers.json",
+      "sha256": "4b07b0a8a5e86b8fa9afc176b0f5d123f8e51aaf159a1899747d3277c7dd56e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/config.json",
+      "sha256": "6e813883c3c88e9576a933aaf7a7e312d787641ba410ca6d7327a76f4809b257"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/predictions.meta.json",
+      "sha256": "2ef3e264a6e588a793980066fe27660c943d997e95f04c4fe547114d4bfc4189"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/adapters.json",
+      "sha256": "d41410cf4d78db1983805768c7c44860f2ee54d2be8041ae81162778c3b4eeb4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/mixers.json",
+      "sha256": "1a920225a128ee0cd675385b6d53303833b673aa7c8f9abb93f945e11b08f5a5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/feature_definition.json",
+      "sha256": "6a95fbb03eb16d8a4c822a6f959bc39c737c2fddcad364da05183feeaf896c9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/tail2.pt",
+      "sha256": "98508f50f75476d8e3fb6de904d02b51273a0c0629c66e0adefe0644d0efc5bd"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/tail2.json",
+      "sha256": "25668db7dcfbf345d886bdaf4747c8a79728e6845896ebd5946f9bbb72875705"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/mae.pt",
+      "sha256": "991d91748ccc875a5e0b416d3df21098c29aafcb973d0dc7efc739c4e5df5374"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/mae.json",
+      "sha256": "5ecbd86eec53a50fe301128d2cfdf418581c0c823a66e373d964171ff4aef9bc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/selective.pt",
+      "sha256": "b4e8b892ebe1815b0097610fadc3817a0103c9a0e300f7931a6ef6e9081984c4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/selective.json",
+      "sha256": "488d5efc949eb30b2047e10bc439d93a55e8c151dd0b8edbaa4b5438b6ac83d9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/station.pt",
+      "sha256": "c25df0f33e80627816b63604d44c75cce6b0f262931ace20eab39fca98ca59c7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/station.json",
+      "sha256": "ded7b5acb99daa43875b90687e329d9ed2cb1068f9b6fdb9a0bd7e2ca9d0d110"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/predictions.parquet",
+      "sha256": "ecf22ae06ced4b81bfa7c657cbbbc713e0e3618cbc80bf9b3afaa8f46c44ec48"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/complete.json",
+      "sha256": "9b4199b74741f0e7e29d9cd1b5a5ea4a2433cf52ca53825cdc2506b67293b98b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/config.json",
+      "sha256": "82a343b12760cd2e59e08b263f57160d014036341ab5d713fc89b31ff67e8ce7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/predictions.meta.json",
+      "sha256": "717e07de1068ada2097b8fb57d0fa1eafde4401bda096e4a7dc043b3fe78dc5a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/adapters.json",
+      "sha256": "9555b63c2dc0cf579507b6ac7b6d8676de10d4018df3aeb3b1e58384156be57e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/mixers.json",
+      "sha256": "ff77b56cd277e3ddb1a78181edaa91c7b238301a3d3327ce39a4a6557fbdaf66"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/feature_definition.json",
+      "sha256": "6a95fbb03eb16d8a4c822a6f959bc39c737c2fddcad364da05183feeaf896c9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/frozen.pt",
+      "sha256": "f645b37ef6e4628b60ddc568b339378fe1f01d3a75057a696139a8673a1e3efe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/frozen.json",
+      "sha256": "53e4bbc4446b2fdf30250f5f7304b4b735009ca893a1276b9e969e90daa7c156"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self.pt",
+      "sha256": "bdc57d8d4db05d54e7bf6fac527799e05256061ee4bef6237db7df764c04ab62"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self.json",
+      "sha256": "99c21539e686959377aa0d0f5e648cd2afe362fcb97ec0b19f9631e25f48f98b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self_ecology.pt",
+      "sha256": "7eb476135bb820a99acd89c1a1e2fdc0da48e85a3f318d614f7db26526a729fc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self_ecology.json",
+      "sha256": "7578957e8a66eeefa634cbf2a7358ffb6ff1d9e5842f59e818bdf4a21cb042c3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/predictions.parquet",
+      "sha256": "71e51ecfea241adb3b0672205d0fa56618b507446e285998859a4a9b47cfb39e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/complete.json",
+      "sha256": "cb72d3c157d0e6755453d0e333a52c7ed121c27e443d65fe38bb65f7c12dcebb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed42/ecological_affine.json",
+      "sha256": "bfe71f10907ab02328a9892b583cb295c526f106758e8f0dbb978fde43d07b0d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/feature_definition.json",
+      "sha256": "6a95fbb03eb16d8a4c822a6f959bc39c737c2fddcad364da05183feeaf896c9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/tail2.json",
+      "sha256": "25668db7dcfbf345d886bdaf4747c8a79728e6845896ebd5946f9bbb72875705"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/mae.json",
+      "sha256": "5ecbd86eec53a50fe301128d2cfdf418581c0c823a66e373d964171ff4aef9bc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/selective.json",
+      "sha256": "488d5efc949eb30b2047e10bc439d93a55e8c151dd0b8edbaa4b5438b6ac83d9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/station.json",
+      "sha256": "ded7b5acb99daa43875b90687e329d9ed2cb1068f9b6fdb9a0bd7e2ca9d0d110"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed42/last_self_ecology.json",
+      "sha256": "7578957e8a66eeefa634cbf2a7358ffb6ff1d9e5842f59e818bdf4a21cb042c3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/adapters.json",
+      "sha256": "d41410cf4d78db1983805768c7c44860f2ee54d2be8041ae81162778c3b4eeb4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed42/mixers.json",
+      "sha256": "1a920225a128ee0cd675385b6d53303833b673aa7c8f9abb93f945e11b08f5a5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/config.json",
+      "sha256": "c6999ffbefe2e0d32e2ea379430084730c16a6cb56ab14f462e2d1d6a3485c0e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/predictions.meta.json",
+      "sha256": "cc3ca34d00a97ba44e390b03f6a413caf7cf1b762a676b30011176fb84d5f14a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/adapters.json",
+      "sha256": "232747acef8e152fc6423d756ae572d94f254de145b1615c375223980a9d6090"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/mixers.json",
+      "sha256": "469b61d3b9e2d3109d907a48fa2d55f324b1f26c8e5cd5432e6652f0428f0bbe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/feature_definition.json",
+      "sha256": "3c8565945f84118123cbe0d5b52045421480ecaccf871612f9b947d87365cb39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/tail2.pt",
+      "sha256": "8a2ae428ae6c3a97f5a80ddda897360cc5d17699bdef0f3816cc33599879ddf4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/tail2.json",
+      "sha256": "7073e3e5c180a98383840dd388b9685192b19a31fc7f0a06e171fd682d62da48"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/mae.pt",
+      "sha256": "e26de5bb812072d5257cfe278824477c259a4b44e3e85b55fedf237faa3aba39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/mae.json",
+      "sha256": "39ff204cc8cdf0b84400d3dd78e2c03c8ce54cd1392ff47eda1969f2f2627158"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/selective.pt",
+      "sha256": "30f328cff26586b1b37f9405ca0862465b845f5aaa17905105d596a6bc87df15"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/selective.json",
+      "sha256": "7f01bcc2e4ed26dc013312c7e161adb6d4d1d0f7fcbef4e06723c9e24fb51458"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/station.pt",
+      "sha256": "397fddb7e9ef6933a40dd877bf557403967e810141d2610f7bfcaec99cc8eaa1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/station.json",
+      "sha256": "647ce98429285d5009a6eeaadb11960ad24f09fb87fbafbdbd850cbf2674e038"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/predictions.parquet",
+      "sha256": "9aac8033d9103eea920a1d26723a82047e1bf2b81da951071bad94b8158e3369"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/complete.json",
+      "sha256": "b1cc2bb9e5376f25db1b73d30f61b06039fa39a306833b1876068bc4c9d20730"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/config.json",
+      "sha256": "85fd25361a533a4661d9a4d156d5397d195c33a9ed8f76b6cb09f187c84c7b35"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/predictions.meta.json",
+      "sha256": "df5c47882a6f8c7d8a94a7f4999c4d87ade6c961085753b80f5854d4edcef970"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/adapters.json",
+      "sha256": "db2d850438a88d39188e2992ce242b8780669e25803aa48f2bce01b432999bfc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/mixers.json",
+      "sha256": "4fffb26fdb5a54fa74bfd3405295b532422e68697de28631ef87d36fcec1b2f2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/feature_definition.json",
+      "sha256": "3c8565945f84118123cbe0d5b52045421480ecaccf871612f9b947d87365cb39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/frozen.pt",
+      "sha256": "600c0748d21a5636516e942abb908cd3ae428499ef197f8d1a5cd72f719e6cd6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/frozen.json",
+      "sha256": "09a7aee9f2e6473bf8527d807bc9aade3093ff700b75af9f8eb368b3f52bdb84"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self.pt",
+      "sha256": "5275098f44690b8a59ec0c33f06d5d661424b4eec49d1bb29aa327ce9ca12a49"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self.json",
+      "sha256": "b71dced431c94fedfa89fec8371cdafa8c4ff6d30cbde1e94187a6cdfebcbb00"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self_ecology.pt",
+      "sha256": "5819c01699fd4411d7076104815cae19590d22cd483af165682600110b987cd8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self_ecology.json",
+      "sha256": "3cf5862b196e187268201bf3a5c92644897ad1200396c0e1849abfdb3291797b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/predictions.parquet",
+      "sha256": "7d755cd02dac025f5d9373d96e7c33f395a9bd9e3102496bbdf070ad30365440"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/complete.json",
+      "sha256": "15e43dd632b117a70a1eee65f699fbf44823896e16dfcde1a37352a194ae62fc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed43/ecological_affine.json",
+      "sha256": "b827249acd58d5876f7dd8f51cd220b2fd6dd51703623eadd8fabd6e63f34d88"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/feature_definition.json",
+      "sha256": "3c8565945f84118123cbe0d5b52045421480ecaccf871612f9b947d87365cb39"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/tail2.json",
+      "sha256": "7073e3e5c180a98383840dd388b9685192b19a31fc7f0a06e171fd682d62da48"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/mae.json",
+      "sha256": "39ff204cc8cdf0b84400d3dd78e2c03c8ce54cd1392ff47eda1969f2f2627158"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/selective.json",
+      "sha256": "7f01bcc2e4ed26dc013312c7e161adb6d4d1d0f7fcbef4e06723c9e24fb51458"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/station.json",
+      "sha256": "647ce98429285d5009a6eeaadb11960ad24f09fb87fbafbdbd850cbf2674e038"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed43/last_self_ecology.json",
+      "sha256": "3cf5862b196e187268201bf3a5c92644897ad1200396c0e1849abfdb3291797b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/adapters.json",
+      "sha256": "232747acef8e152fc6423d756ae572d94f254de145b1615c375223980a9d6090"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed43/mixers.json",
+      "sha256": "469b61d3b9e2d3109d907a48fa2d55f324b1f26c8e5cd5432e6652f0428f0bbe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/config.json",
+      "sha256": "24e7d50fd8efbeb3356a7206ee89e4ee292f210687227f5b465a54ebc2a3b9d1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/predictions.meta.json",
+      "sha256": "7158275dc6c7f9b6fb81d4d1cbee1b54809ae41eab5a5379e7416fd62fb63c69"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/adapters.json",
+      "sha256": "fb6d8a886b0eb52bd9a0594f938618d9b6f116fb18f0d813dee1e37bd4819e83"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/mixers.json",
+      "sha256": "833bb2532c09a2e16318ecf5fb7e50bd089eab4a30b33122580f12b4011706d2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/feature_definition.json",
+      "sha256": "773f0d62c4284ff57404d5e7cbed6bd8109281c780b81977f456ae5859743755"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/tail2.pt",
+      "sha256": "b9a58d72da64a0e24c6fc1339604823b5e936ca76a051b42b33a53b9b205f1ec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/tail2.json",
+      "sha256": "f5d7843ef1961396a8a69015a856c412d725a52391933c96b6ecfef8a4ff4dec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/mae.pt",
+      "sha256": "4dff5d34c3b1016489e64503907618d32494af85a32eb5c68b10bf5e3a98ef93"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/mae.json",
+      "sha256": "58e23442c798d5bdd2e102dcc13c836d42800b58b7ea5302d9396dd1d6887f9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/selective.pt",
+      "sha256": "93524fd87d927d253e07cf465616557d71ee9437a65b0dfdedf98bbf5cb1f4fd"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/selective.json",
+      "sha256": "17b37521b7068565be69b0e3b246c78c796bea6bb7e34d93fc615a6178e1a974"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/station.pt",
+      "sha256": "6161a0c20813c4e7d4f5ac4483adc1a89f16c1ce5119d8e3842bf4a4d2152f61"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/station.json",
+      "sha256": "536651d4c26dd628600aa1c82edff46c0e0d0940ec6a5d590523978e2d03e110"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/predictions.parquet",
+      "sha256": "8f2ec2adffb07ddba101abe5502e90acacd1f329936b94bb7cf307f71295c344"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/complete.json",
+      "sha256": "af6fcdb8bb11e183c7f1b8f37a08dff97a88af35d519bb2450f535cd8fdb8a25"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/config.json",
+      "sha256": "6c4a85cc70ee7775f27dcb991ac9898dec09eaed3ab7be2d29439be0e95a98fb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/predictions.meta.json",
+      "sha256": "dc4238ca8cc21ab7bf2d0e40e9b5602615a81a0005c9e89d6cef658d0a858dd2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/adapters.json",
+      "sha256": "1fd5bfc03e3a25e2703a52dc1ab8070e47abd6a924fa1d8aeb8b99b6c93300f1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/mixers.json",
+      "sha256": "d2c4c31980ce709a96ddd584edb505f6e529f64c0ca95a94f2281786adbad402"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/feature_definition.json",
+      "sha256": "773f0d62c4284ff57404d5e7cbed6bd8109281c780b81977f456ae5859743755"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/frozen.pt",
+      "sha256": "1965e2199c48d3a2c87ff32a81505614b316fee4de0dc7828c8afc6c450f1781"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/frozen.json",
+      "sha256": "b0dfcbd38aa1dbfc1396241bfebafdb8042c546755688a3af43e6440c8632798"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self.pt",
+      "sha256": "42bf05beee0bd855c69e25124e115fb27a8ed9088604cacd8670a169c553746e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self.json",
+      "sha256": "da82adb7d7fc70b1dae9a7546520625c39b4e59897677a06858d2ade6f1614e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self_ecology.pt",
+      "sha256": "9fff363824bcb1bd06ff97c4e72066b2783cdba0a000a0c97b2956d6bff8c0d6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self_ecology.json",
+      "sha256": "d36e7a67c3636515eb0de04903b18e0b39f5c23e9e12a0490355643b03c81773"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/predictions.parquet",
+      "sha256": "4b8fa25f7f6df76d5c35423955a4950a868da55c728258cc6ecdc958473cbe45"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/complete.json",
+      "sha256": "d64e2c2e59f2fd63fec75e737537b5ea1d48a00f12f87f2572a1d17088bc345f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed44/ecological_affine.json",
+      "sha256": "3c40e2b36af06faa28a200a318603f0468ce7aea2b2bed3c113b4d2e714aeae2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/feature_definition.json",
+      "sha256": "773f0d62c4284ff57404d5e7cbed6bd8109281c780b81977f456ae5859743755"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/tail2.json",
+      "sha256": "f5d7843ef1961396a8a69015a856c412d725a52391933c96b6ecfef8a4ff4dec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/mae.json",
+      "sha256": "58e23442c798d5bdd2e102dcc13c836d42800b58b7ea5302d9396dd1d6887f9a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/selective.json",
+      "sha256": "17b37521b7068565be69b0e3b246c78c796bea6bb7e34d93fc615a6178e1a974"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/station.json",
+      "sha256": "536651d4c26dd628600aa1c82edff46c0e0d0940ec6a5d590523978e2d03e110"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split143_seed44/last_self_ecology.json",
+      "sha256": "d36e7a67c3636515eb0de04903b18e0b39f5c23e9e12a0490355643b03c81773"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/adapters.json",
+      "sha256": "fb6d8a886b0eb52bd9a0594f938618d9b6f116fb18f0d813dee1e37bd4819e83"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split143_seed44/mixers.json",
+      "sha256": "833bb2532c09a2e16318ecf5fb7e50bd089eab4a30b33122580f12b4011706d2"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/config.json",
+      "sha256": "055c60c10bef6233c9574d5485b964162bacefc98aab091311cfea90a8a5d027"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/predictions.meta.json",
+      "sha256": "186a142b66a71bff981d0dadbad3e9d31447bf68b38720c5b608e54287145749"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/adapters.json",
+      "sha256": "40e0eae4bbbbc4bd68045116fda5670567eec1b5c9cdd4fcf93a91bb18068175"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/mixers.json",
+      "sha256": "e1c41368fc72ba575949c5b8536df7ecc5d607d2a24f1ded93e98bca4825d877"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/feature_definition.json",
+      "sha256": "1f020eb4b3c11f58ce522b6e43d3ba2513dab934653370a034ed498a259a5ba5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/tail2.pt",
+      "sha256": "6e15d80e6eab9eb3d02220bd1e743aaef8ae4746a4c7c14d279675bc47e8083e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/tail2.json",
+      "sha256": "d63d3002e7a79b455fcfbee6c21e53027ec5dbda0d63cdc34ed6602024691df4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/mae.pt",
+      "sha256": "1f62310cbe399587e5184bb5db2393f8625e7dd9df5ea083ba5668dc425cd2eb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/mae.json",
+      "sha256": "0f22e2aef952c60fb0c9385447a42fb7ba212841398ea5d53939d1bc6af5ba9c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/selective.pt",
+      "sha256": "92469e7ea8b31e59ec623d25b0e1d2c87b392a704eb562b34bcec9fd12ae1944"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/selective.json",
+      "sha256": "4c5056865b26494e9c8fa0cef79a8fafba8df844001c0b917082c7bcd2c3493b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/station.pt",
+      "sha256": "2c74e6f0236f3f55074b41219e4d3d10f6c88aa75f41504dd0b54e85850a4cd7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/station.json",
+      "sha256": "4c4dddc57c1a70f84083b165131e74878b2c8330cda6132060932f8a742b7366"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/predictions.parquet",
+      "sha256": "626097a43d263162d71f04d721bf44febf290045f0fc01be851d2e2453ab7a15"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/complete.json",
+      "sha256": "e8bea7fc289584495d0569f850ccb900efdbc16de08a6565c377ce21fbe8a06d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/config.json",
+      "sha256": "e4fdfe88e837eaa7bb4a8a734bfa052aa191fd6b2c8058980257df795e756700"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/predictions.meta.json",
+      "sha256": "083c0447f87892f7d96df5e30de4eac0de64a40f0259a067129ee711ada077fe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/adapters.json",
+      "sha256": "88165cb0d531d4111633ad3e85200e3e1144d9da760c332c180bb8275afb53d5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/mixers.json",
+      "sha256": "ce2967f82e548b54350b151ce8234cf862d68ed186e9bc5b09a7aee6f7940d2a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/feature_definition.json",
+      "sha256": "1f020eb4b3c11f58ce522b6e43d3ba2513dab934653370a034ed498a259a5ba5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/frozen.pt",
+      "sha256": "70f440660591860f2a084f3e7e305d74dfdd258b14fd27ff6d0c12f760cc2ea6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/frozen.json",
+      "sha256": "a1ba4ae9b833a8c2cc71ecdb4fdc1f6083fc570dd2e6a4599c24b5faedce5402"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self.pt",
+      "sha256": "5c2c9d0bab4042c284d1fc9302e3ce3852a9242dbeb2c0a65e6bae8f496c9e1d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self.json",
+      "sha256": "cde5f2a3cded7a898f26b293f79396ca602c297a65ed440cf8e52c89fa961112"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self_ecology.pt",
+      "sha256": "f64d3e4fea8d892420b5f8180c49b6574151a7b784c07b3e60d0e5d2d6baacbd"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self_ecology.json",
+      "sha256": "31e8b535c6e451cb8d80ddb7ae391bc13204498c86fa28ccd351605cdaff7cf5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/predictions.parquet",
+      "sha256": "9c7ecd04ffc967de90824ff55607d12c03969b1301041fabebaad9f3b0e25ec8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/complete.json",
+      "sha256": "083d4b0b0563737247561a47e1ecb229364a6294c0b8b9fda88978c507c08c4c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split144_seed42/ecological_affine.json",
+      "sha256": "23ef1f8d386020c141f4fe696605a544ce39809ab1eb0ce1f719036f152742a5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/feature_definition.json",
+      "sha256": "1f020eb4b3c11f58ce522b6e43d3ba2513dab934653370a034ed498a259a5ba5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/tail2.json",
+      "sha256": "d63d3002e7a79b455fcfbee6c21e53027ec5dbda0d63cdc34ed6602024691df4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/mae.json",
+      "sha256": "0f22e2aef952c60fb0c9385447a42fb7ba212841398ea5d53939d1bc6af5ba9c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/selective.json",
+      "sha256": "4c5056865b26494e9c8fa0cef79a8fafba8df844001c0b917082c7bcd2c3493b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/station.json",
+      "sha256": "4c4dddc57c1a70f84083b165131e74878b2c8330cda6132060932f8a742b7366"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed42/last_self_ecology.json",
+      "sha256": "31e8b535c6e451cb8d80ddb7ae391bc13204498c86fa28ccd351605cdaff7cf5"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/adapters.json",
+      "sha256": "40e0eae4bbbbc4bd68045116fda5670567eec1b5c9cdd4fcf93a91bb18068175"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed42/mixers.json",
+      "sha256": "e1c41368fc72ba575949c5b8536df7ecc5d607d2a24f1ded93e98bca4825d877"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/config.json",
+      "sha256": "942de1ca99ca1044734e631fe21460e2ea5c3a413c70ef39bc60867fa239b9e1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/predictions.meta.json",
+      "sha256": "765454cd540a97f2f9548838ba3ea61d1a5163455e63a466dbe46516b1d55b8d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/adapters.json",
+      "sha256": "14cb4bdc8cc55943d22b91a54384fdca70fe5731051546876b47165e37fd29cc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/mixers.json",
+      "sha256": "51e8d9ef16448a3cefb0f3bdb6ec30c7b5039361214f4a0bb10d5c5b3f6fc82e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/feature_definition.json",
+      "sha256": "22c4d1831b97203154324a68e6f734d8d16f1affc06c62ad18be956a0feab415"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/tail2.pt",
+      "sha256": "b83abbc6e7520240dc99cb050e48ed20a7e11d6143064db53ab8bc62d4e1ff7e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/tail2.json",
+      "sha256": "2820f140a0a3413b352f9ae7dc486146de0ac5c08320550377c6d9932a9442e9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/mae.pt",
+      "sha256": "dab807fd6d07d43e64c5fa314721e62d959470f8ee073ae5600cff992cd8b977"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/mae.json",
+      "sha256": "f03b8cf5725f1405a2c61061764db6660719ae323cfcb13e0d51df8ce843338a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/selective.pt",
+      "sha256": "10d840ba9de4fb76e8f216a7da569645da539d28cea867d5ae438ed6ca5bd7d1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/selective.json",
+      "sha256": "fd868ed0abd0009224c5bbe330ba0987adc5dd34f7f7c89bf37ce2e9d805efed"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/station.pt",
+      "sha256": "64ba78c8afed943e91443cd4abfa485c61380a01ee01296884710036263900d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/station.json",
+      "sha256": "5ed2892333efc9ae49bd32c25b06383857bfe6cc71fa14d1d73c901570c8accf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/predictions.parquet",
+      "sha256": "39d35d45720af4ce6b1273f87990417d3f1369f1d41aa0df27376fd701566d93"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/complete.json",
+      "sha256": "2c40f74aca41b4e6ce27f34883980770249143062d6065d063478a7f6701ebcc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/config.json",
+      "sha256": "e8a5eb2d6c7ecbc974e183edc83f4e0fd27ba6cd4646b0a529b062699b465d18"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/predictions.meta.json",
+      "sha256": "983a03bea2c0ecbfbc8c2e7a845f178a4f5b8e298f5fc1747dc1c4cf963e53c4"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/adapters.json",
+      "sha256": "5f619e260bf016c1854a662eb221d89abd7d7b73289369c300fd9d9f50139798"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/mixers.json",
+      "sha256": "043a37c0ab887d6b20c480a320a49a70fa13499193139758c995dfd7f6a73407"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/feature_definition.json",
+      "sha256": "22c4d1831b97203154324a68e6f734d8d16f1affc06c62ad18be956a0feab415"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/frozen.pt",
+      "sha256": "11efefb83b5f41c9e09454ad4e67b6113ea1da38894e247211e8856e1fc2134d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/frozen.json",
+      "sha256": "7a518d8cd1c7f674d3f236f359cdeaed8e22bfc74850455f9192d0028c61dfec"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self.pt",
+      "sha256": "f6b737cfc4a0c83544df4cd387bf31fdd5b262c7640d614ff6a14bdb3cb4535f"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self.json",
+      "sha256": "893f933080078f7b88aa5dba431371a894ce9b2b87f262abfb16b0eae9145fce"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self_ecology.pt",
+      "sha256": "78630c6e0564d179928cbeda0bb7fbf31235c52af1a35c374ce81bf1edabebe7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self_ecology.json",
+      "sha256": "cddf1029ddc2e4f5b922a5548b3069155119ab26a377d79fd5c39e60514857d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/predictions.parquet",
+      "sha256": "cc22caad6df988af789f4089e2228ddaa20b5b2e4fe54741c39de252a5f428c6"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/complete.json",
+      "sha256": "fe7d273574e9ac5d6a5f1bb6c338450f5336bfb3e16077e52cd961cf8bd9e6d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split144_seed43/ecological_affine.json",
+      "sha256": "190c5457513c50ac86678bc81b8110d0bf1b078355015f4f6104d7dada59312b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/feature_definition.json",
+      "sha256": "22c4d1831b97203154324a68e6f734d8d16f1affc06c62ad18be956a0feab415"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/tail2.json",
+      "sha256": "2820f140a0a3413b352f9ae7dc486146de0ac5c08320550377c6d9932a9442e9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/mae.json",
+      "sha256": "f03b8cf5725f1405a2c61061764db6660719ae323cfcb13e0d51df8ce843338a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/selective.json",
+      "sha256": "fd868ed0abd0009224c5bbe330ba0987adc5dd34f7f7c89bf37ce2e9d805efed"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/station.json",
+      "sha256": "5ed2892333efc9ae49bd32c25b06383857bfe6cc71fa14d1d73c901570c8accf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed43/last_self_ecology.json",
+      "sha256": "cddf1029ddc2e4f5b922a5548b3069155119ab26a377d79fd5c39e60514857d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/adapters.json",
+      "sha256": "14cb4bdc8cc55943d22b91a54384fdca70fe5731051546876b47165e37fd29cc"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed43/mixers.json",
+      "sha256": "51e8d9ef16448a3cefb0f3bdb6ec30c7b5039361214f4a0bb10d5c5b3f6fc82e"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/config.json",
+      "sha256": "3e85dc5a900521f2a1046883d8958ff4761a824f1729bccfce46c8756bb6eea1"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/predictions.meta.json",
+      "sha256": "f4cc6a30b3d853a63684bf939a7c979f6dbc40842f9158b4b3894506c392f163"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/adapters.json",
+      "sha256": "00795a3f84a8871538da7c018b30b5938331c8c34643402bbf7881455f856134"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/mixers.json",
+      "sha256": "c11fc605e3726db1fa4fc438492e913d3a7037d77e73e58ffc09683d509ac8e0"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/feature_definition.json",
+      "sha256": "49d4f18a1b41c710536b3fa16714a272e3d9a52a7f794a7fd06517a4a7872c71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/tail2.pt",
+      "sha256": "04fd1ff5e91d5fb91dc77747a44a724138a3b50b4f5cd102b45419bd898e6bdb"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/tail2.json",
+      "sha256": "762196fe40b32df1e484f5001a5a7eea5e84521352a338da71ec5b76e715dab8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/mae.pt",
+      "sha256": "270446f116c3927225352dc064ee797818be5bf01e6ce9b278b76464181a4f82"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/mae.json",
+      "sha256": "6b1ac7702369d0ea3cd580b4565f11be535b4d692e567b8972b5b2caafb64532"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/selective.pt",
+      "sha256": "954de886c8143faa9b83cb2ca7e31cbc22f6008ddd08175d91d8987a0586ca68"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/selective.json",
+      "sha256": "bdc6c205dff8fed9e5be77b2da58d27b581692a07397fba057d7d26393ba43cf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/station.pt",
+      "sha256": "232dd6ea4db0fbcedae63d289fab491c5f5427292474d4edd53e0e795fb6166d"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/station.json",
+      "sha256": "b455ffff55690e7054a9d632115e384172196cfeebe2ce72c00dd266e52de9c9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/predictions.parquet",
+      "sha256": "e5c89a9b1a38405c47a951b77b86f095b91a57d24a5e0d8d07bf40e2eb67a290"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/complete.json",
+      "sha256": "3d59efd100048e2d862e1adba0e392eda4553b06e81b40975a376e6b9f391e2a"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/config.json",
+      "sha256": "024b2abda0e08bb0a82e4a7ea0572b8a29ae18c261674e3e64a42747b5267f68"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/predictions.meta.json",
+      "sha256": "1ba761b02d4e32f76a5134459759bce60fdfb01417825bea2e35afc81b276d23"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/adapters.json",
+      "sha256": "61389499ff824460b8cc3cb023298c7411e95ee69e973ea995d58f24816da3ac"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/mixers.json",
+      "sha256": "aee0b2fafc23d6b3829374d2503aba3826c9a857feed638a2b0b4eb6999ae5d3"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/feature_definition.json",
+      "sha256": "49d4f18a1b41c710536b3fa16714a272e3d9a52a7f794a7fd06517a4a7872c71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/frozen.pt",
+      "sha256": "84b024218e0755e69ae457277fd31e5f298080c1db1a0a8291bdaf076bbfad5c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/frozen.json",
+      "sha256": "85ded17f248c22de0ab088271f2e0cfdd787b7e7ab7ebe9a6dcc83519e5c8e9c"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self.pt",
+      "sha256": "3754c9b10e80efcf0eef22c391b196a7027343bce388b3cce23f2ab4f5380abe"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self.json",
+      "sha256": "59df3a5a42de4c9ba7d877022b17ce8227570eb48b70ca7b7c4805ab618422f9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self_ecology.pt",
+      "sha256": "cb6eeb37d8ceb5f3a09347277e7664d1ff2a39c8440a287c7025ef1275650984"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self_ecology.json",
+      "sha256": "b9869840f5f3075545500bdbccb320affbe6593eefb144661b9e96f789cf46b8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/predictions.parquet",
+      "sha256": "1b5c6bdbc3ae65c3849ce8af9d31029b9d3762c1629396f249a92590381fde2b"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/complete.json",
+      "sha256": "6ffb35cbe396164c65a459c707242dafb03600df3597f5d46552b67c5774e6a7"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split144_seed44/ecological_affine.json",
+      "sha256": "1728187b418bedbf20824f9527b22ddf980d56086bde22df695ba804d1ba2809"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/feature_definition.json",
+      "sha256": "49d4f18a1b41c710536b3fa16714a272e3d9a52a7f794a7fd06517a4a7872c71"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/tail2.json",
+      "sha256": "762196fe40b32df1e484f5001a5a7eea5e84521352a338da71ec5b76e715dab8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/mae.json",
+      "sha256": "6b1ac7702369d0ea3cd580b4565f11be535b4d692e567b8972b5b2caafb64532"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/selective.json",
+      "sha256": "bdc6c205dff8fed9e5be77b2da58d27b581692a07397fba057d7d26393ba43cf"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/station.json",
+      "sha256": "b455ffff55690e7054a9d632115e384172196cfeebe2ce72c00dd266e52de9c9"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_encoder_budget_v1/runs/split144_seed44/last_self_ecology.json",
+      "sha256": "b9869840f5f3075545500bdbccb320affbe6593eefb144661b9e96f789cf46b8"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/adapters.json",
+      "sha256": "00795a3f84a8871538da7c018b30b5938331c8c34643402bbf7881455f856134"
+    },
+    {
+      "path": "experiments/phase4_transfer/doc_selective_residual_v1/runs/split144_seed44/mixers.json",
+      "sha256": "c11fc605e3726db1fa4fc438492e913d3a7037d77e73e58ffc09683d509ac8e0"
+    }
+  ],
+  "outputs": {
+    "metrics_by_run.csv": "809bc395463043f820372a470241db5d9507f4dfaf305d8fe2f8fb068e5ca9a0",
+    "metrics_by_partition.csv": "9fb8761c78335882f7c21f911e6d66bac9e10e5cc9ea413a33853543fcd495d4",
+    "k_curves.csv": "4d9f3c43627f9bea89c767e9cccc69c3cc1ab61cfbe1cbb60a860cfab78da224",
+    "error_profiles_by_run.csv": "a08b06adea78f481b7c0db308fa272312285bb429473327928ffa87ef1bb264a",
+    "error_profiles_by_partition.csv": "b58ece02ded4f0a399b410b0ca989464c40d049c1cc2b5ac703ca73ab46f93a2",
+    "error_profiles.csv": "219694368947ba2aa54aed422788b36a219716da26f49762f6abe01554475a5e",
+    "classification_by_run.csv": "21aa757a164b9894260b9c3301b1bee8ac36844ee555b64d7df8a734a3494719",
+    "classification_by_partition.csv": "4fcf878daff251aac3f949c311da9dc01b5b9a58c6bb440ec922329ac185fc1f",
+    "classification.csv": "df249e0f930790e45ce219bf33faefb6a3fd5fe1840d80826f437e370d2a491d",
+    "comparisons.csv": "1e148996d67b624f6f48165a5a62a495bdedaa611eabf11586ee22c0cbdc2070",
+    "directions_by_seed.csv": "0a57b46f46e0b316c0463601fbfe80a742a715e9ea08211a504379fd8fa34427",
+    "directions_by_partition.csv": "85409a6b6aa46c29c09a798b72194fb720492f585a06b74dcbb09cee10230d7f",
+    "station_responses.csv": "e54996e7647befa2aa0331935ad9e94d6fe41b322c66aaf4ec7902c65238dbb3",
+    "global_station_contributions.csv": "27a6db7384a2bb8a1278eb39e83947c81c8ebf0b1fcfa433314ccdb16b0650de",
+    "gain_loss_concentration.csv": "5f1835d515a13b3255edd548cff566ff81a82cd302f0b91869257e5154c456f3",
+    "training_choices.csv": "32b2522856f002b3e8e0e1e39aa668f8ea0711bea520edfb47107363e6c4ef6f",
+    "adapter_choices.csv": "a5d3113351d162463462cd308695b223c85a5d196b45edc18a3c6c0bd320f70f",
+    "mixing_choices.csv": "3e28eec0320f9c9264c975cae62412202fc13392e488813f1c840b7a87b7e930",
+    "gamma_scores.csv": "b43a0c630a97092a1e9f2880c2cf319db753cd2c96d017e3e01e4bd01c2a4c15",
+    "tail2_control_replication.csv": "de14b3ef3cb3bfea6d97a508006af923372080ca9624d1cad7a80d760bf131e2",
+    "findings.md": "90c8999e805a2ab21b3af824b71ed8addb169b30d5d8063344ca38189522ad26",
+    "budget_extension_comparisons.csv": "c81fb4da9fc125387d419aa008414821f9fb04914ec64aa3a8987d79fd7c845e",
+    "budget_extension_directions_by_seed.csv": "a927e34005e0b11fb883e0e6dc11d3cc37f446b59821bda15f3ee2bc7e0a3ac0",
+    "budget_extension_directions_by_partition.csv": "fc4d6c47ed3252c8d99478068748298c4797d8aca2b72b89bde2f95f80687670",
+    "budget_extension_station_responses.csv": "86163078852c30a80701183984bd080f9ddde5d1654ebaf3b266d15ae63a4caf",
+    "budget_extension_global_station_contributions.csv": "5c55c0fb1e4f8c3a12f153beed7908c096f2be7b26a88b68f14dd863de689a2e",
+    "budget_extension_gain_loss_concentration.csv": "bb99005eb4e584d15c2b5f5cba79dfd9373857cf25b15775b6904a14f96cd472",
+    "budget_extension_training_choices.csv": "d4c68e64cb86edf1ad02b839e9a9b8e4abefb0ae27935f4d05ed84de0a36bf4c",
+    "budget_extension_training_prefix_checks.csv": "28a0b34f9db349b5cf9d298a5708d7981185f4643e5192844a73457c3b64e19c",
+    "budget_extension_findings.md": "f03bafe863830a79b68535b2152bc92ea3f3ed01c1df536618a39d09eb52ae82"
+  },
+  "role": "same-cohort model development; no target-based model selection",
+  "estimand": "cell-pooled within seed; seed mean within partition; equal partition mean"
+}

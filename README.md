@@ -37,6 +37,15 @@ integrated model improves K0 Q90 error by 2.43% versus the current overall
 model, but raises ordinary errors and false-high rates; the overall model
 above remains the reference. All fits stop before the new 60-epoch ceiling.
 
+The [four-loss comparison](experiments/phase4_transfer/doc_selective_residual_v2/completion.md)
+completes 72 fits across initial and extended common budgets. An ordinary-DOC
+overprediction penalty lowers integrated K5 MAE to **1.5727 mg/L**, improving
+1.01% over its matched tail-weighted control and 0.46% over the earlier overall
+reference (the latter interval spans zero). K0 does not improve. Removing tail
+emphasis reduces false-high rates while weakening high-DOC recovery, and equal
+station weighting worsens K5. The previous overall model remains the reference;
+the new support-adapted candidate and all negative comparisons are retained.
+
 ## Scientific question
 
 USGS DOC monitoring is sparse and irregular: in the Mississippi River Basin,
