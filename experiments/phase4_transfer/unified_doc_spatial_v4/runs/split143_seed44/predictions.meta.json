@@ -1,0 +1,100 @@
+{
+  "config": {
+    "experiment": "unified_doc_spatial_v4",
+    "split_seed": 143,
+    "seed": 44,
+    "started_at": "2026-10-03T11:04:49.410511+00:00",
+    "runtime_snapshot_hash": "898bdf1a1c03745eabeb8d7877a77b52f7978876d12a6d5b6cb68cb2cbb5518f",
+    "prior_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed44",
+    "prior_completion_hash": "5651ad47eb0511d85830c0e4605861cb0700d03e068999d9e1c6d66b1642e2a9",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed44",
+    "source_completion_hash": "19f4f4d4f8279d8e0338b1c8fd95face880de423c372c0c35dceceb3c5398084",
+    "fusion_run": "experiments/phase4_transfer/unified_doc_spatial_v2/runs/split143_seed44",
+    "fusion_completion_hash": "54d53ecd462bf2d93de137fd2cca55d33e2d92862faefd610d0d5b91d7ccc50a",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "query_cells": 3907,
+    "target_analyte": "doc",
+    "target_transform": "log1p",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_episodic",
+      "context_tree_episodic",
+      "context_gru_frozen_anchor",
+      "context_gru_tuned_anchor",
+      "fusion_constant",
+      "fusion_gru_episodic",
+      "fusion_tree_episodic",
+      "fusion_gru_frozen_anchor",
+      "fusion_gru_tuned_anchor"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "learning_rate": 0.0001,
+    "batch_size": 8,
+    "gradient_clip_norm": 1,
+    "anchor_count": 32,
+    "scale_floor": 0.0001,
+    "trainable": [
+      "GRUCell",
+      "observation_decay"
+    ],
+    "readout": "fixed v3 GRU supervised projection",
+    "training_K": [
+      3,
+      5
+    ],
+    "training_ridge": [
+      1,
+      10
+    ],
+    "training_alpha": 1,
+    "training_loss": "raw query MAE, equal source station, K and ridge",
+    "epoch_selection": "source-validation pooled query MAE; epoch0 included",
+    "final_alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "final_ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "normalization": "station scalar RMS over fixed calendar anchors; retrospective",
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "fde184d209b24b31f6c6ba3f65cbfee045eac297610e23c9b3aa2dcc03e71d36",
+  "runtime_snapshot_hash": "898bdf1a1c03745eabeb8d7877a77b52f7978876d12a6d5b6cb68cb2cbb5518f",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "52f0aac3594241c90c3e7a2c9e4cca9c7a1368fb87ad1b4b57ed35c45fbdecf6",
+  "prediction_sha256": "9b6e4a18c2f2db2be44be3fa42c96e499fcd072fa8401b377f657ef8422dc024",
+  "model_files": {
+    "fusion.json": "70973b33fd95eec7f585cc30e8e19f3dff2d1d8f4e732341d795372a030b00ea",
+    "adapters.json": "66fefec068cfbb9781690eeb6e858bb181a85283eb7a880733913a951e26ea52",
+    "memory.pt": "3681510175dbb7ce9b85887d8670750b2a2dc96f85f886674aac454dcc83c2c6",
+    "memory.json": "69b035552c3bc740e7c5b88b84c0b2d0dd5a686eceb14690fa5bd8f3b371f1a0",
+    "normalization.json": "e3b650da7efdc4905bae4d36dde226f16976031b994c9fc798e87ef6cfae5f5d",
+    "representations.npz": "4c5fa4fc1191d77a3fb4c5107ec9fc460936599ee529e486d2c0e98a9219ad6c"
+  },
+  "rows": 156280,
+  "selection_role": "source_validation"
+}

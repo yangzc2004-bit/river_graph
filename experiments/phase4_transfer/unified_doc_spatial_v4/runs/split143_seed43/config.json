@@ -1,0 +1,82 @@
+{
+  "experiment": "unified_doc_spatial_v4",
+  "split_seed": 143,
+  "seed": 43,
+  "started_at": "2026-10-03T11:04:43.571803+00:00",
+  "runtime_snapshot_hash": "898bdf1a1c03745eabeb8d7877a77b52f7978876d12a6d5b6cb68cb2cbb5518f",
+  "prior_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed43",
+  "prior_completion_hash": "389460a585edbfecf563c09f8b1688f02df5f133c0e95b38d06ccb972fb77b2d",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed43",
+  "source_completion_hash": "abc91dcfa61c8ce21d15024af5f286ad5a2ea63923fae37c68a6da706a68e211",
+  "fusion_run": "experiments/phase4_transfer/unified_doc_spatial_v2/runs/split143_seed43",
+  "fusion_completion_hash": "46d16ffe39a0126f0bb332dca1390ff9ea2efb3043e65da8397ed8a85a7f5493",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+  "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "q90_threshold_train": 10.0,
+  "query_cells": 3907,
+  "target_analyte": "doc",
+  "target_transform": "log1p",
+  "inference_roles": [
+    "train"
+  ],
+  "models": [
+    "context_constant",
+    "context_gru_episodic",
+    "context_tree_episodic",
+    "context_gru_frozen_anchor",
+    "context_gru_tuned_anchor",
+    "fusion_constant",
+    "fusion_gru_episodic",
+    "fusion_tree_episodic",
+    "fusion_gru_frozen_anchor",
+    "fusion_gru_tuned_anchor"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "lookback": 12,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.0001,
+  "batch_size": 8,
+  "gradient_clip_norm": 1,
+  "anchor_count": 32,
+  "scale_floor": 0.0001,
+  "trainable": [
+    "GRUCell",
+    "observation_decay"
+  ],
+  "readout": "fixed v3 GRU supervised projection",
+  "training_K": [
+    3,
+    5
+  ],
+  "training_ridge": [
+    1,
+    10
+  ],
+  "training_alpha": 1,
+  "training_loss": "raw query MAE, equal source station, K and ridge",
+  "epoch_selection": "source-validation pooled query MAE; epoch0 included",
+  "final_alpha_grid": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "final_ridge_grid": [
+    0.1,
+    1,
+    10,
+    "infinity"
+  ],
+  "normalization": "station scalar RMS over fixed calendar anchors; retrospective",
+  "torch_threads": 2,
+  "study_role": "development on previously evaluated station partitions"
+}
