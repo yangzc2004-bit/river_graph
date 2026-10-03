@@ -18,8 +18,14 @@ candidate has MAE **1.8035 mg/L at K=0** and **1.5650 mg/L at K=5**. At K5 it
 improves **1.51%** over the matched monthly control and **0.94%** over the
 preceding ecological-affine model (1.5799 mg/L); both paired station intervals
 exclude zero. High-DOC Q90 error also falls by **1.40%** versus that reference.
-K0 overall improvement remains uncertain, and cells without sufficient daily
-flow remain the next development focus. K-shot support is retrospective, and
+K0 overall improvement remains uncertain. A subsequent
+[availability-preserving fallback](experiments/phase4_transfer/doc_daily_hydro_fallback_v1/completion.md)
+reuses the monthly expert when all numerical daily descriptors are invalid.
+Integrated K0 MAE becomes **1.7944 mg/L** (0.51% lower than daily, interval
+includes zero), but K5 worsens to **1.5714 mg/L**. Missing-input K0 behavior
+improves while daily remains the main K5 candidate. The next iteration puts
+daily hydrologic history inside the existing GRU and adds a tree benchmark with
+the same information. K-shot support is retrospective, and
 these partitions are development data.
 
 See [latest results and reproduction](experiments/phase4_transfer/doc_daily_hydro_residual_v1/completion.md)

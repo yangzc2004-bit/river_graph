@@ -1,0 +1,132 @@
+{
+  "config": {
+    "experiment": "doc_daily_hydro_fallback_v1",
+    "split_seed": 143,
+    "seed": 43,
+    "started_at": "2026-10-03T17:39:56.935955+00:00",
+    "runtime_snapshot_hash": "3ff4bd5beb286d81c8c53954fae5c00c37039cf047114a56b3271b61947331c1",
+    "prior_run": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/runs/split143_seed43",
+    "prior_completion_hash": "120605ec08d5c8a8615e11a9f7e035537d59fc12a2b584b159eea107f0b8c502",
+    "parent_verification_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/verification/replay_checks.json",
+    "parent_verification_hash": "6a2e9d207a8d854eac014e03897da93dc7bf4e8c553ec18bda31b606aeb9c5a3",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed43",
+    "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed43",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed43",
+    "source_completion_hash": "abc91dcfa61c8ce21d15024af5f286ad5a2ea63923fae37c68a6da706a68e211",
+    "basis_completion_hash": "61318f21cc0400b167a5ace3e76c15e7e48294d075128837e2b0d4589a38c14b",
+    "oof_completion_hash": "389460a585edbfecf563c09f8b1688f02df5f133c0e95b38d06ccb972fb77b2d",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "query_cells": 3907,
+    "memory_run": "experiments/phase4_transfer/doc_ecological_transfer_v1/runs/split143_seed43",
+    "memory_completion_hash": "72b3def49abe1f4dc6bdc51d9fe05716795e7d585347935a9e6a96215ddc70f0",
+    "memory_file_hash": "b827249acd58d5876f7dd8f51cd220b2fd6dd51703623eadd8fabd6e63f34d88",
+    "daily_features_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz",
+    "daily_features_hash": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+    "daily_metadata_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json",
+    "daily_metadata_hash": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+    "target_analyte": "doc",
+    "target_transform": "log1p",
+    "residual_scale": "native mg/L",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_tuned_anchor",
+      "monthly_constant",
+      "monthly_gru_tuned_anchor",
+      "daily_constant",
+      "daily_gru_tuned_anchor",
+      "hybrid_constant",
+      "hybrid_gru_tuned_anchor",
+      "monthly_integrated_constant",
+      "monthly_integrated_gru_tuned_anchor",
+      "daily_integrated_constant",
+      "daily_integrated_gru_tuned_anchor",
+      "hybrid_integrated_constant",
+      "hybrid_integrated_gru_tuned_anchor",
+      "prior_encoder_constant",
+      "prior_encoder_gru_tuned_anchor",
+      "prior_encoder_integrated_constant",
+      "prior_encoder_integrated_gru_tuned_anchor",
+      "prior_ecological_affine_constant",
+      "prior_ecological_affine_gru_tuned_anchor"
+    ],
+    "arms": [
+      "monthly",
+      "daily",
+      "hybrid"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "expert_retraining": false,
+    "route_definition": {
+      "model_class": "DailyHydroRouter",
+      "version": 1,
+      "rule": "any_numeric_descriptor_valid_selects_daily_else_monthly",
+      "daily_feature_names": [
+        "daily_flow_width",
+        "daily_flow_flashiness",
+        "daily_flow_rising_fraction",
+        "daily_flow_day_fraction",
+        "daily_flow_pair_fraction",
+        "daily_flow_width_valid",
+        "daily_flow_flashiness_valid",
+        "daily_flow_rising_valid"
+      ],
+      "validity_feature_indices": [
+        5,
+        6,
+        7
+      ],
+      "input_space": "native prediction units",
+      "stage": "base routing before ecological mixture and support adaptation",
+      "fitted_parameters": false,
+      "target_label_dependency": "none"
+    },
+    "support_basis": "unchanged frozen v4 GRU; identical across arms",
+    "ecological_integration": "frozen v1 ecological_affine profile; source-validation gamma/alpha/ridge",
+    "gamma_grid": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "full_grid_role": "native bases and integrated K0 bases",
+    "study_role": "development after seeing daily hydrology results; fixed availability route"
+  },
+  "config_hash": "138d1da8a3cd9153b56d678d302d99f90d6c79f9be6738cd31527fd0d8cff88a",
+  "runtime_snapshot_hash": "3ff4bd5beb286d81c8c53954fae5c00c37039cf047114a56b3271b61947331c1",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "128b00d801a2aa2f3ea5e422708a9350384b7e22c0f51c37b88ebf25af6b7136",
+  "prediction_sha256": "3a287b59341ead01f2ff7f3a9dc9e666dd37d71711953aa75c319b8a5a55a198",
+  "model_files": {
+    "router.json": "9e51b112c3fe195b28279ef170f2253d6caa14410793f8fe666084e05055009e",
+    "adapters.json": "accf0def52b907f4933c347928ecf4c814a36fcf630a0d74c9f59604d1e33b85",
+    "mixers.json": "f840de06bb1b3b9458403a9c0863f3901f0c878baa83db050488bfdbf1528184"
+  },
+  "rows": 233478,
+  "selection_role": "source_validation"
+}
