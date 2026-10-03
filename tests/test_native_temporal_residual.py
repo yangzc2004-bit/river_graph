@@ -296,3 +296,113 @@ def test_zero_extra_replays_actual_v1_checkpoint_and_preserves_summary_exactly()
     np.testing.assert_array_equal(new.predict_delta(inputs, batch_size=7),
                                   old.predict_delta(inputs, batch_size=7))
     np.testing.assert_array_equal(new.predict(inputs, base), old.predict(inputs, base))
+
+
+def interaction_fixture(*, interaction_indices=(0,), train_memory=False, epochs=12):
+    with torch.random.fork_rng():
+        temporal = nn.GRUCell(5, 4).double()
+        decay = nn.Linear(4, 4).double()
+    with torch.no_grad():
+        for parameter in (*temporal.parameters(), *decay.parameters()):
+            parameter.zero_()
+        # A nearly memoryless sign-carrying state gives a clear interaction
+        # target; all other hidden coordinates are zero.
+        temporal.weight_ih[8, 0] = 1.
+        temporal.bias_ih[4:8] = -30.
+        decay.bias.fill_(.1)
+
+    def values(n, shift):
+        state = np.tile(np.roll([-1., -1., 1., 1.], shift), (n, 4))
+        flow = np.tile(np.roll([-1., 1., -1., 1.], shift), (n, 4))
+        encoded = np.zeros((n, 16, 4))
+        encoded[..., 0] = state
+        inputs = {"encoded": encoded, "age": np.ones((n, 16)),
+                  "support": np.zeros((n, 16, 3)),
+                  "extra": np.stack([flow, np.ones_like(flow)], axis=-1)}
+        base = np.full((n, 16), 3.)
+        truth = base + np.tanh(state) * flow
+        return inputs, base, truth, np.ones((n, 16), dtype=bool)
+
+    model = NativeTemporalResidual(
+        temporal, decay, extra_dim=2, interaction_indices=interaction_indices,
+        train_memory=train_memory, epochs=epochs, patience=4, batch_size=256,
+        head_learning_rate=.2)
+    return model, (*values(4, 0), *values(2, 2))
+
+
+def test_interaction_learns_sign_changing_flow_effect_with_frozen_memory():
+    model, args = interaction_fixture()
+    additive, additive_args = interaction_fixture(interaction_indices=())
+    initial = [copy.deepcopy(module.state_dict()) for module in (model.temporal, model.decay)]
+    np.testing.assert_array_equal(model.predict_delta(args[0]), np.zeros_like(args[1]))
+    assert model.head.in_features == 4 + 2 + 4
+    fit_model(model, args)
+    fit_model(additive, additive_args)
+    assert model.validation_metrics_["validation_mae"] < .25 * additive.validation_metrics_["validation_mae"]
+    assert model.head.weight[0, 6] > .5
+    assert model.trainable_parameter_count_ == model.head.weight.numel() + model.head.bias.numel()
+    for module, before in zip((model.temporal, model.decay), initial):
+        assert not any(parameter.requires_grad for parameter in module.parameters())
+        for key, value in module.state_dict().items():
+            torch.testing.assert_close(value, before[key], rtol=0, atol=0)
+    assert all(row["temporal_parameter_distance"] == 0 and row["decay_parameter_distance"] == 0
+               for row in model.trace_)
+    predicted = model.predict_delta(args[4])
+    # Positive flow has opposite correction signs under the two states.
+    positive_flow = args[4]["extra"][..., 0] > 0
+    high_state = args[4]["encoded"][..., 0] > 0
+    assert (predicted[positive_flow & high_state] > 0).all()
+    assert (predicted[positive_flow & ~high_state] < 0).all()
+
+
+def test_zero_numeric_flow_removes_interactions_but_retains_validity_flag_effect():
+    model, args = interaction_fixture(epochs=0)
+    with torch.no_grad():
+        model.head.weight[0, 6:] = torch.tensor([1., 2., 3., 4.])
+        model.head.weight[0, 5] = .3
+    control = copy.deepcopy(args[0])
+    control["extra"][..., 0] = 0
+    expected_flags = .3 * control["extra"][..., 1]
+    np.testing.assert_allclose(model.predict_delta(control), expected_flags, atol=1e-14)
+    assert not np.allclose(model.predict_delta(args[0]), expected_flags)
+    control["extra"][..., 1] = 0
+    np.testing.assert_array_equal(model.predict_delta(control), 0.)
+
+
+def test_interaction_future_inputs_cannot_change_earlier_predictions():
+    model, args = interaction_fixture(epochs=0)
+    with torch.no_grad():
+        model.head.weight[0, 6] = 1.
+    expected = model.predict_delta(args[0], batch_size=11)
+    changed = copy.deepcopy(args[0])
+    changed["encoded"][:, 9:] *= -1
+    changed["extra"][:, 9:, 0] = .5
+    actual = model.predict_delta(changed, batch_size=11)
+    np.testing.assert_array_equal(actual[:, :9], expected[:, :9])
+    assert not np.allclose(actual[:, 9:], expected[:, 9:])
+
+
+def test_interaction_payload_preserves_frozen_memory_flags_and_nondefault_config():
+    model, args = interaction_fixture(epochs=2)
+    fit_model(model, args)
+    summary = model.to_dict()
+    assert summary["config"]["interaction_indices"] == [0]
+    assert summary["config"]["train_memory"] is False
+    restored = NativeTemporalResidual.from_payload(model.to_payload())
+    assert restored.interaction_indices == (0,) and restored.train_memory is False
+    assert restored.to_dict() == summary
+    assert not any(p.requires_grad for module in (restored.temporal, restored.decay) for p in module.parameters())
+    np.testing.assert_array_equal(restored.predict(args[4], args[5]), model.predict(args[4], args[5]))
+    default, default_args, *_ = fixture(epochs=0)
+    fit_model(default, default_args)
+    assert "interaction_indices" not in default.to_dict()["config"]
+    assert "train_memory" not in default.to_dict()["config"]
+
+
+def test_invalid_interaction_definition_and_memory_flag_are_rejected():
+    _, _, temporal, decay = fixture(epochs=0)
+    for indices in ((0, 0), (2,), (-1,), (True,)):
+        with pytest.raises(ValueError, match="interaction"):
+            NativeTemporalResidual(temporal, decay, extra_dim=2, interaction_indices=indices)
+    with pytest.raises(TypeError, match="train_memory"):
+        NativeTemporalResidual(temporal, decay, train_memory="false")

@@ -1,0 +1,143 @@
+{
+  "config": {
+    "experiment": "doc_flow_interaction_v1",
+    "split_seed": 143,
+    "seed": 42,
+    "started_at": "2026-10-03T12:56:42.502569+00:00",
+    "runtime_snapshot_hash": "7077c4306fdd114e0faeb7fc972477e5a9df7761d36f2b4bfca13ddbfa30d9be",
+    "prior_run": "experiments/phase4_transfer/doc_flow_residual_v1/runs/split143_seed42",
+    "prior_completion_hash": "27c9a09e121c431cb133fd13f33e65d98822076084bbd168c3e3abff49017542",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed42",
+    "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed42",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed42",
+    "source_completion_hash": "194ab0eeedc16ff3b0a10484314dea8a52f7707442e5a53ef189d1c6a0e07891",
+    "basis_completion_hash": "d9fd84f44921fd2fece10be4d7a2d8a2078ba29e4aefe31ad65aac828002cf32",
+    "oof_completion_hash": "2729ba4013b1b3084c4ed3e4a793e8ab8f069de78017e1a2bbd758f9c2ee5235",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "query_cells": 3907,
+    "target_analyte": "doc",
+    "residual_scale": "native mg/L",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "context_constant",
+      "context_gru_tuned_anchor",
+      "interaction_frozen_constant",
+      "interaction_frozen_gru_tuned_anchor",
+      "interaction_tuned_constant",
+      "interaction_tuned_gru_tuned_anchor"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "learning_rate": 0.0001,
+    "head_learning_rate": 0.001,
+    "batch_size": 512,
+    "gradient_clip_norm": 1,
+    "arms": [
+      "interaction_frozen",
+      "interaction_tuned"
+    ],
+    "tail_weight": 2.0,
+    "residual_scales": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "extra_dim": 10,
+    "flow_definition": {
+      "version": 1,
+      "age_cap_months": 12,
+      "history_months": 12,
+      "min_history_observations": 3,
+      "feature_names": [
+        "flow_relative_anomaly",
+        "flow_relative_anomaly_valid",
+        "flow_change_1",
+        "flow_change_1_valid",
+        "flow_change_3",
+        "flow_change_3_valid",
+        "flow_past12_observed_fraction",
+        "flow_age_capped",
+        "flow_age_valid",
+        "flow_current_valid"
+      ],
+      "value_feature_indices": [
+        0,
+        2,
+        4
+      ],
+      "freshness_feature_indices": [
+        1,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_feature_indices": [
+        1,
+        3,
+        5,
+        8,
+        9
+      ]
+    },
+    "interaction_indices": [
+      0,
+      2,
+      4
+    ],
+    "train_memory_by_arm": {
+      "interaction_frozen": false,
+      "interaction_tuned": true
+    },
+    "interaction_order": "hidden-major outer product",
+    "epoch_selection": "source-validation K0 pooled query MAE; epoch0 included",
+    "support_basis": "frozen v4 GRU; same for all arms",
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "d3e4bcd849f22cb4a969c8bd8e8e59030471d5bcf77d72ce665ff6683c8c5355",
+  "runtime_snapshot_hash": "7077c4306fdd114e0faeb7fc972477e5a9df7761d36f2b4bfca13ddbfa30d9be",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "1667c083c4415aacf086de95b8d360646b01385afaddc791ed94d488a7644e26",
+  "prediction_sha256": "249ddf02087fd91d74a7a3760aa25f368c229e822d88f495523cf6392499bc2f",
+  "model_files": {
+    "adapters.json": "20f6fee7df06ca243821d6eebecb18fff6e6999c9bcae032f2eac77ce8fce275",
+    "flow_features.json": "9e889aad1ccb9c497927ec1f399b12cdd120e86881421f37c759c6abd434ca6c",
+    "interaction_frozen.pt": "a2d39762869fb6e373bba88eecfee065988acc22570d9fb17f24b67ce296fd61",
+    "interaction_frozen.json": "104af90a5495e2b1b1c51fe046f8b567676831f194ab428bf1f751db76c1fcda",
+    "interaction_tuned.pt": "e04a9837bb4440450ac9efdef6000a4acfe255b63969f7fc80d8f487386dfae8",
+    "interaction_tuned.json": "4da47eff59a253d646afb511d1ecb22d28c739d2ebf76a38e7a29eace6164fbf"
+  },
+  "rows": 93768,
+  "selection_role": "source_validation"
+}
