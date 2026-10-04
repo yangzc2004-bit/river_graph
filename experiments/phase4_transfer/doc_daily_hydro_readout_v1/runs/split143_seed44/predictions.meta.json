@@ -1,0 +1,113 @@
+{
+  "config": {
+    "experiment": "doc_daily_hydro_readout_v1",
+    "split_seed": 143,
+    "seed": 44,
+    "started_at": "2026-10-04T05:45:19.834833+00:00",
+    "runtime_snapshot_hash": "f2a78e029ca0e5e8c9d39e92f8074cb62200d248cc09d2d732902d07285ec1cb",
+    "prior_run": "experiments/phase4_transfer/doc_daily_hydro_support_basis_v1/runs/split143_seed44",
+    "prior_completion_hash": "3b0c9dee2ebaef68ed03deac108a01bc461a4c110eeab94faba51860622768bb",
+    "expert_run": "experiments/phase4_transfer/doc_daily_hydro_memory_v1/runs/split143_seed44",
+    "expert_completion_hash": "1167cae359152c45a3d45bb22972122e1f9fe2190cacc960556cb6ceeab75861",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed44",
+    "source_completion_hash": "19f4f4d4f8279d8e0338b1c8fd95face880de423c372c0c35dceceb3c5398084",
+    "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed44",
+    "basis_completion_hash": "5503b0a0335869cf0f6bf9d1fffd4bb4369d11ca93c12758a8bca06ce34d6107",
+    "q90_threshold_train": 10.0,
+    "query_cells": 3907,
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed44",
+    "oof_completion_hash": "5651ad47eb0511d85830c0e4605861cb0700d03e068999d9e1c6d66b1642e2a9",
+    "daily_features_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz",
+    "daily_features_hash": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+    "daily_metadata_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json",
+    "daily_metadata_hash": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+    "parent_checkpoint_hash": "08b1c25b20ff962db4895782f7b0eb76f8c5a42bbc4b585b0f11209bd7c73c8c",
+    "basis_checkpoint_hash": "3681510175dbb7ce9b85887d8670750b2a2dc96f85f886674aac454dcc83c2c6",
+    "parent_representation_hash": "215333eaa0ef4a4673201ede472cde902d36e04742ec6fea8bace8dafdd5a239",
+    "parent_full_grid_hash": "3f9aba5986c2740cbac0b988e5819d56c7d2924efdf976fc95c77a08914e0f09",
+    "target_analyte": "doc",
+    "target_transform": "log1p",
+    "inference_roles": [
+      "train"
+    ],
+    "arms": [
+      "off"
+    ],
+    "basis_names": [
+      "constant",
+      "legacy",
+      "refreshed_fixed",
+      "refreshed_learned"
+    ],
+    "models": [
+      "off_constant_direct",
+      "off_constant_integrated",
+      "off_legacy_direct",
+      "off_legacy_integrated",
+      "off_refreshed_fixed_direct",
+      "off_refreshed_fixed_integrated",
+      "off_refreshed_learned_direct",
+      "off_refreshed_learned_integrated"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "anchor_count": 32,
+    "scale_floor": 0.0001,
+    "batch_size": 32,
+    "hidden_batch_size": 2048,
+    "projection_batch_size": 2048,
+    "epochs": 30,
+    "patience": 5,
+    "learning_rate": 0.001,
+    "gradient_clip_norm": 1,
+    "trainable_parameter_count": 128,
+    "readout_parameterization": "P0+norm(P0)*D; D initialized zero",
+    "torch_threads": 2,
+    "backbone_retraining": false,
+    "forest_retraining": false,
+    "readout_fitting": true,
+    "gamma_k0": "frozen parent source-validation choice",
+    "selection_role": "source_validation",
+    "train_k": [
+      3,
+      5
+    ],
+    "train_ridge": [
+      1,
+      10
+    ],
+    "train_alpha": 1,
+    "source_objective": "equal-station native query MAE; four K/ridge combinations equal",
+    "validation_objective": "pooled query native MAE; four K/ridge combinations equal; epoch0 included",
+    "source_base": "OOF forest plus fixed source-trained neural native residual; not fully OOF neural",
+    "source_visibility": "receiving station-fold DOC hidden in all source input months",
+    "normalization": "same 32 fixed record-wide calendar anchors and station scalar RMS",
+    "study_role": "retrospective support readout development on existing partitions"
+  },
+  "config_hash": "6f7ae724724435a4f40e30e79b017e022e45d138f6db0417cc045815b688b628",
+  "runtime_snapshot_hash": "f2a78e029ca0e5e8c9d39e92f8074cb62200d248cc09d2d732902d07285ec1cb",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "04076748114da3e37ab8c9eb7bc93833254969aad7b5833498e086543f605dfb",
+  "prediction_sha256": "b527463409af0867e4ecf76295b0ed3c661d102257b0ef063774fc9e0a53a638",
+  "model_files": {
+    "readout.pt": "1c1df1319264193f879ed98f64871e46f24ba5baa24300674e7da7460674cbaf",
+    "readout.json": "a6980565540425dd6f0a2baeb3814e0b914b70e1f9056d80bfa52badec59b23f",
+    "input_definition.json": "27405aabe02f080f3208495d2973f0fe6da025a9c24083f171280a7611eb5c4e",
+    "source_training.npz": "0702fd3ad6e7c5026c5b9b0fbac6e0f0d6d40abdc3a0f2a45489dac97a040809",
+    "representations.npz": "f6a1d45da2c28e4c1cd911847877fcd6264a30e11833e0aaf4ea841c33b045fa",
+    "basis_definition.json": "d17a3007c0a98b84f84fa78d2a0dab817e98204aac9643461370aad3e7b7ea57",
+    "adapters.json": "f206747f8e678bcf7f7940c96a178e1554c7e8a7424e667f6038e4ca8d58490b",
+    "mixers.json": "baa29d1f4260ab8087f2fd6f68c3948efe3abd011741c40f6a910b1c9682edae"
+  },
+  "rows": 125024,
+  "selection_role": "source_validation"
+}

@@ -1,0 +1,93 @@
+{
+  "experiment": "doc_daily_hydro_readout_v1",
+  "split_seed": 143,
+  "seed": 42,
+  "started_at": "2026-10-04T05:45:07.793683+00:00",
+  "runtime_snapshot_hash": "f2a78e029ca0e5e8c9d39e92f8074cb62200d248cc09d2d732902d07285ec1cb",
+  "prior_run": "experiments/phase4_transfer/doc_daily_hydro_support_basis_v1/runs/split143_seed42",
+  "prior_completion_hash": "f17e26ff1c830abf207a4261da50953a236b71f94b7062f555bf9800da93bd2d",
+  "expert_run": "experiments/phase4_transfer/doc_daily_hydro_memory_v1/runs/split143_seed42",
+  "expert_completion_hash": "b940fae5270b65fddfba9499fd85d288bccb4c43482e6b38364d734f284128f0",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+  "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split143_seed42",
+  "source_completion_hash": "194ab0eeedc16ff3b0a10484314dea8a52f7707442e5a53ef189d1c6a0e07891",
+  "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split143_seed42",
+  "basis_completion_hash": "d9fd84f44921fd2fece10be4d7a2d8a2078ba29e4aefe31ad65aac828002cf32",
+  "q90_threshold_train": 10.0,
+  "query_cells": 3907,
+  "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split143_seed42",
+  "oof_completion_hash": "2729ba4013b1b3084c4ed3e4a793e8ab8f069de78017e1a2bbd758f9c2ee5235",
+  "daily_features_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz",
+  "daily_features_hash": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+  "daily_metadata_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json",
+  "daily_metadata_hash": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+  "parent_checkpoint_hash": "d7bedef12b16a7888bc042fd79fe9358709c869ea5ccfb97486d936caa18f878",
+  "basis_checkpoint_hash": "5ae1295bcc61cea85a015b334b5eb6f2b8b479731aebcfe4de221fff24f46549",
+  "parent_representation_hash": "b77d9e9cc3a0c5412ceb84e56363dc6dd8ead57d2f9e014907abd6551abf1614",
+  "parent_full_grid_hash": "1919ccc828f12b84b48f2ff33d1dfc4068122d5796d3a840406735af5765a8c7",
+  "target_analyte": "doc",
+  "target_transform": "log1p",
+  "inference_roles": [
+    "train"
+  ],
+  "arms": [
+    "off"
+  ],
+  "basis_names": [
+    "constant",
+    "legacy",
+    "refreshed_fixed",
+    "refreshed_learned"
+  ],
+  "models": [
+    "off_constant_direct",
+    "off_constant_integrated",
+    "off_legacy_direct",
+    "off_legacy_integrated",
+    "off_refreshed_fixed_direct",
+    "off_refreshed_fixed_integrated",
+    "off_refreshed_learned_direct",
+    "off_refreshed_learned_integrated"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "anchor_count": 32,
+  "scale_floor": 0.0001,
+  "batch_size": 32,
+  "hidden_batch_size": 2048,
+  "projection_batch_size": 2048,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.001,
+  "gradient_clip_norm": 1,
+  "trainable_parameter_count": 128,
+  "readout_parameterization": "P0+norm(P0)*D; D initialized zero",
+  "torch_threads": 2,
+  "backbone_retraining": false,
+  "forest_retraining": false,
+  "readout_fitting": true,
+  "gamma_k0": "frozen parent source-validation choice",
+  "selection_role": "source_validation",
+  "train_k": [
+    3,
+    5
+  ],
+  "train_ridge": [
+    1,
+    10
+  ],
+  "train_alpha": 1,
+  "source_objective": "equal-station native query MAE; four K/ridge combinations equal",
+  "validation_objective": "pooled query native MAE; four K/ridge combinations equal; epoch0 included",
+  "source_base": "OOF forest plus fixed source-trained neural native residual; not fully OOF neural",
+  "source_visibility": "receiving station-fold DOC hidden in all source input months",
+  "normalization": "same 32 fixed record-wide calendar anchors and station scalar RMS",
+  "study_role": "retrospective support readout development on existing partitions"
+}

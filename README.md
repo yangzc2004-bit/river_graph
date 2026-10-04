@@ -42,8 +42,28 @@ adaptation projection. With three support readings, direct daily-head and
 current-input MAE improve **1.45%/1.41%**, primarily in ordinary DOC and one
 station partition. All refreshed K5 overall estimates worsen; K0/K1 are
 unchanged. The main candidate remains the daily model with its existing
-support basis. The next focused training experiment updates only the 128
+support basis. This led to a focused training experiment updating only the128
 support-readout parameters while keeping the prediction trunk fixed.
+
+That [episodic readout experiment](experiments/phase4_transfer/doc_daily_hydro_readout_v1/completion.md)
+is now complete: nine fits learn only the 64×2 support map. Integrated K5 MAE
+is **1.5710 mg/L**, versus 1.5725 for fixed refresh and **1.5650** for legacy.
+The incremental learned-versus-fixed difference is uncertain; K3 worsens
+slightly, and high-DOC recovery does not improve. Five fits select early
+updates and four retain epoch0. The daily-head/legacy-support main candidate
+is retained.
+
+The [recurrent-clock comparison](experiments/phase4_transfer/doc_recurrent_clock_v1/completion.md)
+then completes18 matched neural fits, retaining the old support basis.
+Unseen-neutral and within-window discharge-age clocks yield integrated K5
+MAE **1.5708/1.5690 mg/L**, versus **1.5650** for legacy. Both worsen Q90
+errors; direct K5 gains are uncertain and do not survive ecological integration.
+Neutral almost removes external state decay on validation windows, so its
+effective capacity differs despite unchanged allocated parameters. The original
+daily-head/legacy-support model remains the main candidate. The prepared
+[next head experiment](experiments/phase4_transfer/doc_recurrent_clock_v1/next_iteration.md)
+tests whether a small conditional mixture improves the remaining high-DOC
+underprediction while retaining ordinary-DOC performance.
 
 See [latest results and reproduction](experiments/phase4_transfer/doc_daily_hydro_residual_v1/completion.md)
 and [product roles](experiments/phase4_transfer/doc_daily_hydro_residual_v1/PRODUCTS.md).

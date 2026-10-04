@@ -1,0 +1,93 @@
+{
+  "experiment": "doc_daily_hydro_readout_v1",
+  "split_seed": 142,
+  "seed": 44,
+  "started_at": "2026-10-04T05:45:01.938690+00:00",
+  "runtime_snapshot_hash": "f2a78e029ca0e5e8c9d39e92f8074cb62200d248cc09d2d732902d07285ec1cb",
+  "prior_run": "experiments/phase4_transfer/doc_daily_hydro_support_basis_v1/runs/split142_seed44",
+  "prior_completion_hash": "00908a8757cf7f75e8df78c8933cfce98a78225ad96419b4cb0e2bb996095ad8",
+  "expert_run": "experiments/phase4_transfer/doc_daily_hydro_memory_v1/runs/split142_seed44",
+  "expert_completion_hash": "0395c8387c6732111ef1892ca5d4d510ca4fc450be4c77b07e26c97f36fce3a9",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+  "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split142_seed44",
+  "source_completion_hash": "40f4049af529c6c424c17275742d5be10c928f7f266e26eb0e9c1a824aca6954",
+  "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split142_seed44",
+  "basis_completion_hash": "5b5b155989063385863461aef772956b25a0652ac55ecbbae9cf6834d3e72058",
+  "q90_threshold_train": 9.851500511169434,
+  "query_cells": 3975,
+  "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split142_seed44",
+  "oof_completion_hash": "59461f9462adab682e0e88abaaf5ffbf53c5a91080b76169118f4adf6661ad3a",
+  "daily_features_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz",
+  "daily_features_hash": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+  "daily_metadata_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json",
+  "daily_metadata_hash": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+  "parent_checkpoint_hash": "c3bb6b9d1be66778d642d9228b402ca2ca3bec561cf2cb4e5741858aa5f2ae48",
+  "basis_checkpoint_hash": "8da255da98c2f3b351d425fac9e46132fff3d825be678bba47f920f854ea7c74",
+  "parent_representation_hash": "f5fd6ab199efc7f6752db40a639f697653f05cb57cf7378c752379dc4adf42ff",
+  "parent_full_grid_hash": "2a657125ab93eeab66c516425529aecb39004e9224a1750dff008acc7fdfc085",
+  "target_analyte": "doc",
+  "target_transform": "log1p",
+  "inference_roles": [
+    "train"
+  ],
+  "arms": [
+    "off"
+  ],
+  "basis_names": [
+    "constant",
+    "legacy",
+    "refreshed_fixed",
+    "refreshed_learned"
+  ],
+  "models": [
+    "off_constant_direct",
+    "off_constant_integrated",
+    "off_legacy_direct",
+    "off_legacy_integrated",
+    "off_refreshed_fixed_direct",
+    "off_refreshed_fixed_integrated",
+    "off_refreshed_learned_direct",
+    "off_refreshed_learned_integrated"
+  ],
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "anchor_count": 32,
+  "scale_floor": 0.0001,
+  "batch_size": 32,
+  "hidden_batch_size": 2048,
+  "projection_batch_size": 2048,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.001,
+  "gradient_clip_norm": 1,
+  "trainable_parameter_count": 128,
+  "readout_parameterization": "P0+norm(P0)*D; D initialized zero",
+  "torch_threads": 2,
+  "backbone_retraining": false,
+  "forest_retraining": false,
+  "readout_fitting": true,
+  "gamma_k0": "frozen parent source-validation choice",
+  "selection_role": "source_validation",
+  "train_k": [
+    3,
+    5
+  ],
+  "train_ridge": [
+    1,
+    10
+  ],
+  "train_alpha": 1,
+  "source_objective": "equal-station native query MAE; four K/ridge combinations equal",
+  "validation_objective": "pooled query native MAE; four K/ridge combinations equal; epoch0 included",
+  "source_base": "OOF forest plus fixed source-trained neural native residual; not fully OOF neural",
+  "source_visibility": "receiving station-fold DOC hidden in all source input months",
+  "normalization": "same 32 fixed record-wide calendar anchors and station scalar RMS",
+  "study_role": "retrospective support readout development on existing partitions"
+}
