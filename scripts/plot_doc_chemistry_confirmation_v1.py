@@ -151,7 +151,7 @@ def set_style():
 def draw_figure(data):
     set_style()
     fig, axes = plt.subplots(1, 3, figsize=(183 * MM, 104 * MM))
-    fig.subplots_adjust(left=.075, right=.986, top=.765, bottom=.255, wspace=.64)
+    fig.subplots_adjust(left=.075, right=.986, top=.765, bottom=.31, wspace=.64)
     fig.suptitle("DOC reconstruction on new station assignments", y=.965, fontsize=11, fontweight="bold")
     handles = [Line2D([], [], **{key: value for key, value in STYLE[model].items()
                                if key != "label"}, markersize=4, linewidth=1.45,
@@ -166,10 +166,14 @@ def draw_figure(data):
             axis.plot(points.k, points[metric], color=style["color"], marker=style["marker"],
                 linestyle=style["linestyle"], linewidth=1.45, markersize=4, markeredgewidth=.45,
                 markeredgecolor="white", zorder=3)
+        values = data["curves"][metric].to_numpy()
+        padding = .13 * max(float(np.ptp(values)), .01)
         axis.set(xlabel="Support observations (K)", xticks=KS, xlim=(-.2, 5.2),
-                 ylim=(0, None), title=title)
+                 ylim=(max(0, float(values.min()) - padding), float(values.max()) + padding),
+                 title=title)
         axis.set_ylabel("MAE (mg L$^{-1}$)" if metric == "mae" else "Q90-tail MAE (mg L$^{-1}$)")
         axis.yaxis.set_major_locator(MaxNLocator(5))
+        axis.ticklabel_format(axis="y", style="plain", useOffset=False)
         axis.grid(axis="y", color="#E8EBED", linewidth=.5, zorder=0)
     ax = axes[1]
     effects = data["effects"].set_index("comparison")
@@ -231,7 +235,9 @@ def write_readme(data, output):
         "seeds. They describe partition variation, not uncertainty intervals. "
         "**c,** MAE conditional on observed DOC being at or above the source-training 90th percentile. "
         "Tail thresholds are defined separately by source partition. Panels a and c show seed-averaged metrics "
-        "within each partition and equal weights across the three partitions; these curves carry no confidence bands."), "",
+        "within each partition and equal weights across the three partitions; these curves carry no confidence bands. "
+        "Their y axes focus on the displayed range, with 13% range padding, rather than starting at zero; "
+        "tick labels give the absolute error values. Panel b retains its zero-difference reference."), "",
         ("The three partitions use new station-role assignments on the existing ST357 Mississippi cohort. "
         "They are not external-basin validation or new independent measurements. K counts retrospective support "
         "observations per held station. All five reserved support candidates are excluded from the query set at "
@@ -280,7 +286,8 @@ def write_readme(data, output):
     lines += ["", "## Files and reproduction", "",
         ("The PDF and SVG are vector figures; the PNG is 300 dpi. White backgrounds, DejaVu Sans typography "
         "and the manuscript's blue/orange/grey palette are used. Shape and line style provide redundant model "
-        "encodings. Panel b has a visible zero reference; absolute-error axes start at zero."), "",
+        "encodings. Panels a and c use focused, explicitly labeled absolute-error axes; panel b has a visible "
+        "zero-difference reference."), "",
         "Run from the repository root after the complete analysis:", "", "```bash",
         "uv run python scripts/plot_doc_chemistry_confirmation_v1.py", "```", "",
         ("The source manifest records every input CSV, the complete-analysis manifest and the plotting script. "
@@ -312,6 +319,8 @@ def main():
         "training_seeds": list(SEEDS), "k_values": list(KS), "bootstrap_draws": 5000,
         "paired_interval": "95% percentile joint whole-station bootstrap; repeated stations sampled jointly",
         "partition_dots": "three-seed means, not confidence intervals",
+        "error_axis_range": "displayed minimum to maximum plus 13% range padding; lower bound at least zero",
+        "difference_axis_reference": "zero retained",
         "render": {"width_mm": 183, "height_mm": 104, "png_dpi": 300,
                    "vector_formats": ["pdf", "svg"], "font": "DejaVu Sans"}}
     (output / "sources_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

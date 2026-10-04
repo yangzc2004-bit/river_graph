@@ -1,0 +1,109 @@
+{
+  "stage": "fresh_chemistry_and_calibration",
+  "seed": 42,
+  "smoke": false,
+  "recipe": {
+    "modes": [
+      "no_aux",
+      "masks",
+      "chemistry"
+    ],
+    "models": [
+      "neural_chemistry_legacy",
+      "neural_chemistry_masks_aug",
+      "neural_chemistry_chemistry_aug",
+      "neural_chemistry_selected",
+      "neural_chemistry_integrated_legacy",
+      "neural_chemistry_integrated_masks_aug",
+      "neural_chemistry_integrated_chemistry_aug",
+      "neural_chemistry_integrated_selected",
+      "tree_chemistry_legacy",
+      "tree_chemistry_masks_aug",
+      "tree_chemistry_chemistry_aug",
+      "tree_chemistry_selected",
+      "point_integrated_legacy",
+      "context_legacy",
+      "point_legacy",
+      "tree_prior_legacy",
+      "neural_no_aux_legacy",
+      "neural_no_aux_integrated_legacy",
+      "neural_masks_legacy",
+      "neural_masks_integrated_legacy"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "epochs": 120,
+    "patience": 10,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    "tail_weight": 2,
+    "correction_scales": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "head_features": 554,
+    "head_parameters": 1111,
+    "tree_features": {
+      "current": 147,
+      "chemistry": 151
+    },
+    "tree_n_jobs": 2,
+    "pca_eigenvalue_floor": 1e-08,
+    "normalization_role": "source_training",
+    "selection_role": "source_validation",
+    "auxiliary_gate": "any actual auxiliary observation; same for all three heads",
+    "final_fallback": "frozen fresh point/tree-current after support calibration and ecological mixing",
+    "basis_tie_order": [
+      "legacy",
+      "masks_aug",
+      "chemistry_aug"
+    ]
+  },
+  "upstream": {
+    "experiments/phase4_transfer/doc_chemistry_confirmation_v1/runs/split242_seed42/initial/complete.json": "e87a9b5931f94795de13c9eedf1b0e57ca15d8a5426ed4fdc9cc16bf46fb169f",
+    "experiments/phase4_transfer/doc_chemistry_confirmation_v1/runs/split242_seed42/source_oof/complete.json": "77a40e8bb679a358de2722151ab57e17cdb91232ccfa41bf24b0fb79720a2c67",
+    "experiments/phase4_transfer/doc_chemistry_confirmation_v1/runs/split242_seed42/basis/inputs/complete.json": "1565eaf280dea9f70115e78b7949713dc78b595a230759f01708301f2044f7a7",
+    "experiments/phase4_transfer/doc_chemistry_confirmation_v1/runs/split242_seed42/basis/projector/complete.json": "0c557960764521cfb31cea5f4408f2b92c3ba1afda2140e1f6f01f17c37f7d4d",
+    "experiments/phase4_transfer/doc_chemistry_confirmation_v1/runs/split242_seed42/basis/memory/complete.json": "9b0d72add89dd06556b1de1fa9e8772462e4d5667dc37e48f240fa9793e9ebac",
+    "experiments/phase4_transfer/doc_chemistry_confirmation_v1/runs/split242_seed42/native/complete.json": "dc54fb2c993750aa14c83f9db4c67597a4c854f2efee1461bf5ea64abf0387df"
+  },
+  "dataset_content_hash": "4fda4022d8e75f4777da99d47bc69ab0e3320140ed8aa3125e9a1bb23c9ce7ae",
+  "split_content_hash": "a4365b9ab3188e37daef32f8edfe165ee50f5a36213048c8e56a2027e3a5c21c",
+  "driver_config_hash": "9e6b24595c3b270f354ae946b4935c12f3176290d19a8b11c544a3f4ac815f00",
+  "helper_hash": "ce0cc50b6a53be5d5e0a6595e62d5119291b7e737fee1d075b59d120914a8db4",
+  "library_snapshot_hash": "e843a3689eee4abc430c4e894d47635e5e17dcc7535c33eaae7ad471a6bdead3",
+  "torch_threads": 2,
+  "auxiliary_hashes": {
+    "ph": "100be6eb967d8a7507967d1c9ae2406bbbd6cbb69b059c732dabf160a7fc21ae",
+    "ec": "5fc06dbaadb7263e20032a8961f7bce81d61d752fba3ff4c345a2a202633bc48"
+  },
+  "native_state_hash": "d8236a9972ce0470bb6192298423a418788bdd8bb61ab037de948590f76edd2b",
+  "native_selected_scale": 1.0,
+  "selected_context_parameters": {
+    "bootstrap": false,
+    "ccp_alpha": 0.0,
+    "criterion": "squared_error",
+    "max_depth": null,
+    "max_features": 1.0,
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 4,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 300,
+    "n_jobs": 4,
+    "oob_score": false,
+    "random_state": 42,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "input_hash": "ea50c52ec50d6c8f9b73f2ead3b50aa5de2c166d0eeed5dbf9e8bbc19034c560"
+}

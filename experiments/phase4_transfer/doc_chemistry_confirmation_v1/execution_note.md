@@ -55,11 +55,17 @@ adaptation, rather than to a newly established river-transport effect. Support
 calibration is retrospective. Availability on observed DOC query cells and on
 genuinely missing DOC cells is reported separately.
 
-Production results will be written to `analysis/` after all nine packages
-finish, followed by the compact figure and a research decision note.
+## Production completion
 
-The first full-budget package (split242, seed42) completed in456.4 seconds.
-Its independent saved-state replay also passed. The remaining packages are
-running serially; a thread follow-up checks completion and performs final
-replay, analysis and rendering. Training does not depend on a further user
-confirmation.
+All nine packages completed on 2026-10-04 at 11:12 UTC. Summed package training
+time was about 66.3 minutes; the first full-budget package took 456.4 seconds.
+Independent saved-state replay passed for all nine packages, including all 80
+query panels and the full grid. Analysis used 5,000 joint station-bootstrap
+draws. The compact figure was rendered and visually checked; plotting-only
+layout repairs leave the archived training recipe unchanged.
+
+Full pytest passed (847 passed, 2 skipped, 3 warnings), Ruff passed and the
+historical artifact audit exited 0. Results are in `analysis/` and `figures/`;
+`research_decision.md` records the scientific interpretation and next priority.
+This fixed confirmation is complete. Its automated follow-up is paused after
+the final results notification.

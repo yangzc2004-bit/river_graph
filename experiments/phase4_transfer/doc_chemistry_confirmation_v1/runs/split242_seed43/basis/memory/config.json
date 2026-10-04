@@ -1,0 +1,78 @@
+{
+  "stage": "episodic_temporal_support_basis",
+  "seed": 43,
+  "n_jobs": 4,
+  "torch_threads": 2,
+  "smoke": false,
+  "recipe": {
+    "initial": {
+      "n_estimators": 300,
+      "max_epochs": 20,
+      "patience": 5,
+      "hidden": 64,
+      "chunk_months": 64
+    },
+    "initial_structure": {
+      "base_variant": "local",
+      "edge_set": "empty",
+      "edge_direction": "upstream",
+      "temporal_operator": "gru",
+      "lookback": 12,
+      "dropout": 0.1,
+      "lr": 0.001,
+      "forest_backend": "extra_trees",
+      "forest_min_samples_leaf": 4,
+      "forest_max_features": 1.0
+    },
+    "context_candidates": [
+      "et_leaf4",
+      "et_leaf2",
+      "et_leaf1",
+      "et_sqrt"
+    ],
+    "context_oof_folds": 5,
+    "projector": {
+      "n_components": 16,
+      "output_dim": 2,
+      "epochs": 100,
+      "patience": 15,
+      "learning_rate": 0.01,
+      "batch_size": 32
+    },
+    "memory": {
+      "lookback": 12,
+      "epochs": 30,
+      "patience": 5,
+      "learning_rate": 0.0001,
+      "batch_size": 8,
+      "anchor_count": 32,
+      "scale_floor": 0.0001
+    },
+    "basis_training": {
+      "k": [
+        3,
+        5
+      ],
+      "ridge": [
+        1.0,
+        10.0
+      ],
+      "alpha": 1.0,
+      "source_weighting": "equal station",
+      "selection": "pooled source-validation query native MAE",
+      "validation_mask": "all split.val cells; support/query reservation inside existing learner",
+      "source_neural_status": "source-trained weights, source-fold-hidden inputs; not OOF-fitted neural experts"
+    }
+  },
+  "dataset_content_hash": "4fda4022d8e75f4777da99d47bc69ab0e3320140ed8aa3125e9a1bb23c9ce7ae",
+  "split_content_hash": "a4365b9ab3188e37daef32f8edfe165ee50f5a36213048c8e56a2027e3a5c21c",
+  "helper_hash": "b9dfbf52932a19d31165bee30d3be5e3b483c19645255c8de2db01a521523933",
+  "library_snapshot_hash": "e843a3689eee4abc430c4e894d47635e5e17dcc7535c33eaae7ad471a6bdead3",
+  "driver_config_hash": "29df2dd3c62c6f72d77dd0391a755654f55489596806783f26513aa3948e0df5",
+  "upstream": {
+    "initial_completion_hash": "e6cb7d329e2e43f7aa584468916af4780aacfeca69e33c2a95795c146ed5072e",
+    "oof_completion_hash": "ef0d8a4b5d8fa82e4ecf808c3a8a41f6b00682e32677ee5e42d5c05f00accaf7",
+    "input_completion_hash": "0a88570653e8e984e0ace86b0984da2e1cadc8dc46ad72de29ee841b7db0be4c",
+    "projector_completion_hash": "4fa933a90912dfea9315031764db864b18aa321cc9ecb94dd1663061dc21ba6c"
+  }
+}

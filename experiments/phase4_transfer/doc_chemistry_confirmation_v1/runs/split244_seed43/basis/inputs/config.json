@@ -1,0 +1,76 @@
+{
+  "stage": "frozen_temporal_inputs",
+  "seed": 43,
+  "n_jobs": 4,
+  "torch_threads": 2,
+  "smoke": false,
+  "recipe": {
+    "initial": {
+      "n_estimators": 300,
+      "max_epochs": 20,
+      "patience": 5,
+      "hidden": 64,
+      "chunk_months": 64
+    },
+    "initial_structure": {
+      "base_variant": "local",
+      "edge_set": "empty",
+      "edge_direction": "upstream",
+      "temporal_operator": "gru",
+      "lookback": 12,
+      "dropout": 0.1,
+      "lr": 0.001,
+      "forest_backend": "extra_trees",
+      "forest_min_samples_leaf": 4,
+      "forest_max_features": 1.0
+    },
+    "context_candidates": [
+      "et_leaf4",
+      "et_leaf2",
+      "et_leaf1",
+      "et_sqrt"
+    ],
+    "context_oof_folds": 5,
+    "projector": {
+      "n_components": 16,
+      "output_dim": 2,
+      "epochs": 100,
+      "patience": 15,
+      "learning_rate": 0.01,
+      "batch_size": 32
+    },
+    "memory": {
+      "lookback": 12,
+      "epochs": 30,
+      "patience": 5,
+      "learning_rate": 0.0001,
+      "batch_size": 8,
+      "anchor_count": 32,
+      "scale_floor": 0.0001
+    },
+    "basis_training": {
+      "k": [
+        3,
+        5
+      ],
+      "ridge": [
+        1.0,
+        10.0
+      ],
+      "alpha": 1.0,
+      "source_weighting": "equal station",
+      "selection": "pooled source-validation query native MAE",
+      "validation_mask": "all split.val cells; support/query reservation inside existing learner",
+      "source_neural_status": "source-trained weights, source-fold-hidden inputs; not OOF-fitted neural experts"
+    }
+  },
+  "dataset_content_hash": "4fda4022d8e75f4777da99d47bc69ab0e3320140ed8aa3125e9a1bb23c9ce7ae",
+  "split_content_hash": "55654fa32398bde03840b7375a76afa5137c758dfeecc09fa8c899f800597fd3",
+  "helper_hash": "b9dfbf52932a19d31165bee30d3be5e3b483c19645255c8de2db01a521523933",
+  "library_snapshot_hash": "e843a3689eee4abc430c4e894d47635e5e17dcc7535c33eaae7ad471a6bdead3",
+  "driver_config_hash": "96930acb141d3ee35e3e98ebb3acedf85c72feb3f0a9095c4a67363a9c15723d",
+  "upstream": {
+    "initial_completion_hash": "d8d8c12f75487285d7afc01eebc4d6c86af09262c109e7698efb8e962904b43e",
+    "oof_completion_hash": "c062a15343f60fc530c26a0b6febbd35c9235d8c99fd2b61f50190c5eeac7cbb"
+  }
+}
