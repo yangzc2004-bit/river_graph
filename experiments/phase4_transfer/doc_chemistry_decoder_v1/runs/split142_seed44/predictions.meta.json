@@ -1,0 +1,204 @@
+{
+  "config": {
+    "experiment": "doc_chemistry_decoder_v1",
+    "split_seed": 142,
+    "seed": 44,
+    "started_at": "2026-10-04T07:10:49.329760+00:00",
+    "runtime_snapshot_hash": "0f6434840da437b3c4a31e228e89ed6123ab6c07e8da83c267e9701214e69ae6",
+    "prior_run": "experiments/phase4_transfer/doc_daily_hydro_memory_v1/runs/split142_seed44",
+    "prior_completion_hash": "0395c8387c6732111ef1892ca5d4d510ca4fc450be4c77b07e26c97f36fce3a9",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split142_seed44",
+    "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split142_seed44",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split142_seed44",
+    "source_completion_hash": "40f4049af529c6c424c17275742d5be10c928f7f266e26eb0e9c1a824aca6954",
+    "basis_completion_hash": "5b5b155989063385863461aef772956b25a0652ac55ecbbae9cf6834d3e72058",
+    "oof_completion_hash": "59461f9462adab682e0e88abaaf5ffbf53c5a91080b76169118f4adf6661ad3a",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "q90_threshold_train": 9.851500511169434,
+    "query_cells": 3975,
+    "daily_features_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz",
+    "daily_features_hash": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+    "daily_metadata_path": "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json",
+    "daily_metadata_hash": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+    "auxiliary_paths": {
+      "ph": "data/processed/mississippi_graph_ph_st357.pt",
+      "ec": "data/processed/mississippi_graph_spec_conductance_st357.pt"
+    },
+    "auxiliary_hashes": {
+      "ph": "100be6eb967d8a7507967d1c9ae2406bbbd6cbb69b059c732dabf160a7fc21ae",
+      "ec": "5fc06dbaadb7263e20032a8961f7bce81d61d752fba3ff4c345a2a202633bc48"
+    },
+    "auxiliary_provenance_hashes": {
+      "ph": "23fc672a9dccccc7193d7b46295f2cf92a9b886ca0ef58f9909959683313df04",
+      "ec": "52e9638fd6759bfdb49492108ff2f8a7ce70a0490d689536d85e62c0dc21a3e4"
+    },
+    "availability_audit_hash": "d8391b6a7db0cdae73253f04d302d0e94c49ba21b7d9dc007adc72d72cc55462",
+    "auxiliary_policy": {
+      "visibility": "observed pH/EC are exogenous known covariates in all DOC split roles",
+      "station_setting": "DOC held out; conventional water chemistry may be observed",
+      "time_scope": "same calendar-month means only; no future-month input or forward fill",
+      "units": {
+        "ph": "standard units",
+        "spec_conductance": "uS/cm"
+      },
+      "transforms": {
+        "ph": "ph/14",
+        "spec_conductance": "log1p(spec_conductance)"
+      },
+      "quality": {
+        "ph_range": [
+          0,
+          14
+        ],
+        "spec_conductance_range": [
+          0,
+          100000
+        ],
+        "detection": "existing tensor builder excludes nonempty detection-condition records",
+        "aggregation": "arithmetic mean of accepted measurements in each station/calendar month",
+        "fractions_and_parameter_codes": "retain the existing tensor definitions without reclassification",
+        "zero_conductance": "retained as an observed value under the existing QC policy"
+      },
+      "fitted_statistics": "none",
+      "doc_value_dependency": "none",
+      "active": "actual pH_visible OR EC_visible; identical across all three feature modes",
+      "modes": {
+        "no_aux": "four zeros, actual active retained separately",
+        "masks": "numeric values zero, observed masks retained",
+        "chemistry": "numeric values and observed masks retained"
+      }
+    },
+    "auxiliary_feature_names": [
+      "aux_ph_div14",
+      "aux_log1p_conductance",
+      "aux_ph_visible",
+      "aux_ec_visible"
+    ],
+    "auxiliary_feature_hash": "7885ff1e0877121df459ceb2f986b1752bb8d1179d09ff162195a75731582af3",
+    "auxiliary_active_hash": "f307896a49f434b06e9d5615686c49dcbe0fc4421e237a31e17ce81b56a0c051",
+    "models": [
+      "point_gru_tuned_anchor",
+      "context_gru_tuned_anchor",
+      "tree_prior_gru_tuned_anchor",
+      "neural_no_aux_gru_tuned_anchor",
+      "neural_masks_gru_tuned_anchor",
+      "neural_chemistry_gru_tuned_anchor",
+      "tree_no_aux_gru_tuned_anchor",
+      "tree_masks_gru_tuned_anchor",
+      "tree_chemistry_gru_tuned_anchor",
+      "point_integrated_gru_tuned_anchor",
+      "neural_no_aux_integrated_gru_tuned_anchor",
+      "neural_masks_integrated_gru_tuned_anchor",
+      "neural_chemistry_integrated_gru_tuned_anchor",
+      "linear_chemistry_gru_tuned_anchor",
+      "linear_chemistry_integrated_gru_tuned_anchor"
+    ],
+    "arms": [
+      "point",
+      "context",
+      "tree_prior",
+      "neural_no_aux",
+      "neural_masks",
+      "neural_chemistry",
+      "tree_no_aux",
+      "tree_masks",
+      "tree_chemistry"
+    ],
+    "neural_arms": [
+      "neural_no_aux",
+      "neural_masks",
+      "neural_chemistry"
+    ],
+    "tree_arms": [
+      "tree_no_aux",
+      "tree_masks",
+      "tree_chemistry"
+    ],
+    "modes": [
+      "no_aux",
+      "masks",
+      "chemistry"
+    ],
+    "basis_names": [
+      "gru_tuned_anchor"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "target_analyte": "doc",
+    "target_transform": "native residual; tree log1p",
+    "inference_roles": [
+      "train"
+    ],
+    "selection_role": "source_validation",
+    "epochs": 120,
+    "patience": 10,
+    "learning_rate": 0.001,
+    "batch_size": 512,
+    "tail_weight": 2,
+    "torch_threads": 2,
+    "gradient_clip_norm": 1,
+    "correction_scales": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "feature_dim": 554,
+    "feature_layout": "source-standardized original550+aux4; phi8; hidden64xphi8; output1070",
+    "feature_std_floor": 1e-06,
+    "head_parameters": 1111,
+    "tree_feature_dim": 151,
+    "tree_n_jobs": 2,
+    "tree_hyperparameter_search": false,
+    "neural_parent_hash": "c3bb6b9d1be66778d642d9228b402ca2ca3bec561cf2cb4e5741858aa5f2ae48",
+    "tree_parent_hash": "4727de34454fc8cec49ddafb1e9436504f0840b8c3e9c4dd9168def31471c738",
+    "backbone_retraining": false,
+    "source_neural_is_oof": false,
+    "support_selection_query": "aux-active val only; constant parent fallback elsewhere",
+    "full_grid_role": "conditional chemistry components; final K0; no held DOC truth",
+    "study_role": "nonlinear chemistry response on existing DOC development partitions",
+    "chemistry_run": "experiments/phase4_transfer/doc_auxiliary_chemistry_v1/runs/split142_seed44",
+    "chemistry_completion_hash": "9999e60a4061d6c63ff6f9febe821ac619136821fea8e1ad280c00ab6a8d3f55",
+    "chemistry_full_grid_hash": "3438be1c4b1c2e25e92eeb7664632fe89956ce359c1b8db86981c35006a69347",
+    "chemistry_prediction_hash": "178b4660fab32cb3a674aaba2136ca62d6fefb6946960dfe6777ca035f2fb604",
+    "availability_audit_path": "experiments/phase4_transfer/doc_auxiliary_chemistry_v1/availability_audit.json",
+    "linear_reference_models": [
+      "linear_chemistry_gru_tuned_anchor",
+      "linear_chemistry_integrated_gru_tuned_anchor"
+    ],
+    "chemistry_embedding_dim": 8,
+    "head_class": "NonlinearChemistryHead",
+    "activation": "SiLU",
+    "new_head_fits": 3,
+    "new_tree_fits": 0,
+    "trees_reused_fixed_controls": true,
+    "linear_reference_role": "previously seen linear-study development results"
+  },
+  "config_hash": "c5c4ba6668bb4854d2a638bd1e6e205d5da0298ed90488417f57eea83a3c59b2",
+  "runtime_snapshot_hash": "0f6434840da437b3c4a31e228e89ed6123ab6c07e8da83c267e9701214e69ae6",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "5e16e86c7e060af5c1e801b09acf2921bfd4e71305bcf48563e01311009757c4",
+  "prediction_sha256": "8eb44f6da84c6068937116520345491b0de3c864a4fa1b96fa12c33976e9c042",
+  "model_files": {
+    "input_definition.json": "b82ecc050373aeab4baabaf59b00c60750e9aff049e437b804de2744527e4651",
+    "source_training.npz": "0b3e00a5dcedfdbe6aed99a005843aad0277f74f9cfb6edc189fab47d80c9f1d",
+    "adapters.json": "5a76467d6388817544204eadc1ba97a3a61e0f521a46e847783d0a2077be04fe",
+    "mixers.json": "550e57c7199297a3bb305ebbd81c5b9cbb1f8f669e3aaade4d5009333a49091d",
+    "neural_no_aux.pt": "8fb8a11a2b133ce867cb08b1c8f03114da661b3bcdb0eadafb81b13916d3c782",
+    "neural_no_aux.json": "57932d2b09289c6db73e09c0ea414aa9d9fb4bc34587eda46b7e00d853371ea0",
+    "neural_masks.pt": "a86922c4b8221c9b966513bb5fe66426d28d419d60dce240f98ecd0c7d8bace5",
+    "neural_masks.json": "b2f71f9594e098e54dbd7d8c2268a90dcdfd6a326bcc965a650ceb04068908d3",
+    "neural_chemistry.pt": "0572b8548ee3d20d581bbf532a743e310f197d298ab5ca060c07b34fdb218771",
+    "neural_chemistry.json": "897daa08daaef2dbf18b30521252b6fc76ae6f74e5f241397e1741c81cf88755"
+  },
+  "rows": 238500,
+  "selection_role": "source_validation"
+}

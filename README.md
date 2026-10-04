@@ -65,6 +65,29 @@ daily-head/legacy-support model remains the main candidate. The prepared
 tests whether a small conditional mixture improves the remaining high-DOC
 underprediction while retaining ordinary-DOC performance.
 
+That [density-head comparison](experiments/phase4_transfer/doc_distribution_head_v1/completion.md)
+has completed18 fits. The mixture yields integrated K0/K5 MAE
+**1.7993/1.5620 mg/L**, small reductions of0.237%/0.190% versus the retained
+point model. All twelve overall-MAE intervals cross zero; K5 improvement is
+concentrated in one partition, and high-DOC underprediction remains. Keep
+the point model as the main reference and the mixture as a challenger.
+The [auxiliary-chemistry experiment](experiments/phase4_transfer/doc_auxiliary_chemistry_v1/completion.md)
+has completed54 fits. Measured monthly pH and conductance lower matched-tree
+K5 MAE from1.5776 to1.5379 mg/L (2.52%, all nine packages improve). The
+linear neural branch does not reproduce this gain; integrated K5 MAE1.5713
+is numerically worse than the retained1.5650. The
+[nonlinear chemistry decoder](experiments/phase4_transfer/doc_chemistry_decoder_v1/completion.md)
+has completed27 neural fits. Its chemistry-informed integrated K0 MAE is
+**1.7649 mg/L**, down2.14% from1.8035, with a paired station interval excluding
+zero and gains in all three partitions. Both ordinary and Q90 error improve.
+K5 MAE1.5688 does not improve the retained1.5650; the chemical tree remains
+stronger at K5. Keep the new decoder as a K0 chemistry-informed candidate and
+the old model as the general reference. The
+[next iteration](experiments/phase4_transfer/doc_chemistry_decoder_v1/next_iteration.md)
+tests a chemical-state representation for station-support calibration.
+These experiments address reconstruction where auxiliary chemistry is known;
+those measurements are available for only19.74% of genuinely DOC-missing cells.
+
 See [latest results and reproduction](experiments/phase4_transfer/doc_daily_hydro_residual_v1/completion.md)
 and [product roles](experiments/phase4_transfer/doc_daily_hydro_residual_v1/PRODUCTS.md).
 The [preceding ecological integration](experiments/phase4_transfer/doc_ecological_transfer_v2/completion.md)
