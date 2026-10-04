@@ -51,6 +51,11 @@ def load_runner() -> ModuleType:
 
 
 def main() -> None:
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-nested-confirmation-v1"]:
+        from run_doc_nested_confirmation_v1 import main as nested_confirmation_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        nested_confirmation_main()
+        return
     if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-nested-chemistry-v1"]:
         from run_doc_nested_chemistry_v1 import main as nested_chemistry_main
         sys.argv = [sys.argv[0], *sys.argv[3:]]
