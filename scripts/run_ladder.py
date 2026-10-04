@@ -51,6 +51,11 @@ def load_runner() -> ModuleType:
 
 
 def main() -> None:
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-chemistry-support-v1"]:
+        from run_doc_chemistry_support_v1 import main as chemistry_support_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        chemistry_support_main()
+        return
     if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-chemistry-decoder-v1"]:
         from run_doc_chemistry_decoder_v1 import main as decoder_main
         sys.argv = [sys.argv[0], *sys.argv[3:]]

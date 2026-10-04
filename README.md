@@ -82,9 +82,16 @@ has completed27 neural fits. Its chemistry-informed integrated K0 MAE is
 zero and gains in all three partitions. Both ordinary and Q90 error improve.
 K5 MAE1.5688 does not improve the retained1.5650; the chemical tree remains
 stronger at K5. Keep the new decoder as a K0 chemistry-informed candidate and
-the old model as the general reference. The
-[next iteration](experiments/phase4_transfer/doc_chemistry_decoder_v1/next_iteration.md)
-tests a chemical-state representation for station-support calibration.
+the old model as the general reference. The completed
+[chemical-state calibration](experiments/phase4_transfer/doc_chemistry_support_v1/completion.md)
+adds two source-fitted chemical coordinates to the existing GRU support basis.
+Its validation-selected integrated K0/1/3/5 MAE is
+**1.7649/1.7386/1.5959/1.5569 mg/L**. At K3 it improves1.50% over the
+general reference, with gains in all three partitions and a paired station
+interval excluding zero. The K5 reduction is0.51%; all nine package estimates
+improve, while its interval still crosses zero. K0/K1 remain exactly unchanged.
+The chemical tree remains stronger at K3 and numerically stronger at K5.
+Keep the new whole-curve procedure as the chemistry-informed neural candidate.
 These experiments address reconstruction where auxiliary chemistry is known;
 those measurements are available for only19.74% of genuinely DOC-missing cells.
 
