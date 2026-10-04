@@ -92,6 +92,12 @@ interval excluding zero. The K5 reduction is0.51%; all nine package estimates
 improve, while its interval still crosses zero. K0/K1 remain exactly unchanged.
 The chemical tree remains stronger at K3 and numerically stronger at K5.
 Keep the new whole-curve procedure as the chemistry-informed neural candidate.
+The follow-up [bounded residual-interpolation pilot](experiments/phase4_transfer/doc_chemical_kernel_v1/completion.md)
+uses only source-validation stations. Its apparent fitted gains reverse under
+conditional station-fold evaluation: integrated K3/K5 errors rise0.325%/0.067%.
+Omit the extra kernel and retain the completed chemical-coordinate model for
+new station-partition retraining. No outer target result is evaluated for this
+negative pilot.
 These experiments address reconstruction where auxiliary chemistry is known;
 those measurements are available for only19.74% of genuinely DOC-missing cells.
 
