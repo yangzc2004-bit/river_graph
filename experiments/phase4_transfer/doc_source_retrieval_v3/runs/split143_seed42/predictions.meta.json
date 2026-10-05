@@ -1,0 +1,48 @@
+{
+  "config": {
+    "split_seed": 143,
+    "seed": 42,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "information_condition": "target station has no DOC/pH/conductance inputs",
+    "source_neural_status": "source-trained weights; station-fold-hidden inputs",
+    "experiment": "doc_source_retrieval_v3",
+    "parent_run": "experiments/phase4_transfer/doc_source_retrieval_v1/runs/split143_seed42",
+    "started_at": "2026-10-04T20:14:22.546443+00:00",
+    "parent_completion_hash": "605d9bd956d3fb00847f475b99084d4b35035467fc3f2b8ac324b591d8c87157",
+    "epochs": 30,
+    "patience": 5,
+    "runtime_snapshot_hash": "8666be1e43a7884f789c86683b2888da2c846a9869c53e4d9d8f6cd499581313",
+    "evaluation_role": "source_validation_only",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "static_memory",
+      "retrieval_contrast",
+      "retrieval_contrast_uniform",
+      "retrieval_contrast_zero_source_values"
+    ],
+    "main_change": "train a donor-minus-current residual contrast; no query-design value shortcut",
+    "donor_bank": "nested_OOF_smooth_native_MAE_season_hydro_profiles",
+    "zero_initialization": "current complete prediction",
+    "bank_preparation_run": "experiments/phase4_transfer/doc_source_retrieval_v3/banks/split143_seed42",
+    "bank_preparation_hash": "7f657a7e168b776502852e717e49f0187cad8b79ea1e185810df9b60a1d8207f"
+  },
+  "config_hash": "bf9b503dec70887fd8b4676c85d5d1a1db00ab4b843f920ebb9b540b3daf28c6",
+  "runtime_snapshot_hash": "8666be1e43a7884f789c86683b2888da2c846a9869c53e4d9d8f6cd499581313",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "9df75a19958b1d14c2beeb30fddf73d6ad8ce0b8e80dcf43e4a02339293fea54",
+  "prediction_sha256": "0835ee4334ee0ee527ff162933b874d034f21cd2bc3e542205410df6a41e26e8",
+  "model_files": {
+    "config.json": "825b12ad9595cd455a1b6b31985f5b61b5967c1993ce7cbe036ad4829a445afa",
+    "retrieval_contrast.pt": "0b81e44d6b28df6b556baf5be8ccb2aac1d1d360da7cf4330f979c3736861710",
+    "retrieval_contrast.json": "7e88fa70fe9094ab0e5b9a33d0ea0c9eeb2ac244807950039099cd933f21f0a2",
+    "validation_inputs.npz": "15df3d1cd491e93f768e351e2b5326578026715451fe82ef01521997ead00a62"
+  },
+  "rows": 18408,
+  "selection_role": "source_validation"
+}

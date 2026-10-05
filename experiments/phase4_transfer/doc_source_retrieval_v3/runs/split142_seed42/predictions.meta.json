@@ -1,0 +1,48 @@
+{
+  "config": {
+    "split_seed": 142,
+    "seed": 42,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "q90_threshold_train": 9.851500511169434,
+    "information_condition": "target station has no DOC/pH/conductance inputs",
+    "source_neural_status": "source-trained weights; station-fold-hidden inputs",
+    "experiment": "doc_source_retrieval_v3",
+    "parent_run": "experiments/phase4_transfer/doc_source_retrieval_v1/runs/split142_seed42",
+    "started_at": "2026-10-04T20:09:38.473931+00:00",
+    "parent_completion_hash": "e8b02e874b8cc365a6269df14d4fe877972e778b7d430ad616ddfac33eb49176",
+    "epochs": 30,
+    "patience": 5,
+    "runtime_snapshot_hash": "8666be1e43a7884f789c86683b2888da2c846a9869c53e4d9d8f6cd499581313",
+    "evaluation_role": "source_validation_only",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "static_memory",
+      "retrieval_contrast",
+      "retrieval_contrast_uniform",
+      "retrieval_contrast_zero_source_values"
+    ],
+    "main_change": "train a donor-minus-current residual contrast; no query-design value shortcut",
+    "donor_bank": "nested_OOF_smooth_native_MAE_season_hydro_profiles",
+    "zero_initialization": "current complete prediction",
+    "bank_preparation_run": "experiments/phase4_transfer/doc_source_retrieval_v3/banks/split142_seed42",
+    "bank_preparation_hash": "cc8a092c9c15a416f9d4e01a007fb94851de9899c34a0116aed8dfc964689e0e"
+  },
+  "config_hash": "2d80d983f2f61ae93d587b5552a6e27308adb409224ddfc9d67c90e2cee8bae3",
+  "runtime_snapshot_hash": "8666be1e43a7884f789c86683b2888da2c846a9869c53e4d9d8f6cd499581313",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "bdb9eba2253b7b00c1ffc88c99cac42936f15d5c29a8dfe1397e1d2b6ab5d8c4",
+  "prediction_sha256": "c5440ac9354d4742a957831abb0b464481d05f6d7455603170f7ae8a7fcc523d",
+  "model_files": {
+    "config.json": "23017139fedd8cef439c4476e3f4a2b58bfb835b73ddc08dc9fd3296e34deaec",
+    "retrieval_contrast.pt": "0b81e44d6b28df6b556baf5be8ccb2aac1d1d360da7cf4330f979c3736861710",
+    "retrieval_contrast.json": "446257383d332be532427632edaa0bf7af6b8e8dc245ed25b6a2c3dc7fab3718",
+    "validation_inputs.npz": "306ddad30cdf49938777c230b7dd9be0347dab18f0d7ad22d5f8c6b375a99ebc"
+  },
+  "rows": 13698,
+  "selection_role": "source_validation"
+}

@@ -1,0 +1,31 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "split_seed": 144,
+  "seed": 44,
+  "started_at": "2026-10-05T06:51:21.641480+00:00",
+  "experiment": "doc_unmonitored_residual_v1",
+  "parent_run": "experiments/phase4_transfer/doc_unmonitored_trees_v1/runs/split144_seed44",
+  "parent_completion_hash": "291cc6f6600012f523918cf735adc22bed3fbd342284919b6ea19e4bd0829693",
+  "runtime_snapshot_hash": "6b85e239d7ce9e6a401886334827764c56c3f14981a81224a45c6b47244175ac",
+  "models": [
+    "current_model",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "unmonitored_residual",
+    "unmonitored_integrated"
+  ],
+  "selection_role": "source_validation",
+  "evaluation_role": "source_validation_only",
+  "epochs": 30,
+  "patience": 5,
+  "main_change": "station-hidden source tree base plus its OOF residual retraining",
+  "residual_backbone": "existing ecology encoder and observation GRU, retained fitted initialization",
+  "readout": "existing daily hydro and regime interactions; zero initialized native head",
+  "input_statistics": "retained historical raw preprocessing; new source-only readout context scaling",
+  "tail_weight": 2,
+  "tree_hyperparameters": "frozen selected station-hidden tree from the parent"
+}

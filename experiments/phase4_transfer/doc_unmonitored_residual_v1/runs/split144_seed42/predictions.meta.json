@@ -1,0 +1,52 @@
+{
+  "config": {
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+    "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+    "q90_threshold_train": 10.0,
+    "split_seed": 144,
+    "seed": 42,
+    "started_at": "2026-10-05T06:50:37.533659+00:00",
+    "experiment": "doc_unmonitored_residual_v1",
+    "parent_run": "experiments/phase4_transfer/doc_unmonitored_trees_v1/runs/split144_seed42",
+    "parent_completion_hash": "79c33e0fbb1d197dd224f15652d74311c606c81c69731c8f4b7b8b17eb465a1d",
+    "runtime_snapshot_hash": "6b85e239d7ce9e6a401886334827764c56c3f14981a81224a45c6b47244175ac",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "station_hidden_trees",
+      "unmonitored_residual",
+      "unmonitored_integrated"
+    ],
+    "selection_role": "source_validation",
+    "evaluation_role": "source_validation_only",
+    "epochs": 30,
+    "patience": 5,
+    "main_change": "station-hidden source tree base plus its OOF residual retraining",
+    "residual_backbone": "existing ecology encoder and observation GRU, retained fitted initialization",
+    "readout": "existing daily hydro and regime interactions; zero initialized native head",
+    "input_statistics": "retained historical raw preprocessing; new source-only readout context scaling",
+    "tail_weight": 2,
+    "tree_hyperparameters": "frozen selected station-hidden tree from the parent"
+  },
+  "config_hash": "20541e22864b2d3d32a02fb5ec32b5e8d42f1a3d6a1d1cd8eb9398b1f139b962",
+  "runtime_snapshot_hash": "6b85e239d7ce9e6a401886334827764c56c3f14981a81224a45c6b47244175ac",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "run_identity_sha256": "4cf0f4e46b6adddf36c5a8cd6e9bf955f1c29a9ea475db19b0e8b28564f7f8a6",
+  "prediction_sha256": "07590b6ff47f8d7a61b6948134c4c2ac7f02a07a695438562ea163f3d43dc12c",
+  "model_files": {
+    "config.json": "378f07f28003cfee29539c9d8fc7636d0f2bf4229432900c25e4859e3253a44f",
+    "native.pt": "829de3a741ad13e581cba4d94f38ee19430b4537f78525293aaa5cf9b17ea145",
+    "native.json": "279bb7b6ffe93b0afdb7af6a4d48a72db2e7eac6e81b7838c611a3ae13af13a3",
+    "memory.json": "ce4ab5e3bfde1f93a9b676db32e0916081df4f6f02a556c7d8b01b1c6b161acb",
+    "readout_normalization.json": "47f9d46673298773a99f044606a086addfba120e6e1301c8652143709068702c",
+    "source_oof.npz": "e4fe3a37b104e6e599c80e7f7f5341c79199520cd459fb0da4a1c14dff3cfb3a",
+    "oof_records.json": "43b8f6e4cb1ad910c0bd8c28c1854a23f1a3dc74cb62dedd161e0852bb4d8cbe",
+    "oof_complete.json": "c0fa0949101ecd6924b97497bbc442910b7d6630a12315889d746fe77ff4c192",
+    "validation_inputs.npz": "d451a7411b6e41981f62b7dd1682e4af43f1c8906081f222c09a4ffad85310cb"
+  },
+  "rows": 17530,
+  "selection_role": "source_validation"
+}

@@ -1,0 +1,46 @@
+{
+  "config": {
+    "split_seed": 142,
+    "seed": 44,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "q90_threshold_train": 9.851500511169434,
+    "information_condition": "target station has no DOC/pH/conductance inputs",
+    "source_neural_status": "source-trained weights; station-fold-hidden inputs",
+    "experiment": "doc_source_retrieval_v2",
+    "parent_run": "experiments/phase4_transfer/doc_source_retrieval_v1/runs/split142_seed44",
+    "started_at": "2026-10-04T19:59:34.025129+00:00",
+    "parent_completion_hash": "7f36a417d14dd3dbdf9d2bda0fa38209471bd9d2bf3867bc7d452b3719cb00ec",
+    "epochs": 30,
+    "patience": 5,
+    "runtime_snapshot_hash": "de2bd080bf2b00a9008e9f1efa3720b42ea4235ea8f7d698a54152d28c199378",
+    "evaluation_role": "source_validation_only",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "static_memory",
+      "retrieval_contrast",
+      "retrieval_contrast_uniform",
+      "retrieval_contrast_zero_source_values"
+    ],
+    "main_change": "train a donor-minus-current residual contrast; no query-design value shortcut",
+    "donor_bank": "unchanged v1 nested station OOF profiles",
+    "zero_initialization": "current complete prediction"
+  },
+  "config_hash": "45835bc8acb92db0f0f1d9a55e14f0833d3bedbb5b8abb09cf1dad34f0d2190c",
+  "runtime_snapshot_hash": "de2bd080bf2b00a9008e9f1efa3720b42ea4235ea8f7d698a54152d28c199378",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "8ca30fef85c383f3f7f747cf138f354413b85c59709ccd939c9492a1c489e535",
+  "prediction_sha256": "a37fbacca7efaea5977f1a875cca942b3dd2db8ff641391e3d094cf88d4c570c",
+  "model_files": {
+    "config.json": "adb4b7efe7acf3cea8a24854db7f8dbd34fc7e6288ee32a9464b0ebc6414a1a9",
+    "retrieval_contrast.pt": "875d4746c5ada982b270ee3956a175d65b777aaf05992ba7ee08064ecb0e2cac",
+    "retrieval_contrast.json": "cdc0398b7d30f0a279cebe8e5fcd887d34675b1ef3cc9e026f5fed8044cd994e",
+    "validation_inputs.npz": "9ec670e5cbabca8e4254c742a86988e594d87e4437837f9d635d5c6377d22271"
+  },
+  "rows": 13698,
+  "selection_role": "source_validation"
+}

@@ -1,0 +1,46 @@
+{
+  "config": {
+    "split_seed": 143,
+    "seed": 43,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "information_condition": "target station has no DOC/pH/conductance inputs",
+    "source_neural_status": "source-trained weights; station-fold-hidden inputs",
+    "experiment": "doc_source_retrieval_v2",
+    "parent_run": "experiments/phase4_transfer/doc_source_retrieval_v1/runs/split143_seed43",
+    "started_at": "2026-10-04T19:59:37.451792+00:00",
+    "parent_completion_hash": "356528da0628e004d419123e773c804feff4dc49d424b1c2413ff74c33b53217",
+    "epochs": 30,
+    "patience": 5,
+    "runtime_snapshot_hash": "de2bd080bf2b00a9008e9f1efa3720b42ea4235ea8f7d698a54152d28c199378",
+    "evaluation_role": "source_validation_only",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "static_memory",
+      "retrieval_contrast",
+      "retrieval_contrast_uniform",
+      "retrieval_contrast_zero_source_values"
+    ],
+    "main_change": "train a donor-minus-current residual contrast; no query-design value shortcut",
+    "donor_bank": "unchanged v1 nested station OOF profiles",
+    "zero_initialization": "current complete prediction"
+  },
+  "config_hash": "90170e5dc4fc67e09c7d2b1251b9915374582a643fb5c9e5c736f3e8e73e935f",
+  "runtime_snapshot_hash": "de2bd080bf2b00a9008e9f1efa3720b42ea4235ea8f7d698a54152d28c199378",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "92c9c16749c2e2e24cfea8eb82348fd7f223b9787abd8f46671a7985147fd1c7",
+  "prediction_sha256": "37070f6225c2e7f03cfbc54d8f9eac0449536094acd96e34dff023aa551b401f",
+  "model_files": {
+    "config.json": "95a1c10e6b22fe5c69bf4bdb38b88031bf70c864b3dc08bf19ce5fabb72c4186",
+    "retrieval_contrast.pt": "deac234402359bf48d32fd836b02bb68f84c8af15eabb9a77bc480dfad74a935",
+    "retrieval_contrast.json": "4921850d1c2270516184272d28edc846523d8cedfea8cb1a9729d314296e2776",
+    "validation_inputs.npz": "6aa342031febb6ea66ee86876f9eff3b06bd475efea42802d97ed0f71d52d429"
+  },
+  "rows": 18408,
+  "selection_role": "source_validation"
+}

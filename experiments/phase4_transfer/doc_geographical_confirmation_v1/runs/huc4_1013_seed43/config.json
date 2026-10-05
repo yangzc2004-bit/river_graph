@@ -1,0 +1,32 @@
+{
+  "experiment": "doc_geographical_confirmation_v1",
+  "target_huc4": "1013",
+  "split_seed": 1013,
+  "seed": 43,
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/doc_unmonitored_tasks_v1/geographical_masks/huc4_1013.npz",
+  "mask_hash": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+  "runtime_snapshot_hash": "f027f1ff9b7347ced4f544e63ec6f9c9c3a193e86b01b3fd2c67f0f57a599125",
+  "started_at": "2026-10-05T07:14:55.035372+00:00",
+  "q90_threshold_train": 8.649999618530273,
+  "models": [
+    "current_model",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "unmonitored_residual",
+    "unmonitored_integrated"
+  ],
+  "source_backbone_epochs": 20,
+  "current_native_epochs": 120,
+  "candidate_native_epochs": 30,
+  "patience": 5,
+  "information_condition": "no target DOC/pH/conductance",
+  "query_policy": "primary K0 all valid test cells; separate fixed-query support curve",
+  "source_experience": "station-blocked OOF; same ecological memory family in both full models",
+  "support_adapter": "matched validation-selected log1p mean residual; support not fed to the backbone",
+  "selection_role": "source_validation",
+  "evaluation_role": "whole HUC4 test",
+  "candidate_choice": "fixed integrated station-hidden recipe from source-validation development",
+  "historical_scope": "ST357 retrospective geographical replication, not independent external validation"
+}

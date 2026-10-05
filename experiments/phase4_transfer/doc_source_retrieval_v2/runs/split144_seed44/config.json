@@ -1,0 +1,30 @@
+{
+  "split_seed": 144,
+  "seed": 44,
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "information_condition": "target station has no DOC/pH/conductance inputs",
+  "source_neural_status": "source-trained weights; station-fold-hidden inputs",
+  "experiment": "doc_source_retrieval_v2",
+  "parent_run": "experiments/phase4_transfer/doc_source_retrieval_v1/runs/split144_seed44",
+  "started_at": "2026-10-04T19:59:44.310251+00:00",
+  "parent_completion_hash": "93b2f53863f152e211d86f7f3afdba58416a211a74fefe39cae1d03bac75f3f8",
+  "epochs": 30,
+  "patience": 5,
+  "runtime_snapshot_hash": "de2bd080bf2b00a9008e9f1efa3720b42ea4235ea8f7d698a54152d28c199378",
+  "evaluation_role": "source_validation_only",
+  "models": [
+    "current_model",
+    "matched_daily_trees",
+    "static_memory",
+    "retrieval_contrast",
+    "retrieval_contrast_uniform",
+    "retrieval_contrast_zero_source_values"
+  ],
+  "main_change": "train a donor-minus-current residual contrast; no query-design value shortcut",
+  "donor_bank": "unchanged v1 nested station OOF profiles",
+  "zero_initialization": "current complete prediction"
+}
