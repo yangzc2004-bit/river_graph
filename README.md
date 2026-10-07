@@ -5,6 +5,16 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [real-confluence follow-up](experiments/phase4_transfer/doc_river_confluence_response_v1/research_decision.md)
+adds half-hour flow at all eleven mapped gauge sites and a separate five-junction
+laboratory DOC/channel survey. Twelve eligible C2+C4→C7 spring windows show incoming
+water-profile overlap of 0.71–0.88, with changing seasonal peak clocks at the same
+geometry. At the five Tom's Creek junctions, two change DOC mixture-deviation sign
+between seasons. Fall relative deepening has a descriptive rank correlation of
+0.90 with DOC deviation, compared with 0.10 for widening. This supplies a local
+geometry lead within one network; water timing is not substituted for carbon
+timing, and the original three whole-network forms remain fixed.
+
 The [hourly response comparison](experiments/phase4_transfer/doc_river_hourly_response_v1/research_decision.md)
 separates later flow maxima from waveform broadening. All seven paired Turbolo
 segments spanning at least 24 hours have downstream flow maxima 1–2 hours later,
