@@ -1,0 +1,58 @@
+{
+  "config": {
+    "bootstrap_draws": 5000,
+    "bootstrap_seed": 42,
+    "aggregation": "dates within pair, pairs within receiver, receivers equal",
+    "primary_bootstrap_unit": "component",
+    "sensitivity_bootstrap_unit": "huc4",
+    "calendar_adjustment": [
+      "intercept",
+      "month_sin",
+      "month_cos",
+      "centered_year"
+    ],
+    "variance_scale": "native DOC population variance",
+    "arrival_fraction": 1.0,
+    "max_path_km": 861.4307704600011,
+    "arrival_relative_denominator": "1 + same-month mixture",
+    "arrival_relative_thresholds": [
+      0.01,
+      0.05
+    ],
+    "minimum_area_coverage": 0.8,
+    "monthly_flow_closure_range": [
+      0.8,
+      1.2
+    ],
+    "previous_results_seen": true,
+    "model_refitting": false,
+    "supplementary_after_native_results": [
+      "same-dates log1p variability",
+      "leave-one-system summaries"
+    ]
+  },
+  "config_hash": "d3799bddb5db24ddbff8917450fb69c67255dd9a55d67ef67f48f08f8dfd55f9",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_hash": "c7d08eb8d4c1613f21bba7607aa2e9952b60d7fda3495f8c132020a72722cfc3",
+  "source_cells_sha256": "7ee2dcbbe69ddbdb3d2ccdfed750b9ffe314dd4825c49ceaa3f1bfcd17dfa19d",
+  "runtime_sources": {
+    "scripts/analyze_doc_river_signal_mechanisms_v1.py": "93c0b3e60e765d99fc8f9b65032baeac1f114c412a720cf6882155105260b19b",
+    "src/river_graph/analysis/river_signal_mechanisms.py": "96de3421843ad1884467ea1264d57c45912c3e2b768fa052413ada34b9cccdee",
+    "src/river_graph/analysis/river_mechanisms.py": "7b0f4f1a6a61358c654d43b9577afcc96b4ac2a82d43425ea3f8840c0043060a",
+    "src/river_graph/analysis/river_form_process.py": "adcbd19664928563b923bfe9eb1b321f3440a18b2614134d69d1ff220fa41f38",
+    "src/river_graph/analysis/river_observed_transport.py": "a8337afce8ccacdbe22e68adfcb32d2c05c4c1af8528fd76c5758d2f79c024be"
+  },
+  "runtime_snapshot_hash": "bc5ffb06219d952c0513f5385eefaa31827bdb109c4fe2609c79a7d8939e48fb",
+  "prediction_sha256": "74614bf1735257255cd2eb417458519ff6a46dd11023773e3657a039a9b5a6aa",
+  "input_records_sha256": "ceedf00a59ac144b696be0a4ff58af06b6b937a264ac5e0d5608e3ee75494bb8",
+  "saved_states_sha256": "cd741ab4b1d2c562fcd91e8754ad085a76d62421a46439b76997e296613f4db0",
+  "prediction_columns": [
+    "mean_input_prediction",
+    "branch_input_prediction"
+  ],
+  "prediction_grain": "connection x observed receiver month; receiver truth repeats across connections",
+  "product_role": "fixed saved model input sensitivity; not a newly fitted model",
+  "visibility": "current and previous source DOC permitted; outlet DOC not used to alter proxies or fitted states",
+  "calibrators_refitted": false,
+  "previous_results_seen": true
+}
