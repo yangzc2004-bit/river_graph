@@ -5,6 +5,17 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [storage placement experiment](experiments/phase4_transfer/doc_river_storage_placement_v1/research_decision.md)
+now compares earlier tributaries, later tributaries and shared downstream trunks
+on 295 real confluences plus 59 monitored footprints. With fixed path means and
+equal added variance, middle-pulse mean peak reductions are 4.60%, 7.04%, and
+9.01%. Some branch placements raise the combined peak because increased
+waveform overlap outweighs attenuation of the individual pulses. At equal
+allocated storage time, mean reductions are about 5% across all three positions
+and their paired differences are uncertain. This identifies component attenuation
+and mixture overlap as separate structural controls on conservative DOC pulses.
+Bilingual figures retain actual river geometry and explicit strength matching.
+
 The [complete-network storage extension](experiments/phase4_transfer/doc_river_whole_storage_v1/research_decision.md)
 now retains all three real river forms across 297 station-network instances
 (295 receiving reaches). Under identical DOC forcing, elongated networks give
@@ -14,8 +25,8 @@ Moderate fixed-mean storage reduces the peak by more than 1% in 41 instances
 and increases it by more than 1% in six. The response varies strongly within
 each form: measured path arrangement and storage position matter in addition
 to the class label. These are conservative geometry scenarios, not fitted
-field residence times. The next experiment isolates storage position along
-early/late tributary routes and shared downstream segments.
+field residence times. The placement experiment above isolates storage position
+along early/late tributary routes and shared downstream segments.
 
 The [controlled branch/storage experiment](experiments/phase4_transfer/doc_river_storage_transport_v1/research_decision.md)
 now separates unequal branch arrivals from common-trunk storage at the same
