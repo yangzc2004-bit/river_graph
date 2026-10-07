@@ -5,6 +5,17 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [hourly response comparison](experiments/phase4_transfer/doc_river_hourly_response_v1/research_decision.md)
+separates later flow maxima from waveform broadening. All seven paired Turbolo
+segments spanning at least 24 hours have downstream flow maxima 1–2 hours later,
+but the two single-lobe cases have effectively unchanged widths. Optical DOC
+requires a separate measurement audit: values above 600 FNU use flow/rainfall
+regressions, and none of the seven long records supplies two complete DOC
+half-height intervals outside that regime. All sampled DOC maxima also exceed
+the source laboratory calibration range. The next field target is synchronized
+branch–branch–outlet carbon-wave timing, connected to branch-path differences
+and shared-trunk length; the original three morphology classes are retained.
+
 The [flow-weighted mixing comparison](experiments/phase4_transfer/doc_river_flow_mixing_v1/research_decision.md)
 now uses actual daily discharge on the matched laboratory dates. Eight windows
 have complete flow, including seven repeated years at C7. In all seven C7
