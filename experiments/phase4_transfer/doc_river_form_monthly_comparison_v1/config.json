@@ -1,0 +1,55 @@
+{
+  "arms": {
+    "environment": [],
+    "hydro": [
+      "log_discharge",
+      "temperature"
+    ],
+    "form": [
+      "log_discharge",
+      "temperature",
+      "form_2",
+      "form_3"
+    ],
+    "branching": [
+      "log_discharge",
+      "temperature",
+      "log_drainage_density",
+      "mainstem_share"
+    ],
+    "paths": [
+      "log_discharge",
+      "temperature",
+      "mainstem_sinuosity",
+      "log_route_mean_scaled",
+      "route_distance_cv"
+    ],
+    "all_morphology": [
+      "log_discharge",
+      "temperature",
+      "log_basin_aspect",
+      "log_network_axis_ratio",
+      "log_drainage_density",
+      "mainstem_share",
+      "mainstem_sinuosity",
+      "log_route_mean_scaled",
+      "route_distance_cv"
+    ]
+  },
+  "high_doc_threshold_mg_l": 10.0,
+  "ridge_alpha": 10.0,
+  "logistic_C": 1.0,
+  "logistic_max_iter": 1000,
+  "cv": "five station-defined HUC4 folds",
+  "training_weight": "one per station",
+  "evaluation_weight": "station equal for information; pair equal after same-month responses",
+  "pair_min_months": 12,
+  "pair_min_months_of_year": 6,
+  "longer_record_months": 24,
+  "bootstrap_draws": 5000,
+  "bootstrap_seed": 42,
+  "bootstrap_unit": "HUC4",
+  "target_transform": "log1p",
+  "source_roles": "union142/143/144",
+  "matching": "unchanged preceding pairs"
+}
