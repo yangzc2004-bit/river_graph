@@ -5,6 +5,14 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [integrated structural portraits](experiments/phase4_transfer/doc_river_structure_profiles_v1/research_decision.md)
+connect the three original real forms to arrival dispersion, shared paths and
+actual storage positions across 297 station-network instances. The original
+22 environment-matched elongated/broad pairs retain a clear path-dispersion
+and identical-input pulse difference, while measured monthly DOC variation
+does not establish the same class ranking. Bilingual real maps and evidence
+figures distinguish measured structure, controlled responses and field DOC.
+
 The [storage placement experiment](experiments/phase4_transfer/doc_river_storage_placement_v1/research_decision.md)
 now compares earlier tributaries, later tributaries and shared downstream trunks
 on 295 real confluences plus 59 monitored footprints. With fixed path means and
