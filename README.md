@@ -5,6 +5,16 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [flow-weighted mixing comparison](experiments/phase4_transfer/doc_river_flow_mixing_v1/research_decision.md)
+now uses actual daily discharge on the matched laboratory dates. Eight windows
+have complete flow, including seven repeated years at C7. In all seven C7
+years, the calculated branch mixture has lower relative DOC variation than
+the branch-CV average. Extra receiver smoothing is less consistent: outlet
+absolute SD is smaller than the mixture in three of seven years. Measured
+branches contribute roughly 64–77% of flow by window median, so this is a
+partial-input comparison. The next question connects incoming signal synchrony
+with independent branch paths and shared downstream length.
+
 The [real-observation follow-up](experiments/phase4_transfer/doc_river_event_observations_v1/research_decision.md)
 adds 5,057 laboratory DOC values at 16 SITES sites, daily discharge and actual
 Krycklan stream geometry. Four monitored tributary–receiver configurations
