@@ -5,6 +5,18 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [complete-network storage extension](experiments/phase4_transfer/doc_river_whole_storage_v1/research_decision.md)
+now retains all three real river forms across 297 station-network instances
+(295 receiving reaches). Under identical DOC forcing, elongated networks give
+lower and longer pulses than broad networks; their original matched-pair
+contrast persists after mapped storage and five-point reach-input refinement.
+Moderate fixed-mean storage reduces the peak by more than 1% in 41 instances
+and increases it by more than 1% in six. The response varies strongly within
+each form: measured path arrangement and storage position matter in addition
+to the class label. These are conservative geometry scenarios, not fitted
+field residence times. The next experiment isolates storage position along
+early/late tributary routes and shared downstream segments.
+
 The [controlled branch/storage experiment](experiments/phase4_transfer/doc_river_storage_transport_v1/research_decision.md)
 now separates unequal branch arrivals from common-trunk storage at the same
 mean arrival time. Across 59 real monitored footprints, identical input pulses
@@ -13,7 +25,7 @@ receiver-equal branch peak reduction is 12.37%; allocating half the common
 mean-time budget to a conservative storage response reduces peaks by a further
 29.26% and expands central duration by 58.36%. All 1,416 geometric scenarios
 preserve integrated anomaly. These are controlled responses, not measured DOC
-removal or calibrated residence times. The next step returns delay/storage
+removal or calibrated residence times. The extension above returns delay/storage
 fingerprints to the complete real-network shape comparison.
 
 The [sampling-resolution follow-up](experiments/phase4_transfer/doc_river_sampling_resolution_v1/research_decision.md)
