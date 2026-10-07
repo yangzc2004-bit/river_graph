@@ -5,6 +5,17 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [junction dynamics study](experiments/phase4_transfer/doc_river_junction_dynamics_v1/research_decision.md)
+crosses incoming pulse clocks with shared-channel volume/discharge and distributed
+response on 295 real network junctions plus 59 monitored footprints. In the middle
+controlled pulse, natural branch delays reduce the mean peak by 14.32% relative
+to aligned arrivals; prescribed shared mixing adds a 22.23% reduction relative to
+the same-clock translation response. Pure transit shifts the peak without lowering
+it, and doubling volume and discharge together leaves the response unchanged.
+The original 22 elongated/broad pairs support a longer response duration more
+clearly than a peak ranking. Real maps retain the three original forms; laboratory
+DOC deviations and channel/tracer measurements remain separate field evidence.
+
 The [real-confluence follow-up](experiments/phase4_transfer/doc_river_confluence_response_v1/research_decision.md)
 adds half-hour flow at all eleven mapped gauge sites and a separate five-junction
 laboratory DOC/channel survey. Twelve eligible C2+C4→C7 spring windows show incoming
