@@ -5,6 +5,17 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [actual-junction geometry study](experiments/phase4_transfer/doc_river_confluence_mixing_v1/research_decision.md)
+keeps the original three whole-network forms and measures incoming angles,
+flow-direction turns and downstream bending at 295 selected real junctions
+(251 distinct physical junctions). At 250 m, the class median incoming angles are
+83.48°, 82.71° and 84.50°. The original 22 elongated/broad matches do not establish
+a local-geometry difference at any of the three measured scales. Actual maps
+show whole-network shape and its local junction separately. The next structural
+question concerns junction arrangement, branch arrival timing and shared-channel
+processing length. A separate public mixing archive is identified, but its event
+CSV download is unavailable; no observed mixing response was substituted.
+
 The [paired-tracer field study](experiments/phase4_transfer/doc_river_tracer_process_v1/research_decision.md)
 adds three real salt/labelled-DOC releases and both sampling locations in Blaine
 Creek, retaining 205 co-observed laboratory rows. Downstream salt centroids are
