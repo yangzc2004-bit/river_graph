@@ -5,6 +5,18 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [real-observation follow-up](experiments/phase4_transfer/doc_river_event_observations_v1/research_decision.md)
+adds 5,057 laboratory DOC values at 16 SITES sites, daily discharge and actual
+Krycklan stream geometry. Four monitored tributary–receiver configurations
+yield 11 matched spring comparisons: receiving-stream relative DOC variation
+is smaller in nine, with eight repeated years at C7. This supplies an observed
+mixing lead, rather than a confirmed ranking of the three whole-network forms.
+A separate public Turbolo optical-DOC case has 422 paired hourly records and
+seven continuous blocks spanning at least 24 hours. Bilingual figures keep
+laboratory points, optical estimates and actual river paths distinct. The next
+step compares flow-weighted mixing and event timing with branch-path differences
+and shared downstream length.
+
 The [integrated structural portraits](experiments/phase4_transfer/doc_river_structure_profiles_v1/research_decision.md)
 connect the three original real forms to arrival dispersion, shared paths and
 actual storage positions across 297 station-network instances. The original
