@@ -1,0 +1,44 @@
+{
+  "config_hash": "58af9ddb9a16fb417670039ed6cb978b28fa4128115230bbe412bc6fa8ed3ca2",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_hash": "c7d08eb8d4c1613f21bba7607aa2e9952b60d7fda3495f8c132020a72722cfc3",
+  "runtime_snapshot_hash": "e97e6ff94fe9f5a7984c9c0e7f16bf5bf52de6049c917cc5fdb74aed6eff4518",
+  "prediction_sha256": "8a567764a744148c76b80206cc662ab4035172cd56b29fa0fd628181c0c674d1",
+  "config": {
+    "operators": [
+      "background",
+      "same_month",
+      "uniform_history",
+      "mean_delay",
+      "branch_arrival"
+    ],
+    "fractions": [
+      0.0,
+      0.1,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "min_common_months": 24,
+    "lookback": 2,
+    "max_path_km": 861.4307704600011,
+    "ridge_alpha": 1.0,
+    "inner_folds": 3,
+    "outer": "leave_connected_monitoring_system_out",
+    "source_role": "union142/143/144",
+    "training_weight": "equal receiver, then equal pair, then equal date",
+    "target_transform": "log1p"
+  },
+  "runtime_sources": {
+    "scripts/analyze_doc_river_observed_transport_v1.py": "52cca76bd2696fd85e4fcd419f9a3b270a62442d34e4d1be12c3633104cf710d",
+    "src/river_graph/analysis/river_observed_transport.py": "a8337afce8ccacdbe22e68adfcb32d2c05c4c1af8528fd76c5758d2f79c024be",
+    "src/river_graph/analysis/river_mechanisms.py": "7b0f4f1a6a61358c654d43b9577afcc96b4ac2a82d43425ea3f8840c0043060a",
+    "src/river_graph/analysis/river_form_process.py": "adcbd19664928563b923bfe9eb1b321f3440a18b2614134d69d1ff220fa41f38"
+  },
+  "study_plan_sha256": "d06af8d181c877e5b66d5f0e8b466a4566abe78f04106bb51ab2a308893839cc",
+  "source_cells_sha256": "7ee2dcbbe69ddbdb3d2ccdfed750b9ffe314dd4825c49ceaa3f1bfcd17dfa19d",
+  "visibility": "held receiving DOC never used to select/fill/scale/fit its operator; observed upstream current/previous DOC is an allowed input",
+  "prediction_grain": "connection x observed receiver month x operator; shared receiver observations repeat across connections",
+  "calibrators_fitted": true,
+  "existing_neural_models_retrained": false
+}
