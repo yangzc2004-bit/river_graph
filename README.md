@@ -5,6 +5,18 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [paired-tracer field study](experiments/phase4_transfer/doc_river_tracer_process_v1/research_decision.md)
+adds three real salt/labelled-DOC releases and both sampling locations in Blaine
+Creek, retaining 205 co-observed laboratory rows. Downstream salt centroids are
+60–67 minutes later and central durations are 9–32% longer. The two glucose
+downstream/upstream tracer-normalized DOC core fractions are 0.265 and 0.358;
+the leaf-leachate fraction is 1.206. Original-point and author-processed results
+retain this direction. This connects transport and carbon processing in one
+stream segment, while the three whole-network forms remain the structural
+comparison. Bilingual figures show actual clocks, laboratory points and separate
+processing sensitivities; these concentration fractions are not mass-removal
+rates. The next field step links real confluence geometry to observed mixing length.
+
 The [junction dynamics study](experiments/phase4_transfer/doc_river_junction_dynamics_v1/research_decision.md)
 crosses incoming pulse clocks with shared-channel volume/discharge and distributed
 response on 295 real network junctions plus 59 monitored footprints. In the middle
