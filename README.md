@@ -5,13 +5,24 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## River-form and DOC mechanism study
 
+The [controlled branch/storage experiment](experiments/phase4_transfer/doc_river_storage_transport_v1/research_decision.md)
+now separates unequal branch arrivals from common-trunk storage at the same
+mean arrival time. Across 59 real monitored footprints, identical input pulses
+show distinct peak and duration effects. For the middle-duration pulse,
+receiver-equal branch peak reduction is 12.37%; allocating half the common
+mean-time budget to a conservative storage response reduces peaks by a further
+29.26% and expands central duration by 58.36%. All 1,416 geometric scenarios
+preserve integrated anomaly. These are controlled responses, not measured DOC
+removal or calibrated residence times. The next step returns delay/storage
+fingerprints to the complete real-network shape comparison.
+
 The [sampling-resolution follow-up](experiments/phase4_transfer/doc_river_sampling_resolution_v1/research_decision.md)
 checks original dates on 59 measured tributary pairs. Three-station samples
 span a median four days; the median station samples every 28 days. Replacing
 monthly means with date-aligned activities retains substantial asynchronous
 tributary variability. The five connections with mapped common-trunk storage
 have no common month with at least three sampling days at all three stations.
-The next controlled experiment separates branch-arrival dispersion from
+The controlled experiment above separates branch-arrival dispersion from
 common-trunk storage broadening, keeping river structure as the explanatory
 variable. Prior whole-network classes and model results remain available.
 
