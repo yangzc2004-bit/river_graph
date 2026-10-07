@@ -1,0 +1,50 @@
+{
+  "flow_quantiles": [
+    0.3333333333333333,
+    0.6666666666666666
+  ],
+  "minimum_reference_months": 24,
+  "minimum_doc_flow_months": 24,
+  "minimum_low_high_doc_months": 6,
+  "minimum_calendar_months": 6,
+  "minimum_years": 2,
+  "minimum_joint_low_high_months": 4,
+  "high_doc_threshold_mg_l": 10.0,
+  "association_controls": [
+    "log_polygon_area",
+    "wetland",
+    "forest",
+    "agriculture",
+    "urban",
+    "precipitation",
+    "climate_temperature",
+    "latitude",
+    "longitude",
+    "log_flow_contrast"
+  ],
+  "association_blocks": {
+    "form": [
+      "form_2",
+      "form_3"
+    ],
+    "footprint": [
+      "log_basin_aspect",
+      "log_network_axis_ratio"
+    ],
+    "branching": [
+      "log_drainage_density",
+      "mainstem_share"
+    ],
+    "paths": [
+      "mainstem_sinuosity",
+      "log_route_mean_scaled",
+      "route_distance_cv"
+    ]
+  },
+  "bootstrap_draws": 5000,
+  "bootstrap_unit": "HUC4",
+  "bootstrap_seed": 42,
+  "permitted_roles": "source union142/143/144",
+  "classification_and_pairs": "fixed previous geometry-only classes and covariate-only pairs",
+  "main_adjusted_response": "within-station log1p DOC high-state minus low-state; season and year adjusted"
+}
