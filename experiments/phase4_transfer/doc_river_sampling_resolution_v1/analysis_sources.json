@@ -1,0 +1,1030 @@
+{
+  "source_hashes": {
+    "experiments/phase4_transfer/doc_river_observed_transport_v1/analysis/input_records.parquet": "ceedf00a59ac144b696be0a4ff58af06b6b937a264ac5e0d5608e3ee75494bb8",
+    "experiments/phase4_transfer/doc_monitored_river_footprint_v1/analysis/footprints.csv": "200f155dfb66b3cfa8e63fd9cfd55853fa5c91ed36a5ac0f38f802fedffa34c1",
+    "experiments/phase4_transfer/doc_river_mechanisms_v1/analysis/source_cells.npy": "7ee2dcbbe69ddbdb3d2ccdfed750b9ffe314dd4825c49ceaa3f1bfcd17dfa19d",
+    "data/processed/mississippi_graph_graphfix_st357.pt": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/study_plan.md": "f8ddde9389628c55c66ddf61ea0fad4ceef3d20b0ed136a47695791bfb0b9c48",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/config.json": "02bf924fd2c4a5e8c079196e13970b80aa89e719a5aff2c44618c0444b1d1294",
+    "scripts/analyze_doc_river_sampling_resolution_v1.py": "337217f316de184419ed57e9bba297e816fd32f0bf9152f9fca8b53d4c1c93d4",
+    "scripts/plot_doc_river_sampling_resolution_v1.py": "8104f4d9a5cf4066d87236d9825117cf1444c5db32dd455fa0e44a0d309b7b38",
+    "scripts/verify_doc_river_sampling_resolution_v1.py": "b971646c80795c1b77b40dbbfd69682c6f4ce320ccfdfdea16043f531dbce024",
+    "tests/test_river_sampling_resolution.py": "ba8190181c0150ca3366b70c5f3a245c167685322cef42ee7431920d1fc9af0c",
+    "src/river_graph/analysis/river_sampling_resolution.py": "2f1fac722d9126bad6a12463a70fa223d42f836265fe01c07c0d7821e1ce3e02",
+    "src/river_graph/analysis/river_signal_mechanisms.py": "96de3421843ad1884467ea1264d57c45912c3e2b768fa052413ada34b9cccdee",
+    "src/river_graph/analysis/river_form_process.py": "adcbd19664928563b923bfe9eb1b321f3440a18b2614134d69d1ff220fa41f38",
+    "src/river_graph/analysis/river_mechanisms.py": "7b0f4f1a6a61358c654d43b9577afcc96b4ac2a82d43425ea3f8840c0043060a",
+    "src/river_graph/data/wqp.py": "109faaf5b6b861e1eee6c89862036a315e2f20e3da0c52ce5bea8390f9234da0",
+    "src/river_graph/models/daily_flow_features.py": "0336dfee97eb0f58da447565b4e5a8b73b16331cec5902aa1b85220d7d651c03"
+  },
+  "raw_doc_inventory": [
+    {
+      "path": "data/raw/wqp_results/03037525.csv",
+      "sha256": "c81855f1f5c86ddb12749cc90ec03d8c5621979dfed69e2124f5a18decc606cb",
+      "site_no": "03037525",
+      "recognized_water_quality_rows": 269,
+      "accepted_doc_rows": 37
+    },
+    {
+      "path": "data/raw/wqp_results/03040000.csv",
+      "sha256": "bf8013261094830c366cfb420e58184deefd8bef645943ce997bd95a88cc1d49",
+      "site_no": "03040000",
+      "recognized_water_quality_rows": 350,
+      "accepted_doc_rows": 35
+    },
+    {
+      "path": "data/raw/wqp_results/03049625.csv",
+      "sha256": "17b617283afa31533ca379cb9fce869b141280256a969d2cdc4413f689d3d3aa",
+      "site_no": "03049625",
+      "recognized_water_quality_rows": 1633,
+      "accepted_doc_rows": 49
+    },
+    {
+      "path": "data/raw/wqp_results/03072000.csv",
+      "sha256": "01ddbaac4aa0ccf041419c785b11baae84d04f54e60c0e082a23a31045b4a3b5",
+      "site_no": "03072000",
+      "recognized_water_quality_rows": 1463,
+      "accepted_doc_rows": 33
+    },
+    {
+      "path": "data/raw/wqp_results/03083500.csv",
+      "sha256": "4dc96d3d978af305fe1cf5dd4d3bf18630c4032c95c84a31fd469a379e64e9e9",
+      "site_no": "03083500",
+      "recognized_water_quality_rows": 2021,
+      "accepted_doc_rows": 107
+    },
+    {
+      "path": "data/raw/wqp_results/03085000.csv",
+      "sha256": "a0313879ac0c917ada8567effdd7075733966c6a13fcdf571c62557041361dc3",
+      "site_no": "03085000",
+      "recognized_water_quality_rows": 3179,
+      "accepted_doc_rows": 128
+    },
+    {
+      "path": "data/raw/wqp_results/03216600.csv",
+      "sha256": "dda1fa501f8cd753a2f5716fdb149dfa6b5a462123ad261861756d8e284ed7a2",
+      "site_no": "03216600",
+      "recognized_water_quality_rows": 1613,
+      "accepted_doc_rows": 161
+    },
+    {
+      "path": "data/raw/wqp_results/03267900.csv",
+      "sha256": "0565d1f6f7e2f080bd6e9b4c00f4ef70a843505a6605a70d86f01dc918290eb7",
+      "site_no": "03267900",
+      "recognized_water_quality_rows": 883,
+      "accepted_doc_rows": 82
+    },
+    {
+      "path": "data/raw/wqp_results/03280000.csv",
+      "sha256": "64bbbd069051392e4fd41810d08467493780a1450c466842864c19f2ab82bed6",
+      "site_no": "03280000",
+      "recognized_water_quality_rows": 688,
+      "accepted_doc_rows": 55
+    },
+    {
+      "path": "data/raw/wqp_results/03281000.csv",
+      "sha256": "e571cde5a2670efbeab2ed2caaa21cb5c3423fe683bec6381d31648630089e19",
+      "site_no": "03281000",
+      "recognized_water_quality_rows": 652,
+      "accepted_doc_rows": 45
+    },
+    {
+      "path": "data/raw/wqp_results/03281500.csv",
+      "sha256": "2d0bcdd82134d7a74a0476c3086b953cf368af9a2e5a25a45c2c4986d59a5c49",
+      "site_no": "03281500",
+      "recognized_water_quality_rows": 639,
+      "accepted_doc_rows": 45
+    },
+    {
+      "path": "data/raw/wqp_results/03284000.csv",
+      "sha256": "aa2c5bc3a84079ccb5f0e2f235c348c8577162f7d492388fc2c69f77ad2a1036",
+      "site_no": "03284000",
+      "recognized_water_quality_rows": 594,
+      "accepted_doc_rows": 54
+    },
+    {
+      "path": "data/raw/wqp_results/03287500.csv",
+      "sha256": "fc6b0778ebe655ffc35298cd61c2d90b55f18579817ce8aed9e20cff235513b1",
+      "site_no": "03287500",
+      "recognized_water_quality_rows": 1711,
+      "accepted_doc_rows": 44
+    },
+    {
+      "path": "data/raw/wqp_results/03289500.csv",
+      "sha256": "4acb873ce97ddb40d8030a80f36738ff057f61035bb745394d4139ba6971c881",
+      "site_no": "03289500",
+      "recognized_water_quality_rows": 569,
+      "accepted_doc_rows": 53
+    },
+    {
+      "path": "data/raw/wqp_results/03290500.csv",
+      "sha256": "0aec2eea08b40f33ae282072d801d4cc323b8c98888af9abd195a87334d91afc",
+      "site_no": "03290500",
+      "recognized_water_quality_rows": 1602,
+      "accepted_doc_rows": 68
+    },
+    {
+      "path": "data/raw/wqp_results/03303280.csv",
+      "sha256": "6a2598fcedf41919cb9b574ce578009d5c165da584288064d0d7137e80ea70a7",
+      "site_no": "03303280",
+      "recognized_water_quality_rows": 3433,
+      "accepted_doc_rows": 418
+    },
+    {
+      "path": "data/raw/wqp_results/03378500.csv",
+      "sha256": "a9fe00758fea907b4f39826203dc253af712550b030f7777d51be60bd150333f",
+      "site_no": "03378500",
+      "recognized_water_quality_rows": 4131,
+      "accepted_doc_rows": 405
+    },
+    {
+      "path": "data/raw/wqp_results/03609750.csv",
+      "sha256": "2816fb0133994f26068c8707d3fe6ef53d2725482a89e649596b695ff35d146c",
+      "site_no": "03609750",
+      "recognized_water_quality_rows": 2920,
+      "accepted_doc_rows": 353
+    },
+    {
+      "path": "data/raw/wqp_results/03612500.csv",
+      "sha256": "c1e0a009df308f53fd2571d9e39e95da54c54dfa1b8d8e3a4f4de1b050d1aabb",
+      "site_no": "03612500",
+      "recognized_water_quality_rows": 4074,
+      "accepted_doc_rows": 279
+    },
+    {
+      "path": "data/raw/wqp_results/05288705.csv",
+      "sha256": "0ac5ec6d888b9197feb04bbcff36c61a29822b4b71d4e45aabb9a9ee8504668e",
+      "site_no": "05288705",
+      "recognized_water_quality_rows": 3266,
+      "accepted_doc_rows": 387
+    },
+    {
+      "path": "data/raw/wqp_results/05330000.csv",
+      "sha256": "6859d3861d3bbd986939eae4d5ae79db5106fe260b640a7924eee2b6e8051e3e",
+      "site_no": "05330000",
+      "recognized_water_quality_rows": 1706,
+      "accepted_doc_rows": 55
+    },
+    {
+      "path": "data/raw/wqp_results/05330902.csv",
+      "sha256": "8fad3ee7feb4e1f6ff766bbf7709bb181a34573309f0f90ff7f4e47c51d1a9eb",
+      "site_no": "05330902",
+      "recognized_water_quality_rows": 397,
+      "accepted_doc_rows": 53
+    },
+    {
+      "path": "data/raw/wqp_results/05331580.csv",
+      "sha256": "1fc4b21eef429b4557eff2c266500af6e1a2c3a7f1c28d226cb54e74e1581f35",
+      "site_no": "05331580",
+      "recognized_water_quality_rows": 3033,
+      "accepted_doc_rows": 252
+    },
+    {
+      "path": "data/raw/wqp_results/05340500.csv",
+      "sha256": "00e9343849a0dc6f09f9c0cd45fb614e7e3498b7357118ca5e873f61138caece",
+      "site_no": "05340500",
+      "recognized_water_quality_rows": 1172,
+      "accepted_doc_rows": 86
+    },
+    {
+      "path": "data/raw/wqp_results/05355250.csv",
+      "sha256": "3c306cfeadda84665e69e5b9bddf41621870de82d5efc6c256b93f2713c55b81",
+      "site_no": "05355250",
+      "recognized_water_quality_rows": 266,
+      "accepted_doc_rows": 37
+    },
+    {
+      "path": "data/raw/wqp_results/05357215.csv",
+      "sha256": "a60c04339ceb3c44386fdb9c75a600468aeef4d595f70fd365e03defc67df3a7",
+      "site_no": "05357215",
+      "recognized_water_quality_rows": 663,
+      "accepted_doc_rows": 154
+    },
+    {
+      "path": "data/raw/wqp_results/05357239.csv",
+      "sha256": "2d1be2d546efc1039bf37039e5aca2167b8b6e2f2d73e609668288a4bba1af20",
+      "site_no": "05357239",
+      "recognized_water_quality_rows": 545,
+      "accepted_doc_rows": 127
+    },
+    {
+      "path": "data/raw/wqp_results/05357245.csv",
+      "sha256": "2a37ff6118a3d38ee5e91adaf92d85a030803b0d1681a20995618ab8f9ded978",
+      "site_no": "05357245",
+      "recognized_water_quality_rows": 578,
+      "accepted_doc_rows": 120
+    },
+    {
+      "path": "data/raw/wqp_results/05412500.csv",
+      "sha256": "f27f8a90bf2e0a38b6cb1838cfbaffbf60bfc9616a4f4a47f37ee2420c891963",
+      "site_no": "05412500",
+      "recognized_water_quality_rows": 1194,
+      "accepted_doc_rows": 121
+    },
+    {
+      "path": "data/raw/wqp_results/05418600.csv",
+      "sha256": "91dc038849c9d4781cd6fb1f68a2c65f5aaa24513327876b6cbe1336e7f25d6d",
+      "site_no": "05418600",
+      "recognized_water_quality_rows": 701,
+      "accepted_doc_rows": 122
+    },
+    {
+      "path": "data/raw/wqp_results/05420500.csv",
+      "sha256": "3fae3a634e9ce9e869aa7dccd1b86fe091b9eb78a34b37603e91ccbf232dfe33",
+      "site_no": "05420500",
+      "recognized_water_quality_rows": 3975,
+      "accepted_doc_rows": 444
+    },
+    {
+      "path": "data/raw/wqp_results/05422000.csv",
+      "sha256": "75d5e2b352135343e93b1bbd06293831c601e50924559e437434962d6e8e8ae5",
+      "site_no": "05422000",
+      "recognized_water_quality_rows": 1346,
+      "accepted_doc_rows": 157
+    },
+    {
+      "path": "data/raw/wqp_results/05449500.csv",
+      "sha256": "74191b365b1eee3efe7f79d7224f6cdccb161a0072f56483258318ea6be3b31f",
+      "site_no": "05449500",
+      "recognized_water_quality_rows": 1101,
+      "accepted_doc_rows": 78
+    },
+    {
+      "path": "data/raw/wqp_results/05451210.csv",
+      "sha256": "7d32e61fb6b72e46bd3c1bb7c69bd7fc8bc0cd50177c15c023989a274dc8a9fc",
+      "site_no": "05451210",
+      "recognized_water_quality_rows": 3585,
+      "accepted_doc_rows": 426
+    },
+    {
+      "path": "data/raw/wqp_results/05453100.csv",
+      "sha256": "f8dcda90d0d1cc88673870181a2f108d74178b2ca1651307bb5553b66a279a90",
+      "site_no": "05453100",
+      "recognized_water_quality_rows": 811,
+      "accepted_doc_rows": 53
+    },
+    {
+      "path": "data/raw/wqp_results/05455100.csv",
+      "sha256": "893e4cf56d071012b1a2d83edf5bb6878b7ea8885acf3963abfdf323c79e4ef1",
+      "site_no": "05455100",
+      "recognized_water_quality_rows": 1071,
+      "accepted_doc_rows": 38
+    },
+    {
+      "path": "data/raw/wqp_results/05465500.csv",
+      "sha256": "21d8c974954da518892a37efb55f209ac1997e85e7d40986f34216d2fc991ba5",
+      "site_no": "05465500",
+      "recognized_water_quality_rows": 7953,
+      "accepted_doc_rows": 403
+    },
+    {
+      "path": "data/raw/wqp_results/05474000.csv",
+      "sha256": "a98002fa16af0fd9a5a3346a840bb811ce761a8ccf942f899615e3a51d3d0e93",
+      "site_no": "05474000",
+      "recognized_water_quality_rows": 12009,
+      "accepted_doc_rows": 167
+    },
+    {
+      "path": "data/raw/wqp_results/05490500.csv",
+      "sha256": "be13b3804ccc0a2f0a7fd8f0a08b0fed8940718ee84b7185c2a04a7bce8decad",
+      "site_no": "05490500",
+      "recognized_water_quality_rows": 2527,
+      "accepted_doc_rows": 310
+    },
+    {
+      "path": "data/raw/wqp_results/05520500.csv",
+      "sha256": "6dd539bd7b0ba0b4a1ee240c04d8134ac33490d7432498eecda1fadb1d460fcf",
+      "site_no": "05520500",
+      "recognized_water_quality_rows": 2887,
+      "accepted_doc_rows": 45
+    },
+    {
+      "path": "data/raw/wqp_results/05526000.csv",
+      "sha256": "75fcc3496ce7be6684ea0e561efebb3e2037b86e1af9a2f5b1ad7f2c6b12b9ab",
+      "site_no": "05526000",
+      "recognized_water_quality_rows": 4292,
+      "accepted_doc_rows": 47
+    },
+    {
+      "path": "data/raw/wqp_results/05540500.csv",
+      "sha256": "6240e340656da43cbec7d6f7755b57ef40f512c01ffc8ce66889cc3d5fd18685",
+      "site_no": "05540500",
+      "recognized_water_quality_rows": 2548,
+      "accepted_doc_rows": 72
+    },
+    {
+      "path": "data/raw/wqp_results/05543500.csv",
+      "sha256": "5688ad27d7a328d851e58059ae4d3a04905411469d0b71e33fb363465feaf99f",
+      "site_no": "05543500",
+      "recognized_water_quality_rows": 4071,
+      "accepted_doc_rows": 67
+    },
+    {
+      "path": "data/raw/wqp_results/05586300.csv",
+      "sha256": "213d55d1c840baad49230a7014d3c780d9428ac53ca51fc574c8f314e3486dce",
+      "site_no": "05586300",
+      "recognized_water_quality_rows": 890,
+      "accepted_doc_rows": 112
+    },
+    {
+      "path": "data/raw/wqp_results/05587455.csv",
+      "sha256": "52da82dfa30046bb5d1609e6e4743b4a41697d133e62c99a0d5be049464da919",
+      "site_no": "05587455",
+      "recognized_water_quality_rows": 3421,
+      "accepted_doc_rows": 362
+    },
+    {
+      "path": "data/raw/wqp_results/06338490.csv",
+      "sha256": "c91483a0cbe2b61414df436fb556c6f111a65404872e548c912331168a632704",
+      "site_no": "06338490",
+      "recognized_water_quality_rows": 1972,
+      "accepted_doc_rows": 117
+    },
+    {
+      "path": "data/raw/wqp_results/06339560.csv",
+      "sha256": "ffae2ac5ceac778b7bbb4dd5d047075473feb4c39451db7e68bd9602db0662d2",
+      "site_no": "06339560",
+      "recognized_water_quality_rows": 738,
+      "accepted_doc_rows": 87
+    },
+    {
+      "path": "data/raw/wqp_results/06340000.csv",
+      "sha256": "e4481f46ce0ebcd18965790f150ed5822a5afb7de62e8bb607ee0374b9435496",
+      "site_no": "06340000",
+      "recognized_water_quality_rows": 1522,
+      "accepted_doc_rows": 80
+    },
+    {
+      "path": "data/raw/wqp_results/06340500.csv",
+      "sha256": "b3face98a0455862e2febf46fd796f314c4d73bbc422974d28c1e519edb79e7d",
+      "site_no": "06340500",
+      "recognized_water_quality_rows": 1906,
+      "accepted_doc_rows": 61
+    },
+    {
+      "path": "data/raw/wqp_results/06342500.csv",
+      "sha256": "78b4182d9c612941bc41787a165d4b2d59e11c1547bb34fc0ef923dfd03c4dea",
+      "site_no": "06342500",
+      "recognized_water_quality_rows": 1610,
+      "accepted_doc_rows": 69
+    },
+    {
+      "path": "data/raw/wqp_results/06607500.csv",
+      "sha256": "000ce234113f8c0f4171f6525f593c6b3b803c628511c7d719e74bd776e29937",
+      "site_no": "06607500",
+      "recognized_water_quality_rows": 1272,
+      "accepted_doc_rows": 126
+    },
+    {
+      "path": "data/raw/wqp_results/06609500.csv",
+      "sha256": "ddcd692b569f19af48d7bbe81ec6061abbd738c5bd55de91d57ef25e4bc60352",
+      "site_no": "06609500",
+      "recognized_water_quality_rows": 1325,
+      "accepted_doc_rows": 124
+    },
+    {
+      "path": "data/raw/wqp_results/06610000.csv",
+      "sha256": "910ca6afb97d33f948a5e86586e5f8cb6e61f97b51f5da8f1c34299960390a9e",
+      "site_no": "06610000",
+      "recognized_water_quality_rows": 10208,
+      "accepted_doc_rows": 380
+    },
+    {
+      "path": "data/raw/wqp_results/06731000.csv",
+      "sha256": "2cac2d30c2fa2734a94b6e9ec10ca25f3ce56763a5b7c99d9704844b28eb43bc",
+      "site_no": "06731000",
+      "recognized_water_quality_rows": 861,
+      "accepted_doc_rows": 34
+    },
+    {
+      "path": "data/raw/wqp_results/06753990.csv",
+      "sha256": "fd079dfb13111ff5a2636f9e635606303ab296bd2082d7beb00679bc451816dc",
+      "site_no": "06753990",
+      "recognized_water_quality_rows": 536,
+      "accepted_doc_rows": 75
+    },
+    {
+      "path": "data/raw/wqp_results/06754000.csv",
+      "sha256": "bd564cc89bd031b6bfbace663e66e94e1d295da731ccffae75a9ef622169bf66",
+      "site_no": "06754000",
+      "recognized_water_quality_rows": 3071,
+      "accepted_doc_rows": 309
+    },
+    {
+      "path": "data/raw/wqp_results/06879100.csv",
+      "sha256": "91dd90a7571499146d18d3a537854a4f19ef14e22e54d26a801b389046465b11",
+      "site_no": "06879100",
+      "recognized_water_quality_rows": 1753,
+      "accepted_doc_rows": 38
+    },
+    {
+      "path": "data/raw/wqp_results/06882000.csv",
+      "sha256": "75177fa3f4f6c7a4730717a4c3fd8afcfde064e7b465560ae658a09726123c85",
+      "site_no": "06882000",
+      "recognized_water_quality_rows": 1217,
+      "accepted_doc_rows": 41
+    },
+    {
+      "path": "data/raw/wqp_results/06885500.csv",
+      "sha256": "751247ec3184251a61d82f27f4e6c30fa52b001c00398b61acb825ce9301e8c1",
+      "site_no": "06885500",
+      "recognized_water_quality_rows": 2497,
+      "accepted_doc_rows": 41
+    },
+    {
+      "path": "data/raw/wqp_results/06887000.csv",
+      "sha256": "b4862d5b65195795a77b7724dfc2ae9f574e1db9f7eb2a2b3d11870c8a58d0b1",
+      "site_no": "06887000",
+      "recognized_water_quality_rows": 2567,
+      "accepted_doc_rows": 67
+    },
+    {
+      "path": "data/raw/wqp_results/06888500.csv",
+      "sha256": "3ab3ca80d627060c64aec521d7fa47aa03745b36b94c46ca58f85c1797a10fb4",
+      "site_no": "06888500",
+      "recognized_water_quality_rows": 830,
+      "accepted_doc_rows": 38
+    },
+    {
+      "path": "data/raw/wqp_results/06889000.csv",
+      "sha256": "d612a44a387a2f8bc23f531bc9273d52a3af141fca9b266c9d0f6f058eec137a",
+      "site_no": "06889000",
+      "recognized_water_quality_rows": 1996,
+      "accepted_doc_rows": 36
+    },
+    {
+      "path": "data/raw/wqp_results/06890900.csv",
+      "sha256": "5311491965d888c839e27baed7fa179495eb3afc6301525c8885e30334e2af15",
+      "site_no": "06890900",
+      "recognized_water_quality_rows": 1122,
+      "accepted_doc_rows": 33
+    },
+    {
+      "path": "data/raw/wqp_results/06892350.csv",
+      "sha256": "6653976118534c23bc959dcba85a3f3658b32eb01fade9988d538df38e34d046",
+      "site_no": "06892350",
+      "recognized_water_quality_rows": 6043,
+      "accepted_doc_rows": 271
+    },
+    {
+      "path": "data/raw/wqp_results/06893820.csv",
+      "sha256": "417909980b3d794fc8da61f8eecac766f8d2c2a2d8444da128954729da070eb6",
+      "site_no": "06893820",
+      "recognized_water_quality_rows": 949,
+      "accepted_doc_rows": 76
+    },
+    {
+      "path": "data/raw/wqp_results/06893830.csv",
+      "sha256": "56db12432bf8c725f7991af8b7e9249b9811089ae27357708603a665b341362d",
+      "site_no": "06893830",
+      "recognized_water_quality_rows": 871,
+      "accepted_doc_rows": 49
+    },
+    {
+      "path": "data/raw/wqp_results/06893890.csv",
+      "sha256": "d8a14a6cfe08dd791b96cf7ec461d7220c0b4050503ab6d6a4fb1207561df9c3",
+      "site_no": "06893890",
+      "recognized_water_quality_rows": 707,
+      "accepted_doc_rows": 49
+    },
+    {
+      "path": "data/raw/wqp_results/06893940.csv",
+      "sha256": "7ef27d118bc95a753af37b0b5dbb363bab31930bdbf8f6455450fef1c2dc764c",
+      "site_no": "06893940",
+      "recognized_water_quality_rows": 614,
+      "accepted_doc_rows": 36
+    },
+    {
+      "path": "data/raw/wqp_results/06893970.csv",
+      "sha256": "258b3eac9827cce83a80d6ad3204245b8b092077d80c2a61cebde4c5127a4808",
+      "site_no": "06893970",
+      "recognized_water_quality_rows": 1098,
+      "accepted_doc_rows": 75
+    },
+    {
+      "path": "data/raw/wqp_results/06893990.csv",
+      "sha256": "cd05211d90e4fde7e8edc00612f94ae3d3b0951d37e2a7b66f081ac1112505fa",
+      "site_no": "06893990",
+      "recognized_water_quality_rows": 462,
+      "accepted_doc_rows": 35
+    },
+    {
+      "path": "data/raw/wqp_results/06894000.csv",
+      "sha256": "9b904378b26b5a15715a856cadac9e12e5f81053f4f93966e5fd41df0646f039",
+      "site_no": "06894000",
+      "recognized_water_quality_rows": 1176,
+      "accepted_doc_rows": 80
+    }
+  ],
+  "daily_inventory": {
+    "files": [
+      {
+        "path": "data/raw/nwis_dv/dv_0000_4ba5fbcb.rdb",
+        "sha256": "dc5493426e95cd83c2bceeade5c05e97c9f1500e3be4d987bfcef672cec2d0c3",
+        "selected_station_rows": 134638,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0000_815f4d42.rdb",
+        "sha256": "c0eda764a565aa22614e791dbe4e91f64c605a04d18bb6c4d759a14269d92ca8",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0000_f2a25b79.rdb",
+        "sha256": "54b7108bdfc564f4b1e786527a63d63c09be959b9d9ce732b91c5140eb4fa75a",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0001_3c36e36e.rdb",
+        "sha256": "f13dba0e4e2c819ee418674899ceee41bc650f4466a5205b49401b611a1b0140",
+        "selected_station_rows": 40814,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0001_53c57e2c.rdb",
+        "sha256": "b036a79fb9dd5699f6cd039d1306467519a24aeed9b029bb84f65a7433ab7b69",
+        "selected_station_rows": 251424,
+        "ignored_alternative_columns": [
+          "213292_00060_00003"
+        ]
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0002_5d2dc789.rdb",
+        "sha256": "75282820fdf90e2ae90a814c87373256a743fbaa6ef9d91b487372683e55253b",
+        "selected_station_rows": 31307,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0002_5f8d69c6.rdb",
+        "sha256": "e7ff934c672b8aec09b49061a6893265504e41fe8eabd59a798ab17288bf5781",
+        "selected_station_rows": 58108,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0003_f86847d0.rdb",
+        "sha256": "3196db8bcaf035059f859b19400647d2049b7ad91fe39aceb74a92ed6ee58d1e",
+        "selected_station_rows": 62517,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0004_3094e42b.rdb",
+        "sha256": "1394c1016896ba583282b9c9eb93624d8b017df63a8e8fd4991dc4d6334d118e",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0005_7c0a99cb.rdb",
+        "sha256": "e763ffdb7fd1eb10dc2d7f890ceceaaba2bf89d25239d88f73a649c891e765bb",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0006_fbeda1eb.rdb",
+        "sha256": "312e73bdfc5e8c527fd0623acf4b289a6126f2467510ab820247fed8a74ced26",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0007_42303a95.rdb",
+        "sha256": "6d1d5c4a2a2c18157543fba38c66bed10efc4c70f79d495cc0153356826ee3f1",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0008_6f3297ff.rdb",
+        "sha256": "9098ecbbcd5bd45b7259351beb90c3f9c18804d150725d852002b656325a2f5c",
+        "selected_station_rows": 74122,
+        "ignored_alternative_columns": [
+          "213292_00060_00003"
+        ]
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0009_25426059.rdb",
+        "sha256": "c55460c64eb537135a89653b9e30e591c6338c7d5a36c9f01e4387d9d08e7abe",
+        "selected_station_rows": 177302,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0010_e0e9ce8b.rdb",
+        "sha256": "2d967f68e688f6ae097b694614f02d8bbc83629c9f73c81c0d387aefa1bd5daa",
+        "selected_station_rows": 52285,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0011_c3af6f9b.rdb",
+        "sha256": "f2bc2651a4ead423701d3690df1fc3e413450a2acc5c80c8212a12fabbdbd3a4",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0012_e4a36dc7.rdb",
+        "sha256": "2ca3aa5dbe0ac22ceee787acc9fcf43e1baea14a03ea902077e077b4693d79ce",
+        "selected_station_rows": 5823,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0013_0ab16574.rdb",
+        "sha256": "30d2d3687524faf76f8754d9f5c703cc21e0f59eb9325fad4520d6504fb2bf48",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0014_094ea173.rdb",
+        "sha256": "af35ba634bef99b65893eb5d20563da5c2239f9dd23c4804e03ac7b78b7d0e41",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0015_de2706b1.rdb",
+        "sha256": "8b96888e842ae434734c35da0af49e21bf66f7754bdf3682fcea4d9d23ca7a6c",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0016_8bbd586d.rdb",
+        "sha256": "a105cd931b6dcf8c756d48c593641d3c57e2f7c1abe5eafafc7237477fe4eb44",
+        "selected_station_rows": 10456,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0017_b42e2fbb.rdb",
+        "sha256": "1555de9c6727151b96bfb6d13d621943006de830e7ebdab508b3d4d357bf1caa",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0018_0496e903.rdb",
+        "sha256": "7141bff79789c740f32bed0b6ec394c0da5f43eb1eeaaeff415f0b05b5855bd0",
+        "selected_station_rows": 44167,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0019_8e4aacdb.rdb",
+        "sha256": "333117e4b058dbcd9c6cf4bd8c7ff47f1231c500be19fd2ae4e54c9bbfdc9e33",
+        "selected_station_rows": 60125,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0020_97fb94a9.rdb",
+        "sha256": "9d37d2c3ef00a042ef1768790a16a15476fad2a842949e237c22486d97f5aa2f",
+        "selected_station_rows": 51243,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0021_72cb2a57.rdb",
+        "sha256": "c9b2e3450f702ad4737789885e3fddb8085d39eddca84dbf19e08d889d5b7936",
+        "selected_station_rows": 79917,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0022_da8c1d90.rdb",
+        "sha256": "ec7e209acbef4e29527f668959354c63b631b127e1896536d7ddc5f4b218e78e",
+        "selected_station_rows": 67977,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0023_385c44c0.rdb",
+        "sha256": "7e4c8047cfe823a56eef18754eee99fdf7bbeea05e5bd96166ba1af06760ef50",
+        "selected_station_rows": 20440,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0024_b4bf9f38.rdb",
+        "sha256": "11e02b7e24afa5b1fb57024ee407d3fb1541d3b4a5df252240afd5bc5a04c34d",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0025_747af609.rdb",
+        "sha256": "1fca0df4512d4300bd4f039aa14fa3fc94ef405a2c5453c4def1578ceb3cfccc",
+        "selected_station_rows": 204385,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0026_90ef1959.rdb",
+        "sha256": "0d673a0273e938601e050f0c92277d8bfe9fdacd093b268a1799edb7b4f3cb15",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0027_d5114cfc.rdb",
+        "sha256": "96891091a9eff71150b8d2c54d83b013ca20f489e434ed66b8634637f2aef48e",
+        "selected_station_rows": 70465,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0028_a3d6fe7c.rdb",
+        "sha256": "daafbbce82983d545bc49a60db3b5079e0ff4a0740c574d494e7e9146ba57a17",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0029_4acfa659.rdb",
+        "sha256": "376428569c9093263035433099bec0716e7ca2069d735bd2d78e51a83000b660",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0030_bd599eed.rdb",
+        "sha256": "7cc06e235cba0205c6f50a3293c4e7d0bf3ee491c0f9239228204408e9555cde",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0031_81bde019.rdb",
+        "sha256": "0ed0f7a546a5200aae351712da722365ce12e21b78b8244f53d3aa3b2c19d007",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": [
+          "247095_00060_00003"
+        ]
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0032_8cd12e92.rdb",
+        "sha256": "0a9a8a830cc807bae3df3b5330c214958a7228669ec014a7a1ff3303095e1f3b",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0033_5b28b4db.rdb",
+        "sha256": "467008b7f51b1b341b084b0dd01c858472d1cd8bc668759b95f65ac1d928da68",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0034_3adae80d.rdb",
+        "sha256": "e5fecc06f487e07b313a714536adb4697f19c3aa021dff88f6583ab79ecfadab",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0035_f3af6ad5.rdb",
+        "sha256": "dfb64dc505bbd91c2bc73b330da286c57dd55b711d068862ad7212a8803752a2",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0036_c7fc435a.rdb",
+        "sha256": "9ee0d59d5527b83ee65cb0f541f22761a7643d8aa4ad43f85e3bc17231a2b180",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0037_7e2bc661.rdb",
+        "sha256": "3b5298a817fe5038c87ab38c7c97c24a68c4720339add154becc5583c05ba9da",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0038_5a844a3f.rdb",
+        "sha256": "12ae85be679e88b63502d14534e698076de61f2df873da308e33020d001d7a9b",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0039_2cfbdf7e.rdb",
+        "sha256": "27fd0ecaa93e259043e79d22ee7a84b5787466e3eeffd149522ee1d9fa41c14b",
+        "selected_station_rows": 14609,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0040_77c60878.rdb",
+        "sha256": "a2a2f7020daa37d787d80892aa5926746bc2b3cbe5c310d2f38dcddb1124dee5",
+        "selected_station_rows": 35724,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0041_4891500b.rdb",
+        "sha256": "0ad0f7f7d6b47c06e07456ffbaa378a6a94b50ef8db48b8b403f03ffc8f7fe12",
+        "selected_station_rows": 34138,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0042_f24cfae5.rdb",
+        "sha256": "46ea61380fb0d01b70269833593c865dfc2fc74da5e82fd57d67b56a6d84fa6a",
+        "selected_station_rows": 35997,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0043_9dd0a0aa.rdb",
+        "sha256": "2e60b1a8c7d41dac3208cab591aa430731d3cd23bb99d248df1d79f9f5e1be83",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0044_a994194d.rdb",
+        "sha256": "64b114a3051f814fb24d3171a0b4314b7febdb66a098244ad5a02cd037e31dfc",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0045_d1e29897.rdb",
+        "sha256": "ea387f5fbd1eabd279c713de33b3ac9a8d31bc0c0c66e4bd8c533b74330f50b2",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0046_dda16b4e.rdb",
+        "sha256": "8d99b6082e0755124995f1ba49f523eb2f28fb1715b04bb128a0ea11179dbe8c",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0047_7af485a5.rdb",
+        "sha256": "a0738e8bd95d5a484bb7ab079b32098b69a2dc09a82c2762573d07f9083ffffd",
+        "selected_station_rows": 30725,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0048_9d44318d.rdb",
+        "sha256": "84cf6683242135ae9b90ac8b5e090e0404f8c38f36510b6310d4ec959404ad60",
+        "selected_station_rows": 70808,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0049_7c5a4d63.rdb",
+        "sha256": "e0d2f6b951bad65102d965b9e6c705be38826cd346114fa472d0fe994944a9e6",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0050_fdb8ddb5.rdb",
+        "sha256": "9e67bdb8a287f379bd3281ec312420737d173f6486b54fbd168821766a9dd675",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0051_818ffec8.rdb",
+        "sha256": "a09198868ea0f7212c8168aa9695883859cd43628f46a81f33cc0abfd86debf1",
+        "selected_station_rows": 26151,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0052_0f1f54d4.rdb",
+        "sha256": "e80e9c70a0e1030cccf72c6e7d90cdce4ed2c31f9132794a785bde6ccdc5cf5a",
+        "selected_station_rows": 40258,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0053_e86103c7.rdb",
+        "sha256": "1da5a46b26247d81d16bdc015148fb3ca2918a03cd8f6325125e372046f9bb98",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0054_10ab0187.rdb",
+        "sha256": "ff4b17fcd9ccef282262898ce137e51dfb5c15c1e9d8b603034cdd467501bb52",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0055_6c7e5aaa.rdb",
+        "sha256": "e0a28a87740da45bdf7ed9e9baed2e656195e636f32ff5f744f056f9c0fd9b82",
+        "selected_station_rows": 22920,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0056_20e1ba5e.rdb",
+        "sha256": "5b88d2672548b92d9f0fdb39f34eef5b6ce941614044e35e53e5ca8e096df663",
+        "selected_station_rows": 115296,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0057_64390a87.rdb",
+        "sha256": "e4884d16aeb4f981370f0c0a9389bc2085945e7b5fff31dcd18a779c704e9b86",
+        "selected_station_rows": 100698,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0058_218ef390.rdb",
+        "sha256": "e11c75f45916ce2590e9ca8624be7481ea92aaadff997d4930639a0838accd2a",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0059_b963326a.rdb",
+        "sha256": "46c15b310e710fa21f370327aacd08bd20ae104f98494cd61445b9801a1a7db7",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0060_12233871.rdb",
+        "sha256": "331be3881a60975a3638fa0d2f939d17b421b5409a8f319d12abe21a1db0a1a3",
+        "selected_station_rows": 28337,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0061_d5ec6480.rdb",
+        "sha256": "fe4d0d0bf4d898d515070f046e3aef2a708ba16bc4b6d279b0ccea1c82f00d43",
+        "selected_station_rows": 36100,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0062_33d27610.rdb",
+        "sha256": "2c4136bd4372fa64fb9d2c0adf7916f3ad73044637bcd1e604a842ac223cee91",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0063_d1b2c4c4.rdb",
+        "sha256": "8bbad693167005feb14c7b763005976ce451a4b0a5f6847bbb94ed57f37a7eac",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0064_e483500d.rdb",
+        "sha256": "c899cea0e2bc6ba75a5617f4e80a731060e7e71ffbf5ebc5700cb52f16cc3ff0",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0065_56c2079c.rdb",
+        "sha256": "2e10f65347cf7ad712cbd1a78dbe4d20d55744999184f917360e3c19f2a9c52c",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0066_92baffb5.rdb",
+        "sha256": "1cd551d0ebc3a4fecae36707400da44a67d94dd7864ec9dcf964af1d0f02e632",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0067_96f2c1c3.rdb",
+        "sha256": "b2809438c7273878c486ef201b8011c9d43b01c7c31e81b035ecabafd1f8bb88",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0068_99f6f8bc.rdb",
+        "sha256": "a96b38f3d2c978a861ea2e15f332ce8edc8a91ab2ad4ae5e11d93f8ad0a662b7",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0069_1d7a0c25.rdb",
+        "sha256": "084e500600521c097f048d950f461d67ce0f794177cff93813cb2cb4f7840d1d",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0070_b338c2e8.rdb",
+        "sha256": "d4e4d7e29ce6d3944c69c5ab7a3a0d3146067c3b376c8a3c3d2057a74ad52cb9",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0071_4f7ee685.rdb",
+        "sha256": "79be14faf9e9c7cda14098fbf64a6ad0e6ff6be39b8ac47b3f7d5511440ffff6",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0072_c9d2b6b3.rdb",
+        "sha256": "9f9f348361507090b7be6fd238a6283a957001a4f2af1b26f917d8cc91a1d724",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      },
+      {
+        "path": "data/raw/nwis_dv/dv_0073_c9cc3766.rdb",
+        "sha256": "b2a4165d0b07529d5e826fcc2f0efe5cde5d03bf4f02ea0f4239018f092c2886",
+        "selected_station_rows": 0,
+        "ignored_alternative_columns": []
+      }
+    ],
+    "quality_summary": {
+      "input_rows": 2089276,
+      "invalid_date_rows": 0,
+      "invalid_site_rows": 0,
+      "nonfinite_value_rows": 11398,
+      "magnitude_excluded_rows": 0,
+      "accepted_rows_before_reconciliation": 2077878,
+      "duplicated_station_days": 438776,
+      "duplicate_excess_rows": 438776,
+      "conflicting_station_days": 0,
+      "conflicting_rows": 0,
+      "unique_valid_station_days": 1639102,
+      "negative_days": 31,
+      "zero_days": 3583,
+      "calendar_start": "1900-01-01",
+      "calendar_end": "2026-09-19"
+    }
+  },
+  "product_hashes": {
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/calendar_examples.csv": "fa41a84cbefaf51dc4a1f5d01909025fece0b9edc946314858781fce6c65e4ed",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/daily_flow_context.parquet": "6eb5d32afdd11beb1ec4296bbcb56519a3f17d09e1c6e544c9559b8f8d398a40",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/date_cut_ledger.csv": "ecad0083e26c4b1bea9f294821ad72ac5616e48ebec5aeb51acb2374a540efe4",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/doc_activities.parquet": "b7b674ad2302c0f96238085e1b5b723d9fbe5bff2174bce884af5b968d7e26d6",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/event_opportunity.csv": "3f1b047f2d0ac06368ec27e0ac51e9ec7833648a44b2f26db0561f64b55e1ec2",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/hydro_date_summary.csv": "b542f13e1bff9df2b26f0d3562ad163fb3989f8b04536b84315f15bc7c2b613a",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/mixing_connections.csv": "2de252aab99b182c194486b985c69d2873c11e9fbd06e808f1823d59261f744f",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/mixing_receivers.csv": "4de5e143d96e41434a70cc2acf1d4b33935d6bf2708a8b9c31a677ddfb39e59d",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/monthly_reconciliation.parquet": "1257f7344ffae3a112710e44d836e21696887549698eab9205218715a52fac6c",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/sample_triplets.parquet": "09647a70652e8b25d27784b6d2cb66309bd32c96472ab55f535350ae39048b20",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/sampling_intervals.csv": "920229293870ff3c954c064761f76cdec43f0bc6a4d7a04e7735ebb29979eec7",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/signal_summary.csv": "baaa5196957aa1cc1db0363459dd9792dd4f0f3bd39dffdd83aa2ef2b1daf839",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/station_cadence.csv": "fb0e3c4ace58f3191b41501d83def57931ddf2c17898aab3dff6456646b1a3ad",
+    "experiments/phase4_transfer/doc_river_sampling_resolution_v1/analysis/summary.json": "e94495cb73c6607b46c391c99fa313a7d026b97f359d38ee77e8a3d440322f0c"
+  }
+}

@@ -3,6 +3,18 @@
 **Topology-aware Graph Neural Networks for Reconstructing Sparse Dissolved
 Organic Carbon Observations in the Mississippi River Basin**
 
+## River-form and DOC mechanism study
+
+The [sampling-resolution follow-up](experiments/phase4_transfer/doc_river_sampling_resolution_v1/research_decision.md)
+checks original dates on 59 measured tributary pairs. Three-station samples
+span a median four days; the median station samples every 28 days. Replacing
+monthly means with date-aligned activities retains substantial asynchronous
+tributary variability. The five connections with mapped common-trunk storage
+have no common month with at least three sampling days at all three stations.
+The next controlled experiment separates branch-arrival dispersion from
+common-trunk storage broadening, keeping river structure as the explanatory
+variable. Prior whole-network classes and model results remain available.
+
 ## Current DOC spatial-transfer development
 
 The active model combines ecological/context prediction, a recurrent residual
