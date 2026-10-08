@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "whole-form-lead",
+      "title": "Observed whole-form lead in high-coverage networks",
+      "queries": [
+        {
+          "id": "form-contrast",
+          "source": {
+            "label": "DOC pathway context",
+            "files": [
+              {
+                "label": "form_contrasts.csv"
+              }
+            ],
+            "filters": [
+              "Represented area at least 80%",
+              "Original elongated and broad whole-network classes",
+              "Permitted ST357 source-training observations"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "SD ratio contrast",
+                "definition": "The geometric-mean receiving/tributary-mixture SD ratio for broad networks divided by the corresponding elongated ratio, after shared calendar/year projection."
+              }
+            ],
+            "caveats": [
+              "The follow-up is exploratory after previous DOC results were seen.",
+              "Regions and whole forms remain confounded; the contrast does not isolate a shape effect.",
+              "The ratio concerns observed fluctuation amplitude, not DOC concentration or mass removal."
+            ]
+          },
+          "columns": [
+            "broad_receivers",
+            "elongated_receivers",
+            "systems",
+            "ratio",
+            "ci_low",
+            "ci_high"
+          ],
+          "rows": [
+            {
+              "broad_receivers": 8,
+              "elongated_receivers": 4,
+              "systems": 5,
+              "ratio": 0.40318053435111784,
+              "ci_low": 0.19433046362645057,
+              "ci_high": 0.9395807015810149
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "totalRows": 1,
+            "note": "One aggregate record calculated from the specified observed population."
+          }
+        }
+      ]
+    },
+    {
+      "id": "paired-comparison-gap",
+      "title": "Same-region structural comparison opportunity",
+      "queries": [
+        {
+          "id": "opportunity-counts",
+          "source": {
+            "label": "Whole-network sampling inventory",
+            "files": [
+              {
+                "label": "same_region_form_pairs.csv"
+              }
+            ],
+            "filters": [
+              "Same HUC4 elongated/broad candidate pairs",
+              "Area-comparable means catchment area ratio at most two",
+              "Both receivers must have enough common source/outlet DOC under current source-role availability"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Candidate pair",
+                "definition": "One elongated and one broad network in the same HUC4; stations can occur in multiple candidate pairs."
+              }
+            ],
+            "caveats": [
+              "Candidate combinations are not independent field replicates.",
+              "Source-role sampling availability is specific to this ST357 study, not all potential public observations."
+            ]
+          },
+          "columns": [
+            "same_huc4_pairs",
+            "area_comparable_pairs",
+            "both_observed_comparable_pairs"
+          ],
+          "rows": [
+            {
+              "same_huc4_pairs": 473,
+              "area_comparable_pairs": 105,
+              "both_observed_comparable_pairs": 0
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "totalRows": 1,
+            "note": "One aggregate record calculated from the specified observed population."
+          }
+        }
+      ]
+    },
+    {
+      "id": "monthly-flow-sensitivity",
+      "title": "Area and flow shares compared on identical months",
+      "queries": [
+        {
+          "id": "flow-share-change",
+          "source": {
+            "label": "Paired monthly-flow sensitivity",
+            "files": [
+              {
+                "label": "flow_paired_contrasts.csv"
+              }
+            ],
+            "filters": [
+              "Positive measured monthly discharge at every source and receiver",
+              "At least 24 common months, three sampled years and six calendar-month categories",
+              "Complete catchment systems resampled together 5,000 times"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Paired log-SD change",
+                "definition": "Flow-weighted minus area-weighted log receiving/mixture SD on the same common dates."
+              }
+            ],
+            "caveats": [
+              "Monthly discharge is not simultaneous event mixing or a measured travel time.",
+              "The interval spans zero; replacing weights does not establish an overall improvement."
+            ]
+          },
+          "columns": [
+            "receivers",
+            "systems",
+            "change",
+            "ci_low",
+            "ci_high"
+          ],
+          "rows": [
+            {
+              "receivers": 18,
+              "systems": 6,
+              "change": 0.0133737386654238,
+              "ci_low": -0.0765230387039323,
+              "ci_high": 0.1361461448560021
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "totalRows": 1,
+            "note": "One aggregate record calculated from the specified observed population."
+          }
+        }
+      ]
+    },
+    {
+      "id": "mapped-lake-corridor",
+      "title": "A mapped lake lies between the Loch Vale gauges and outlet",
+      "queries": [
+        {
+          "id": "loch-route",
+          "source": {
+            "label": "Cropped monitored river paths",
+            "files": [
+              {
+                "label": "source_corridor_reaches.csv"
+              },
+              {
+                "label": "receiver_pathway_panel.csv"
+              }
+            ],
+            "filters": [
+              "Icy Brook, Andrews Creek and The Loch outlet",
+              "Actual directed NHD gauge-to-receiver paths with station measures"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Tagged lake length",
+                "definition": "The common route traverses 0.413 km of lake-tagged COMID 13676, waterbody 11922; its length is counted once in the common corridor."
+              }
+            ],
+            "caveats": [
+              "Mapped path length is not waterbody volume or residence time.",
+              "Missing lake tags on other routes do not establish absence of storage."
+            ]
+          },
+          "columns": [
+            "tagged_lake_km",
+            "common_corridor_km",
+            "mean_source_path_km",
+            "mapped_storage_length_fraction"
+          ],
+          "rows": [
+            {
+              "tagged_lake_km": 0.413,
+              "common_corridor_km": 1.03275225,
+              "mean_source_path_km": 1.1912269224965195,
+              "mapped_storage_length_fraction": 0.3467013649544229
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "totalRows": 1,
+            "note": "One aggregate record calculated from the specified observed population."
+          }
+        }
+      ]
+    }
+  ]
+}
