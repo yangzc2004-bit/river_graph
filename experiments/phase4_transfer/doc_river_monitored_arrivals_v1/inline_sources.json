@@ -3,12 +3,12 @@
   "items": [
     {
       "id": "river-form-observed-doc",
-      "title": "整张河网形态与真实DOC波动",
+      "title": "Complete river form and observed DOC fluctuations",
       "queries": [
         {
           "id": "monitoring-coverage",
           "source": {
-            "label": "ST357河网形态与原始DOC观测分析",
+            "label": "ST357 mapped river form and accepted raw DOC analysis",
             "files": [
               {
                 "label": "summary.json"
@@ -18,17 +18,17 @@
               }
             ],
             "filters": [
-              "原142/143/144源训练角色允许的station-month",
-              "固定非重叠上游站点集合；保持原河网形态分类"
+              "Permitted station-months from original source-training roles 142/143/144",
+              "Fixed non-overlapping upstream gauge sets; original form classes retained"
             ],
             "metricDefinitions": [
               {
-                "label": "口径",
-                "definition": "覆盖为选定监测站上游唯一增量汇水面积/全河网面积。"
+                "label": "Definition",
+                "definition": "Coverage is unique incremental catchment area upstream of selected gauges divided by complete network area."
               }
             ],
             "caveats": [
-              "32个出口属于7个共享流域系统。"
+              "Thirty-two receivers belong to seven overlapping-catchment systems."
             ]
           },
           "columns": [
@@ -37,84 +37,84 @@
           ],
           "rows": [
             {
-              "item": "不同出口河网",
+              "item": "Distinct receiving networks",
               "value": 32
             },
             {
-              "item": "三条以上独立上游输入",
+              "item": "Receivers with at least three disjoint inputs",
               "value": 15
             },
             {
-              "item": "监测面积覆盖中位比例",
+              "item": "Median monitored catchment-area fraction",
               "value": 0.719059
             },
             {
-              "item": "共同出口月份",
+              "item": "Common receiving months",
               "value": 1333
             },
             {
-              "item": "Loch Vale同日采样组",
+              "item": "Loch Vale same-day sample sets",
               "value": 334
             }
           ],
           "preview": {
             "kind": "aggregate",
-            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "note": "Saved analysis-table aggregates; complete records accompany the research decision.",
             "totalRows": 5
           }
         },
         {
           "id": "observed-fluctuations",
           "source": {
-            "label": "ST357河网形态与原始DOC观测分析",
+            "label": "ST357 mapped river form and accepted raw DOC analysis",
             "files": [
               {
                 "label": "signal_summary.csv"
               }
             ],
             "filters": [
-              "原142/143/144源训练角色允许的station-month",
-              "固定非重叠上游站点集合；保持原河网形态分类"
+              "Permitted station-months from original source-training roles 142/143/144",
+              "Fixed non-overlapping upstream gauge sets; original form classes retained"
             ],
             "metricDefinitions": [
               {
-                "label": "口径",
-                "definition": "每个不同出口等权，完整重叠流域系统bootstrap 5000次；方差减小是支流信号计算混合的结果。"
+                "label": "Definition",
+                "definition": "One vote per distinct receiver; 5,000 whole-overlapping-catchment-system bootstrap draws. Mixing is a calculation from observed signals."
               }
             ],
             "caveats": [
-              "面积权重不是实测流量权重；不是DOC去除率或峰值降低率。"
+              "Area shares are not measured flow shares. Mixture reduction is not DOC removal or event-peak attenuation."
             ]
           },
           "columns": [
             {
               "field": "metric",
-              "label": "指标"
+              "label": "Metric"
             },
             {
               "field": "estimate",
-              "label": "估计"
+              "label": "Estimate"
             },
             {
               "field": "ci_low",
-              "label": "95%下界"
+              "label": "95% lower"
             },
             {
               "field": "ci_high",
-              "label": "95%上界"
+              "label": "95% upper"
             },
             {
               "field": "networks",
-              "label": "出口河网"
+              "label": "Receiving networks"
             },
             {
               "field": "systems",
-              "label": "共享流域系统"
+              "label": "Overlapping systems"
             }
           ],
           "rows": [
             {
-              "metric": "支流波动同步程度",
+              "metric": "Source coherence",
               "estimate": 0.264425,
               "ci_low": 0.212629,
               "ci_high": 0.313026,
@@ -122,7 +122,7 @@
               "systems": 7
             },
             {
-              "metric": "计算混合信号的方差减小比例",
+              "metric": "Calculated mixture variance reduction",
               "estimate": 0.305302,
               "ci_low": 0.2574,
               "ci_high": 0.354023,
@@ -130,7 +130,7 @@
               "systems": 7
             },
             {
-              "metric": "不同步贡献的方差减小比例",
+              "metric": "Asynchronous variance reduction",
               "estimate": 0.233503,
               "ci_low": 0.199507,
               "ci_high": 0.263629,
@@ -138,7 +138,7 @@
               "systems": 7
             },
             {
-              "metric": "上游混合与出口相关",
+              "metric": "Source-mixture / outlet correlation",
               "estimate": 0.368665,
               "ci_low": 0.28459,
               "ci_high": 0.455047,
@@ -146,7 +146,7 @@
               "systems": 7
             },
             {
-              "metric": "真实同期相关超过打乱的部分",
+              "metric": "Real minus calendar shuffle correlation",
               "estimate": 0.234524,
               "ci_low": 0.166972,
               "ci_high": 0.293628,
@@ -154,7 +154,7 @@
               "systems": 7
             },
             {
-              "metric": "出口与混合波动比的对数",
+              "metric": "Log outlet / mixture SD ratio",
               "estimate": -0.070643,
               "ci_low": -0.23212,
               "ci_high": 0.127203,
@@ -164,31 +164,31 @@
           ],
           "preview": {
             "kind": "aggregate",
-            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "note": "Saved analysis-table aggregates; complete records accompany the research decision.",
             "totalRows": 6
           }
         },
         {
           "id": "form-contrast",
           "source": {
-            "label": "ST357河网形态与原始DOC观测分析",
+            "label": "ST357 mapped river form and accepted raw DOC analysis",
             "files": [
               {
                 "label": "form_contrasts.csv"
               }
             ],
             "filters": [
-              "原142/143/144源训练角色允许的station-month",
-              "固定非重叠上游站点集合；保持原河网形态分类"
+              "Permitted station-months from original source-training roles 142/143/144",
+              "Fixed non-overlapping upstream gauge sets; original form classes retained"
             ],
             "metricDefinitions": [
               {
-                "label": "口径",
-                "definition": "宽阔型减细长型；两组使用相同共享流域重采样。"
+                "label": "Definition",
+                "definition": "Broad minus elongated, using identical whole-system resampling draws for both forms."
               }
             ],
             "caveats": [
-              "未作环境匹配的描述性比较；六项区间均跨0。"
+              "Unadjusted descriptive comparison; all six intervals span zero."
             ]
           },
           "columns": [
@@ -199,37 +199,37 @@
           ],
           "rows": [
             {
-              "metric": "支流波动同步程度",
+              "metric": "Source coherence",
               "difference": -0.032222,
               "ci_low": -0.277052,
               "ci_high": 0.191187
             },
             {
-              "metric": "计算混合信号的方差减小比例",
+              "metric": "Calculated mixture variance reduction",
               "difference": 0.007026,
               "ci_low": -0.187719,
               "ci_high": 0.167724
             },
             {
-              "metric": "不同步贡献的方差减小比例",
+              "metric": "Asynchronous variance reduction",
               "difference": 0.000557,
               "ci_low": -0.185311,
               "ci_high": 0.128479
             },
             {
-              "metric": "上游混合与出口相关",
+              "metric": "Source-mixture / outlet correlation",
               "difference": -0.011766,
               "ci_low": -0.371101,
               "ci_high": 0.330266
             },
             {
-              "metric": "真实同期相关超过打乱的部分",
+              "metric": "Real minus calendar shuffle correlation",
               "difference": -0.026284,
               "ci_low": -0.221886,
               "ci_high": 0.15788
             },
             {
-              "metric": "出口与混合波动比的对数",
+              "metric": "Log outlet / mixture SD ratio",
               "difference": -0.127409,
               "ci_low": -0.795465,
               "ci_high": 0.258004
@@ -237,14 +237,14 @@
           ],
           "preview": {
             "kind": "aggregate",
-            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "note": "Saved analysis-table aggregates; complete records accompany the research decision.",
             "totalRows": 6
           }
         },
         {
           "id": "weekly-loch-vale",
           "source": {
-            "label": "ST357河网形态与原始DOC观测分析",
+            "label": "ST357 mapped river form and accepted raw DOC analysis",
             "files": [
               {
                 "label": "weekly_case_signals.csv"
@@ -254,18 +254,18 @@
               }
             ],
             "filters": [
-              "原142/143/144源训练角色允许的station-month",
-              "固定非重叠上游站点集合；保持原河网形态分类"
+              "Permitted station-months from original source-training roles 142/143/144",
+              "Fixed non-overlapping upstream gauge sets; original form classes retained"
             ],
             "metricDefinitions": [
               {
-                "label": "口径",
-                "definition": "原始同日活动均值，月内偏差；每月至少3个共同日。"
+                "label": "Definition",
+                "definition": "Metadata-selected activity means on exactly common calendar days. Within-month departures use months with at least three joint dates."
               }
             ],
             "caveats": [
-              "一个湖泊影响的系统，不是形态类型总体效应。",
-              "334组同日样本；月内分析262组；同一天不等于同一时刻。"
+              "One lake-influenced system does not establish a form-class effect.",
+              "334 same-day sets; 262 within-month sets. Same calendar day is not simultaneous sampling."
             ]
           },
           "columns": [
@@ -274,29 +274,29 @@
           ],
           "rows": [
             {
-              "item": "月内共同采样日",
+              "item": "Within-month common sample dates",
               "value": 262.0
             },
             {
-              "item": "支流同步程度",
+              "item": "Source coherence",
               "value": 0.556484
             },
             {
-              "item": "计算混合方差减小比例",
+              "item": "Calculated mixture variance reduction",
               "value": 0.205533
             },
             {
-              "item": "出口与混合相关",
+              "item": "Outlet / mixture correlation",
               "value": 0.462118
             },
             {
-              "item": "出口波动SD / 混合波动SD",
+              "item": "Outlet / mixture SD ratio",
               "value": 1.603235
             }
           ],
           "preview": {
             "kind": "aggregate",
-            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "note": "Saved analysis-table aggregates; complete records accompany the research decision.",
             "totalRows": 5
           }
         }
