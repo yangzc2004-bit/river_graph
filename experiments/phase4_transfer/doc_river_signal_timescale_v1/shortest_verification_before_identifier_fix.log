@@ -1,0 +1,29 @@
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/verify_doc_river_signal_timescale_v1.py", line 104, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/verify_doc_river_signal_timescale_v1.py", line 91, in main
+    pd.testing.assert_frame_equal(actual, stored, check_dtype=False, check_exact=False, atol=1e-11, rtol=1e-10)
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/util/_decorators.py", line 220, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/_testing/asserters.py", line 1347, in assert_frame_equal
+    assert_series_equal(
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/util/_decorators.py", line 193, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/_testing/asserters.py", line 1121, in assert_series_equal
+    _testing.assert_almost_equal(
+  File "pandas/_libs/testing.pyx", line 53, in pandas._libs.testing.assert_almost_equal
+  File "pandas/_libs/testing.pyx", line 171, in pandas._libs.testing.assert_almost_equal
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/_testing/asserters.py", line 619, in raise_assert_detail
+    raise AssertionError(msg)
+AssertionError: DataFrame.iloc[:, 5] (column name="source_a_station") are different
+
+DataFrame.iloc[:, 5] (column name="source_a_station") values are different (100.0 %)
+[index]: [0, 1, 2, 3, 4, 5]
+[left]:  <ArrowStringArray>
+['401707105395000', '401707105395000', '401707105395000', '401707105395000',
+ '401707105395000', '401707105395000']
+Length: 6, dtype: str
+[right]: [401707105395000, 401707105395000, 401707105395000, 401707105395000, 401707105395000, 401707105395000]
+At positional index 0, first diff: 401707105395000 != 401707105395000

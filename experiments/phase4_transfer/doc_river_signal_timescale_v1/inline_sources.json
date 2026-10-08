@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "fluctuation-duration",
+      "title": "Fast and slow inputs have different controlled river responses",
+      "queries": [
+        {
+          "id": "timescale-response",
+          "source": {
+            "label": "River signal timescale experiment",
+            "files": [{"label": "scenario_summary.csv"}, {"label": "source_paths.csv"}],
+            "filters": ["All 32 fixed physical receiving networks", "Source coherence 0.5", "Original geometric-mainstem routes", "Complete catchment systems resampled 5,000 times"],
+            "metricDefinitions": [{
+              "label": "Controlled SD ratio",
+              "definition": "The receiver-equal mean outlet standard deviation divided by that of the same instantaneous source mixture; input correlation time is relative to each network's mean nominal travel time."
+            }],
+            "caveats": [
+              "Input covariance and common-memory strength are imposed scenarios, not measured DOC timescales or lake residence times.",
+              "The common unit-gain kernel allocates part of the shared-corridor travel budget to spreading while preserving every path mean.",
+              "The 32 networks contain 89 source paths and seven overlapping-catchment systems; paths are not independent field replicates."
+            ]
+          },
+          "columns": ["correlation_time", "memory_allocation", "sd_ratio", "ci_low", "ci_high"],
+          "rows": [
+            {"correlation_time": 0.025, "memory_allocation": 0, "sd_ratio": 0.8729972873409437, "ci_low": 0.8382619109322803, "ci_high": 0.9156556439392597},
+            {"correlation_time": 0.025, "memory_allocation": 0.5, "sd_ratio": 0.3518051401385168, "ci_low": 0.33748698148021455, "ci_high": 0.3836694747241992},
+            {"correlation_time": 8, "memory_allocation": 0, "sd_ratio": 0.9928944880534529, "ci_low": 0.9906382310408273, "ci_high": 0.9961705898162424},
+            {"correlation_time": 8, "memory_allocation": 0.5, "sd_ratio": 0.9827498505355569, "ci_low": 0.9810407588094249, "ci_high": 0.9855261546099374}
+          ],
+          "preview": {"kind": "partial", "note": "Four declared endpoint scenarios from the complete saved timescale/coherence/memory grid."}
+        }
+      ]
+    },
+    {
+      "id": "arrival-alignment",
+      "title": "The same paths can separate or align constructed upstream waves",
+      "queries": [
+        {
+          "id": "fixed-geometry-phases",
+          "source": {
+            "label": "Loch Vale pathway illustration",
+            "files": [{"label": "illustration_metrics.csv"}, {"label": "illustration_waves.parquet"}, {"label": "source_paths.csv"}],
+            "filters": ["Two fixed actual Loch Vale gauge-to-receiver paths", "Identical unit-amplitude source waves and period", "Synchronous or constructed 3π/4 source phase advance"],
+            "metricDefinitions": [{
+              "label": "Amplitude ratio",
+              "definition": "Constructed outlet wave amplitude divided by the amplitude of the same instantaneous upstream mixture, with source weights and individual path means held fixed."
+            }],
+            "caveats": [
+              "Only the mapped path lengths are observed; the input wave phases are constructed and do not explain the measured Loch Vale signal by themselves.",
+              "A ratio above one can result from removing input cancellation. It is not increased source concentration, carbon production or DOC removal.",
+              "The shared-corridor kernel is conservative and imposed; no physical speed or residence time is estimated."
+            ]
+          },
+          "columns": ["forcing", "scenario", "mixture_amplitude", "outlet_amplitude", "amplitude_ratio"],
+          "rows": [
+            {"forcing": "synchronous", "scenario": "actual_delays", "mixture_amplitude": 1, "outlet_amplitude": 0.4599076009323071, "amplitude_ratio": 0.4599076009323071},
+            {"forcing": "synchronous", "scenario": "actual_plus_shared_memory", "mixture_amplitude": 1, "outlet_amplitude": 0.13125477040931732, "amplitude_ratio": 0.13125477040931732},
+            {"forcing": "path_compensated", "scenario": "actual_delays", "mixture_amplitude": 0.4599076009323071, "outlet_amplitude": 1, "amplitude_ratio": 2.174349799770298},
+            {"forcing": "path_compensated", "scenario": "actual_plus_shared_memory", "mixture_amplitude": 0.4599076009323071, "outlet_amplitude": 0.28539378375839547, "amplitude_ratio": 0.6205459165707549}
+          ],
+          "preview": {"kind": "partial", "totalRows": 6, "note": "Four transport cases; the two aligned-arrival reference rows remain in the complete scenario file."}
+        }
+      ]
+    },
+    {
+      "id": "whole-form-comparison",
+      "title": "The same-input working point does not establish a fixed whole-form ranking",
+      "queries": [
+        {
+          "id": "controlled-form-contrast",
+          "source": {
+            "label": "Controlled broad–elongated comparison",
+            "files": [{"label": "form_contrasts.csv"}, {"label": "shortest-route form_contrasts.csv"}],
+            "filters": ["Represented catchment area at least 80%", "Four elongated and eight broad networks", "Correlation time 0.5, coherence 0.5, common allocation 0.5", "Five complete catchment systems resampled 5,000 times"],
+            "metricDefinitions": [{
+              "label": "Form difference",
+              "definition": "The arithmetic receiver-mean controlled SD ratio in broad networks minus that in elongated networks at the fixed working point."
+            }],
+            "caveats": [
+              "The interval spans zero for both real-edge route definitions.",
+              "The controlled arithmetic difference is a different estimand and forcing population from the previous observed geometric-mean SD contrast.",
+              "No kernel strength or source phase is selected to fit the observed whole-form contrast."
+            ]
+          },
+          "columns": ["routing", "estimate", "ci_low", "ci_high", "valid_draws"],
+          "rows": [
+            {"routing": "original geometric mainstem", "estimate": -0.022454285093580717, "ci_low": -0.06900099966388273, "ci_high": 0.02553018441937671, "valid_draws": 4882},
+            {"routing": "saved shortest", "estimate": -0.020809350915139246, "ci_low": -0.06627433103502667, "ci_high": 0.026533733967465056, "valid_draws": 4882}
+          ],
+          "preview": {"kind": "partial", "note": "The fixed working-point form contrast from each independently retained routing definition."}
+        }
+      ]
+    }
+  ]
+}
