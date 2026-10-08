@@ -1,0 +1,566 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "receiving-reference",
+      "title": "Observed source coordination and receiving fluctuation",
+      "queries": [
+        {
+          "id": "network-response",
+          "source": {
+            "label": "Common-date river DOC",
+            "files": [
+              {
+                "label": "network_metrics.csv"
+              },
+              {
+                "label": "observed_series.parquet"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Source coordination",
+                "definition": "Source coordination is the source-variance-weighted mean pair correlation on identical sampled months."
+              },
+              {
+                "label": "Receiving SD reference",
+                "definition": "Receiving relative SD divides the observed receiving SD by the sum of area-share-weighted individual source SDs, without source pair covariance."
+              }
+            ],
+            "filters": [
+              "Original geometric-mainstem source frontiers",
+              "Common-calendar native DOC observations",
+              "Seasonal sine/cosine and linear-year adjustment",
+              "All 32 unique receiving networks"
+            ],
+            "caveats": [
+              "The 32 receiving networks belong to seven overlapping-catchment systems, not 32 independent basins.",
+              "Source shares use represented catchment area, not synchronized flow or DOC load.",
+              "The receiving-coordination correlation is descriptive and does not establish transit time or causality."
+            ]
+          },
+          "columns": [
+            "target",
+            "form",
+            "covered_area_fraction",
+            "n_dates",
+            "source_coherence",
+            "receiver_relative_sd"
+          ],
+          "rows": [
+            {
+              "target": "03049625",
+              "form": "Broad",
+              "covered_area_fraction": 0.1321199721,
+              "n_dates": 28,
+              "source_coherence": 0.2682123473,
+              "receiver_relative_sd": 1.0189371644
+            },
+            {
+              "target": "03049652",
+              "form": "Broad",
+              "covered_area_fraction": 0.5253421252,
+              "n_dates": 25,
+              "source_coherence": 0.1952893634,
+              "receiver_relative_sd": 0.5121171652
+            },
+            {
+              "target": "03085000",
+              "form": "Broad",
+              "covered_area_fraction": 0.2644484069,
+              "n_dates": 30,
+              "source_coherence": 0.2261903288,
+              "receiver_relative_sd": 0.6466417879
+            },
+            {
+              "target": "03086000",
+              "form": "Elongated",
+              "covered_area_fraction": 0.967661803,
+              "n_dates": 31,
+              "source_coherence": 0.3753844601,
+              "receiver_relative_sd": 2.1150915395
+            },
+            {
+              "target": "03284000",
+              "form": "Broad",
+              "covered_area_fraction": 0.5934546289,
+              "n_dates": 34,
+              "source_coherence": 0.5078039733,
+              "receiver_relative_sd": 1.3899089482
+            },
+            {
+              "target": "03290500",
+              "form": "Broad",
+              "covered_area_fraction": 0.9349502507,
+              "n_dates": 35,
+              "source_coherence": -0.1349652085,
+              "receiver_relative_sd": 0.3910620078
+            },
+            {
+              "target": "03303280",
+              "form": "Broad",
+              "covered_area_fraction": 0.6417759573,
+              "n_dates": 44,
+              "source_coherence": 0.2601369304,
+              "receiver_relative_sd": 4.0638481364
+            },
+            {
+              "target": "03374100",
+              "form": "Broad",
+              "covered_area_fraction": 0.6553494668,
+              "n_dates": 29,
+              "source_coherence": -0.1659314112,
+              "receiver_relative_sd": 0.9218526392
+            },
+            {
+              "target": "03612500",
+              "form": "Broad",
+              "covered_area_fraction": 0.8183271411,
+              "n_dates": 130,
+              "source_coherence": 0.141288674,
+              "receiver_relative_sd": 0.2343091537
+            },
+            {
+              "target": "03612600",
+              "form": "Broad",
+              "covered_area_fraction": 0.8182650132,
+              "n_dates": 98,
+              "source_coherence": 0.4625955547,
+              "receiver_relative_sd": 0.8067769203
+            },
+            {
+              "target": "05331580",
+              "form": "Broad",
+              "covered_area_fraction": 0.4413664564,
+              "n_dates": 25,
+              "source_coherence": -0.0967242596,
+              "receiver_relative_sd": 0.8865325827
+            },
+            {
+              "target": "05355250",
+              "form": "Broad",
+              "covered_area_fraction": 0.9253341564,
+              "n_dates": 28,
+              "source_coherence": 0.2743639381,
+              "receiver_relative_sd": 0.9861743604
+            },
+            {
+              "target": "05357245",
+              "form": "Mainstem dominated",
+              "covered_area_fraction": 0.7272850524,
+              "n_dates": 97,
+              "source_coherence": 0.209174588,
+              "receiver_relative_sd": 0.2102253728
+            },
+            {
+              "target": "05420500",
+              "form": "Broad",
+              "covered_area_fraction": 0.0379956325,
+              "n_dates": 40,
+              "source_coherence": 0.8059571261,
+              "receiver_relative_sd": 0.9981990782
+            },
+            {
+              "target": "05453100",
+              "form": "Elongated",
+              "covered_area_fraction": 0.2334422306,
+              "n_dates": 28,
+              "source_coherence": 0.8012767421,
+              "receiver_relative_sd": 0.4378532762
+            },
+            {
+              "target": "05465500",
+              "form": "Elongated",
+              "covered_area_fraction": 0.2396887784,
+              "n_dates": 28,
+              "source_coherence": 0.3222562706,
+              "receiver_relative_sd": 0.6552640451
+            },
+            {
+              "target": "05543500",
+              "form": "Broad",
+              "covered_area_fraction": 0.7345553867,
+              "n_dates": 34,
+              "source_coherence": 0.1412107664,
+              "receiver_relative_sd": 0.4865416698
+            },
+            {
+              "target": "05587455",
+              "form": "Broad",
+              "covered_area_fraction": 0.8061083067,
+              "n_dates": 53,
+              "source_coherence": 0.0776750548,
+              "receiver_relative_sd": 0.8042214574
+            },
+            {
+              "target": "06295000",
+              "form": "Broad",
+              "covered_area_fraction": 0.5170544702,
+              "n_dates": 32,
+              "source_coherence": 0.3042052717,
+              "receiver_relative_sd": 0.9965889339
+            },
+            {
+              "target": "06329500",
+              "form": "Broad",
+              "covered_area_fraction": 0.767800773,
+              "n_dates": 35,
+              "source_coherence": -0.196297828,
+              "receiver_relative_sd": 0.9939318138
+            },
+            {
+              "target": "06337000",
+              "form": "Elongated",
+              "covered_area_fraction": 0.1059186737,
+              "n_dates": 24,
+              "source_coherence": -0.0426340763,
+              "receiver_relative_sd": 0.8274081153
+            },
+            {
+              "target": "06338490",
+              "form": "Broad",
+              "covered_area_fraction": 0.9157182844,
+              "n_dates": 24,
+              "source_coherence": 0.4510769827,
+              "receiver_relative_sd": 1.1125188568
+            },
+            {
+              "target": "06340500",
+              "form": "Broad",
+              "covered_area_fraction": 0.3795081284,
+              "n_dates": 24,
+              "source_coherence": 0.6824471129,
+              "receiver_relative_sd": 0.5323502243
+            },
+            {
+              "target": "06342500",
+              "form": "Broad",
+              "covered_area_fraction": 0.9882556086,
+              "n_dates": 38,
+              "source_coherence": 0.5187270717,
+              "receiver_relative_sd": 0.3213881581
+            },
+            {
+              "target": "06610000",
+              "form": "Broad",
+              "covered_area_fraction": 0.8871736719,
+              "n_dates": 24,
+              "source_coherence": 0.4111361565,
+              "receiver_relative_sd": 1.2221800093
+            },
+            {
+              "target": "06754000",
+              "form": "Broad",
+              "covered_area_fraction": 0.7108324748,
+              "n_dates": 25,
+              "source_coherence": -0.1014542107,
+              "receiver_relative_sd": 0.3871324917
+            },
+            {
+              "target": "06887000",
+              "form": "Elongated",
+              "covered_area_fraction": 0.4663362591,
+              "n_dates": 33,
+              "source_coherence": -0.1998691674,
+              "receiver_relative_sd": 0.5352876876
+            },
+            {
+              "target": "06889000",
+              "form": "Elongated",
+              "covered_area_fraction": 0.9660004156,
+              "n_dates": 35,
+              "source_coherence": 0.3132868037,
+              "receiver_relative_sd": 1.0541061948
+            },
+            {
+              "target": "06892350",
+              "form": "Elongated",
+              "covered_area_fraction": 0.9677315393,
+              "n_dates": 32,
+              "source_coherence": 0.3317048859,
+              "receiver_relative_sd": 0.8624186959
+            },
+            {
+              "target": "06893578",
+              "form": "Elongated",
+              "covered_area_fraction": 0.454917967,
+              "n_dates": 27,
+              "source_coherence": 0.3389421873,
+              "receiver_relative_sd": 0.5040331818
+            },
+            {
+              "target": "06894000",
+              "form": "Elongated",
+              "covered_area_fraction": 0.872195705,
+              "n_dates": 35,
+              "source_coherence": 0.2066268103,
+              "receiver_relative_sd": 2.7501190358
+            },
+            {
+              "target": "401733105392404",
+              "form": "Mainstem dominated",
+              "covered_area_fraction": 0.7451222524,
+              "n_dates": 128,
+              "source_coherence": 0.772499488,
+              "receiver_relative_sd": 1.6316739601
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "Reviewed observational measures for the displayed population."
+          }
+        }
+      ]
+    },
+    {
+      "id": "coincident-excursions",
+      "title": "Joint tributary highs correspond to more receiving highs",
+      "queries": [
+        {
+          "id": "excursion-contrast",
+          "source": {
+            "label": "Receiving-excursion contrast",
+            "files": [
+              {
+                "label": "signal_summary.csv"
+              },
+              {
+                "label": "network_metrics.csv"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Excursion difference",
+                "definition": "The receiving-excursion difference is the receiver-equal average probability with at least two source excursions minus that with exactly one source excursion; intervals resample complete catchment systems 5,000 times."
+              }
+            ],
+            "filters": [
+              "Each source and receiver exceeds its own 75th anomaly percentile",
+              "Both source-condition groups have at least five dates",
+              "Fixed monitored source identities"
+            ],
+            "caveats": [
+              "The primary estimate uses 17 eligible receiving networks in six systems; other networks remain in the amplitude panels.",
+              "Same-calendar-day observations do not imply identical sampling instants.",
+              "The retrospective excursion comparison is concurrent association, not a causal source effect."
+            ]
+          },
+          "columns": [
+            "population",
+            "estimate_pp",
+            "ci_low_pp",
+            "ci_high_pp",
+            "n_receivers",
+            "n_components"
+          ],
+          "rows": [
+            {
+              "population": "All monthly networks",
+              "estimate_pp": 19.616766338,
+              "ci_low_pp": 10.7253932699,
+              "ci_high_pp": 40.5753968254,
+              "n_receivers": 17,
+              "n_components": 6
+            },
+            {
+              "population": "Area coverage >=80%",
+              "estimate_pp": 27.2874034949,
+              "ci_low_pp": 11.5501165501,
+              "ci_high_pp": 45.8333333333,
+              "n_receivers": 6,
+              "n_components": 5
+            },
+            {
+              "population": "Strict same-day activities",
+              "estimate_pp": 17.0253357753,
+              "ci_low_pp": 1.0416666667,
+              "ci_high_pp": 28.6057692308,
+              "n_receivers": 3,
+              "n_components": 3
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "Reviewed observational measures for the displayed population."
+          }
+        },
+        {
+          "id": "condition-probabilities",
+          "source": {
+            "label": "Receiver-equal conditional frequencies",
+            "files": [
+              {
+                "label": "network_metrics.csv"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Conditional frequency",
+                "definition": "Each receiving network contributes equally to the mean receiving-excursion frequency under each observed upstream condition."
+              }
+            ],
+            "filters": [
+              "17 eligible monthly networks",
+              "Calendar-adjusted upper-quartile excursions"
+            ],
+            "caveats": [
+              "The reported mean probabilities are not pooled date proportions; the date counts show the retained denominators."
+            ]
+          },
+          "columns": [
+            "group",
+            "mean_probability",
+            "n_receivers",
+            "n_dates"
+          ],
+          "rows": [
+            {
+              "group": "Coincident upstream excursions",
+              "mean_probability": 0.4442725575,
+              "n_receivers": 17,
+              "n_dates": 194
+            },
+            {
+              "group": "Exactly one upstream excursion",
+              "mean_probability": 0.2481048941,
+              "n_receivers": 17,
+              "n_dates": 261
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "Reviewed observational measures for the displayed population."
+          }
+        }
+      ]
+    },
+    {
+      "id": "whole-form-input-coordination",
+      "title": "Broad and elongated forms do not establish different input coordination",
+      "queries": [
+        {
+          "id": "coordination-by-form",
+          "source": {
+            "label": "Original whole-network form contrast",
+            "files": [
+              {
+                "label": "form_contrasts.csv"
+              },
+              {
+                "label": "network_metrics.csv"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Form contrast",
+                "definition": "The coordination contrast is the receiver-mean source coordination in broad networks minus that in elongated networks."
+              }
+            ],
+            "filters": [
+              "Original geometry-only whole-network classes",
+              "All-receiver and >=80% represented-area subsets",
+              "5,000 complete-system bootstrap draws"
+            ],
+            "caveats": [
+              "Both coordination-contrast intervals include zero.",
+              "Form and regional context remain confounded in the observed field populations."
+            ]
+          },
+          "columns": [
+            "minimum_coverage",
+            "estimate",
+            "ci_low",
+            "ci_high",
+            "n_broad",
+            "n_elongated",
+            "n_components"
+          ],
+          "rows": [
+            {
+              "minimum_coverage": 0.0,
+              "estimate": -0.0322221144,
+              "ci_low": -0.2770523866,
+              "ci_high": 0.1911865899,
+              "n_broad": 21.0,
+              "n_elongated": 9.0,
+              "n_components": 7.0
+            },
+            {
+              "minimum_coverage": 0.8,
+              "estimate": -0.031513462,
+              "ci_low": -0.1847485498,
+              "ci_high": 0.201996792,
+              "n_broad": 8.0,
+              "n_elongated": 4.0,
+              "n_components": 5.0
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "Reviewed observational measures for the displayed population."
+          }
+        }
+      ]
+    },
+    {
+      "id": "within-river-periods",
+      "title": "Repeated periods provide limited within-river evidence",
+      "queries": [
+        {
+          "id": "repeated-periods",
+          "source": {
+            "label": "Fixed five-year periods",
+            "files": [
+              {
+                "label": "within_network_association.csv"
+              },
+              {
+                "label": "within_network_periods.csv"
+              },
+              {
+                "label": "period_inventory.csv"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "Within-river association",
+                "definition": "The association relates receiver-centered source coordination to receiver-centered log receiving-relative SD, giving each repeated river equal total weight."
+              }
+            ],
+            "filters": [
+              "Non-overlapping calendar five-year blocks",
+              "At least 24 dates, three sampled years and six calendar months per block",
+              "At least two eligible periods per receiving network"
+            ],
+            "caveats": [
+              "Only four receiving networks have repeated eligible periods, totaling 11 periods in three overlapping systems.",
+              "The interval includes zero; this comparison does not establish an input-timing mediation effect."
+            ]
+          },
+          "columns": [
+            "n_receivers",
+            "n_periods",
+            "n_components",
+            "correlation",
+            "ci_low",
+            "ci_high"
+          ],
+          "rows": [
+            {
+              "n_receivers": 4,
+              "n_periods": 11,
+              "n_components": 3,
+              "correlation": 0.192952915,
+              "ci_low": -0.5136954561,
+              "ci_high": 1.0
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "Reviewed observational measures for the displayed population."
+          }
+        }
+      ]
+    }
+  ]
+}
