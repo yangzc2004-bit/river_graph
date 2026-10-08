@@ -1,0 +1,25 @@
+{
+  "previous_results_seen": true,
+  "minimum_months": 24,
+  "minimum_years": 3,
+  "minimum_calendar_months": 6,
+  "sampling_cuts_days": [
+    0,
+    1,
+    3,
+    7
+  ],
+  "bootstrap_draws": 5000,
+  "routing": "saved shortest",
+  "source_selection": "disjoint eligible frontier; largest-area valid pair then greedy area-ordered additions",
+  "receiver_alias": "largest allowed-month count then station ID",
+  "source_alias": "largest receiver-month overlap then station ID",
+  "shuffle_draws": 200,
+  "aggregation": "unique physical receiver equal; complete overlapping-catchment systems resampled",
+  "weekly_follow_up": {
+    "case_selection": "maximum jointly dense months, then receiver ID",
+    "activity_selection": "earliest known UTC timestamp per station/day then activity ID",
+    "within_month_minimum_joint_days": 3,
+    "scope": "one lake-influenced case, no population CI or travel-time optimization"
+  }
+}

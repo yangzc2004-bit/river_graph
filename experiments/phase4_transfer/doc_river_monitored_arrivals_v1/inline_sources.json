@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "river-form-observed-doc",
+      "title": "整张河网形态与真实DOC波动",
+      "queries": [
+        {
+          "id": "monitoring-coverage",
+          "source": {
+            "label": "ST357河网形态与原始DOC观测分析",
+            "files": [
+              {
+                "label": "summary.json"
+              },
+              {
+                "label": "network_inventory.csv"
+              }
+            ],
+            "filters": [
+              "原142/143/144源训练角色允许的station-month",
+              "固定非重叠上游站点集合；保持原河网形态分类"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "口径",
+                "definition": "覆盖为选定监测站上游唯一增量汇水面积/全河网面积。"
+              }
+            ],
+            "caveats": [
+              "32个出口属于7个共享流域系统。"
+            ]
+          },
+          "columns": [
+            "item",
+            "value"
+          ],
+          "rows": [
+            {
+              "item": "不同出口河网",
+              "value": 32
+            },
+            {
+              "item": "三条以上独立上游输入",
+              "value": 15
+            },
+            {
+              "item": "监测面积覆盖中位比例",
+              "value": 0.719059
+            },
+            {
+              "item": "共同出口月份",
+              "value": 1333
+            },
+            {
+              "item": "Loch Vale同日采样组",
+              "value": 334
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "totalRows": 5
+          }
+        },
+        {
+          "id": "observed-fluctuations",
+          "source": {
+            "label": "ST357河网形态与原始DOC观测分析",
+            "files": [
+              {
+                "label": "signal_summary.csv"
+              }
+            ],
+            "filters": [
+              "原142/143/144源训练角色允许的station-month",
+              "固定非重叠上游站点集合；保持原河网形态分类"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "口径",
+                "definition": "每个不同出口等权，完整重叠流域系统bootstrap 5000次；方差减小是支流信号计算混合的结果。"
+              }
+            ],
+            "caveats": [
+              "面积权重不是实测流量权重；不是DOC去除率或峰值降低率。"
+            ]
+          },
+          "columns": [
+            {
+              "field": "metric",
+              "label": "指标"
+            },
+            {
+              "field": "estimate",
+              "label": "估计"
+            },
+            {
+              "field": "ci_low",
+              "label": "95%下界"
+            },
+            {
+              "field": "ci_high",
+              "label": "95%上界"
+            },
+            {
+              "field": "networks",
+              "label": "出口河网"
+            },
+            {
+              "field": "systems",
+              "label": "共享流域系统"
+            }
+          ],
+          "rows": [
+            {
+              "metric": "支流波动同步程度",
+              "estimate": 0.264425,
+              "ci_low": 0.212629,
+              "ci_high": 0.313026,
+              "networks": 32,
+              "systems": 7
+            },
+            {
+              "metric": "计算混合信号的方差减小比例",
+              "estimate": 0.305302,
+              "ci_low": 0.2574,
+              "ci_high": 0.354023,
+              "networks": 32,
+              "systems": 7
+            },
+            {
+              "metric": "不同步贡献的方差减小比例",
+              "estimate": 0.233503,
+              "ci_low": 0.199507,
+              "ci_high": 0.263629,
+              "networks": 32,
+              "systems": 7
+            },
+            {
+              "metric": "上游混合与出口相关",
+              "estimate": 0.368665,
+              "ci_low": 0.28459,
+              "ci_high": 0.455047,
+              "networks": 32,
+              "systems": 7
+            },
+            {
+              "metric": "真实同期相关超过打乱的部分",
+              "estimate": 0.234524,
+              "ci_low": 0.166972,
+              "ci_high": 0.293628,
+              "networks": 32,
+              "systems": 7
+            },
+            {
+              "metric": "出口与混合波动比的对数",
+              "estimate": -0.070643,
+              "ci_low": -0.23212,
+              "ci_high": 0.127203,
+              "networks": 32,
+              "systems": 7
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "totalRows": 6
+          }
+        },
+        {
+          "id": "form-contrast",
+          "source": {
+            "label": "ST357河网形态与原始DOC观测分析",
+            "files": [
+              {
+                "label": "form_contrasts.csv"
+              }
+            ],
+            "filters": [
+              "原142/143/144源训练角色允许的station-month",
+              "固定非重叠上游站点集合；保持原河网形态分类"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "口径",
+                "definition": "宽阔型减细长型；两组使用相同共享流域重采样。"
+              }
+            ],
+            "caveats": [
+              "未作环境匹配的描述性比较；六项区间均跨0。"
+            ]
+          },
+          "columns": [
+            "metric",
+            "difference",
+            "ci_low",
+            "ci_high"
+          ],
+          "rows": [
+            {
+              "metric": "支流波动同步程度",
+              "difference": -0.032222,
+              "ci_low": -0.277052,
+              "ci_high": 0.191187
+            },
+            {
+              "metric": "计算混合信号的方差减小比例",
+              "difference": 0.007026,
+              "ci_low": -0.187719,
+              "ci_high": 0.167724
+            },
+            {
+              "metric": "不同步贡献的方差减小比例",
+              "difference": 0.000557,
+              "ci_low": -0.185311,
+              "ci_high": 0.128479
+            },
+            {
+              "metric": "上游混合与出口相关",
+              "difference": -0.011766,
+              "ci_low": -0.371101,
+              "ci_high": 0.330266
+            },
+            {
+              "metric": "真实同期相关超过打乱的部分",
+              "difference": -0.026284,
+              "ci_low": -0.221886,
+              "ci_high": 0.15788
+            },
+            {
+              "metric": "出口与混合波动比的对数",
+              "difference": -0.127409,
+              "ci_low": -0.795465,
+              "ci_high": 0.258004
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "totalRows": 6
+          }
+        },
+        {
+          "id": "weekly-loch-vale",
+          "source": {
+            "label": "ST357河网形态与原始DOC观测分析",
+            "files": [
+              {
+                "label": "weekly_case_signals.csv"
+              },
+              {
+                "label": "weekly_case_series.parquet"
+              }
+            ],
+            "filters": [
+              "原142/143/144源训练角色允许的station-month",
+              "固定非重叠上游站点集合；保持原河网形态分类"
+            ],
+            "metricDefinitions": [
+              {
+                "label": "口径",
+                "definition": "原始同日活动均值，月内偏差；每月至少3个共同日。"
+              }
+            ],
+            "caveats": [
+              "一个湖泊影响的系统，不是形态类型总体效应。",
+              "334组同日样本；月内分析262组；同一天不等于同一时刻。"
+            ]
+          },
+          "columns": [
+            "item",
+            "value"
+          ],
+          "rows": [
+            {
+              "item": "月内共同采样日",
+              "value": 262.0
+            },
+            {
+              "item": "支流同步程度",
+              "value": 0.556484
+            },
+            {
+              "item": "计算混合方差减小比例",
+              "value": 0.205533
+            },
+            {
+              "item": "出口与混合相关",
+              "value": 0.462118
+            },
+            {
+              "item": "出口波动SD / 混合波动SD",
+              "value": 1.603235
+            }
+          ],
+          "preview": {
+            "kind": "aggregate",
+            "note": "已保存分析表的摘要，完整记录见研究报告。",
+            "totalRows": 5
+          }
+        }
+      ]
+    }
+  ]
+}
