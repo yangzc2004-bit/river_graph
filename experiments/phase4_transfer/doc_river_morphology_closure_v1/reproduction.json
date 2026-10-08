@@ -1,0 +1,30 @@
+{
+  "working_directory": "/Users/yzccc/river_graph",
+  "environment": "uv-managed .venv with gnn and dev dependencies",
+  "result_replay": [
+    "uv run python scripts/analyze_doc_river_morphology_closure_v1.py --bootstrap-draws 5000",
+    "uv run python scripts/verify_doc_river_morphology_closure_v1.py",
+    "uv run python scripts/plot_doc_river_morphology_closure_v1.py",
+    "uv run python scripts/plot_doc_river_morphology_closure_v1.py --chinese"
+  ],
+  "replay_inputs": [
+    "Previously saved actual river geometry, paths and fixed observational population from the preceding river-form studies",
+    "Saved primary activity downloads or the one declared historical-cache fallback",
+    "Saved additional public-station activity and mapping tables",
+    "Saved station discovery and continuous-series catalogue responses"
+  ],
+  "raw_cache": "data/raw/river_morphology_closure_v1/",
+  "raw_cache_committed": false,
+  "collection_scripts": [
+    "scripts/recover_doc_river_morphology_closure_v1.py",
+    "scripts/discover_doc_river_morphology_closure_v1.py",
+    "scripts/extend_doc_river_morphology_closure_v1.py"
+  ],
+  "collection_note": "These scripts recover and prepare provider records. A result replay uses the saved responses and additional-station products; it does not assume unchanged live providers or independently rediscover the population.",
+  "bootstrap_draws": 5000,
+  "bootstrap_seed": 42,
+  "bootstrap_unit": "Whole overlapping catchment system",
+  "receiver_weighting": "Equal",
+  "results_text": "research_decision.md",
+  "paper_ready_section": "manuscript_section.md"
+}
