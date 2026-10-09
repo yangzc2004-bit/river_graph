@@ -1,0 +1,68 @@
+{
+  "model": "station_blocked_spatial_residual_transfer",
+  "analyte": "doc",
+  "mask": "e3_spatial_seed42",
+  "seed": 42,
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "mask_path": "experiments/masks_stcore_v1/e3_spatial_seed42.npz",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91",
+  "target_transform": "log1p",
+  "fit_roles": [
+    "train",
+    "context"
+  ],
+  "test_roles": [
+    "train",
+    "val",
+    "context"
+  ],
+  "residual_target": "DOC_z - RF_context_OOF_z, source train stations only",
+  "similarity_features": [
+    "temperature",
+    "discharge",
+    "temperature_visible",
+    "discharge_visible",
+    "month_sin",
+    "month_cos",
+    "latitude",
+    "longitude",
+    "regime_0",
+    "regime_1",
+    "regime_2",
+    "regime_3",
+    "regime_4",
+    "regime_5",
+    "regime_6",
+    "regime_7",
+    "regime_8",
+    "regime_9",
+    "regime_10",
+    "regime_11",
+    "regime_12"
+  ],
+  "source_cells": 18036,
+  "source_stations": 314,
+  "test_stations": 43,
+  "rf_context_metrics": {
+    "rmse": 5.640132365407815,
+    "mae": 2.7144919414694453,
+    "r2": 0.3897049764581403,
+    "log_rmse": 0.4039412772112883,
+    "log_mae": 0.28959954953241357,
+    "log_r2": 0.5482270294555389,
+    "pbias": 8.985124135987396,
+    "n": 2531
+  },
+  "transfer_metrics": {
+    "rmse": 5.709958737415307,
+    "mae": 2.8116476507939256,
+    "r2": 0.37450019923751054,
+    "log_rmse": 0.41819442230147585,
+    "log_mae": 0.298282738516439,
+    "log_r2": 0.5157827608697462,
+    "pbias": 5.9925909770664365,
+    "n": 2531
+  },
+  "config_hash": "afe18fe8eccdc8235c1bd51a9045946fcec310ecebdaaf540c9371234ee2ca1b"
+}

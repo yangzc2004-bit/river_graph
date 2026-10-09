@@ -1,0 +1,739 @@
+Reconstructing sparse river dissolved organic carbon with
+environmental prediction and observation-aware residual learning
+Zhaochen Yang
+Working manuscript — October 2026
+Abstract
+Sparse river dissolved organic carbon (DOC) records hinder the analysis of aquatic carbon
+dynamics. Environmental models provide strong background predictions, while irregular ob-
+servation histories and diﬀerences among stations create additional reconstruction challenges.
+We propose an integrated framework combining an environmental-context tree predictor, an
+observation-aware recurrent residual expert, and sparse station adaptation. The recurrent
+branch learns station-blocked out-of-fold errors of a local tree model; a validation-selected com-
+bination integrates the two experts, and local observations adjust target-station predictions.
+Across a 357-station river cohort and ﬁve training seeds, the temporal hybrid reduces MAE
+from 1.047 to 0.887 mg/L for unobserved periods and from 1.016 to 0.784 mg/L for observation-
+assisted periods, improvements of 15.3% and 22.9% over a selected ExtraTrees context predictor.
+A further nine-ﬁt experiment across three station partitions shows that ﬁve observations per tar-
+get station reduce hybrid MAE from 2.002 to 1.626 mg/L, an 18.8% improvement on ﬁxed query
+cells. The equally calibrated ExtraTrees model achieves 1.609 mg/L, showing that station adap-
+tation, rather than an additional hybrid advantage, accounts for the established spatial beneﬁt.
+These results connect two practical routes to sparse DOC reconstruction: residual temporal
+learning for missing periods and local calibration for withheld stations. More transferable ex-
+pert combination and observation-conditioned temporal adaptation are the next steps toward a
+uniﬁed improvement across both settings.
+Keywords: dissolved organic carbon; sparse monitoring; water-quality reconstruction; residual
+learning; recurrent neural network; spatial adaptation
+1 Introduction
+River dissolved organic carbon connects terrestrial carbon sources with downstream aquatic envi-
+ronments. Its concentration varies with watershed properties, hydrological conditions, and biogeo-
+chemical processing, with substantial diﬀerences among regions [ 1]. Reconstructing DOC records
+can support analysis of long-term carbon dynamics and comparison among catchments. Recent
+work has demonstrated the value of combining machine learning with environmental and satel-
+lite information to recover river organic-carbon patterns over large areas and extended periods [ 2].
+These applications require predictions at locations and times where direct chemical measurements
+are unavailable.
+The observation problem is persistent. Water chemistry is often sampled less continuously and
+less consistently across sites than meteorology or streamﬂow, as illustrated by large-sample chem-
+istry compilations [ 3]. A river monitoring record can contain isolated gaps, prolonged interruptions,
+partially observed later periods, and stations with little or no target chemistry. Each case leaves
+a diﬀerent set of information available for reconstruction. A nearby measurement may help with
+1a short gap, whereas an unmonitored station must rely more heavily on environmental similarity
+and observations elsewhere.
+Existing methods provide complementary strengths. Temporal interpolation and seasonal sum-
+maries oﬀer simple local references when surrounding observations exist. Stream-network geo-
+statistics represent hydrological distance and ﬂow connectivity, extending spatial prediction be-
+yond straight-line proximity [ 4]. Environmental machine learning, including random forests and
+extremely randomized trees, can represent nonlinear associations among predictors [ 5, 6]. Such
+models can also use manually constructed lags and neighboring-observation summaries; their pre-
+dictive ability is therefore a demanding baseline for a new temporal method. Recurrent graph
+models already combine spatial and temporal representations for missing-data reconstruction [ 7],
+while observation-aware recurrent models use missingness masks and elapsed observation time to
+inform memory updates [ 8].
+The remaining methodological question concerns how these information sources should share
+the reconstruction task. A strong environmental predictor can explain much of the background
+variation, leaving errors that may depend on observation history. Asking a neural model to predict
+the complete DOC signal requires it to relearn that background as well as any remaining dynamics.
+Conversely, a tree model supplied with a ﬁxed set of lags may not capture all useful relationships
+in an irregular observation sequence. This motivates a division of prediction into an environmental
+reference and a temporal correction, followed by a combination that can retain useful information
+from both.
+We propose an integrated DOC reconstruction model that combines environmental prediction,
+observation-aware residual learning, and sparse station adaptation. A ﬁxed local tree model supplies
+the reference for a recurrent residual expert, trained on errors from station-blocked out-of-fold
+predictions. Observation age, recent support, ecological descriptors, and hydroclimatic inputs
+inform its correction. A separate environmental-context expert uses visible local and river-network
+summaries, and validation data determine how to combine the two complete predictions. At a
+new monitoring station, a small set of DOC measurements then adjusts the combined prediction
+to the station’s concentration level. This design connects transferable environmental relationships,
+temporal information, and local observations in one ﬁtted prediction workﬂow.
+This study makes three contributions. First, we introduce an integrated reconstruction method
+in which environmental prediction supplies a reference, recurrent learning corrects its residual
+dynamics, and sparse observations adapt the prediction at a target station. Second, matched com-
+ponent comparisons establish the complementary value of environmental and temporal prediction
+for prolonged monitoring gaps, using tree baselines that already include observation history and
+river context. Third, three new station partitions quantify the value of one to ﬁve local observations
+and distinguish station calibration from additional neural prediction gains. Station-level analyses
+relate these beneﬁts to observation availability, environmental similarity, and ﬂow variability. To-
+gether, these contributions explain how environmental relationships, temporal memory, and local
+observations contribute to diﬀerent DOC reconstruction tasks.
+2 Materials and methods
+2.1 River cohort and reconstruction tasks
+We use a Mississippi River basin cohort of 357 stream stations connected by 324 directed river-
+network edges. The monthly grid spans April 1972 to September 2026, comprising 654 months and
+233,478 station-month positions. Only 22,571 positions (9.67%) contain observed DOC, illustrating
+the sparsity of the reconstruction problem. The present study focuses on DOC concentration
+2in mg/L. Dynamic covariates are water temperature and discharge with availability indicators.
+Static inputs describe station location and ecological regime. DOC targets are transformed as
+z = log(1 + y), where y denotes concentration.
+The original four evaluation scenarios represent diﬀerent monitoring gaps (Table 1). Random
+gaps withhold observed station-month cells. Unobserved periods withhold target observations in a
+later time segment. Observation-assisted periods retain designated observations as context in that
+segment. Unmonitored stations withhold the target record at a group of stations. This experiment
+uses one existing split per scenario and ﬁve training seeds, 42–46. A second experiment, described
+below, evaluates integrated station adaptation across three new station partitions. Splits are held
+constant across the compared methods. Spatially and temporally structured evaluation follows the
+principle of matching a split to its intended prediction setting [ 9].
+T able 1: Evaluation tasks. Counts are unique query cells and contributing stations within each scenario.
+The same cells can occur in diﬀerent scenarios.
+Scenario Query cells Stations
+Random gaps 4,514 355
+Unobserved periods 2,223 69
+Observation-assisted
+periods
+1,778 67
+Unmonitored stations 2,531 43
+In the original four-scenario experiment, model ﬁtting and validation inference use only training
+and designated context observations as target inputs. Validation labels enter early stopping and
+model combination, but not the input features. Terminal inference additionally permits validation
+observations as context; the evaluated query labels remain hidden. The new station-partition exper-
+iment retains training-only target inputs at both validation and test inference. Current hydrological
+covariates are assumed available in both experiments. The task is reconstruction of missing DOC
+under speciﬁed information availability.
+2.2 An environmental-context predictor
+The context predictor Cit uses 39 features for station i and month t: temperature and discharge with
+their visibility ﬂags, seasonal sine/cosine terms, coordinates, 13 regime descriptors, six visible-DOC
+context summaries, and 12 local lag features. The context summaries contain global, upstream, and
+downstream visible DOC means and support fractions. Means are calculated in log-transformed
+target space and exclude the query cell. The local lags describe observations at one, three, six, and
+twelve months, including availability.
+All context forests contain 300 trees. For each seed and scenario, validation MAE selects among
+six candidates: random forests with minimum leaf sizes one or two, and ExtraTrees variants using
+all-feature or square-root-feature split selection and minimum leaf sizes one, two, or four. All
+selected context experts are ExtraTrees: leaf size four in the temporal scenarios, leaf size two for
+random gaps, and leaf sizes one or two for unmonitored stations. A ﬁxed 300-tree random forest
+with leaf size one is retained as an additional baseline on the same features, seeds, and query cells.
+This predictor already uses explicit temporal and river-context information. Its comparison
+with the hybrid therefore measures the added value of the learned residual expert and combination,
+beyond an environmental model that already has engineered history and neighborhood features.
+32.3 An observation-aware temporal residual expert
+2.3.1 Local reference and out-of-fold residual targets
+A separate local forest deﬁnes the reference for residual learning. It is an ExtraTrees model with
+300 trees, minimum leaf size four, and all features available at each split. Its 40 predictors retain
+environmental and lag information but replace the six network-context columns with seven strictly
+historical local features: the most recent value, log observation age, an availability ﬂag, and ob-
+servation counts over the preceding one, three, six, and twelve months. This local reference B is
+distinct from the selected context expert C.
+We partition training stations into ﬁve folds. For each fold, the local forest is ﬁtted on the other
+four folds, and all target observations at the withheld stations, including context observations, are
+hidden from its input construction. Let BOOF
+it be the resulting prediction in log space. The neural
+target is
+rOOF
+it = zit − BOOF
+it
+σtrain
+, (1)
+where σtrain is the standard deviation of transformed training labels. The neural branch uses the
+corresponding fold-speciﬁc observation view. This construction gives the branch an error signal
+from station withholding rather than residuals from an in-sample forest ﬁt.
+2.3.2 Observation-aware memory
+The neural branch combines a two-layer ecological encoder with a two-layer, 64-unit node encoder.
+The ecological encoder maps nine regime variables through two 32-unit layers. Monthly node
+inputs contain hydroclimatic values and masks, season, location, visible DOC and its availability,
+hydro-regime descriptors, and observation-support features. The latter include the last visible
+value, log age, an ever-observed ﬂag, support fractions at four time scales, and upstream support.
+Downstream support is zero in the selected residual conﬁguration.
+For each prediction month, a 12-month window is processed by an observation-aware GRU with
+64 hidden units. Inspired by observation-decay approaches [ 8], the hidden state is attenuated before
+its recurrent update:
+γit = exp{− ReLU(Wdqit + bd)}, (2)
+hit = GRUCell([eit, v t], γ it ⊙ hi,t − 1), (3)
+where eit is the encoded monthly state, vt indicates valid history, and qit contains scaled log obser-
+vation age, an observation-availability indicator, upstream support, and a zero downstream-support
+channel. Each window starts from zero recurrent state, and padded positions make no recurrent
+update. Input windows end at the prediction month. Visible observations at the current month
+may enter support features; hidden query values cannot.
+The residual expert uses a self-node encoder without learned edge messages or an attention op-
+erator. River connectivity enters through explicit observation-support features. Separate message
+and lag-attention controls examine the potential additional value of learned river propagation.
+2.3.3 Residual prediction and training
+A zero-initialized scalar head maps the ﬁnal hidden state to a standardized residual dθ,it . Using a
+local forest reﬁtted on all training cells, the complete residual-expert prediction is
+Rit = max{0, exp(Bit + σtraindθ,it ) − 1}. (4)
+4At initialization, the correction is zero and this expert equals its local reference, By
+it =
+max{0, exp(Bit) − 1} in concentration units. The forest is ﬁxed throughout neural training.
+Training minimizes mean squared error on the standardized out-of-fold residuals. Five station
+folds contribute to one accumulated optimizer step per epoch. We use Adam with learning rate
+10− 3, gradient-norm clipping at one, dropout 0.1, at most 20 epochs, and early-stopping patience
+ﬁve. Completed temporal runs stop after 15–16 epochs. Early stopping evaluates the complete
+local-reference-plus-residual prediction. Target and dynamic-input scaling are based on training
+cells; static descriptor scaling uses the known station cohort. The prediction applies a lower bound
+of zero after inverse transformation, with no upper-quantile clipping.
+2.4 Combining the two complete experts
+For temporal scenarios and the new station-partition experiment, the candidate outputs are context-
+only, residual-expert-only, a geometric blend, and a log-aﬃne combination. The latter is
+ˆzit = β0 + βC log(1 + Cit) + βR log(1 + Rit), (5)
+Hit = max{0, exp(ˆzit) − 1}. (6)
+Unconstrained least squares ﬁts the aﬃne coeﬃcients on validation predictions. The geometric-
+blend weight is selected on a grid with step 0.005. Raw-scale validation MAE selects the candidate
+output. All ten temporal seed–scenario combinations select the aﬃne form. Its weights combine
+complete expert predictions and are neither attention weights nor physical coeﬃcients.
+Random gaps and the original unmonitored-station task use the context expert directly under
+the existing scenario-speciﬁc conﬁguration. Their ﬁnal outputs therefore equal the context baseline.
+The new station-partition experiment applies validation selection to the spatial task as well, then
+calibrates the selected predictor using sparse observations at each target station. Figure 1 shows
+the integrated prediction workﬂow.
+2.5 Integrated adaptation at withheld stations
+The new spatial experiment evaluates the environmental and temporal experts together with station
+calibration. Three random station partitions of the same 357-station cohort each contain 232
+training, 54 validation, and 71 test stations. Partition seeds are 142–144, with training seeds 42–44
+within each partition. These partitions assess transfer of DOC prediction to withheld monitoring
+stations while the station covariates and river network remain available. They introduce new label-
+withholding tasks within the development cohort.
+Both experts receive training-station DOC only during validation and test inference. Validation
+observations guide early stopping, environmental-expert selection, fusion, and calibration strength.
+For this experiment, the context expert is selected from four 300-tree ExtraTrees conﬁgurations:
+minimum leaf sizes four, two, and one using all features, and leaf size one using square-root feature
+selection. The temporal expert retains the architecture and training budget above. A context-only
+fusion candidate remains available, and its selection is recorded for each ﬁt.
+At each target station, ﬁve observed dates are reserved in the order ﬁrst, middle, last, ﬁrst
+quartile, and third quartile of the observed record. Nested preﬁxes deﬁne K = 0 , 1, 3, 5 support
+budgets. All ﬁve candidates are excluded from evaluation at every budget. The three partitions
+contain 3,975, 3,907, and 4,983 ﬁxed query cells, respectively. Support dates can follow query dates,
+so the task is retrospective record reconstruction.
+5Figure 1: An integrated model for DOC reconstruction and station adaptation. a, An
+environmental-context expert supplies prediction C. b, A recurrent branch learns station-blocked out-of-
+fold residuals of the separate local reference B, producing the complete temporal expert R. Validation
+selection combines the two complete predictions into H. c, Sparse observations provide a station-speciﬁc
+correction in log space, followed by inverse transformation and a lower bound of zero. The experts remain
+ﬁxed during station adaptation. Dashed arrows show training supervision. The training-only input rule
+shown here applies to the new station-partition experiment; the original temporal experiment uses its desig-
+nated context views.
+6For a predictor P ∈ {C, H } and support set S (K)
+i , the station correction is
+¯r(K)
+i,P = 1
+K
+∑
+s∈S(K)
+i
+[log(1 + yis) − log(1 + Pis)], (7)
+ˆy(K)
+it,P = max{0, exp[log(1 + Pit) + α P,K ¯r(K)
+i,P ] − 1}. (8)
+For K = 0, the original prediction is returned unchanged. The support residual compares observed
+and predicted DOC at the same dates. Source-validation tasks select α P,K separately for each
+predictor and budget from {0, 0. 25, 0. 5, 0. 75, 1} using raw-scale MAE. Support observations enter
+this output correction; they do not update the experts’ inputs, recurrent states, or ﬁtted weights.
+Four matched arms separate the contributions of the hybrid and local observations: ExtraTrees,
+calibrated ExtraTrees, the hybrid, and the calibrated hybrid. The principal comparison is calibrated
+hybrid versus calibrated ExtraTrees at K = 5 . The K = 0 comparison and each model’s change
+from K = 0 to K = 5 distinguish expert combination from station calibration. Two supplementary
+controls examine the source of the hybrid gain. A context-only aﬃne recalibration tests the value
+of the second expert beyond a global adjustment of the context prediction’s scale. A combination
+of C and the uncorrected local forest prediction By uses the same validation-selected fusion and
+calibration, testing the added predictive contribution of the learned residual in R. Each control
+independently selects its coeﬃcients on the same validation tasks. These diagnostic comparisons
+were added after the ﬁrst formal run; they do not replace the four primary arms.
+Metrics average the three seed results within each partition, then weight the three partitions
+equally. Paired intervals resample station identities jointly across partitions 5,000 times. A station
+appearing in multiple partitions receives the same bootstrap multiplicity in each; all its query cells
+contribute within each partition. This preserves both the cell-weighted error and dependence due
+to repeated stations. Station-level changes describe variation in the adaptation beneﬁt. Descriptive
+stratiﬁcation uses environmental novelty, visible upstream support, DOC record availability, and
+discharge variability. Record availability counts observed DOC months; every station still receives
+the same support budget K. Discharge variability is the coeﬃcient of variation over available
+monthly ﬂow observations, requiring at least 12 months and positive mean ﬂow. Record-availability
+and ﬂow-variability groups use training-station tertiles within each partition.
+2.6 Evaluation and component comparisons
+Primary performance is MAE on hidden DOC cells. RMSE, R2, log-space MAE, and training-
+derived Q90 tail MAE provide complementary summaries. In the original four-scenario experiment,
+reported metrics average the ﬁve individual seed metrics; the station-partition experiment uses the
+three-seed and three-partition aggregation described above. These are averages of individual-model
+errors. Table 2 compares the ﬁxed random-forest context model, validation-selected ExtraTrees
+context model, and ﬁnal hybrid. In temporal scenarios, the complete residual expert is additionally
+compared on identical query cells.
+For paired intervals, absolute errors are averaged across seeds at each cell, then whole stations
+are resampled 5,000 times. Each sampled station contributes all query cells, preserving the main
+cell-weighted estimand within each replicate. Intervals are reported for the hybrid-minus-context
+MAE diﬀerence and relative reduction. Seed variation is summarized separately. Q90 groups with
+fewer than 20 distinct cells are marked as small-sample diagnostics.
+The earlier regional extension (Appendix C) uses the same paired station-resampling principle.
+A descriptive station-shuﬄe diagnostic assigns ﬁtted corrections to diﬀerent target stations, using
+one ﬁxed permutation per seed and support budget. Model development has repeatedly used
+7the original four scenario splits. The new station-partition experiment evaluates the integrated
+prediction workﬂow across three additional label-withholding tasks; an independent river basin
+remains a next test of geographical generalization.
+3 Results
+3.1 The hybrid improves reconstruction across unobserved periods
+The environmental-context predictor is a strong baseline across all four scenarios (Table 2). Com-
+bining it with the temporal residual expert reduces MAE from 1.047 to 0.887 mg/L in unobserved
+periods and from 1.016 to 0.784 mg/L in observation-assisted periods. These changes correspond
+to improvements of 15.3% and 22.9%, respectively. Both temporal scenarios improve across all ﬁve
+seeds.
+The station-resampled 95% interval for the MAE diﬀerence is [− 0. 262, − 0. 050] mg/L in unob-
+served periods and [− 0. 307, − 0. 159] mg/L in observation-assisted periods. Corresponding relative-
+improvement intervals are 4.7–25.0% and 17.2–27.9% (Figure 2). The gains therefore persist when
+stations are resampled within each existing split.
+T able 2: Five-seed reconstruction performance. MAE and RMSE are in mg/L. The hybrid equals the
+ExtraTrees context route in random gaps and unmonitored stations.
+Scenario
+RF
+MAE
+ET
+MAE
+Hybrid
+MAE
+Hybrid
+RMSE
+Hybrid
+R2
+Random gaps 1.452 1.436 1.436 6.626 0.384
+Unobserved periods 1.070 1.047 0.887 1.404 0.470
+Observation-assisted
+periods
+1.051 1.016 0.784 1.228 0.587
+Unmonitored stations 2.687 2.545 2.545 5.330 0.455
+Random-gap MAE is 1.436 mg/L and unmonitored-station MAE is 2.545 mg/L, identical to
+the context expert by construction. These cases establish the retained baseline performance of the
+deployed conﬁguration, rather than an increment from neural correction. A veraging losses across all
+scenario-cell occurrences gives hybrid MAE 1.475 mg/L, compared with 1.545 for ExtraTrees and
+1.593 for the ﬁxed random forest. The 11,046 scenario-cell occurrences include 8,150 distinct cells
+because scenarios overlap; this pooled summary is descriptive, and the scenario-speciﬁc comparisons
+carry the main inference.
+3.2 The two complete experts supply complementary predictions
+The learned correction improves its matched local reference in both temporal scenarios (Table 3).
+In unobserved periods, MAE decreases from 1.148 mg/L for the local forest to 0.946 for the com-
+plete residual expert, a 17.6% reduction. In observation-assisted periods, it decreases from 0.973
+to 0.795 mg/L, an 18.3% reduction. All ﬁve seeds improve in each comparison. This directly
+establishes the added value of the trained neural residual branch relative to its own base.
+The complete residual expert also outperforms context ExtraTrees, whose MAEs are 1.047 and
+1.016 mg/L. Aﬃne fusion further reduces error to 0.887 and 0.784 mg/L, gains of 6.2% and 1.4%
+relative to the complete residual expert. All ﬁve seeds favor fusion in each comparison.
+This sequence supports the complementary roles of the two complete predictors: the recur-
+rent correction improves its local reference, and the environmental-context expert supplies addi-
+80 1 2 3
+DOC MAE (mg L−1)
+Random gaps
+4,514 cells · 355 stations
+Unobserved periods
+2,223 cells · 69 stations
+Observation-assisted
+periods
+1,778 cells · 67 stations
+Unmonitored stations
+2,531 cells · 43 stations
+a  Reconstruction performance
+0 10 20 30
+MAE reduction vs ExtraTrees (%)
+0% (context route)
+15.3%
+22.9%
+0% (context route)
+b  Paired improvement
+Five training seeds. a: mean ± seed SD.
+b: 95% station-bootstrap intervals (5,000 draws).
+Random forest context ExtraTrees context Selected hybrid
+Figure 2: Performance by monitoring gap. a , Mean individual-seed MAE for matched context baselines
+and the hybrid; error bars show seed SD. b, Relative improvement over selected ExtraTrees with paired
+station-bootstrap 95% intervals. Zero gain in random gaps and unmonitored stations reﬂects the context-
+only route. Counts refer to unique query cells within each scenario.
+T able 3: Matched temporal component comparison. The local base is the forest corrected by the neural
+branch; the context expert is a separate forest. The complete residual expert includes its local base and
+correction. Values are mean individual-seed MAEs on identical query cells.
+Scenario Local base Context Residual expert Hybrid
+Unobserved periods 1.148 1.047 0.946 0.887
+Observation-assisted
+periods
+0.973 1.016 0.795 0.784
+9tional information that improves their combined prediction. Earlier matched river-message and
+lag-attention controls gave little additional DOC improvement over self-node residual models, mo-
+tivating the selected conﬁguration. The temporal performance gain is consequently attributed to
+the evaluated residual-expert combination.
+3.3 Sparse local observations improve reconstruction at withheld stations
+The integrated spatial experiment completed all nine partition–seed ﬁts. Its three partitions contain
+172 distinct test stations and 10,520 distinct query cells, represented by 213 station–partition cases
+and 12,865 query-cell occurrences. All nine ﬁts select log-aﬃne expert combination. With ﬁve
+support observations per station, hybrid MAE decreases from 2.002 to 1.626 mg/L, an 18.8%
+reduction (95% interval 13.8–23.7%; Table 4; Figure 3). All three partitions and all nine ﬁtted
+replicates improve. Three observations already reduce MAE to 1.675 mg/L; one observation yields
+a smaller change to 1.943 mg/L.
+T able 4: Integrated reconstruction on the three new station partitions. Metrics average three training
+seeds within each partition and then weight partitions equally. The query is ﬁxed across all four arms and
+observation budgets. Concentration errors are in mg/L.
+Predictor K MAE RMSE R2 Q90 MAE
+ExtraTrees 0 1.903 4.008 0.467 7.559
+Hybrid 0 2.002 4.122 0.433 7.823
+ExtraTrees + calibration 5 1.609 3.615 0.562 6.744
+Hybrid + calibration 5 1.626 3.593 0.567 6.607
+The same local observations also improve ExtraTrees, from 1.903 to 1.609 mg/L, a 15.4%
+reduction (95% interval 9.8–21.0%). The calibrated hybrid has 1.0% higher MAE than calibrated
+ExtraTrees; its paired diﬀerence is 0.017 mg/L (95% interval [− 0. 005, 0. 041]). Without support,
+hybrid MAE is 5.2% higher, with a paired diﬀerence of 0.099 mg/L ( [0. 033, 0. 172]). Only one of
+the three partitions favors the hybrid over ExtraTrees at either endpoint. Thus, sparse calibration
+transfers successfully across the station partitions, while the temporal hybrid’s additional spatial
+advantage is not established.
+3.4 Component controls locate the remaining spatial challenge
+Context-only aﬃne recalibration produces MAE of 1.983 mg/L without support and 1.629 mg/L at
+K = 5. Both are close to the hybrid’s corresponding outputs, and paired intervals for hybrid-minus-
+aﬃne-context diﬀerences span zero. Aﬃne recalibration itself increases zero-support ExtraTrees
+error by 4.2%. This shared pattern points to transfer of the validation-ﬁtted output adjustment as
+an important component to improve.
+Replacing the corrected temporal expert R with its uncorrected local forest By provides a second
+diagnostic. The resulting two-forest combination has MAE of 2.010 mg/L at K = 0 and 1.623 mg/L
+at K = 5. Adding the recurrent correction gives a small 0.4% beneﬁt without support (95% interval
+0.12–0.71%) and a 0.18% increase in error after calibration (0.03–0.33%). These eﬀects are much
+smaller than the beneﬁt of station observations and change direction with the support budget. The
+controls identify a useful distinction: the recurrent residual supplies substantial information in the
+original temporal tasks, but its incremental value after expert combination is small in the new
+station-transfer tasks.
+100 1 3 5
+Observations per station (K)
+1.65
+1.80
+1.95
+2.10DOC MAE (mg L−1)
+a
+Reconstruction accuracy
+−10 0 10 20
+Relative MAE reduction (%)
+Hybrid vs trees
+K = 5, both calibrated
+Hybrid vs trees
+K = 0
+Trees
+K = 5 vs K = 0
+Hybrid
+K = 5 vs K = 0
+b
+Paired comparisons
+Trees + calibration
+Trees, K = 0
+Hybrid + calibration
+Hybrid, K = 0
+Figure 3: Integrated DOC reconstruction with sparse station calibration. a, Calibrated Extra-
+Trees and hybrid MAE as the number of target-station observations increases. Dashed lines show each
+predictor’s uncalibrated reference; pale lines show the three partition trajectories. Bold lines average seeds
+within partitions, then weight partitions equally. b, Paired relative MAE reductions with 95% intervals from
+5,000 joint station-bootstrap resamples. Positive values favor the ﬁrst predictor or K = 5 ; negative values
+indicate higher MAE. Each partition contains 71 test stations and three training seeds, with 3,975, 3,907,
+and 4,983 ﬁxed query cells. There are 172 distinct test stations across partitions. Support dates may follow
+query dates, consistent with retrospective reconstruction.
+113.5 Station adaptation beneﬁts vary across environmental settings
+Five-observation calibration improves the hybrid in 162 of 213 station–partition cases, with a me-
+dian station-level MAE reduction of 6.8% (Appendix B). The corresponding values for ExtraTrees
+are 150 cases and 5.8%. Station-level medians are smaller than the overall cell-weighted reductions,
+reﬂecting variation in both the size of the beneﬁt and record length.
+The hybrid’s calibration beneﬁt appears across all three ecological-novelty groups, with descrip-
+tive MAE reductions of 11.5%, 22.0%, and 21.4% from lower to higher novelty. It also appears across
+lower, middle, and higher discharge variability (21.6%, 14.1%, and 18.0%) and DOC record availabil-
+ity (18.9%, 13.8%, and 20.8%). These patterns show broad use of local concentration information,
+rather than a beneﬁt conﬁned to the densest monitoring records. At the same K = 5 , hybrid
+MAE remains slightly above calibrated ExtraTrees in all three novelty and discharge-variability
+groups. The lowest record-availability group shows a small descriptive hybrid advantage of 0.8%;
+these strata do not establish a distinct hydrological mechanism.
+3.6 Overall accuracy and high-concentration performance diﬀer
+Improvements in temporal MAE are accompanied by higher R2: from 0.384 to 0.470 in unobserved
+periods and from 0.428 to 0.587 in observation-assisted periods. RMSE decreases from 1.514 to
+1.404 mg/L and from 1.446 to 1.228 mg/L, respectively. These changes extend the temporal gain
+beyond one loss metric.
+High-concentration errors show a diﬀerent pattern (Appendix A). The two temporal Q90 groups
+contain only 12 and seven distinct query cells. The hybrid changes tail MAE from 6.759 to
+6.712 mg/L in unobserved periods and from 6.862 to 7.129 mg/L in observation-assisted periods.
+These small groups do not establish improved extreme-value reconstruction. For random gaps, se-
+lected ExtraTrees improves MAE slightly over the ﬁxed random forest but has higher RMSE (6.626
+versus 6.287 mg/L), further illustrating the importance of reporting more than average absolute
+error.
+The new station partitions contain 352, 440, and 558 Q90 query cells at training-derived thresh-
+olds of approximately 9.85, 10.00, and 10.00 mg/L. Calibrated hybrid tail MAE is 6.607 mg/L com-
+pared with 6.744 for calibrated ExtraTrees, and its RMSE is also slightly lower (Table 4). These
+descriptive diﬀerences complement the primary MAE comparison; the present paired inference does
+not separately establish a tail-error improvement.
+4 Discussion
+4.1 Environmental prediction and temporal correction address diﬀerent parts
+of the task
+The results support a practical division of labor in sparse DOC reconstruction. An environmental-
+context forest supplies a strong reference using nonlinear environmental relationships and engi-
+neered observation summaries. The recurrent residual expert is trained to address errors left by a
+local environmental prediction. Fusing their complete outputs improves temporal reconstruction
+beyond either expert alone.
+This design gives residual learning a speciﬁc role. Instead of requiring the recurrent network
+to estimate every part of DOC variation, the local forest anchors its prediction and the neural
+branch learns a correction. The out-of-fold construction makes this correction depend on errors at
+withheld training stations, reducing reliance on the forest’s ﬁtted training residuals. Observation-
+aware memory provides a way to encode the changing availability of historical information. Our
+12component comparison establishes complementarity at the expert level; it does not yet isolate
+whether elapsed observation time, ecological encoding, or recurrent state contributes most to that
+complementarity.
+The methodological contribution is the organization and training of these complementary tasks
+for sparse DOC reconstruction. Tree ensembles, recurrent memory, observation decay, and resid-
+ual modeling each have precedents. Their integration here is evaluated against tree models that
+already receive explicit lags and river-context features, making the observed temporal improvement
+a substantive prediction comparison rather than a consequence of withholding history from the
+baseline.
+4.2 Diﬀerent monitoring gaps call for diﬀerent information
+A station with a missing later record and a station with no target history present diﬀerent learning
+problems. In the former, observations and hydroclimatic covariates can inform a time-dependent
+correction. In the latter, the model must transfer relationships across stations with diﬀerent con-
+centration levels and environmental conditions. The integrated experiment now evaluates temporal
+residual prediction and station adaptation within the same ﬁtted workﬂow, exposing the distinct
+roles of these components.
+Sparse local observations improve reconstruction across every station partition for both pre-
+dictors. Their strongest established contribution is to adjust the target station’s concentration
+reference. The additional hybrid beneﬁt seen in temporal tasks does not carry over to this spatial
+comparison: the hybrid is worse without target observations and close to calibrated ExtraTrees with
+ﬁve observations. Aﬃne-context and two-forest controls show that a large part of the spatial be-
+havior can arise from output combination and calibration. This directs model development toward
+transferable expert combination and support-conditioned residual learning. Shrinking validation-
+ﬁtted output adjustments toward the environmental reference and allowing local observations to
+inform recurrent states are concrete next steps.
+4.3 Extending the framework with river transport
+River-network geostatistics and graph imputation methods provide established ways to exploit rela-
+tional structure [ 4, 7]. Explicit river-context summaries provide a strong source of spatial informa-
+tion in our context predictor. The earlier local-base message and lag-attention variants produced
+little additional improvement over their matched self-node residual controls. Their incremental
+value relative to the ﬁnal selected context expert remains to be established.
+A next step is to enrich the residual branch with ﬂow-conditioned travel times, source–sink
+states, and observations along connected reaches. These additions would allow the model to repre-
+sent how information moves through the river network as hydrological conditions change. Suitable
+ﬂow, volume, and source information would also make it possible to test process constraints on
+transported loads. The residual formulation provides a direct way to evaluate these developments:
+each transport component can be tested for the additional information it supplies beyond the
+environmental reference and explicit river context.
+4.4 Future research directions
+The framework opens four connected directions for extending sparse DOC reconstruction. The
+ﬁrst is transfer across regions and river basins. Environmental similarity and a small number of
+target observations provide a starting point for adapting the model to diﬀerent catchment settings.
+Geographically contiguous holdouts and an independent basin would extend the station-partition
+13experiment to larger environmental shifts. These studies could identify which environmental re-
+lationships and temporal corrections transfer across regions and where local adaptation adds the
+most value.
+The second direction is event-sensitive reconstruction. Higher-frequency DOC observations
+paired with rainfall and discharge would support learning of concentration changes during hydro-
+logical events. Event-weighted training and tail-focused objectives could then be compared for
+their ability to recover peak magnitude, timing, and duration. This development would connect
+the present monthly reconstruction to observed short-term carbon dynamics and provide a richer
+basis for evaluating high-concentration behavior.
+The third direction is adaptation that evolves as monitoring accumulates. The integrated model
+currently uses sparse local observations to update its station-level prediction reference. Future
+versions could also update recurrent states and residual dynamics, allowing newly observed DOC
+to inform subsequent seasonal and event responses. Comparing retrospective calibration with
+adaptation using only observations available before each prediction would connect the present
+reconstruction workﬂow to operational monitoring.
+The fourth direction is uncertainty-aware river carbon assessment. Prediction intervals should
+be developed for the hybrid and evaluated jointly for coverage, width, and high-concentration
+performance. Combining reconstructed concentrations with discharge at a matching time scale
+would then support DOC-load estimation, with concentration and ﬂow uncertainty propagated
+into the resulting loads. This would extend the framework from ﬁlling monitoring gaps toward
+quantifying carbon transport through river networks.
+5 Conclusion
+We developed and evaluated an environmental-context and observation-aware residual framework
+for sparse river DOC reconstruction. On the existing temporal holdouts, combining the two com-
+plete experts reduces MAE by 15.3% and 22.9% relative to selected ExtraTrees context predictions,
+with further improvement over the residual expert alone. These results show that a strong environ-
+mental reference and learned residual dynamics can supply complementary predictive information.
+The integrated station-transfer experiment shows that ﬁve target observations reduce hybrid
+error by 18.8% across three station partitions. Equally calibrated ExtraTrees remains slightly
+more accurate in MAE, identifying station adaptation as the established spatial beneﬁt and expert-
+combination transfer as the next modeling priority. The resulting framework connects environmen-
+tal prediction, temporal correction, and sparse monitoring updates in one usable reconstruction
+model. Extending how local observations inform residual dynamics oﬀers a direct path toward
+stronger spatial transfer and event-sensitive river carbon assessment.
+Data, code, and ﬁgure availability
+The current manuscript is supported by local prediction products and reproducible analysis scripts.
+The original temporal results are recomputed by analyze_doc_hybrid_manuscript.py. The inte-
+grated station experiment is analyzed by analyze_unified_doc_spatial.py, with supplementary
+controls in analyze_unified_doc_affine_control.py and hydrological stratiﬁcation in analyze_
+unified_doc_flow.py. Publication ﬁgures are generated by plot_unified_doc_manuscript.py.
+Each ﬁtted model saves the environmental forests, recurrent weights, selected expert combination,
+and station-calibration parameters, and exposes a shared query/support prediction interface. Ear-
+lier regional results remain reproducible with analyze_spatial_manuscript_evidence.py . A
+14public data and code release has not yet been assigned a persistent identiﬁer. Figure 1 is an AI-
+assisted architecture schematic checked against the implemented model. All empirical plots are
+generated from saved numerical predictions.
+A Tail diagnostics and implementation details
+Table 5 records the high-concentration comparison without treating repeated predictions across
+seeds as additional observations. Thresholds are estimated from training labels separately for each
+scenario.
+T able 5: Training-derived Q90 tail MAE (mg/L). Asterisks indicate fewer than 20 unique query cells.
+Scenario Threshold Cells ET MAE Hybrid MAE
+Random gaps 10.00 431 6.748 6.748
+Unobserved periods 11.00 12* 6.759 6.712
+Observation-assisted
+periods
+11.00 7* 6.862 7.129
+Unmonitored stations 9.40 510 6.906 6.906
+The temporal expert uses nine ecological encoder inputs, 14 base monthly channels, and nine
+observation-aware channels before ecological embedding. The node representation has width 64
+and the ecological embedding width 32. The self-node encoder is inherited from the graph imple-
+mentation; excluding edge messages leaves the node transformation and explicit upstream-support
+feature intact. Residual targets, input visibility, and the terminal expert combination are deﬁned
+by Equations 1–6. Reproduction should use the selected product settings described here, rather
+than earlier temporal models with diﬀerent prediction clipping or training budgets.
+B Station-level responses in the integrated experiment
+Figure 4 shows the distribution of seed-averaged station responses across the three partitions. The
+same station can occur in more than one partition. These descriptive points retain each station’s
+own ﬁxed query months and are not independent ecological replicates.
+15−60 −30 0
+Station MAE reduction (%)
+0
+50
+100
+150
+200Station–partition cases (ordered)
+a
+Hybrid vs trees, K = 5
+−40 0 40
+Station MAE reduction (%)
+b
+Hybrid, K = 5 vs K = 0
+Partition 1 Partition 2 Partition 3
+Figure 4: Station variation in reconstruction beneﬁt. a, Calibrated hybrid versus calibrated Extra-
+Trees at K = 5 . b, Calibrated hybrid versus its own K = 0 prediction. Each point is a station–partition
+case; shapes identify the three partitions. Cases are ordered separately within each panel and do not align
+by station across panels. Positive values indicate lower MAE for the ﬁrst predictor or K = 5 . Horizontal
+scales diﬀer. The 213 cases represent 172 distinct test stations.
+16C Earlier regional station-calibration experiment
+C.1 Regional prediction and support design
+We also examine whether sparse target observations can improve regional reconstruction at un-
+monitored stations. This experiment uses a separate regional ExtraTrees product with 120 trees
+and 40 source stations selected for each target by environmental similarity. Source descriptors
+combine hydroclimatic summaries, ecology, coordinates, and network attributes. Selection and de-
+scriptor scaling use available covariates, not target DOC labels. Its predictors include the visible
+DOC-context features described above.
+At each of 43 target stations, ﬁve observed months are reserved as support candidates: the ﬁrst,
+middle, last, ﬁrst-quartile, and third-quartile positions of the observed record. Nested preﬁxes give
+K = 0 , 1, 3, 5 support budgets. All ﬁve candidates are excluded from evaluation at every budget,
+leaving the same 2,316 query cells. A shrunken mean support residual adjusts the ﬁxed regional
+prediction:
+¯r(K)
+i = 1
+K
+∑
+s∈S(K)
+i
+[zis − ˆzreg
+is ], (9)
+ˆy(K)
+it = max{0, exp(ˆzreg
+it + α K ¯r(K)
+i ) − 1}. (10)
+The correction is zero for K = 0. The coeﬃcients for K = 1, 3, 5 are 0.25, 0.50, and 0.75, inherited
+unchanged from an earlier internal station-validation analysis. The base predictions remain ﬁxed.
+Support can follow a query month, and station descriptors summarize the available historical
+record. This extension evaluates retrospective station reconstruction. Its source-model conﬁgura-
+tion and query set diﬀer from the main hybrid experiment; it evaluates sparse calibration rather
+than the performance of a jointly trained hybrid-plus-adapter model.
+C.2 Regional calibration results
+In the regional station-adaptation experiment, MAE decreases from 2.466 mg/L without target
+support to 2.320, 2.160, and 2.023 mg/L with one, three, and ﬁve observations per station (Table 6;
+Figure 5). Five observations yield a 17.9% reduction on the unchanged query. The paired MAE
+diﬀerence is − 0. 442 mg/L, with a station-resampled 95% interval of [− 1. 026, − 0. 089] mg/L.
+T able 6: Sparse station calibration in the separate regional experiment. Five seeds share 43 target stations
+and 2,316 ﬁxed query cells. This baseline and query diﬀer from Table 2.
+K MAE (mg/L) Seed SD RMSE (mg/L) Reduction (%)
+0 2.466 0.007 5.390 0.00
+1 2.320 0.013 4.968 5.90
+3 2.160 0.011 4.746 12.41
+5 2.023 0.008 4.412 17.93
+Calibration improves 36 of 43 stations. The median station-level relative reduction is 3.39%,
+smaller than the pooled 17.9%, indicating heterogeneous beneﬁts and diﬀerent weighting of station
+records (Figure 6). With ﬁve observations, assigning the station corrections to diﬀerent targets
+increases mean MAE to 2.736 mg/L. This descriptive shuﬄe shows the importance of matching
+corrections to their own station; it does not identify the ecological cause of each station’s bias.
+170 1 3 5
+T arget observations per station, K
+2.0
+2.2
+2.4
+2.6
+2.8DOC MAE (mg L−1)
+Shuffled station
+2.736
+No support
+2.466
+Correct station
+2.023
+a Station-specific calibration
+0 10 20 30
+MAE reduction (%)
+K = 1
+K = 3
+K = 5
+5.9%
+12.4%
+17.9%
+b Paired improvement
+43 stations  ·  2,316 fixed query cells  ·  5 training seeds
+Figure 5: Sparse target observations improve regional DOC reconstruction. a, Mean DOC MAE
+across ﬁve training seeds as the number of observations per target station increases. The regional model
+and 2,316 query cells at 43 stations remain ﬁxed. Correct-station calibration is compared with station-
+shuﬄed corrections and the uncalibrated reference; error bars show seed SD. Shuﬄing uses one ﬁxed station
+permutation per seed and observation budget and serves as a descriptive diagnostic. b, Paired MAE reduction
+relative to no calibration, with 95% station-bootstrap intervals preserving cell weighting. Support may occur
+after query months, so this experiment evaluates historical reconstruction.
+18−1000 −500 0 500 1000 1500
+East–west distance from map center (km)
+−1000
+−750
+−500
+−250
+0
+250
+500
+750
+1000
+North–south distance from map center (km)
+Station-level benefit of five target observations
+−20
+0
+20
+40
+60
+K=5 MAE reduction from K=0 (%)
+43 target stations; marker size represents query months.
+Grey links show the station graph, not river-channel geometry.
+Lambert azimuthal equal-area projection; center 96°W, 39°N.
+Figure 6: Spatial heterogeneity in calibration beneﬁt. Five-observation station responses from the
+same regional product used in Table 6. Marker size encodes the magnitude of relative MAE change. The
+projected station coordinates are real; connecting lines represent graph links rather than mapped river-
+channel geometry.
+19References
+[1] Yang, Q., Zhang, X., Xu, X., and Asrar, G. R. (2017). An analysis of terrestrial and aquatic
+environmental controls of riverine dissolved organic carbon in the conterminous United States.
+Water, 9, 383. https://doi.org/10.3390/w9060383.
+[2] Tian, S., Sha, A., Luo, Y., et al. (2025). A novel framework for river organic carbon retrieval
+through satellite data and machine learning. ISPRS Journal of Photogrammetry and Remote
+Sensing, 221, 109–123. https://doi.org/10.1016/j.isprsjprs.2025.01.028.
+[3] Sterle, G., Perdrial, J., Kincaid, D. W., et al. (2024). CAMELS-Chem: augmenting CAMELS
+(Catchment Attributes and Meteorology for Large-sample Studies) with atmospheric and
+stream water chemistry data. Hydrology and Earth System Sciences , 28, 611–630. https:
+//doi.org/10.5194/hess-28-611-2024 .
+[4] Ver Hoef, J. M., Peterson, E., and Theobald, D. (2006). Spatial statistical models that use
+ﬂow and stream distance. Environmental and Ecological Statistics , 13, 449–464. https://doi.
+org/10.1007/s10651-006-0022-8 .
+[5] Breiman, L. (2001). Random forests. Machine Learning, 45, 5–32. https://doi.org/10.102
+3/A:1010933404324.
+[6] Geurts, P., Ernst, D., and Wehenkel, L. (2006). Extremely randomized trees. Machine Learning,
+63, 3–42. https://doi.org/10.1007/s10994-006-6226-1 .
+[7] Cini, A., Marisca, I., and Alippi, C. (2022). Filling the G_ap_s: multivariate time series
+imputation by graph neural networks. International Conference on Learning Representations .
+https://openreview.net/forum?id=kOu3-S3wJ7.
+[8] Che, Z., Purushotham, S., Cho, K., Sontag, D., and Liu, Y. (2018). Recurrent neural networks
+for multivariate time series with missing values. Scientiﬁc Reports, 8, 6085. https://doi.or
+g/10.1038/s41598-018-24271-9 .
+[9] Roberts, D. R., Bahn, V., Ciuti, S., et al. (2017). Cross-validation strategies for data with
+temporal, spatial, hierarchical, or phylogenetic structure. Ecography, 40, 913–929. https:
+//doi.org/10.1111/ecog.02881.
+20

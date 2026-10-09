@@ -1,0 +1,38 @@
+{
+  "config": {
+    "analyte": "doc",
+    "mask": "e2a_strict",
+    "seed": 44,
+    "models": [
+      "rf_default",
+      "rf_leaf2",
+      "et_default",
+      "et_sqrt",
+      "et_leaf2",
+      "et_leaf4"
+    ],
+    "n_estimators": 300,
+    "n_jobs": 4,
+    "features": "RF-context: hydro+ecology+calendar+current-month network context+target lags",
+    "fit_visibility": [
+      "train",
+      "context"
+    ],
+    "val_visibility": [
+      "train",
+      "context"
+    ],
+    "test_visibility": [
+      "train",
+      "val",
+      "context"
+    ],
+    "target_transform": "log1p",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/masks_stcore_v1/e2a_strict.npz",
+    "mask_sha256": "c2bfe292e2d292e791f4dfe673f7e61b010f933afea767d489eb778f0ab73b03"
+  },
+  "config_hash": "1cc4813aaf4ff61530ae76b5d5cacb3e65c829a5e7ef3baf51afa578b7100a5b",
+  "prediction_sha256": "ca9a50c78dc745e921fa3912121b622287bfa284fa48d6a45dc7a795155b3743"
+}
