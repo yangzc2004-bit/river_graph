@@ -1,0 +1,1 @@
+First implementation check stopped before a completion record because the new configuration omitted started_at, required by the existing sidecar writer. No target DOC was read and no scientific result was evaluated. Files and execution source are preserved here; the production calibration pilot uses the corrected source in the parent directory.

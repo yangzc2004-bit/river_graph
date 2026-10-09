@@ -1,0 +1,50 @@
+{
+  "config": {
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+    "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+    "q90_threshold_train": 10.0,
+    "split_seed": 143,
+    "seed": 44,
+    "experiment": "doc_log_concentration_residual_v2",
+    "parent_run": "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split143_seed44",
+    "parent_completion_hash": "9e9716097f4777b4ee33c1779c3698fe277ceebbfcd75d5db26809bd5610d251",
+    "started_at": "2026-10-05T16:20:47.490392+00:00",
+    "runtime_snapshot_hash": "b064cb8fe213258525b97f573850868fe7269c2f39f78d571e7c430edb620c8b",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "station_hidden_trees",
+      "unmonitored_residual",
+      "unmonitored_integrated",
+      "log_concentration_residual",
+      "log_concentration_integrated"
+    ],
+    "epochs": 30,
+    "patience": 5,
+    "tail_weight": 2,
+    "loss": "native mg/L MAE",
+    "residual_units": "log1p DOC",
+    "initialization": "parent initial encoder/GRU/decay; zero scalar head",
+    "main_change": "concentration-relative neural residual output rule",
+    "selection_role": "source_validation",
+    "evaluation_role": "source_validation_only"
+  },
+  "config_hash": "89a5191f5e5c6bb05b8bb51359a5261e076bac86ad31e216930ebd835ecf91f6",
+  "runtime_snapshot_hash": "b064cb8fe213258525b97f573850868fe7269c2f39f78d571e7c430edb620c8b",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "run_identity_sha256": "57c32a9419a43057407541d06b63c6586cf768a0c235f79507a0720a897f191c",
+  "prediction_sha256": "f93248325b4d0a9ef8c454cf8bad1c53e815a9aaadcad63d09421b91f76529c7",
+  "model_files": {
+    "config.json": "0b971292bed0b3645e84e813e1689abd8f21390d56c23f0d39b797f39c851341",
+    "relative.pt": "bcc24d7ae6bfebd673f21275abd1a708190e07ab109477c2e2db687fcbe33adc",
+    "relative.json": "5155b619db0a6abd4f34e80480387375522a2e3146149a1ddde00525fc59e374",
+    "relative_complete.json": "21799efcb0e257858478d89acaadcaa78615876ff5dcc5cca5988837d7254064",
+    "memory.json": "518e09701e345c05ed33e533a5d438d8df508aa1d4e7aa19966dadfc3b1a9ebb",
+    "validation_inputs.npz": "042f2fdd228460f98d24ab68d1954e2ca18fbefa2bb1ec935edc611eceef21d5"
+  },
+  "rows": 21476,
+  "selection_role": "source_validation"
+}

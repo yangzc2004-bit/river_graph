@@ -1,0 +1,95 @@
+........................................................................ [  7%]
+........................................................................ [ 14%]
+...............................................F........................ [ 22%]
+........................................................................ [ 29%]
+........................................................................ [ 37%]
+..........................s....................s........................ [ 44%]
+........................................................................ [ 52%]
+........................................................................ [ 59%]
+........................................................................ [ 67%]
+........................................................................ [ 74%]
+........................................................................ [ 82%]
+........................................................................ [ 89%]
+........................................................................ [ 97%]
+.........................                                                [100%]
+=================================== FAILURES ===================================
+_ test_hidden_labels_cannot_change_fits_or_source_bins_and_saved_inference[native_target_trees] _
+
+arm = 'native_target_trees'
+tmp_path = PosixPath('/private/var/folders/kl/2fcqmxl93rv6fsdm6q_y0n5h0000gn/T/pytest-of-yzccc/pytest-97/test_hidden_labels_cannot_chan0')
+
+    @pytest.mark.parametrize("arm", ARMS)
+    def test_hidden_labels_cannot_change_fits_or_source_bins_and_saved_inference(arm, tmp_path):
+        n, t = 7, 8
+        rng = np.random.default_rng(42)
+        data = {"y": rng.uniform(0, 12, (n, t)), "y_mask": np.ones((n, t), bool),
+            "x": rng.uniform(0, 5, (n, t, 2)), "x_mask": np.ones((n, t, 2), bool),
+            "regime": rng.random((n, 13)), "static": rng.random((n, 2)),
+            "months": np.arange("2000-01", "2000-09", dtype="datetime64[M]"),
+            "edge_index": np.array([[0, 1, 2], [1, 2, 3]])}
+        split = {"train": np.arange(5*t), "val": np.arange(5*t, 6*t), "test": np.arange(6*t, 7*t),
+            "context": np.array([], dtype=np.int64)}
+        folds = [np.array([0, 1]), np.array([2, 3]), np.array([4])]
+        daily = rng.random((n, t, 8))
+        changed = copy.deepcopy(data)
+        changed["y"][5:] += 10000
+        models, inputs = [], []
+        for view in (data, changed):
+            train_x, full_x = station_hidden_tree_inputs(view, split, folds, daily)
+            model = make_reference(arm, ExtraTreesRegressor(n_estimators=3, random_state=42), 42)
+            if arm != "native_target_trees":
+                model.set_params(max_iter=3, min_samples_leaf=2)
+            with threadpool_limits(limits=2):
+                model.fit(train_x, reference_target(view["y"].ravel()[split["train"]], arm))
+                prediction = predict_reference(model, full_x, arm)
+            models.append(model)
+            inputs.append((train_x, full_x, prediction))
+        for first, second in zip(inputs[0], inputs[1], strict=True):
+>           np.testing.assert_array_equal(first, second)
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 6 / 56 (10.7%)
+E           First 5 mismatches are at indices:
+E            [3]: 8.044188575290155 (ACTUAL), 8.044188575290157 (DESIRED)
+E            [18]: 7.763437462009694 (ACTUAL), 7.763437462009693 (DESIRED)
+E            [20]: 4.302690927380821 (ACTUAL), 4.302690927380822 (DESIRED)
+E            [23]: 7.472972763630696 (ACTUAL), 7.472972763630694 (DESIRED)
+E            [30]: 4.794323416038342 (ACTUAL), 4.794323416038341 (DESIRED)
+E           Max absolute difference among violations: 1.77635684e-15
+E           Max relative difference among violations: 2.37704177e-16
+E            ACTUAL: array([7.099286, 4.992866, 7.887304, 8.044189, 3.96492 , 6.434032,
+E                  6.696439, 7.196152, 2.071025, 6.282343, 3.041763, 8.172005,
+E                  4.75145 , 4.849617, 3.711447, 2.467525, 5.918517, 1.992377,...
+E            DESIRED: array([7.099286, 4.992866, 7.887304, 8.044189, 3.96492 , 6.434032,
+E                  6.696439, 7.196152, 2.071025, 6.282343, 3.041763, 8.172005,
+E                  4.75145 , 4.849617, 3.711447, 2.467525, 5.918517, 1.992377,...
+
+tests/test_doc_reference_objectives.py:66: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491
+  /Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_doc_reference_objectives.py::test_hidden_labels_cannot_change_fits_or_source_bins_and_saved_inference[log_l1_boosting]
+  /Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/joblib/externals/loky/backend/context.py:134: UserWarning: Could not find the number of physical cores for the following reason:
+  invalid literal for int() with base 10: ''
+  Returning the number of logical cores instead. You can silence this warning by setting LOKY_MAX_CPU_COUNT to the number of cores you want to use.
+    warnings.warn(
+
+tests/test_phase3_uncertainty.py::test_interval_math_median_spread_and_finite_sample_quantile
+  /Users/yzccc/river_graph/src/river_graph/experiments/phase3_uncertainty.py:189: RuntimeWarning: overflow encountered in expm1
+    "pi_upper": np.expm1(median + half),
+
+tests/test_phase3_uncertainty.py::test_interval_math_median_spread_and_finite_sample_quantile
+  /Users/yzccc/river_graph/tests/test_phase3_uncertainty.py:153: RuntimeWarning: overflow encountered in expm1
+    assert np.allclose(out["pi_upper"], np.expm1(
+
+tests/test_portable_doc_source_fit.py::test_frozen_source_fit_exports_replayable_label_free_predictions
+  /Users/yzccc/river_graph/src/river_graph/experiments/graph_upgrade_v2.py:264: UserWarning: std(): degrees of freedom is <= 0. Correction should be strictly less than the reduction factor (input numel divided by output numel). (Triggered internally at /Users/runner/work/pytorch/pytorch/aten/src/ATen/native/ReduceOps.cpp:1913.)
+    edge_attr = (edge_attr - edge_attr.mean(0)) / edge_attr.std(0, unbiased=False).clamp_min(1e-8)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_doc_reference_objectives.py::test_hidden_labels_cannot_change_fits_or_source_bins_and_saved_inference[native_target_trees]
+1 failed, 958 passed, 2 skipped, 5 warnings in 41.35s

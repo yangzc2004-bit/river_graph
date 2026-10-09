@@ -1,0 +1,53 @@
+{
+  "config": {
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+    "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+    "q90_threshold_train": 10.0,
+    "split_seed": 144,
+    "seed": 42,
+    "experiment": "doc_longer_history_v1",
+    "parent_run": "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed42",
+    "parent_completion_hash": "e2b6879dcb9dd31a34b0b5b8cdcf36b81d24e69216ea3384d81fe616dcf62ed6",
+    "started_at": "2026-10-05T21:45:25.520395+00:00",
+    "runtime_snapshot_hash": "02881328816626e1d743e95545745a50bf3586273fa013335b88d1ed4b2a7c6e",
+    "models": [
+      "current_model",
+      "matched_daily_trees",
+      "station_hidden_trees",
+      "unmonitored_residual",
+      "unmonitored_integrated",
+      "longer_history_residual",
+      "longer_history_integrated",
+      "longer_history_truncated_residual"
+    ],
+    "epochs": 30,
+    "patience": 5,
+    "lookback": 24,
+    "tail_weight": 2,
+    "loss": "native mg/L MAE",
+    "residual_units": "native mg/L",
+    "initialization": "parent initial encoder/GRU/decay; zero scalar head",
+    "main_change": "same native residual; 24-month causal window instead of 12",
+    "inference_diagnostic": "same fitted24-month weights/scale; truncate to12 months; not selectable",
+    "selection_role": "source_validation",
+    "evaluation_role": "source_validation_only"
+  },
+  "config_hash": "df4bfd1fb8c314b48fb183eb4efcbc9f4680e0a4208bad7eca02ac3ee9780fdb",
+  "runtime_snapshot_hash": "02881328816626e1d743e95545745a50bf3586273fa013335b88d1ed4b2a7c6e",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "run_identity_sha256": "4e851dcd9f1e8296fa13d9ca6e0437fcbdfe48663c52f8b11563600b21223419",
+  "prediction_sha256": "2f5e63cf6002d9412386765069bf697a456c8524ceea5c6808087afeda2ef8f6",
+  "model_files": {
+    "config.json": "5df3ee6bef8b9277cfd3120105364a77e000e8f8aa40803b04d46ad34b1f01b7",
+    "longer_history.pt": "642fa7093bc66363292f7878a0d321b18abfbde0bc07ddac7a882df625ccfe29",
+    "longer_history.json": "bb91ee2da27da55c431c525ace7f70bc40f7ee5550eb1c4295d6293b41495c43",
+    "longer_history_complete.json": "9bcc504a6190129d8ce1c21378062b96254cfc2a69b929e94dfa4d144bab7674",
+    "memory.json": "61dd145f4c47e9c01b6f7a3636d98e51a46b6756e93b92be6f8ecde6c8d2bfd4",
+    "validation_inputs.npz": "d451a7411b6e41981f62b7dd1682e4af43f1c8906081f222c09a4ffad85310cb"
+  },
+  "rows": 28048,
+  "selection_role": "source_validation"
+}

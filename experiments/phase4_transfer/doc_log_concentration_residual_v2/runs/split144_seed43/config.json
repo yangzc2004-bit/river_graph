@@ -1,0 +1,32 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "split_seed": 144,
+  "seed": 43,
+  "experiment": "doc_log_concentration_residual_v2",
+  "parent_run": "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed43",
+  "parent_completion_hash": "946c1d092caf22b12c51308d588d5cf92614383c7df9995fc6e1034abdf45224",
+  "started_at": "2026-10-05T16:21:01.952736+00:00",
+  "runtime_snapshot_hash": "b064cb8fe213258525b97f573850868fe7269c2f39f78d571e7c430edb620c8b",
+  "models": [
+    "current_model",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "unmonitored_residual",
+    "unmonitored_integrated",
+    "log_concentration_residual",
+    "log_concentration_integrated"
+  ],
+  "epochs": 30,
+  "patience": 5,
+  "tail_weight": 2,
+  "loss": "native mg/L MAE",
+  "residual_units": "log1p DOC",
+  "initialization": "parent initial encoder/GRU/decay; zero scalar head",
+  "main_change": "concentration-relative neural residual output rule",
+  "selection_role": "source_validation",
+  "evaluation_role": "source_validation_only"
+}
