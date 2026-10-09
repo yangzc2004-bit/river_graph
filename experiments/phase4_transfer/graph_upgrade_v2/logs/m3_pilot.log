@@ -1,0 +1,43 @@
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+[m3] doc e2a_strict seed=42
+[m3] doc e2a_strict seed=43
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/run_graph_upgrade_v2.py", line 263, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/run_graph_upgrade_v2.py", line 252, in main
+    rows.append(_run_one(
+                ^^^^^^^^^
+  File "/Users/yzccc/river_graph/scripts/run_graph_upgrade_v2.py", line 176, in _run_one
+    pred = model.fit_predict(dataset, split)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/experiments/graph_upgrade_v2.py", line 396, in fit_predict
+    self.fit(dataset, split)
+  File "/Users/yzccc/river_graph/src/river_graph/experiments/graph_upgrade_v2.py", line 315, in fit
+    eval_pred = self._forward(model, eval_x, inputs, dataset, eval_age)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/experiments/graph_upgrade_v2.py", line 258, in _forward
+    return model.forward_sequence(x, model._edge_index, model._edge_attr,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/temporal.py", line 155, in forward_sequence
+    return self._temporal_windows(hidden)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/graph_upgrade.py", line 243, in _temporal_windows
+    self._causal_conv(self.season_conv, seq)[:, :, -1]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/graph_upgrade.py", line 223, in _causal_conv
+    return conv(torch.nn.functional.pad(seq, (pad, 0)))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1783, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1794, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/nn/modules/conv.py", line 385, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/nn/modules/conv.py", line 380, in _conv_forward
+    return F.conv1d(
+           ^^^^^^^^^
+KeyboardInterrupt

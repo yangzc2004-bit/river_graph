@@ -1,0 +1,248 @@
+"""Observation-driven temporal graph modules.
+
+The released H2X/H2X-T models remain unchanged.  This module contains the
+next experimental family used by ``graph_upgrade_v2``:
+
+* observation-aware temporal memory (GRU-D style decay),
+* directed lagged transport messages, and
+* a small causal multi-scale temporal mixer.
+
+The components deliberately accept the same hidden-state convention as the
+released temporal model, so each mechanism can be switched on independently.
+"""
+
+from __future__ import annotations
+
+import torch
+from torch import nn
+
+from river_graph.models.temporal import TemporalTransportGCNImputer
+
+
+class ObservationAwareTemporalTransportGCNImputer(
+    TemporalTransportGCNImputer
+):
+    """Causal GRU with a learned decay driven by observation age.
+
+    ``age_seq`` is measured in months since the most recent visible target
+    value (log-scaled) and has shape ``[time, nodes]``. Decay acts on the
+    recurrent state BEFORE each GRU update, including the current month.
+    """
+
+    def __init__(self, spatial, *, lookback: int = 12,
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none"):
+        super().__init__(
+            spatial,
+            lookback=lookback,
+            temporal_hidden=temporal_hidden,
+            chunk_months=chunk_months,
+            history_ablation=history_ablation,
+        )
+        self.temporal = nn.GRUCell(temporal_hidden + 1, temporal_hidden)
+        self.decay = nn.Linear(4, temporal_hidden)
+        # Inputs: log age, local visibility, upstream and downstream support.
+        nn.init.zeros_(self.decay.weight)
+        nn.init.zeros_(self.decay.bias)
+        with torch.no_grad():
+            self.decay.weight[:, 0] = 0.1
+
+    def _temporal_windows(self, hidden_seq: torch.Tensor,
+                          age_seq: torch.Tensor | None = None,
+                          support_seq: torch.Tensor | None = None) -> torch.Tensor:
+        if hidden_seq.ndim != 3:
+            raise ValueError("hidden_seq must have shape [time, nodes, hidden]")
+        t, n, h = hidden_seq.shape
+        if age_seq is None:
+            age_seq = hidden_seq.new_zeros((t, n))
+        if age_seq.shape != (t, n):
+            raise ValueError("age_seq must have shape [time, nodes]")
+        outputs: list[torch.Tensor] = []
+        device = hidden_seq.device
+        if support_seq is None:
+            support_seq = hidden_seq.new_zeros((t, n, 3))
+        decay_input = torch.cat([age_seq[..., None], support_seq], dim=-1)
+        gamma = torch.exp(-torch.relu(self.decay(decay_input)))
+        for start in range(0, t, self.chunk_months):
+            stop = min(start + self.chunk_months, t)
+            months = torch.arange(start, stop, device=device)
+            offsets = torch.arange(self.lookback - 1, -1, -1, device=device)
+            raw_idx = months[:, None] - offsets[None, :]
+            valid = (raw_idx >= 0).float()
+            idx = raw_idx.clamp(min=0)
+            seq = hidden_seq[idx].permute(1, 0, 2, 3).reshape(
+                self.lookback, (stop - start) * n, h
+            )
+            decay = gamma[idx].permute(1, 0, 2, 3).reshape(
+                self.lookback, (stop - start) * n, h
+            )
+            valid_feature = valid.T[:, :, None].expand(
+                self.lookback, stop - start, n
+            ).reshape(self.lookback, (stop - start) * n, 1)
+            # Padding contains no target-derived information and performs no
+            # recurrent update; the first real month starts from zero state.
+            seq = seq * valid_feature
+            if self.history_ablation == "shuffle" and self.lookback > 1:
+                seq = torch.cat([seq[:-1].flip(0), seq[-1:]], dim=0)
+                valid_feature = torch.cat(
+                    [valid_feature[:-1].flip(0), valid_feature[-1:]], dim=0
+                )
+                decay = torch.cat([decay[:-1].flip(0), decay[-1:]], dim=0)
+            state = hidden_seq.new_zeros(((stop - start) * n, h))
+            for step in range(self.lookback):
+                updated = self.temporal(
+                    torch.cat([seq[step], valid_feature[step]], dim=-1),
+                    decay[step] * state,
+                )
+                state = torch.where(valid_feature[step].bool(), updated, state)
+            last = state.reshape(stop - start, n, self.temporal_hidden)
+            outputs.append(self.spatial.predict_from_hidden(last))
+        return torch.cat(outputs, dim=0)
+
+    def forward_sequence(self, x_seq, edge_index, edge_attr, env_raw=None,
+                         *, age_seq: torch.Tensor | None = None):
+        if self.history_ablation == "hydro_only":
+            x_seq = x_seq.clone()
+            x_seq[:, :, 8:10] = 0.0
+        hidden = self.encode_months(x_seq, edge_index, edge_attr, env_raw)
+        support_seq = torch.stack([x_seq[..., 9], x_seq[..., -2], x_seq[..., -1]], -1)
+        return self._temporal_windows(hidden, age_seq, support_seq)
+
+
+class LaggedTransportTemporalImputer(ObservationAwareTemporalTransportGCNImputer):
+    """M1 memory with upstream-only transport at causal monthly lags.
+
+    Each spatial layer combines its self path and a degree-normalized sum of
+    messages from actual upstream edges. Lag weights depend on edge attributes,
+    source flow at the lagged month, receiving flow now, their visibility, and
+    target-observation support. Weights are normalized across available lags
+    before aggregation; they are never cancelled by a per-lag normalization.
+    """
+
+    LAGS = (0, 1, 3, 6, 12)
+
+    def __init__(self, spatial, *, lookback: int = 12,
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none", lag_mode: str = "learned"):
+        super().__init__(
+            spatial,
+            lookback=lookback,
+            temporal_hidden=temporal_hidden,
+            chunk_months=chunk_months,
+            history_ablation=history_ablation,
+        )
+        if lag_mode not in ("static", "fixed", "learned", "none"):
+            raise ValueError("invalid lag mode")
+        self.lag_mode = lag_mode
+        edge_dim = spatial.convs[0].gate_up[0].in_features
+        self.lag_gate = nn.Sequential(nn.Linear(edge_dim + 7, 16), nn.ReLU(), nn.Linear(16, 1))
+
+    def lag_weights(self, x_seq, edge_index, edge_attr):
+        t = len(x_seq)
+        src, dst = edge_index
+        logits = []
+        months = torch.arange(t, device=x_seq.device)
+        for lag in self.LAGS:
+            indices = (months - lag).clamp_min(0)
+            dynamic = torch.stack([
+                x_seq[indices][:, src, 2], x_seq[:, dst, 2],
+                x_seq[indices][:, src, 3], x_seq[:, dst, 3],
+                x_seq[indices][:, src, 9], x_seq[:, dst, 9],
+                torch.full((t, len(src)), lag / 12, device=x_seq.device),
+            ], -1)
+            if self.lag_mode == "learned":
+                features = torch.cat([edge_attr[None].expand(t, -1, -1), dynamic], -1)
+                score = self.lag_gate(features).squeeze(-1)
+            else:
+                # Fixed comparator: equal weights on available buckets.
+                score = x_seq.new_zeros((t, len(src)))
+            score = score.masked_fill((months < lag)[:, None], -torch.inf)
+            if self.lag_mode == "static" and lag != 0:
+                score = torch.full_like(score, -torch.inf)
+            logits.append(score)
+        weights = torch.softmax(torch.stack(logits, -1), -1)
+        return weights if self.lag_mode != "none" else torch.zeros_like(weights)
+
+    def encode_months(self, x_seq, edge_index, edge_attr, env_raw=None):
+        t, n, _ = x_seq.shape
+        h = x_seq
+        if self.spatial.env_encoder is not None:
+            env = self.spatial.env_encoder(env_raw)[None].expand(t, -1, -1)
+            h = torch.cat([h, env], -1)
+        weights = self.lag_weights(x_seq, edge_index, edge_attr)
+        src, dst = edge_index
+        degree = torch.bincount(dst, minlength=n).to(h).clamp_min(1)[None, :, None]
+        for conv in self.spatial.convs:
+            message = h.new_zeros((t, n, conv.up_lin.out_features))
+            if len(src) and self.lag_mode != "none":
+                projected = conv.up_lin(h)
+                strength = torch.sigmoid(conv.gate_up(edge_attr))
+                for li, lag in enumerate(self.LAGS):
+                    if lag >= t:
+                        continue
+                    weighted = projected[:t - lag, src] * weights[lag:, :, li, None] * strength
+                    added = message.new_zeros(message.shape)
+                    added[lag:].index_add_(1, dst, weighted)
+                    message = message + added
+            h = torch.relu(conv.self_lin(h) + message / degree)
+            h = torch.nn.functional.dropout(h, self.spatial.dropout, self.training)
+        return h
+
+
+class MultiScaleTemporalTransportImputer(TemporalTransportGCNImputer):
+    """Causal short/seasonal/trend temporal mixer over H2X states."""
+
+    def __init__(self, spatial, *, lookback: int = 12,
+                 temporal_hidden: int = 64, chunk_months: int = 256,
+                 history_ablation: str = "none"):
+        super().__init__(
+            spatial,
+            lookback=lookback,
+            temporal_hidden=temporal_hidden,
+            chunk_months=chunk_months,
+            history_ablation=history_ablation,
+        )
+        h = spatial.head.in_features
+        self.short_conv = nn.Conv1d(h, h, kernel_size=3, dilation=1)
+        self.season_conv = nn.Conv1d(h, h, kernel_size=5, dilation=2)
+        self.trend_gru = nn.GRU(h + 1, h, num_layers=1)
+        self.scale_gate = nn.Sequential(nn.Linear(3 * h, 3), nn.Softmax(dim=-1))
+
+    @staticmethod
+    def _causal_conv(conv: nn.Conv1d, seq: torch.Tensor) -> torch.Tensor:
+        # seq is [batch, hidden, time].  Left padding keeps output aligned to
+        # the current month and never reads a future element.
+        pad = (conv.kernel_size[0] - 1) * conv.dilation[0]
+        return conv(torch.nn.functional.pad(seq, (pad, 0)))
+
+    def _temporal_windows(self, hidden_seq: torch.Tensor) -> torch.Tensor:
+        t, n, h = hidden_seq.shape
+        outputs = []
+        device = hidden_seq.device
+        for start in range(0, t, self.chunk_months):
+            stop = min(start + self.chunk_months, t)
+            months = torch.arange(start, stop, device=device)
+            offsets = torch.arange(self.lookback - 1, -1, -1, device=device)
+            raw_idx = months[:, None] - offsets[None, :]
+            valid = (raw_idx >= 0).float()
+            idx = raw_idx.clamp(min=0)
+            seq = hidden_seq[idx].permute(0, 2, 3, 1).reshape(
+                (stop - start) * n, h, self.lookback
+            )
+            short = self._causal_conv(self.short_conv, seq)[:, :, -1]
+            seasonal = self._causal_conv(self.season_conv, seq)[:, :, -1]
+            trend_in = seq.permute(2, 0, 1)
+            valid_feature = valid.T[:, :, None].expand(
+                self.lookback, stop - start, n
+            ).reshape(self.lookback, (stop - start) * n, 1)
+            trend, _ = self.trend_gru(torch.cat([trend_in, valid_feature], dim=-1))
+            trend = trend[-1]
+            gate = self.scale_gate(torch.cat([short, seasonal, trend], dim=-1))
+            fused = (
+                gate[:, 0:1] * short
+                + gate[:, 1:2] * seasonal
+                + gate[:, 2:3] * trend
+            )
+            last = fused.reshape(stop - start, n, h)
+            outputs.append(self.spatial.predict_from_hidden(last))
+        return torch.cat(outputs, dim=0)

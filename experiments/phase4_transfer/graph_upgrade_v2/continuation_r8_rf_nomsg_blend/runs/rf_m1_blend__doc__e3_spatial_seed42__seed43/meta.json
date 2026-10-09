@@ -1,0 +1,95 @@
+{
+  "config": {
+    "model_name": "validation_selected_rf_m1_blend",
+    "analyte": "doc",
+    "mask": "e3_spatial_seed42",
+    "seed": 43,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "mask_path": "experiments/phase4_transfer/temporal_h2x_v1/target_masks/doc__e3_spatial_seed42.npz",
+    "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_sha256": "b840ddc5957b28cb293e60c2bab005c5ebac4be519054237e9396194e258be46",
+    "gnn": {
+      "mechanism": "m1",
+      "spatial_variant": "baseline",
+      "seed": 43,
+      "lookback": 12,
+      "hidden": 64,
+      "temporal_hidden": 64,
+      "layers": 2,
+      "dropout": 0.1,
+      "lr": 0.001,
+      "max_epochs": 30,
+      "patience": 5,
+      "target_transform": "log1p",
+      "edge_direction": "both",
+      "edge_set": "empty",
+      "feature_edge_set": "river",
+      "env_encoder": true,
+      "context_mode": "none",
+      "masking": "mixed",
+      "chunk_months": 256
+    },
+    "rf": {
+      "n_estimators": 200,
+      "n_jobs": 4,
+      "random_state": 43
+    },
+    "fit_roles": [
+      "train",
+      "context"
+    ],
+    "test_roles": [
+      "train",
+      "val",
+      "context"
+    ],
+    "alpha_rf_grid": [
+      0.0,
+      0.05,
+      0.1,
+      0.15000000000000002,
+      0.2,
+      0.25,
+      0.30000000000000004,
+      0.35000000000000003,
+      0.4,
+      0.45,
+      0.5,
+      0.55,
+      0.6000000000000001,
+      0.65,
+      0.7000000000000001,
+      0.75,
+      0.8,
+      0.8500000000000001,
+      0.9,
+      0.9500000000000001,
+      1.0
+    ],
+    "selection": "raw_validation_mae; ties_prefer_rf",
+    "torch_threads": 4,
+    "runtime_snapshot_hash": "134a9e691d394660d2187f00008ee0576be174a7aeb475ad46985fef64f95554",
+    "plan_path": "experiments/phase4_transfer/graph_upgrade_v2/continuation_r8_rf_nomsg_blend/plan.md",
+    "plan_sha256": "b4126073c50a810d7602f2fc2af4e6e934b065bd39b3773ac0568b6b4c5ff06e",
+    "config_hash_schema": "canonical_json_all_fields_v1"
+  },
+  "config_hash": "24f851814e981338ce9cc489dfda3b093bf2fa938592e4d92f7d5d3a98261c17",
+  "started_at": "2026-09-29T05:41:39.883120+00:00",
+  "finished_at": "2026-09-29T05:44:07.625118+00:00",
+  "elapsed_s": 147.7450937910471,
+  "run_identity_sha256": "46276789ae44e98de72756426ba9ccb49acc06bc36c1e713f86cabc101e7b8b3",
+  "alpha_rf": 1.0,
+  "q90_threshold_train": 9.404999732971191,
+  "training": {
+    "epochs_run": 28,
+    "best_val_loss": 0.39253684878349304
+  },
+  "artifacts": {
+    "gnn_checkpoint.pt": "dcbb1b3987e82495945582a5269eb680bf124a290c0c80658b4a8e5d726b3c06",
+    "rf.joblib": "0993223de91ab2d1e8cfd3fe983eafc19a3a35c496795462987f712ab6c5efdd",
+    "selection.json": "b36233c27881db376ea77700b6c8520b4db92dac47bf09956cbfd1bfe9eb5e4a",
+    "test_predictions.parquet": "4a6d13132c8b487ab206344ec9204dba495c28b265848f6138af44fe6668ac4a",
+    "training_trace.jsonl": "4c2913c01fdfcd2025f7c6f8198d06abff292aa015eef6d77b3858cbd49073ef",
+    "val_predictions.parquet": "ea7d10b0212ec925ed3f16ecfffb6f488b1201d4814f8da08de60408b97a6d2a"
+  }
+}
