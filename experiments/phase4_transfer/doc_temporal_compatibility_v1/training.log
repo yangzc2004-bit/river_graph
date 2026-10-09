@@ -1,0 +1,22 @@
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/run_ladder.py", line 343, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/run_ladder.py", line 57, in main
+    return temporal_compatibility_main()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/scripts/run_doc_temporal_compatibility_v1.py", line 239, in main
+    run_one(args.root, mask, seed, digest(snapshot))
+  File "/Users/yzccc/river_graph/scripts/run_doc_temporal_compatibility_v1.py", line 140, in run_one
+    epoch_callback=lambda row: progress("backbone", row)).fit(dataset, split)
+                                                          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/unified_doc.py", line 67, in fit
+    _, validation_query = support_query_cells(
+                          ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/experiments/unified_spatial_protocol.py", line 168, in support_query_cells
+    schedule, query = support_schedule(target, n_months)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/experiments/spatial_fewshot.py", line 23, in support_schedule
+    raise ValueError("each target station needs five support months and at least one query")
+ValueError: each target station needs five support months and at least one query

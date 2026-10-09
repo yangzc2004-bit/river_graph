@@ -1,0 +1,53 @@
+{
+  "config": {
+    "experiment": "doc_temporal_compatibility_v2",
+    "mask": "e2a_strict",
+    "seed": 42,
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/masks_stcore_v1/e2a_strict.npz",
+    "mask_hash": "c2bfe292e2d292e791f4dfe673f7e61b010f933afea767d489eb778f0ab73b03",
+    "runtime_snapshot_hash": "b092da44bb05f260c7ca677753f4a5ba0a7d1505fa1d21b8e9896df7e846fced",
+    "started_at": "2026-10-05T13:32:40.321559+00:00",
+    "q90_threshold_train": 11.0,
+    "models": [
+      "original_hybrid",
+      "context_trees",
+      "matched_daily_trees",
+      "station_hidden_trees",
+      "current_native",
+      "current_fusion",
+      "upgraded_native",
+      "upgraded_fusion"
+    ],
+    "source_backbone_epochs": 20,
+    "current_native_epochs": 120,
+    "candidate_native_epochs": 30,
+    "patience": 5,
+    "inference_roles": [
+      "train",
+      "context"
+    ],
+    "selection_role": "source_validation",
+    "query_policy": "exact existing temporal test cells; no K support added",
+    "memory": "disabled: source/validation stations overlap",
+    "scope": "retrospective temporal compatibility"
+  },
+  "config_hash": "06df640a233114cc356280155b246fa485ce31cd97c874ce7d877926f57b09dc",
+  "runtime_snapshot_hash": "b092da44bb05f260c7ca677753f4a5ba0a7d1505fa1d21b8e9896df7e846fced",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "c2bfe292e2d292e791f4dfe673f7e61b010f933afea767d489eb778f0ab73b03",
+  "run_identity_sha256": "0e8d31193a0437123ee7f2d016a68fb6a3796cb3967d6066fc9378989a9c0953",
+  "prediction_sha256": "08ec2c1e001016b296987a207921f2114bdefec3a6cd3b47a3b5d6c0456d9947",
+  "model_files": {
+    "config.json": "356f8eaeb9d19bfae25f062f7bc30aefc4a4c06bb09513b3327628cbc91f7214",
+    "candidate.pt": "3e2221df3950d6af71de8ed01c041a0192efa089185e68e117aff04c4b083a24",
+    "fusion.json": "651ada0668f46d383d672d42b5ef163c3fd77ffd11382e0c7342ebf6122e4600",
+    "components.npz": "fdeba3964d95cdd292b00c8b1429460d181b358d9650ea9b366e2dacfdf1b550",
+    "backbone_complete.json": "90ef2551aeaacbed80f5b1a521aa5db107cb6fc3a06e8173f17610ae91a47b90",
+    "trees_complete.json": "a2f832bbb2a80ad7a22d74b502849474b36e6cff308071883fe5c894e9aa09e2",
+    "current_complete.json": "a79b67e885fe5622e4a528adf202fbbb472fc4db53f565db6b6b1dccae859f3f"
+  },
+  "rows": 17784,
+  "selection_role": "source_validation"
+}

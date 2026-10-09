@@ -1,0 +1,34 @@
+{
+  "experiment": "doc_temporal_compatibility_v2",
+  "mask": "e2a_strict",
+  "seed": 42,
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/masks_stcore_v1/e2a_strict.npz",
+  "mask_hash": "c2bfe292e2d292e791f4dfe673f7e61b010f933afea767d489eb778f0ab73b03",
+  "runtime_snapshot_hash": "b092da44bb05f260c7ca677753f4a5ba0a7d1505fa1d21b8e9896df7e846fced",
+  "started_at": "2026-10-05T13:32:40.321559+00:00",
+  "q90_threshold_train": 11.0,
+  "models": [
+    "original_hybrid",
+    "context_trees",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "current_native",
+    "current_fusion",
+    "upgraded_native",
+    "upgraded_fusion"
+  ],
+  "source_backbone_epochs": 20,
+  "current_native_epochs": 120,
+  "candidate_native_epochs": 30,
+  "patience": 5,
+  "inference_roles": [
+    "train",
+    "context"
+  ],
+  "selection_role": "source_validation",
+  "query_policy": "exact existing temporal test cells; no K support added",
+  "memory": "disabled: source/validation stations overlap",
+  "scope": "retrospective temporal compatibility"
+}

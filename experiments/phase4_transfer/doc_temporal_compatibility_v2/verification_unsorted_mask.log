@@ -1,0 +1,31 @@
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+{"run": "e2a_strict_seed42", "max_grid_replay_difference": {"original_hybrid": 2.842170943040401e-14, "context_trees": 7.105427357601002e-14, "matched_daily_trees": 3.552713678800501e-14, "station_hidden_trees": 3.552713678800501e-14, "current_native": 7.105427357601002e-14, "current_fusion": 6.394884621840902e-14, "upgraded_native": 3.552713678800501e-14, "upgraded_fusion": 3.552713678800501e-14}, "test_cells": 2223}
+{"run": "e2a_strict_seed43", "max_grid_replay_difference": {"original_hybrid": 2.842170943040401e-14, "context_trees": 4.973799150320701e-14, "matched_daily_trees": 2.842170943040401e-14, "station_hidden_trees": 4.263256414560601e-14, "current_native": 4.973799150320701e-14, "current_fusion": 3.907985046680551e-14, "upgraded_native": 4.263256414560601e-14, "upgraded_fusion": 3.552713678800501e-14}, "test_cells": 2223}
+{"run": "e2a_strict_seed44", "max_grid_replay_difference": {"original_hybrid": 2.1316282072803006e-14, "context_trees": 2.1316282072803006e-14, "matched_daily_trees": 2.1316282072803006e-14, "station_hidden_trees": 2.842170943040401e-14, "current_native": 2.1316282072803006e-14, "current_fusion": 1.5987211554602254e-14, "upgraded_native": 2.842170943040401e-14, "upgraded_fusion": 4.263256414560601e-14}, "test_cells": 2223}
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/verify_doc_temporal_compatibility_v1.py", line 114, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/verify_doc_temporal_compatibility_v1.py", line 106, in main
+    row = replay(run, runtime)
+          ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/scripts/verify_doc_temporal_compatibility_v1.py", line 86, in replay
+    np.testing.assert_array_equal(group.cell, split["test"])
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/numpy/testing/_private/utils.py", line 1128, in assert_array_equal
+    assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/numpy/testing/_private/utils.py", line 988, in assert_array_compare
+    raise AssertionError(msg)
+AssertionError: 
+Arrays are not equal
+
+Mismatched elements: 1778 / 1778 (100%)
+First 5 mismatches are at indices:
+ [0]: 9741 (ACTUAL), 177885 (DESIRED)
+ [1]: 9745 (ACTUAL), 192902 (DESIRED)
+ [2]: 9746 (ACTUAL), 33998 (DESIRED)
+ [3]: 9749 (ACTUAL), 82351 (DESIRED)
+ [4]: 9750 (ACTUAL), 69294 (DESIRED)
+Max absolute difference among violations: 217778
+Max relative difference among violations: 22.33849626
+ ACTUAL: array([  9741,   9745,   9746, ..., 230184, 230193, 230200], shape=(1778,))
+ DESIRED: array([177885, 192902,  33998, ..., 180470, 181781, 183100], shape=(1778,))
