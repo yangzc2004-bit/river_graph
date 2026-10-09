@@ -1,0 +1,119 @@
+{
+  "config": {
+    "experiment": "doc_ecological_transfer_v1",
+    "split_seed": 142,
+    "seed": 42,
+    "started_at": "2026-10-03T13:29:33.543243+00:00",
+    "runtime_snapshot_hash": "6b786249a5370411d5d9a05b9102ba091134fa394f031277aa6979d18d08e174",
+    "prior_run": "experiments/phase4_transfer/doc_flow_interaction_v1/runs/split142_seed42",
+    "prior_completion_hash": "0b35df6bd00c4f5fec3341f54c307d94afcdfaaf22b58b0b61959fcb773f4644",
+    "source_run": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/runs/split142_seed42",
+    "basis_run": "experiments/phase4_transfer/unified_doc_spatial_v4/runs/split142_seed42",
+    "oof_run": "experiments/phase4_transfer/unified_doc_spatial_v3/runs/split142_seed42",
+    "source_completion_hash": "07a71822b9990b2552ee211da73a8e2df5765fb92a216655d36189425dc83ec9",
+    "basis_completion_hash": "0896e5bef1e17343e3e4c492ae679cc93ea81b2e27ab75f2a6e2550edd240e17",
+    "oof_completion_hash": "ffefd0935da47eab15550e6df83ba26dbb1de9cb5df9d2a982ae1ac02a1a9917",
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+    "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+    "q90_threshold_train": 9.851500511169434,
+    "query_cells": 3975,
+    "target_analyte": "doc",
+    "inference_roles": [
+      "train"
+    ],
+    "models": [
+      "interaction_constant",
+      "interaction_gru_tuned_anchor",
+      "global_bias_constant",
+      "global_bias_gru_tuned_anchor",
+      "ecological_bias_constant",
+      "ecological_bias_gru_tuned_anchor",
+      "global_affine_constant",
+      "global_affine_gru_tuned_anchor",
+      "ecological_affine_constant",
+      "ecological_affine_gru_tuned_anchor"
+    ],
+    "arms": [
+      "global_bias",
+      "ecological_bias",
+      "global_affine",
+      "ecological_affine"
+    ],
+    "k_values": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "ecological_columns": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "neighbor_grid": [
+      20,
+      40,
+      80
+    ],
+    "memory_ridge_grid": [
+      0.1,
+      1
+    ],
+    "gamma_grid": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "memory_loss": "station-balanced smooth native MAE plus identity-centered ridge",
+    "smooth_epsilon_scaled": 0.05,
+    "memory_max_iter": 200,
+    "conditioning": "source-station-balanced standardized log1p(context prediction)",
+    "residual_library": "source labels minus station OOF context prediction",
+    "mixing": "context + (1-gamma)*(interaction-context) + gamma*memory",
+    "selection": "source-validation K0 fixed-query pooled native MAE",
+    "ecological_scaling": "source unique-station median/IQR; -1/nonfinite missing",
+    "minimum_valid_ecology": 5,
+    "donor_weighting": "uniform stations; uniform cells within station",
+    "exclude_receiving_station": true,
+    "support_basis": "frozen v4 GRU; matched across arms",
+    "alpha_grid": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "ridge_grid": [
+      0.1,
+      1,
+      10,
+      "infinity"
+    ],
+    "torch_threads": 2,
+    "study_role": "development on previously evaluated station partitions"
+  },
+  "config_hash": "ccbabfc85a4ab18158d8ad8c1d87d681a388aa457f178c8afd1eac91cc7a3a0d",
+  "runtime_snapshot_hash": "6b786249a5370411d5d9a05b9102ba091134fa394f031277aa6979d18d08e174",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "run_identity_sha256": "6f76067a95ba68eac8e290171fd019650e4275750787eb1755fbf095e0202cf3",
+  "prediction_sha256": "ff3d724e86d1c27a8b22dfaa87e4bbd2a58412bfc7213a573fda672556f6c2bc",
+  "model_files": {
+    "adapters.json": "78114dabe049e01a3dd83fc7bb94b8dd79dabd6c7983a8fa42f63bbfc98dab3f",
+    "global_bias.json": "c5b3a374bda4a83e25e8be6a410b316f60681a8fd05357017f0586dfb1757897",
+    "ecological_bias.json": "66aef25a21ab790842e0c33e73e92a711b0bf61614181e3d61a980389833d39a",
+    "global_affine.json": "18c8f4856db37ac25d67def0343edd63865a0a58fe68d145177547568a6c3e26",
+    "ecological_affine.json": "ed716b6510a89880ef88bdaba2aa36d3aea9e8f01fef8e260ca4b71dc42c3ed8"
+  },
+  "rows": 233478,
+  "selection_role": "source_validation"
+}

@@ -1,0 +1,424 @@
+"""GCN imputation model for the DOC reconstruction benchmark.
+
+Monthly snapshot imputation: at month t the model sees node features +
+the observed-DOC channel (0 where unobserved) and predicts DOC at all
+nodes. Loss is computed on train cells only (design.md leakage rules).
+
+Topology variants (the paper's core ablation):
+- "river":  real directed river graph, symmetrized for GCN
+- "random": same number of edges, uniformly random node pairs
+- "none":   no edges (GCN degrades to a per-node MLP)
+"""
+
+from __future__ import annotations
+
+import itertools
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import nn
+from torch_geometric.nn import GCNConv
+from torch_geometric.utils import to_undirected
+
+IN_CHANNELS = 10  # temp, temp_mask, flow, flow_mask, sin, cos, lat, lon, doc_obs, doc_obs_m
+
+
+class GCNImputer(nn.Module):
+    def __init__(self, in_channels: int = IN_CHANNELS, hidden: int = 64,
+                 layers: int = 2, dropout: float = 0.1):
+        super().__init__()
+        self.convs = nn.ModuleList()
+        dims = [in_channels, *([hidden] * layers)]
+        for a, b in itertools.pairwise(dims):
+            self.convs.append(GCNConv(a, b))
+        self.head = nn.Linear(hidden, 1)
+        self.dropout = dropout
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+        h = x
+        for conv in self.convs:
+            h = F.relu(conv(h, edge_index))
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        return self.head(h).squeeze(-1)
+
+
+def make_edge_index(variant: str, edge_index: torch.Tensor, n_nodes: int,
+                    seed: int = 42) -> torch.Tensor:
+    """Topology ablation: real river graph / random graph / no edges."""
+    if variant == "river":
+        return to_undirected(edge_index)
+    if variant == "random":
+        rng = np.random.default_rng(seed)
+        n_edges = edge_index.shape[1]
+        pairs = rng.choice(n_nodes * (n_nodes - 1), size=n_edges, replace=False)
+        src, dst = pairs // (n_nodes - 1), pairs % (n_nodes - 1)
+        dst = np.where(dst >= src, dst + 1, dst)  # skip self-loops
+        ei = torch.tensor(np.stack([src, dst]), dtype=torch.long)
+        return to_undirected(ei)
+    if variant == "none":
+        return torch.empty((2, 0), dtype=torch.long)
+    raise ValueError(f"unknown variant: {variant}")
+
+
+class GCNDocModel:
+    """fit_predict(dataset, split) interface shared with the baselines."""
+
+    def __init__(self, variant: str = "river", hidden: int = 64, layers: int = 2,
+                 dropout: float = 0.1, lr: float = 1e-3, max_epochs: int = 200,
+                 patience: int = 20, seed: int = 0, architecture: str = "gcn",
+                 share_weights: bool = False, edge_dropout: float = 0.0,
+                 weight_decay: float = 0.0, env_groups: list[str] | None = None,
+                 env_encoder: bool = False, edge_set: str = "river",
+                 edge_direction: str = "both", target_transform: str = "log1p",
+                 training_protocol: str = "monthly_updates"):
+        self.variant = variant
+        self.hidden = hidden
+        self.layers = layers
+        self.dropout = dropout
+        self.lr = lr
+        self.max_epochs = max_epochs
+        self.patience = patience
+        self.seed = seed
+        self.architecture = architecture
+        self.share_weights = share_weights
+        self.edge_dropout = edge_dropout
+        self.weight_decay = weight_decay
+        self.env_groups = env_groups
+        self.env_encoder = env_encoder
+        if edge_set not in ("river", "empty"):
+            raise ValueError("edge_set must be 'river' or 'empty'")
+        self.edge_set = edge_set
+        if edge_direction not in ("both", "upstream", "downstream"):
+            raise ValueError(
+                "edge_direction must be 'both', 'upstream', or 'downstream'"
+            )
+        self.edge_direction = edge_direction
+        if target_transform not in ("log1p", "standard"):
+            raise ValueError("target_transform must be 'log1p' or 'standard'")
+        self.target_transform = target_transform
+        if training_protocol not in ("monthly_updates", "matched_full_grid"):
+            raise ValueError(
+                "training_protocol must be 'monthly_updates' or 'matched_full_grid'"
+            )
+        self.training_protocol = training_protocol
+
+    def _build_inputs(self, dataset: dict, split: dict[str, np.ndarray]):
+        """Fixed features + pieces for the dynamic DOC-obs channel.
+
+        Returns (xt_static, y, base_visible, train_cells) where
+        xt_static is (T, N, C) with the two DOC channels left as zeros,
+        y is log1p mg/L, base_visible marks val+context cells (always
+        visible, never used for loss), and train_cells are flat indices.
+        """
+        y_raw = dataset["y"].float()
+        y_transformed = (
+            torch.log1p(y_raw) if self.target_transform == "log1p" else y_raw
+        )
+        x = dataset["x"]  # (N, T, 2), already 0-filled
+        x_mask = dataset["x_mask"].float()
+        n, t = y_transformed.shape
+
+        base_visible = torch.zeros(n * t, dtype=torch.bool)
+        for key in ("val", "context"):
+            if key in split and len(split[key]):
+                base_visible[torch.as_tensor(split[key])] = True
+        base_visible = base_visible.reshape(n, t)
+
+        months = torch.tensor(
+            [int(str(m)[5:7]) for m in dataset["months"]], dtype=torch.float32
+        )
+        season = torch.stack(
+            [torch.sin(2 * np.pi * months / 12), torch.cos(2 * np.pi * months / 12)],
+            dim=1,
+        )  # (T, 2)
+        latlon = dataset["static"]  # (N, 2)
+
+        train_cells = torch.as_tensor(split["train"])
+        ti, tj = train_cells // t, train_cells % t
+        target_mu = y_transformed[ti, tj].mean()
+        target_sd = y_transformed[ti, tj].std() + 1e-8
+        if self.target_transform == "standard":
+            y = (y_transformed - target_mu) / target_sd
+            channel_stats = (torch.tensor(0.0), torch.tensor(1.0))
+        else:
+            y = y_transformed
+            channel_stats = (target_mu, target_sd)
+
+        def standardized(v: torch.Tensor) -> torch.Tensor:
+            mu = v[ti, tj].mean() if v.shape == y.shape else v.mean()
+            sd = v[ti, tj].std() if v.shape == y.shape else v.std()
+            return (v - mu) / (sd + 1e-8)
+
+        feats = [
+            standardized(x[:, :, 0]), x_mask[:, :, 0],
+            standardized(x[:, :, 1]), x_mask[:, :, 1],
+            season[:, 0].expand(n, t), season[:, 1].expand(n, t),
+            standardized(latlon[:, 0:1]).expand(n, t),
+            standardized(latlon[:, 1:2]).expand(n, t),
+            torch.zeros(n, t), torch.zeros(n, t),  # doc_obs channel slots
+        ]
+        env_raw = None
+        if "regime" in dataset:  # H2/M5: static regime + ecological context
+            reg = dataset["regime"].float()
+            # v04 regime layout: 0:4 hydro, 4:8 landcover, 8:10 climate,
+            # 10:11 soil, 11:13 topo (elev, bfi)
+            if self.env_groups is not None:
+                group_idx = {"hydro": [0, 1, 2, 3], "landcover": [4, 5, 6, 7],
+                             "climate": [8, 9], "soil": [10], "topo": [11, 12]}
+                keep = sorted(i for g in self.env_groups for i in group_idx[g])
+            else:
+                keep = list(range(reg.shape[1]))
+            reg = (reg - reg.mean(0)) / (reg.std(0) + 1e-8)
+            # subset FIRST so the positions below index kept columns;
+            # split by ORIGINAL column index: hydro (<4) stays in x,
+            # ecological context (>=4) goes to the encoder (M6)
+            reg = reg[:, keep]
+            pos = {orig: k for k, orig in enumerate(keep)}
+            hydro_cols = [pos[i] for i in keep if i < 4]
+            env_cols = [pos[i] for i in keep if i >= 4]
+            if self.env_encoder:
+                env_raw = reg[:, env_cols] if env_cols else None
+                reg = reg[:, hydro_cols] if hydro_cols else None
+            if reg is not None:
+                for c in range(reg.shape[1]):
+                    feats.append(reg[:, c:c + 1].expand(n, t))
+        xt_static = torch.stack(feats, dim=-1).permute(1, 0, 2).contiguous()
+        # Target-channel statistics are always fit on train cells only.  For
+        # the historical DOC path this is log-space; the generic standard
+        # path supports pH and other analytes without changing old defaults.
+        # Preserve the historical two-value bundle for DOC callers (H3 and
+        # older wrappers); the additional affine pair is only needed by the
+        # new raw-scale standardization path.
+        stats = (
+            (target_mu, target_sd)
+            if self.target_transform == "log1p"
+            else (*channel_stats, target_mu, target_sd)
+        )
+        return xt_static, y, base_visible, train_cells, stats, env_raw
+
+    @staticmethod
+    def _fill_doc_channel(xt, y, visible, stats):
+        """Set channels 8/9 (standardized observed DOC + visibility mask)."""
+        mu, sd = stats[:2]
+        doc_obs = torch.where(visible, y, torch.zeros_like(y))
+        xt[:, :, 8] = ((doc_obs - mu) / sd).permute(1, 0)
+        xt[:, :, 9] = visible.float().permute(1, 0)
+        return xt
+
+    def fit(self, dataset: dict, split: dict[str, np.ndarray]) -> None:
+        """Train on ``split['train']`` and store the fitted bundle for predict()."""
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
+        rng = np.random.default_rng(self.seed)
+
+        n, t = dataset["y"].shape
+        xt, y, base_visible, train_cells, stats, env_raw = self._build_inputs(dataset, split)
+        if self.architecture == "directed":
+            from river_graph.models.hydro import DirectedGCNImputer, make_directed_edges
+
+            ei = make_directed_edges(self.variant, dataset["edge_index"], n)
+            model = DirectedGCNImputer(xt.shape[-1], self.hidden, self.layers,
+                                       self.dropout, share_weights=self.share_weights,
+                                       edge_dropout=self.edge_dropout)
+        elif self.architecture in ("transport", "transport_enc"):
+            from river_graph.models.hydro import TransportGCNImputer
+
+            ei = (dataset["edge_index"] if self.edge_set == "river"
+                  else torch.empty((2, 0), dtype=torch.long))
+            edge_attr = dataset["edge_attr"]
+            edge_attr = (edge_attr - edge_attr.mean(0)) / (edge_attr.std(0) + 1e-8)
+            env_dim = (env_raw.shape[1]
+                       if self.architecture == "transport_enc" and env_raw is not None
+                       else 0)
+            model = TransportGCNImputer(xt.shape[-1], edge_attr.shape[1],
+                                        self.hidden, self.layers, self.dropout,
+                                        env_dim=env_dim,
+                                        edge_direction=self.edge_direction)
+        else:
+            ei = make_edge_index(self.variant, dataset["edge_index"], n)
+            model = GCNImputer(xt.shape[-1], self.hidden, self.layers, self.dropout)
+
+        opt = torch.optim.Adam(model.parameters(), lr=self.lr,
+                               weight_decay=self.weight_decay)
+        if self.architecture == "transport":
+            def fwd(xb):
+                return model(xb, ei, edge_attr)
+        elif self.architecture == "transport_enc":
+            def fwd(xb):
+                return model(xb, ei, edge_attr, env_raw)
+        else:
+            def fwd(xb):
+                return model(xb, ei)
+        months_idx = np.arange(t)
+
+        # base_visible includes val+context (inference-time convention).
+        # During TRAINING selection, val must be hidden (fixed held-out
+        # problem set for early stopping; the model never sees the answers).
+        val_cells = torch.as_tensor(split.get("val", np.array([], dtype=int)))
+        base_train = base_visible.clone()
+        if len(val_cells):
+            base_train.reshape(-1)[val_cells] = False
+
+        # Train with per-epoch re-masking of train cells: half stay visible
+        # as context, half are hidden and used for the loss. Without this the
+        # model learns to copy the input channel and never learns imputation.
+        # Early stopping uses the FIXED val set, hidden from the input.
+        best_loss, best_state, bad = float("inf"), None, 0
+        epochs_run = 0
+        for _epoch in range(self.max_epochs):
+            epochs_run = _epoch + 1
+            perm = rng.permutation(train_cells.numpy())
+            half = len(perm) // 2
+            ctx_cells = torch.as_tensor(perm[:half])
+            tgt_cells = torch.as_tensor(perm[half:])
+            visible = base_train.clone()
+            visible.reshape(-1)[ctx_cells] = True
+            self._fill_doc_channel(xt, y, visible, stats)
+            ti, tj = tgt_cells // t, tgt_cells % t
+
+            model.train()
+            np.random.shuffle(months_idx)
+            if self.training_protocol == "matched_full_grid":
+                # H2X-T receives one optimizer update from the complete
+                # monthly sequence per epoch.  Accumulate the equivalent
+                # snapshot losses before stepping so the comparison differs
+                # only by the temporal GRU, not by update count.
+                opt.zero_grad()
+                total = max(len(tgt_cells), 1)
+                for j in months_idx:
+                    sel = ti[tj == j]
+                    if len(sel) == 0:
+                        continue
+                    pred = fwd(xt[j])
+                    F.mse_loss(pred[sel], y[sel, j], reduction="sum").div(total).backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                opt.step()
+            else:
+                for j in months_idx:
+                    sel = ti[tj == j]
+                    if len(sel) == 0:
+                        continue
+                    pred = fwd(xt[j])
+                    loss = F.mse_loss(pred[sel], y[sel, j])
+                    opt.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                    opt.step()
+
+            # selection: fixed val cells, hidden from input
+            model.eval()
+            with torch.no_grad():
+                eval_visible = base_train.clone()
+                eval_visible.reshape(-1)[train_cells] = True
+                self._fill_doc_channel(xt, y, eval_visible, stats)
+                if len(val_cells):
+                    vi, vj = val_cells // t, val_cells % t
+                    vloss, vcount = 0.0, 0
+                    for j in np.unique(vj.numpy()):
+                        sel = vi[vj == j]
+                        vloss += F.mse_loss(fwd(xt[j])[sel], y[sel, j]).item() * len(sel)
+                        vcount += len(sel)
+                    crit = vloss / max(vcount, 1)
+            if len(val_cells):
+                if crit < best_loss - 1e-6:
+                    best_loss = crit
+                    # state_dict() returns live references; clone or continued
+                    # training mutates the "best" state
+                    best_state = {k: v.detach().clone()
+                                  for k, v in model.state_dict().items()}
+                    bad = 0
+                else:
+                    bad += 1
+                    if bad >= self.patience:
+                        break
+            # no val set -> train for max_epochs without early stopping
+        if best_state is not None:
+            model.load_state_dict(best_state)
+
+        self._bundle = {
+            "model": model,
+            "fwd": fwd,
+            "xt": xt,
+            "y": y,
+            "base_visible": base_visible,
+            "train_cells": train_cells,
+            "stats": stats,
+            "n": n,
+            "t": t,
+            "epochs_run": epochs_run,
+            "best_val_loss": best_loss if len(val_cells) else None,
+        }
+
+    def predict(
+        self,
+        extra_visible: np.ndarray | torch.Tensor | None = None,
+        extra_values: np.ndarray | torch.Tensor | None = None,
+        only_visible: np.ndarray | torch.Tensor | None = None,
+    ) -> np.ndarray:
+        """Predict the full (N, T) grid in mg/L with optional extra DOC cells.
+
+        ``extra_visible`` is a flat index array of additional observed cells
+        to expose in the DOC channel at inference (e.g. K-shot support).
+        ``extra_values`` optionally overrides the mg/L values shown for those
+        cells (same length as ``extra_visible``), used by shuffle controls.
+
+        ``only_visible`` (Phase-3 scenario visibility) replaces the default
+        inference set entirely: when given, EXACTLY these flat-index cells are
+        visible in the DOC channel — used to enforce e.g. "train only" or
+        "train + context" without touching val/test labels.
+        """
+        if not hasattr(self, "_bundle"):
+            raise RuntimeError("call fit() before predict()")
+        b = self._bundle
+        model, fwd = b["model"], b["fwd"]
+        xt, y = b["xt"], b["y"]
+        base_visible, train_cells = b["base_visible"], b["train_cells"]
+        n, t, stats = b["n"], b["t"], b["stats"]
+
+        if only_visible is not None:
+            visible = torch.zeros(n, t, dtype=torch.bool)
+            only = torch.as_tensor(np.asarray(only_visible, dtype=np.int64))
+            if only.numel():
+                visible.reshape(-1)[only.reshape(-1)] = True
+        else:
+            visible = base_visible.clone()
+            visible.reshape(-1)[train_cells] = True
+        y_feed = y
+        if extra_visible is not None:
+            extra = torch.as_tensor(np.asarray(extra_visible, dtype=np.int64))
+            if extra.numel():
+                extra = extra.reshape(-1)
+                if int(extra.min()) < 0 or int(extra.max()) >= n * t:
+                    raise ValueError("extra_visible out of range")
+                visible.reshape(-1)[extra] = True
+                if extra_values is not None:
+                    vals = torch.as_tensor(
+                        np.asarray(extra_values, dtype=np.float32)
+                    ).reshape(-1)
+                    if vals.numel() != extra.numel():
+                        raise ValueError("extra_values must match extra_visible")
+                    y_feed = y.clone()
+                    if self.target_transform == "log1p":
+                        vals = torch.log1p(vals.clamp(min=0))
+                    else:
+                        vals = (vals - stats[2]) / stats[3]
+                    y_feed.reshape(-1)[extra] = vals
+        self._fill_doc_channel(xt, y_feed, visible, stats)
+        model.eval()
+        preds = torch.empty(n, t)
+        with torch.no_grad():
+            for j in range(t):
+                preds[:, j] = fwd(xt[j])
+        ti, tj = train_cells // t, train_cells % t
+        lo = y[ti, tj].min()
+        hi = torch.quantile(y[ti, tj], 0.995)
+        preds = preds.clamp(min=lo, max=hi)
+        if self.target_transform == "log1p":
+            return np.expm1(preds.numpy())
+        return (preds * stats[3] + stats[2]).numpy()
+
+    def fit_predict(self, dataset: dict, split: dict[str, np.ndarray],
+                    extra_visible: np.ndarray | torch.Tensor | None = None) -> np.ndarray:
+        self.fit(dataset, split)
+        return self.predict(extra_visible=extra_visible)
