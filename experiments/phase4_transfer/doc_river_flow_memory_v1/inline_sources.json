@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "monthly-doc-flow-history",
+      "title": "前月流量的信息价值依赖观测范围",
+      "queries": [
+        {
+          "id": "chronological-previous-flow",
+          "source": {
+            "label": "ST357源角色DOC与实测月流量",
+            "files": [
+              {
+                "label": "chronological_gains.csv"
+              },
+              {
+                "label": "verification.json"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "历史流量增益",
+                "definition": "同站前期拟合、后期评价；相对同月流量模型，加入前一个日历月流量后的MAE降幅。先在站内平均月份，再站点等权。"
+              }
+            ],
+            "filters": [
+              "DOC仅来自142/143/144源训练角色的观测单元",
+              "当月及前月流量均为实测正值",
+              "前期至少24个月，后期至少12个月"
+            ],
+            "caveats": [
+              "这是简单水文响应诊断，9.8%不是当前神经DOC模型的提升。",
+              "2009年以来为敏感性样本；全时段和温度调整样本未稳定复现该增益。",
+              "95%区间来自5000次整片HUC4配对抽样，条件于已拟合预测，未计入重新拟合与多重比较调整。",
+              "月流量不等于DOC采样时瞬时流量，前月关联不代表一个月的物理传输时间。"
+            ],
+            "evidenceFlow": [
+              {
+                "kind": "calculation",
+                "title": "相同后期月份上的增量",
+                "detail": "100×(当月流量模型MAE−当月及前月模型MAE)/当月流量模型MAE。"
+              },
+              {
+                "kind": "validation",
+                "title": "独立复算",
+                "detail": "全部18项时间比较与36项结构比较的点估计已从保存预测独立复算；各时间臂query一致，扰动后期DOC不改变预测。"
+              }
+            ]
+          },
+          "columns": [
+            {
+              "field": "population",
+              "label": "观测范围"
+            },
+            {
+              "field": "space",
+              "label": "评价尺度"
+            },
+            {
+              "field": "gain_pct",
+              "label": "MAE降幅（%）"
+            },
+            {
+              "field": "ci_low_pct",
+              "label": "95%下限（%）"
+            },
+            {
+              "field": "ci_high_pct",
+              "label": "95%上限（%）"
+            },
+            {
+              "field": "n_stations",
+              "label": "站点数"
+            }
+          ],
+          "rows": [
+            {
+              "population": "all_source_months",
+              "space": "native",
+              "gain_pct": -2.5345816670167,
+              "ci_low_pct": -7.816744631349396,
+              "ci_high_pct": 2.557788252020768,
+              "n_stations": 72
+            },
+            {
+              "population": "all_source_months",
+              "space": "log1p",
+              "gain_pct": -1.338111453652524,
+              "ci_low_pct": -7.943786900880202,
+              "ci_high_pct": 2.771704725039442,
+              "n_stations": 72
+            },
+            {
+              "population": "observed_temperature",
+              "space": "native",
+              "gain_pct": -1.5132419552321696,
+              "ci_low_pct": -3.8104909002720615,
+              "ci_high_pct": 2.7775631009990995,
+              "n_stations": 69
+            },
+            {
+              "population": "observed_temperature",
+              "space": "log1p",
+              "gain_pct": 0.8095203344733792,
+              "ci_low_pct": -1.760301713612482,
+              "ci_high_pct": 3.3860181110544545,
+              "n_stations": 69
+            },
+            {
+              "population": "source_months_since_2009",
+              "space": "native",
+              "gain_pct": 3.0105656903730904,
+              "ci_low_pct": -3.3353402938840246,
+              "ci_high_pct": 11.299582501447794,
+              "n_stations": 37
+            },
+            {
+              "population": "source_months_since_2009",
+              "space": "log1p",
+              "gain_pct": 9.801394509002993,
+              "ci_low_pct": 2.00636240707178,
+              "ci_high_pct": 18.8957184934031,
+              "n_stations": 37
+            }
+          ],
+          "reportingPeriod": "1972–2026源角色月观测；近期敏感性为2009年以来"
+        }
+      ]
+    },
+    {
+      "id": "form-response-transfer",
+      "title": "静态河网结构尚不能稳定预测水文响应差异",
+      "queries": [
+        {
+          "id": "geographic-response-blocks",
+          "source": {
+            "label": "真实河网形态与DOC水文响应",
+            "files": [
+              {
+                "label": "descriptor_gains.csv"
+              },
+              {
+                "label": "structure_response_modifiers.csv"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "结构响应信息",
+                "definition": "五个HUC4整区留出折中，固定Ridge alpha=10；在相同环境与面积背景下加入外轮廓、支流、路径或全部结构，预测站点实测DOC—流量响应描述。"
+              }
+            ],
+            "caveats": [
+              "响应描述预测误差不等于完整模型DOC重建误差。",
+              "结构系数的关联分析不识别因果效应；结构对典型DOC水平的信息价值与动态响应是不同问题。"
+            ],
+            "evidenceFlow": [
+              {
+                "kind": "method",
+                "title": "地理留出",
+                "detail": "整片HUC4不进入该折训练，标准化与缺失填充在训练折拟合。误差在折内站点平均、折间等权。"
+              }
+            ]
+          },
+          "columns": [
+            {
+              "field": "population",
+              "label": "观测范围"
+            },
+            {
+              "field": "response",
+              "label": "响应描述"
+            },
+            {
+              "field": "candidate",
+              "label": "结构信息"
+            },
+            {
+              "field": "gain_pct",
+              "label": "MAE降幅（%）"
+            },
+            {
+              "field": "ci_low_pct",
+              "label": "95%下限（%）"
+            },
+            {
+              "field": "ci_high_pct",
+              "label": "95%上限（%）"
+            },
+            {
+              "field": "n_stations",
+              "label": "站点数"
+            }
+          ],
+          "rows": [
+            {
+              "population": "all_source_months",
+              "response": "combined_response",
+              "candidate": "footprint",
+              "gain_pct": -1.1215853538206089,
+              "ci_low_pct": -2.56151348663837,
+              "ci_high_pct": 0.3760499470266371,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "combined_response",
+              "candidate": "branching",
+              "gain_pct": -0.2370450555003733,
+              "ci_low_pct": -6.763417966322434,
+              "ci_high_pct": 2.468983825727161,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "combined_response",
+              "candidate": "paths",
+              "gain_pct": 1.025700396201501,
+              "ci_low_pct": -4.067449198394958,
+              "ci_high_pct": 4.326703176280023,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "combined_response",
+              "candidate": "all_form",
+              "gain_pct": -0.544066734683657,
+              "ci_low_pct": -9.527887115665408,
+              "ci_high_pct": 3.873814179275106,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "current_response",
+              "candidate": "footprint",
+              "gain_pct": -2.284156099467749,
+              "ci_low_pct": -6.213684048495325,
+              "ci_high_pct": 1.6522886938907182,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "current_response",
+              "candidate": "branching",
+              "gain_pct": -6.401499116882192,
+              "ci_low_pct": -15.46883927345517,
+              "ci_high_pct": -0.6639745549291299,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "current_response",
+              "candidate": "paths",
+              "gain_pct": 0.5055839495729408,
+              "ci_low_pct": -2.7425185648721384,
+              "ci_high_pct": 4.118124054127675,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "current_response",
+              "candidate": "all_form",
+              "gain_pct": -9.155460228821056,
+              "ci_low_pct": -18.010448594620566,
+              "ci_high_pct": -2.233212097552848,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "previous_response",
+              "candidate": "footprint",
+              "gain_pct": -1.5133743265345778,
+              "ci_low_pct": -6.803693312518824,
+              "ci_high_pct": 4.5296451528425985,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "previous_response",
+              "candidate": "branching",
+              "gain_pct": -8.927866335584088,
+              "ci_low_pct": -16.82184171673918,
+              "ci_high_pct": -2.348910994313599,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "previous_response",
+              "candidate": "paths",
+              "gain_pct": -0.7043934053566847,
+              "ci_low_pct": -2.71823351093313,
+              "ci_high_pct": 2.011537378257767,
+              "n_stations": 206
+            },
+            {
+              "population": "all_source_months",
+              "response": "previous_response",
+              "candidate": "all_form",
+              "gain_pct": -9.066803811206436,
+              "ci_low_pct": -17.399880451778365,
+              "ci_high_pct": -2.3479268500197943,
+              "n_stations": 206
+            },
+            {
+              "population": "observed_temperature",
+              "response": "combined_response",
+              "candidate": "footprint",
+              "gain_pct": -0.0866913348378961,
+              "ci_low_pct": -0.8577657761267249,
+              "ci_high_pct": 0.6503204088714921,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "combined_response",
+              "candidate": "branching",
+              "gain_pct": -0.7465874848663789,
+              "ci_low_pct": -5.6950807064008435,
+              "ci_high_pct": 2.224564845902345,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "combined_response",
+              "candidate": "paths",
+              "gain_pct": 0.2460929554040647,
+              "ci_low_pct": -4.564813670299673,
+              "ci_high_pct": 4.323275876088859,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "combined_response",
+              "candidate": "all_form",
+              "gain_pct": -1.2555079320867302,
+              "ci_low_pct": -8.875944004505357,
+              "ci_high_pct": 3.380852955836479,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "current_response",
+              "candidate": "footprint",
+              "gain_pct": 0.6280621450673762,
+              "ci_low_pct": -1.626480335114694,
+              "ci_high_pct": 3.677074837303055,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "current_response",
+              "candidate": "branching",
+              "gain_pct": -6.185194182906395,
+              "ci_low_pct": -16.05495368966707,
+              "ci_high_pct": 0.5026593259540176,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "current_response",
+              "candidate": "paths",
+              "gain_pct": 0.3318648107119237,
+              "ci_low_pct": -2.9466741832496113,
+              "ci_high_pct": 4.241245697281977,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "current_response",
+              "candidate": "all_form",
+              "gain_pct": -9.723294152343453,
+              "ci_low_pct": -20.064527496510895,
+              "ci_high_pct": -0.7770433890971717,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "previous_response",
+              "candidate": "footprint",
+              "gain_pct": -1.0888284719183128,
+              "ci_low_pct": -4.621082559729509,
+              "ci_high_pct": 3.0047039448246027,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "previous_response",
+              "candidate": "branching",
+              "gain_pct": -1.7772097383819352,
+              "ci_low_pct": -10.537298884511076,
+              "ci_high_pct": 5.904305438272833,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "previous_response",
+              "candidate": "paths",
+              "gain_pct": -0.355841106818211,
+              "ci_low_pct": -2.0249054254181043,
+              "ci_high_pct": 1.5930365036758385,
+              "n_stations": 205
+            },
+            {
+              "population": "observed_temperature",
+              "response": "previous_response",
+              "candidate": "all_form",
+              "gain_pct": -4.593715011882438,
+              "ci_low_pct": -13.531653030783632,
+              "ci_high_pct": 3.7096512222627234,
+              "n_stations": 205
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "combined_response",
+              "candidate": "footprint",
+              "gain_pct": -7.030224093663651,
+              "ci_low_pct": -13.241142786680696,
+              "ci_high_pct": 0.5412785894883491,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "combined_response",
+              "candidate": "branching",
+              "gain_pct": 8.539155237688867,
+              "ci_low_pct": -6.983380813788098,
+              "ci_high_pct": 22.07623269729005,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "combined_response",
+              "candidate": "paths",
+              "gain_pct": -1.5356102707233976,
+              "ci_low_pct": -8.186729384579394,
+              "ci_high_pct": 2.7126463156505505,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "combined_response",
+              "candidate": "all_form",
+              "gain_pct": -0.6406901090357131,
+              "ci_low_pct": -14.034612059322557,
+              "ci_high_pct": 15.785283270042324,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "current_response",
+              "candidate": "footprint",
+              "gain_pct": -13.01156434348847,
+              "ci_low_pct": -36.061428757559625,
+              "ci_high_pct": 1.6610533569430004,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "current_response",
+              "candidate": "branching",
+              "gain_pct": 7.522509103500685,
+              "ci_low_pct": -25.95980316737656,
+              "ci_high_pct": 32.3925337172154,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "current_response",
+              "candidate": "paths",
+              "gain_pct": -2.988164986816577,
+              "ci_low_pct": -38.13541370762622,
+              "ci_high_pct": 10.058439493936593,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "current_response",
+              "candidate": "all_form",
+              "gain_pct": -8.641061568483877,
+              "ci_low_pct": -36.936011704767054,
+              "ci_high_pct": 16.322306806757364,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "previous_response",
+              "candidate": "footprint",
+              "gain_pct": -8.998119037272613,
+              "ci_low_pct": -29.700044214972625,
+              "ci_high_pct": 5.334705324106442,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "previous_response",
+              "candidate": "branching",
+              "gain_pct": 6.720641760532542,
+              "ci_low_pct": -23.67706332937495,
+              "ci_high_pct": 31.30005215005161,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "previous_response",
+              "candidate": "paths",
+              "gain_pct": -0.426553839111965,
+              "ci_low_pct": -39.73482632163526,
+              "ci_high_pct": 14.9162237505642,
+              "n_stations": 50
+            },
+            {
+              "population": "source_months_since_2009",
+              "response": "previous_response",
+              "candidate": "all_form",
+              "gain_pct": -5.026571725184348,
+              "ci_low_pct": -30.85573970648029,
+              "ci_high_pct": 15.594154534519046,
+              "n_stations": 50
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "independent-flow-access",
+      "title": "独立NEON水文响应复验尚待授权数据下载",
+      "queries": [
+        {
+          "id": "neon-discharge-access",
+          "source": {
+            "label": "NEON连续流量官方数据接口",
+            "links": [
+              {
+                "label": "官方流量产品说明",
+                "url": "https://www.neonscience.org/resources/learning-hub/tutorials/continuous-discharge-intro"
+              },
+              {
+                "label": "官方接口授权要求",
+                "url": "https://data.neonscience.org/data-api/endpoints/data/"
+              }
+            ],
+            "caveats": [
+              "对官方BLUE/2024-06流量端点的一次无凭证请求返回403，未获取原始流量；独立DOC—流量复验尚未执行。"
+            ],
+            "evidenceFlow": [
+              {
+                "kind": "source",
+                "title": "已确认数据来源",
+                "detail": "DP4.00130.001是官方连续流量产品，下载端点要求已授权账户API token。"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
