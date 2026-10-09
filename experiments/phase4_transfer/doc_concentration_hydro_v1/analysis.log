@@ -1,0 +1,33 @@
+/Users/yzccc/.matplotlib is not a writable directory
+Matplotlib created a temporary cache directory at /var/folders/kl/2fcqmxl93rv6fsdm6q_y0n5h0000gn/T/matplotlib-khfwwywa because there was an issue with the default path (/Users/yzccc/.matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+Matplotlib is building the font cache; this may take a moment.
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/analyze_doc_concentration_hydro_v1.py", line 126, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/analyze_doc_concentration_hydro_v1.py", line 70, in main
+    write_json(args.root/"verification"/"replay.json", [verify(path.parent) for path in complete])
+                                                        ^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/scripts/analyze_doc_concentration_hydro_v1.py", line 45, in verify
+    np.testing.assert_array_equal(original[prior.columns].to_numpy(), prior.to_numpy())
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/numpy/testing/_private/utils.py", line 1128, in assert_array_equal
+    assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/numpy/testing/_private/utils.py", line 988, in assert_array_compare
+    raise AssertionError(msg)
+AssertionError: 
+Arrays are not equal
+
+Mismatched elements: 57075 / 205470 (27.8%)
+First 5 mismatches are at indices:
+ [0, 13]: nan (ACTUAL), nan (DESIRED)
+ [0, 14]: nan (ACTUAL), nan (DESIRED)
+ [0, 15]: nan (ACTUAL), nan (DESIRED)
+ [0, 16]: nan (ACTUAL), nan (DESIRED)
+ [0, 17]: nan (ACTUAL), nan (DESIRED)
+ ACTUAL: array([[2401, '03025490', '2008-11-01', ..., nan, nan, nan],
+       [2405, '03025490', '2009-03-01', ..., nan, nan, nan],
+       [2407, '03025490', '2009-05-01', ..., nan, nan, nan],...
+ DESIRED: array([[2401, '03025490', '2008-11-01', ..., nan, nan, nan],
+       [2405, '03025490', '2009-03-01', ..., nan, nan, nan],
+       [2407, '03025490', '2009-05-01', ..., nan, nan, nan],...
