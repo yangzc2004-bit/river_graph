@@ -1,0 +1,31 @@
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [0, 1], "held_cells": 7693, "elapsed_seconds": 7.540297833969817}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [0, 2], "held_cells": 9187, "elapsed_seconds": 12.291489291994367}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [0, 3], "held_cells": 8750, "elapsed_seconds": 17.222141042002477}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [0, 4], "held_cells": 8266, "elapsed_seconds": 22.45322666701395}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [1, 2], "held_cells": 7808, "elapsed_seconds": 27.79155762499431}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [1, 3], "held_cells": 7371, "elapsed_seconds": 33.37307695898926}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [1, 4], "held_cells": 6887, "elapsed_seconds": 39.23436054197373}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [2, 3], "held_cells": 8865, "elapsed_seconds": 44.29398279200541}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [2, 4], "held_cells": 8381, "elapsed_seconds": 49.581956000009086}
+{"run": "seed42", "stage": "pair_reference", "query_donor_folds": [3, 4], "held_cells": 7944, "elapsed_seconds": 55.09269329201197}
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/run_ladder.py", line 513, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/run_ladder.py", line 58, in main
+    experiment_main()
+  File "/Users/yzccc/river_graph/scripts/run_doc_current_source_portable_v2.py", line 249, in main
+    run_one(args.root, seed, digest(snapshot))
+  File "/Users/yzccc/river_graph/scripts/run_doc_current_source_portable_v2.py", line 166, in run_one
+    model = AvailableSourceAttentionResidual(retained.spatial, retained.temporal, retained.decay,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/current_source_attention.py", line 150, in fit
+    return super().fit(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/encoder_native_residual.py", line 259, in fit
+    source, validation = self._prepare_inputs(source_inputs), self._prepare_inputs(val_inputs)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/relative_source_attention.py", line 87, in _prepare_inputs
+    raise ValueError("receiving reference must be finite nonnegative and station/month aligned")
+ValueError: receiving reference must be finite nonnegative and station/month aligned

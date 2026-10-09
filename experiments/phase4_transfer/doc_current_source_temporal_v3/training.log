@@ -1,0 +1,27 @@
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [0, 1], "elapsed_seconds": 5.8011962089804}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [0, 2], "elapsed_seconds": 9.2229157499969}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [0, 3], "elapsed_seconds": 12.48279924999224}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [0, 4], "elapsed_seconds": 16.055616583966184}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [1, 2], "elapsed_seconds": 19.84871137497248}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [1, 3], "elapsed_seconds": 23.307983291975688}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [1, 4], "elapsed_seconds": 27.061493541987147}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [2, 3], "elapsed_seconds": 30.538204209005926}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [2, 4], "elapsed_seconds": 34.15998579200823}
+{"run": "e2a_strict_seed42", "stage": "pair_reference", "folds": [3, 4], "elapsed_seconds": 37.546215209004004}
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/run_ladder.py", line 525, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/run_ladder.py", line 58, in main
+    experiment_main()
+  File "/Users/yzccc/river_graph/scripts/run_doc_current_source_temporal_v3.py", line 272, in main
+    run_one(args.root, mask, seed, digest(snapshot))
+  File "/Users/yzccc/river_graph/scripts/run_doc_current_source_temporal_v3.py", line 216, in run_one
+    model.fit(source_view, *arrays[1:4], val_view, *arrays[5:], tail_threshold=config["q90_threshold_train"],
+  File "/Users/yzccc/river_graph/src/river_graph/models/current_source_attention.py", line 150, in fit
+    return super().fit(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/src/river_graph/models/encoder_native_residual.py", line 256, in fit
+    raise ValueError("checkpoint selection requires source_validation")
+ValueError: checkpoint selection requires source_validation

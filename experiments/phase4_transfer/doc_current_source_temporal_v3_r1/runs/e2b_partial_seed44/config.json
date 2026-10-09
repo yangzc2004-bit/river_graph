@@ -1,0 +1,45 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/masks_stcore_v1/e2b_partial.npz",
+  "mask_hash": "40e1400e531de83e8d3e322f9ce2b3f2b417047e015dbde86fefadd1a754eac6",
+  "q90_threshold_train": 11.0,
+  "mask": "e2b_partial",
+  "seed": 44,
+  "experiment": "doc_current_source_temporal_v3_r1",
+  "started_at": "2026-10-06T06:19:32.215859+00:00",
+  "runtime_snapshot_hash": "ba6907b8a1f2a013a60f2b159e9ac01f21403322bdaddbc9f9e954e85c0cd11b",
+  "parent_run": "experiments/phase4_transfer/doc_temporal_compatibility_v2/runs/e2b_partial_seed44",
+  "parent_completion_hash": "36014490d227eb0d508abb5ef6b812bebda502cc630551804e9527786c670431",
+  "models": [
+    "original_hybrid",
+    "context_trees",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "current_native",
+    "current_fusion",
+    "upgraded_native",
+    "upgraded_fusion",
+    "available_native",
+    "available_fusion"
+  ],
+  "epochs": 30,
+  "patience": 5,
+  "candidate_count": 20,
+  "attention_heads": 2,
+  "attention_dimensions": 32,
+  "lookback": 12,
+  "current_source_requires_previous_observation": false,
+  "source_library_roles": [
+    "train"
+  ],
+  "inference_roles": [
+    "train",
+    "context"
+  ],
+  "selection_role": "source_validation",
+  "execution_repair": "use required source_validation API role; original V3 failed before first neural epoch",
+  "memory": "disabled: train/val stations overlap",
+  "fusion": "same retained validation-selected family",
+  "scope": "retrospective temporal compatibility; temporal test already inspected for preceding recipe"
+}
