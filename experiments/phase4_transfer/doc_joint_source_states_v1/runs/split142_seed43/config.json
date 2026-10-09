@@ -1,0 +1,43 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split142.npz",
+  "mask_hash": "78c31018080d87accea1656f61f72687e341e511904e295f24f53ea596c352e1",
+  "q90_threshold_train": 9.851500511169434,
+  "split_seed": 142,
+  "seed": 43,
+  "experiment": "doc_joint_source_states_v1",
+  "parent_run": "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split142_seed43",
+  "parent_completion_hash": "15e9bd94bd5c6655f8a196392376afc4ac4c8128cbb97ecc6eee997db864928c",
+  "started_at": "2026-10-05T21:13:18.942980+00:00",
+  "runtime_snapshot_hash": "f30ef9e10df0c43452d2a3f6d27f520e3e0ab844ed535fcaa95d2eb2cda50281",
+  "models": [
+    "current_model",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "unmonitored_residual",
+    "unmonitored_integrated",
+    "joint_shuffle_residual",
+    "joint_shuffle_integrated",
+    "joint_source_residual",
+    "joint_source_integrated"
+  ],
+  "epochs": 30,
+  "patience": 5,
+  "tail_weight": 2,
+  "loss": "native mg/L MAE",
+  "residual_units": "native mg/L",
+  "auxiliary_weight": 0.1,
+  "auxiliary_head_learning_rate": 0.001,
+  "initialization": "parent initial encoder/GRU/decay; joint source supervision; zero DOC scalar head",
+  "auxiliary_data_hashes": {
+    "data/processed/mississippi_graph_ph_st357.pt": "100be6eb967d8a7507967d1c9ae2406bbbd6cbb69b059c732dabf160a7fc21ae",
+    "data/processed/mississippi_graph_spec_conductance_st357.pt": "5fc06dbaadb7263e20032a8961f7bce81d61d752fba3ff4c345a2a202633bc48"
+  },
+  "auxiliary_validation": "not used; checkpoint selected on source-validation DOC",
+  "auxiliary_normalization": "all source training stations only",
+  "auxiliary_loss": "equal-target standardized MSE; all available source fit cells",
+  "main_change": "simultaneous DOC/source pH/log-conductance supervision; matched label shuffle",
+  "selection_role": "source_validation",
+  "evaluation_role": "source_validation_only"
+}
