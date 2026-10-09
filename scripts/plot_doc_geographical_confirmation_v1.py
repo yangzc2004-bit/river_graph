@@ -40,7 +40,7 @@ def main():
                 np.testing.assert_allclose(getattr(row, name), grouped[row.model_name])
     set_style()
     fig, axes = plt.subplots(2, 2, figsize=(8.8, 6.7))
-    fig.subplots_adjust(left=.10, right=.97, top=.88, bottom=.17, wspace=.40, hspace=.52)
+    fig.subplots_adjust(left=.10, right=.97, top=.88, bottom=.22, wspace=.40, hspace=.52)
     for ax, metric, title in ((axes[0, 0], "mae", "Unmonitored geographical regions"),
                               (axes[1, 1], "q90_mae", "High-DOC reconstruction")):
         for j, model in enumerate(MODELS):

@@ -67,6 +67,211 @@ def main() -> None:
         sys.argv = [sys.argv[0], *sys.argv[3:]]
         run_frozen_river_comparison()
         return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-river-structure-residual-v1"]:
+        from run_doc_river_structure_residual_v1 import main as river_structure_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return river_structure_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-source-temporal-v3-r1"]:
+        from run_doc_current_source_temporal_v3_r1 import main as experiment_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-source-temporal-v3"]:
+        from run_doc_current_source_temporal_v3 import main as experiment_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-source-portable-v2-r1"]:
+        from run_doc_current_source_portable_v2_r1 import main as experiment_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-source-portable-v2"]:
+        from run_doc_current_source_portable_v2 import main as experiment_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-value-key-attention-v1"]:
+        from run_doc_source_value_key_attention_v1 import main as experiment_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-wide-source-attention-v1"]:
+        from run_doc_wide_source_attention_v1 import main as experiment_main
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-availability-attention-geographical-v1"]:
+        from run_doc_current_availability_attention_geographical_v1 import (
+            main as experiment_main,
+        )
+
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        experiment_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-availability-attention-v1"]:
+        from run_doc_current_availability_attention_v1 import (
+            main as current_availability_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return current_availability_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-monthly-hydro-attention-v1"]:
+        from run_doc_source_monthly_hydro_attention_v1 import (
+            main as source_monthly_hydro_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return source_monthly_hydro_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-level-attention-geographical-v1"]:
+        from run_doc_source_level_attention_geographical_v1 import (
+            main as source_level_geographical_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return source_level_geographical_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-level-attention-v1"]:
+        from run_doc_source_level_attention_v1 import main as source_level_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        source_level_main()
+        return
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-ratio-source-attention-v1"]:
+        from run_doc_ratio_source_attention_v1 import main as ratio_attention_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return ratio_attention_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-relative-source-attention-geographical-v1"]:
+        from run_doc_relative_source_attention_geographical_v1 import (
+            main as relative_geographical_attention_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return relative_geographical_attention_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-relative-source-attention-v1"]:
+        from run_doc_relative_source_attention_v1 import main as relative_attention_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return relative_attention_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-source-attention-geographical-v1"]:
+        from run_doc_current_source_attention_geographical_v1 import (
+            main as geographical_attention_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return geographical_attention_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-current-source-attention-v1"]:
+        from run_doc_current_source_attention_v1 import main as current_attention_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return current_attention_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-innovation-geographical-v1"]:
+        from run_doc_source_innovation_geographical_v1 import (
+            main as innovation_geographical_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return innovation_geographical_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-innovation-learning-v1"]:
+        from run_doc_source_innovation_learning_v1 import (
+            main as innovation_learning_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return innovation_learning_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-innovation-transfer-v1"]:
+        from run_doc_source_innovation_transfer_v1 import main as source_innovation_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return source_innovation_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-full-encoder-v1"]:
+        from run_doc_full_encoder_v1 import main as full_encoder_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return full_encoder_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-longer-history-v1"]:
+        from run_doc_longer_history_v1 import main as longer_history_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return longer_history_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-joint-source-states-v1"]:
+        from run_doc_joint_source_states_v1 import main as joint_source_states_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return joint_source_states_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-extended-optimization-v1"]:
+        from run_doc_extended_optimization_v1 import main as extended_optimization_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return extended_optimization_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-leaf-median-residual-v1"]:
+        from run_doc_leaf_median_residual_v1 import main as leaf_median_residual_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return leaf_median_residual_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-leaf-distribution-reference-v1"]:
+        from run_doc_leaf_distribution_reference_v1 import main as leaf_reference_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return leaf_reference_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-native-reference-objective-v1"]:
+        from run_doc_native_reference_objective_v1 import main as native_reference_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return native_reference_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-reference-trajectory-v1"]:
+        from run_doc_reference_trajectory_v1 import main as reference_trajectory_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return reference_trajectory_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-source-auxiliary-states-v1"]:
+        from run_doc_source_auxiliary_states_v1 import main as source_auxiliary_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return source_auxiliary_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-antecedent-residual-v1"]:
+        from run_doc_antecedent_residual_v1 import main as antecedent_residual_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return antecedent_residual_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-antecedent-hydro-v1"]:
+        from run_doc_antecedent_hydro_v1 import main as antecedent_hydro_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return antecedent_hydro_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-composition-encoder-v1"]:
+        from run_doc_composition_encoder_v1 import main as composition_encoder_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return composition_encoder_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-ecological-composition-v1"]:
+        from run_doc_ecological_composition_v1 import (
+            main as ecological_composition_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return ecological_composition_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-nonlinear-geographical-replication-v1"]:
+        from run_doc_nonlinear_geographical_replication_v1 import (
+            main as nonlinear_geographical_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return nonlinear_geographical_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-nonlinear-native-residual-v1"]:
+        from run_doc_nonlinear_native_residual_v1 import main as nonlinear_native_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return nonlinear_native_main()
+    if (len(sys.argv) > 2 and sys.argv[1] == "--experiment"
+            and sys.argv[2] in {"doc-regional-source-training-v1", "doc-regional-source-training-v2"}):
+        from run_doc_regional_source_training_v1 import main as regional_source_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return regional_source_main()
+    if (len(sys.argv) > 2 and sys.argv[1] == "--experiment"
+            and sys.argv[2] in {"doc-log-concentration-residual-v1", "doc-log-concentration-residual-v2"}):
+        from run_doc_log_concentration_residual_v1 import main as log_concentration_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return log_concentration_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-concentration-hydro-v1"]:
+        from run_doc_concentration_hydro_v1 import main as concentration_hydro_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return concentration_hydro_main()
+    if (len(sys.argv) > 2 and sys.argv[1] == "--experiment"
+            and sys.argv[2] in {"doc-temporal-compatibility-v1", "doc-temporal-compatibility-v2"}):
+        from run_doc_temporal_compatibility_v1 import (
+            main as temporal_compatibility_main,
+        )
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return temporal_compatibility_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-station-balanced-residual-v1"]:
+        from run_doc_station_balanced_residual_v1 import main as station_balanced_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return station_balanced_main()
+    if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-portable-source-fit-v1"]:
+        from run_doc_portable_source_fit_v1 import main as portable_source_main
+        sys.argv = [sys.argv[0], *sys.argv[3:]]
+        return portable_source_main()
     if len(sys.argv) > 2 and sys.argv[1:3] == ["--experiment", "doc-geographical-confirmation-v1"]:
         from run_doc_geographical_confirmation_v1 import main
         sys.argv = [sys.argv[0], *sys.argv[3:]]

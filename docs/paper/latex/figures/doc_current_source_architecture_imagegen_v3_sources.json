@@ -1,0 +1,69 @@
+{
+  "created_utc": "2026-10-06T08:01:31.776537+00:00",
+  "asset": "docs/paper/latex/figures/doc_current_source_architecture_imagegen_v3.png",
+  "sha256": "3fc77e23ab28f3c055358d7442019b14758e0a8e96e45bcd439da72618ea65d1",
+  "dimensions_pixels": [
+    1448,
+    1086
+  ],
+  "generation_mode": "built-in image_gen.imagegen; generation followed by three targeted wiring edits",
+  "generated_source": "/Users/yzccc/.codex/generated_images/01a0cc19-6023-7631-adac-ab5750c39192/exec-c7324fc8-69cd-489e-b6b3-c5a5d536aeca.png",
+  "prompts": [
+    {
+      "path": "docs/paper/latex/figures/doc_current_source_architecture_imagegen_v3_retry3_prompt.txt",
+      "sha256": "c8101119565d4bbbf0ce90589c9941fb85c0ba9cb820eeeaf86259700d1414a9"
+    },
+    {
+      "path": "docs/paper/latex/figures/doc_current_source_architecture_imagegen_v3_edit_prompt.txt",
+      "sha256": "96638ba85061d87f6471751d04860267bc21950979eb2b9dcd6f9d72b7baa6d6"
+    },
+    {
+      "path": "docs/paper/latex/figures/doc_current_source_architecture_imagegen_v3_edit2_prompt.txt",
+      "sha256": "247d62af4ab3c163314f5097306c4cf23038ec7a259b9a0d041b0fa36688e78e"
+    },
+    {
+      "path": "docs/paper/latex/figures/doc_current_source_architecture_imagegen_v3_edit3_prompt.txt",
+      "sha256": "1e745e6510a50b7656b473cef2ffe58595c9fb1802e85930842eea86cc65d9ce"
+    }
+  ],
+  "style_reference": {
+    "title": "Attention Is All You Need",
+    "url": "https://arxiv.org/abs/1706.03762",
+    "scope": "Stacked computational blocks, Q/K/V and routed residual bypasses; the depicted model is the implemented DOC model."
+  },
+  "figure_type": "Illustrative method schematic; not numerical evidence",
+  "implementation_references": [
+    {
+      "path": "src/river_graph/models/current_source_attention.py",
+      "sha256": "afbac83b5d8ce536e46d9e5df33f013c18c8f155e14e2ce347c4e0ec854a7065"
+    },
+    {
+      "path": "src/river_graph/models/source_level_attention.py",
+      "sha256": "34fd185290f808872b19c359a410e3e751b1402c36ecb7a7ad512a081982271b"
+    },
+    {
+      "path": "src/river_graph/models/relative_source_attention.py",
+      "sha256": "15637ec164d20b685c3fb1d14329ee37bc8cf42dd5f637b4a1d34409b8035b06"
+    },
+    {
+      "path": "scripts/portable_current_source_doc_v2.py",
+      "sha256": "e465686cfeaa3a75caa5557af4bd8c27cf9f86726c675a16c3bf8445fa171e4b"
+    }
+  ],
+  "visual_qa": {
+    "status": "passed",
+    "checks": [
+      "Environmental trees provide C independently of GRU and attention queries",
+      "Local d and source g join at a distinct addition node",
+      "Q and K feed attention scores; scalar OOF residuals supply V",
+      "Available source softmax includes a zero-value prior",
+      "Source states scale by (1+C) before zero-initialized projection",
+      "Prediction adds C+s(d+g), clips below at zero, and averages five seeds",
+      "Optional support occurs after the ensemble",
+      "No disconnected residual wires or feedback loops",
+      "Final manuscript page 5 rendered at 100dpi and visually inspected; all thirteen pages inspected in contact sheet"
+    ]
+  },
+  "preserved_code_generated_schematic": "docs/paper/latex/figures/doc_current_source_architecture_v2.pdf",
+  "preserved_manuscript": "docs/paper/latex/versions/pre_architecture_imagegen_20261006/"
+}

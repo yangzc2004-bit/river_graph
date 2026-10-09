@@ -1,0 +1,237 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype}
+\usepackage{amsmath,amssymb,booktabs,array,graphicx}
+\usepackage{caption,placeins}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}
+\title{Reconstructing dissolved organic carbon at unmonitored river stations with temporal memory and source residual attention}
+\author{Zhaochen Yang\\[2pt]\small Working manuscript --- October 2026}
+\date{}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Sparse dissolved organic carbon (DOC) monitoring leaves many river stations without the chemical history needed to reconstruct aquatic carbon dynamics. We propose an environmental--memory--source framework that combines station-hidden environmental trees, an ecological encoder, observation-aware recurrent memory and attention over source-station prediction errors. Double-held station cross-fitting supplies source residuals while excluding the receiving training fold from its experience bank. The main task uses no receiving-station DOC, pH or conductivity. Five-seed geographical refits across five regions of a 357-station Mississippi cohort achieve equal-region MAE 2.249~mg/L, reducing error by 4.73\% relative to an earlier full model and 4.11\% [1.11--7.11\%] relative to strong matched trees. Actual current source values improve error by 0.97\% over equally available seasonal values, supporting the use of contemporaneous monitoring context. In a previously inspected external basin with 130 disjoint stations, the fixed release achieves 0.911~mg/L versus 0.915 for the preceding release and 0.841 for matched trees; the incremental external gain remains unresolved. Five designated DOC observations reduce fixed-query error by 19.35\%. Source-calibrated intervals reach 83.3\% external coverage with median width 2.737~mg/L. The model demonstrates how environmental prediction, temporal memory and permitted source observations can reconstruct DOC without local chemistry. Further work will address concentration-regime transfer, high-DOC events and additional basin validation.
+\end{abstract}
+\paragraph{Keywords:} dissolved organic carbon; unmonitored rivers; ecological information; temporal memory; residual learning; source attention; geographical transfer
+
+\section{Introduction}
+River dissolved organic carbon links terrestrial carbon sources with downstream aquatic environments. Its concentration reflects catchment characteristics, hydrological conditions and biogeochemical processing, and varies substantially among regions \citep{yang2017}. Reconstructing missing DOC records supports comparisons among catchments and analysis of long-term aquatic carbon dynamics. Environmental and satellite-assisted learning already demonstrate the value of recovering river carbon patterns where direct measurements are incomplete \citep{tian2025}.
+
+Monitoring remains uneven in both time and space. Water chemistry is sampled less continuously than meteorology or discharge, and available records differ among stations \citep{sterle2024}. A prolonged interruption at a monitored station can still leave useful local history. An unmonitored station has no such chemical reference. These are distinct reconstruction problems: improving predictions with nearby dates does not by itself establish transfer to a site without DOC observations.
+
+Existing approaches provide complementary information. Interpolation and seasonal summaries exploit a station's observed history. Stream-network geostatistics represent flow connectivity and hydrological distance \citep{verhoef2006}. Random forests and extremely randomized trees capture nonlinear environmental relationships and can use explicit historical lags and neighboring-observation summaries \citep{breiman2001,geurts2006}. Recurrent graph models combine temporal and relational representations for missing-data reconstruction \citep{cini2022}; observation-aware recurrence can additionally use masks and elapsed time to represent irregular monitoring \citep{che2018}. Strong engineered-feature models therefore form a substantive comparison for a neural extension.
+
+The transfer problem concerns how these information sources are learned and combined. A tree predictor can explain much of the environmental DOC signal, leaving residual variation for a temporal model. However, ordinary training rows may contain their station's chemical history even when the eventual target station has none. A residual learner trained on fitted tree errors faces a second mismatch: those errors can be much smaller than the errors at withheld stations. Both mismatches motivate training the correction on station-withheld prediction errors and station-hidden input histories.
+
+We develop an environmental--memory--source model for DOC reconstruction without local chemistry. Environmental prediction supplies a reference, and an ecological encoder with observation-aware recurrent memory learns its remaining error under whole-station withholding. A receiving-state attention operator retrieves prediction errors from ecologically similar source stations, selecting information according to hydrological conditions and actual observation availability. Daily hydrology and permitted source monitoring context remain available. A small number of later-provided local observations can adjust the output through a separate station correction.
+
+Our contributions are threefold. First, we introduce a residual source-attention framework that connects environmental prediction and ecological temporal memory with contemporaneous experience from monitored stations. Second, we train this transfer under whole-station hiding and double-held source references, so that a receiving fold cannot provide labels to its own experience bank. Third, matched geographical experiments, source-value controls and a fixed external replication quantify the information gained from source observations and subsequent local support. The resulting portable model accepts new station identities and calendars and exposes environmental, local-temporal and source corrections.
+
+\section{Materials and methods}
+\subsection{Data and the unmonitored-station task}
+The development cohort contains 357 Mississippi River stations, 324 directed river edges and 654 calendar months from April 1972 to September 2026. Only 22, 571 of 233, 478 station-month positions contain observed DOC (9.67\%). DOC concentration is in mg/L. Inputs include water temperature, discharge, their availability, calendar season, coordinates and ecological descriptors.
+
+In the principal task, the receiving station has no DOC, pH or conductivity input. We hide its entire chemical history and the values, observation ages, masks and support features derived from that history. Source-station observations remain legitimate monitoring context. The resulting task represents reconstruction without a local chemical reference. Predictions are scored only where withheld DOC truth exists.
+
+Eight bounded daily hydrological descriptors supplement the monthly inputs: three value descriptors and five coverage/availability descriptors constructed on the same discharge footprint. Current and previous months define retrospective monthly reconstruction; the task does not assume that a month's complete hydrology is known at its beginning. Twelve-month recurrent windows never include a future month.
+
+\subsection{Environmental prediction and station-blocked residuals}
+The environmental reference is an ExtraTrees predictor using 39 context features plus the eight daily descriptors. Four 300-tree configurations vary minimum leaf size (four, two or one) and all-feature versus square-root feature selection. Validation MAE selects the configuration. The ordinary daily-tree comparator fits rows with their original visible source history. The stronger station-hidden comparator fits each source row using its whole station fold's hidden-chemistry view. Both receive the same available inputs at the new station.
+
+Five station folds generate out-of-fold (OOF) predictions. To predict a held station, a forest uses the other stations' labels and input context. For the station-hidden reference, inner station folds also hide local history in those fitting rows. This yields nested station-blocked errors with a train--deployment input condition matched to missing local chemistry.
+
+Let $C^{\mathrm{OOF}}_{it}$ denote the withheld-station environmental prediction. The recurrent branch learns the native concentration residual
+\[
+ r^{\mathrm{OOF}}_{it}=y_{it}-C^{\mathrm{OOF}}_{it}.
+\]
+Validation and test use the environmental reference fitted to the full permitted training role. OOF predictions enter residual training; fitted training errors are not substituted for them.
+
+\subsection{Ecological and observation-aware temporal correction}
+The neural branch retains the ecological encoder and node self transformation of the existing graph model, with hidden width 64 and ecological embedding width 32. Its selected implementation uses empty neural edges. Explicit source-context features remain available, but this branch does not claim additional learned river-message propagation.
+
+An observation-aware GRU encodes the previous twelve months. Its inputs describe monthly hydroclimate, season, ecological state, visible observation support and elapsed observation time. At an unmonitored station, local target-value and local-support channels remain zero; hydrological history, season and source context still inform the state. Daily hydrology, source-normalized ecology and predicted concentration additionally enter the existing residual readout through additive features and fixed interactions.
+
+For a full-fit environmental prediction $C_{it}$, the native residual expert is
+\[
+ P^{\mathrm{native}}_{it}=\max\{0,C_{it}+s\,d_\theta(h_{it},x_{it})\},
+\]
+where $s\in\{0, 0.25, 0.5, 1\}$ is selected on validation MAE. A zero-initialized head starts at the environmental reference. Absolute-error training retains a weight of two for training-derived Q90 DOC cells. No upper concentration clipping is applied.
+
+The retained training recipe first fits an observation-aware backbone (20-epoch cap), then the daily native residual (120-epoch cap), and finally a station-hidden correction (30-epoch cap). The source-attention variant reuses that correction's saved ecological and recurrent initialization and replaces its final fit with a thirty-epoch attention residual fit. Early-stopping patience is five, and the new readout starts at zero. Matched source-attention controls use the same initialization and final training budget; comparisons with older complete procedures also reflect the accumulated training recipe.
+
+Source OOF errors can also supply ecological-neighbor residual profiles. Validation selects their blending weight, including an exact zero-memory option. The selected complete procedure is fixed before geographical and external evaluation; native-only is retained as an ablation. Dynamic and target statistics use source training cells. Historical coordinate/ecology preprocessing retains the known development-cohort convention and is saved for deployment; scales are not re-estimated on a new target cohort.
+
+\subsection{Observation-aware source residual attention}
+At an unmonitored receiver, source stations provide useful concentration deviations even when their environmental backgrounds differ. For permitted source station $j$, we define a dimensionless innovation
+\[
+ r^{\log}_{jt}=\log(1+y_{jt})-\log(1+C^{\mathrm{OOF}}_{jt}).
+\]
+For each receiver we first retain at most 20 source candidates by ecological distance. Two 32-dimensional attention heads use receiving recurrent state, ecology and daily hydrology as queries; source ecology and daily hydrology form keys. An ecological-distance prior supplements the dot-product score. Invalid source observations are masked, and a zero-value prior remains available at every station-month. Current source DOC is usable without requiring an earlier observation from the same season.
+
+For head $h$, the attended source information is
+\[
+ m^h_{it}=\sum_{j\in\mathcal C_i}\alpha^h_{ijt}\,r^{\log}_{jt},\qquad
+ \alpha^h_{ijt}\propto\exp\!\left(\frac{(q^h_{it})^\top k^h_{jt}}{\sqrt{32}}+\log w^{\mathrm{eco}}_{ij}\right),
+\]
+where the normalization also includes the zero-value prior. A zero-initialized source projection maps $(1+C_{it})m^h_{it}$ into the native residual readout. Three matched aggregate descriptors---source innovation, support count and weight mass---extend its 38 retained features to 41. They are held identical in the individual source-value comparisons. Source attention denotes ecological and hydrological information allocation, rather than a physical river-transport coefficient.
+
+Training requires a second withholding boundary. For a receiving training fold A, donor fold B residuals use a forest fitted on neither A nor B. Ten pair forests cover the five-fold combinations, retaining the forest settings previously selected on source validation. The source bank for A contains only the other permitted training stations; its donor values and complementary forest fits exclude A labels. At new-site inference, the saved source OOF library and preprocessing remain fixed. Calendar matching supplies only source observations in the relevant current month; months outside the source record use the zero prior. Empirical seasonal statistics and normalization are learned from the permitted training role.
+
+The current-availability mechanism is compared against the preceding requirement for earlier seasonal support, equally available seasonal source values, anomaly-only values and native-only prediction. Additional source-role probes with 60 candidates or extra DOC-state key channels did not improve the isolated source-validation comparison and are omitted from the fixed release.
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/doc_current_source_architecture_v2.pdf}
+\caption{\textbf{Environmental prediction, temporal memory and residual source attention.} A station-hidden tree reference combines with ecological recurrent state and a twenty-candidate source experience bank. Attention uses ecological/hydrological keys and actual current observation availability; double-held references exclude both receiving and donor folds during training. K0 contains no receiving chemistry. The saved five-seed release accepts designated DOC support through a separate output correction. Neural river-edge messages are absent; source similarity remains explicit.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Geographical refits and independent deployment}
+We rotate five sufficiently populated HUC4 regions: 1013, 1019, 0708, 1030 and 1101. Each is withheld for test, the next region cyclically supplies validation, and the remainder trains. Every role assignment is fitted afresh with seeds 42--46. Main K0 scores all 7,262 valid test DOC cells at 104 stations, including sparse stations. Region metrics first average seed errors and then weight the five regions equally. These are retrospective geographical tests within ST357.
+
+The independent external case, HUC02040104, is selected from previously ordered candidates using DOC availability and common-input construction. It contains 130 stations disjoint from ST357, 520 calendar months and 6,514 DOC observations. Temperature is available at 96.5\% of DOC cells and discharge at 34.1\%. Prediction outcomes did not select the original case. Its results were inspected for the preceding release, so the present evaluation is an updated external replication rather than a newly blinded test. External outcomes do not select the new source-attention architecture, checkpoint or calibration.
+
+For deployment, 303 ST stations with 20,288 DOC cells train the model; 54 fixed source-validation stations provide 2,283 cells for selection. Historical internal test stations legitimately become source observations for this independent deployment. Five source refits preserve the geographically confirmed architecture, reusing the existing source-fitted environmental reference and recurrent initialization and fitting complementary source references plus a new attention residual. All procedures use an arithmetic mean of native-mg/L predictions. Point products and source-validation policies are saved before external DOC is opened for scoring. No external DOC calibrates K0.
+
+Portable prediction uses saved preprocessing, source observations and source error experience. It accepts arbitrary new station identities and consecutive calendars, without ST357 node indices. Source context is matched by calendar month. Named source-to-external river links are absent in this case, so directional context is zero; the no-message neural recipe remains applicable.
+
+\subsection{Temporal compatibility refits}
+We additionally refit the same current-source attention mechanism on two existing monitored-station time tasks: unobserved periods and periods with designated observation assistance. Each uses seeds 42--44 and its original train/validation/test/context cells. The source-fitted environment reference and recurrent initialization are reused from the preceding temporal procedure; ten complementary pair references and one attention residual are fitted per task/seed. Past local chemistry remains available where allowed by the temporal role. The ecological-neighbor module is omitted because training and validation station identities overlap. The existing validation-selected fusion family combines environmental and native predictions, including a log-affine concentration adjustment. Results average individual-seed errors within each time split and provide a retrospective compatibility assessment distinct from the portable new-station deployment.
+
+\subsection{Sparse observations and uncertainty}
+Five dates per eligible station are reserved in the order first, middle, last, first quartile and third quartile. Nested prefixes define $K=0, 1, 3, 5$. All five candidates are excluded from the curve query at every K, leaving 5,864 external query cells. This curve population differs from the all-observation primary K0 population.
+
+For a support set $\mathcal S_i$, adaptation adds a shrunken mean log residual:
+\[
+ \widehat y_{it}^{(K)}
+ =\max\!\left\{0,\exp\!\left[\log(1+P_{it})
+ +\frac{\alpha_K}{K}\sum_{s\in\mathcal S_i}
+       \bigl(\log(1+y_{is})-\log(1+P_{is})\bigr)\right]-1\right\}.
+\]
+K0 returns the original prediction. Source-validation ensemble query MAE selects $\alpha_K$ from $\{0, 0.25, 0.5, 0.75, 1\}$; ties favor a smaller value. Only designated external supports enter adaptation. Supports may follow query dates, so the correction is retrospective.
+
+Source validation supplies a finite-rank 90\% quantile of absolute log1p prediction errors. Intervals transform the prediction plus/minus that constant log half-width back to nonnegative concentration. Matching adapted source-validation queries calibrate each K curve. Because validation also selects the model, these are empirical intervals. We report coverage jointly with native interval width and high-DOC coverage.
+
+\subsection{Evaluation}
+Main comparisons retain the preceding complete model, ordinary matched daily trees, strong station-hidden trees, the native ablation and the fixed complete upgrade. MAE is primary; RMSE, bias, station-equal MAE and training-derived Q90 diagnostics complement it. Station-equal and cell-weighted errors answer different weighting questions and are not interchangeable. Q90 groups with fewer than 20 unique cells are marked unstable.
+
+Paired 95\% intervals use 5,000 station-bootstrap draws, carrying a station's months together. Geographical analysis preserves region weighting; the external analysis describes station sampling within one independent basin. Repeated seeds do not add ecological samples. Source-defined ecological novelty, nearest-source distance and hydro availability provide descriptive strata. Structured evaluation follows the intended reconstruction setting \citep{roberts2017}. All temporal development results remain distinct from the new geographical and external evaluations.
+
+\FloatBarrier
+\section{Results}
+\subsection{Source attention improves reconstruction across withheld regions}
+The fixed complete model achieves equal-region K0 MAE 2.249~mg/L (Table~\ref{tab:geo}). Relative to the earlier full model, error decreases 4.73\% [2.14, 7.55\%]. Relative to the retained environmental--temporal release, the increment is 1.48\% [0.42, 2.67\%], with four of five regions improving. Strong matched station-hidden trees score 2.345~mg/L; the model reduces their error 4.11\% [1.11, 7.11\%], with all five regions improving. These are internal geographical tests, weighting regions equally after averaging seed losses.
+
+\begin{table}[htbp]\centering\small
+\caption{Five-seed geographical reconstruction with equal region weighting. Errors are in mg/L. The retained release and current-source model are complete fixed procedures.}
+\label{tab:geo}
+\begin{tabular}{lrrr}\toprule
+Procedure &MAE&Station-equal MAE&Q90 MAE\\\midrule
+Earlier full model&2.360&2.557&10.632\\
+Strong station-hidden trees&2.345&2.548&10.520\\
+Retained environmental--temporal release&2.282&2.505&10.520\\
+Current-source native ablation&2.247&2.476&10.432\\
+Current-source complete model&2.249&2.476&10.440\\\bottomrule
+\end{tabular}
+\end{table}
+
+Actual current source values reduce error 0.97\% [0.46, 1.55\%] relative to individual seasonal values with the same availability, in all five regions. Relaxing the earlier-season eligibility requirement adds 0.78\% [0.28, 1.34\%] against its matched predecessor. These controlled contrasts attribute a small, reproducible increment to source monitoring information rather than solely to the accumulated training recipe.
+
+Q90 error decreases 0.76\% [0.11, 1.44\%] against the retained release. Anomaly-only source attention remains competitive: the current model's overall advantage against it is 0.43\% with an interval crossing zero, and it does not improve every tail or support condition. Two regional tail groups contain fewer than 20 cells. We retain the same complete model across regions and K.
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/doc_current_source_geographical_v2.pdf}
+\caption{\textbf{Current-source attention across five withheld regions.} Fixed five-seed refits compare actual current source values with seasonal controls and preceding complete procedures. Region variation, paired station intervals, fixed-query support curves and current-source availability distinguish accumulated model performance from the new mechanism's increment. These are ST357 geographical tests.}
+\label{fig:geo}
+\end{figure}
+
+\subsection{Updated external replication shows a transfer boundary}
+The fixed current-source ensemble achieves 0.911~mg/L in HUC02040104. The earlier full model scores 0.984, giving a cumulative 7.47\% reduction [5.07, 9.54\%]. The preceding complete release scores 0.915; the new mechanism's incremental reduction is 0.48\% [$-0.39$, 1.56\%]. Thus its geographical benefit does not establish an additional cell-weighted benefit in this external case. Strong station-hidden trees score 0.841; the new model's relative gain is $-8.29$\% [$-19.44$, 4.44\%].
+
+Station-equal MAE is 0.821 for the new model, 0.841 for the preceding release and 0.905 for strong trees. Unequal observation counts cause the difference between this descriptive ordering and the primary cell-weighted comparison. External RMSE is 1.377~mg/L and $R^2=-0.129$, compared with 1.240~mg/L and $R^2=0.084$ for strong trees. External mean bias remains $-0.442$~mg/L, compared with $-0.034$ for strong trees. Q90 contains 16 cells at 11 stations, all undetected by the evaluated tools; its error estimates remain unstable.
+
+Current sources support 82.2\% of observed external station-months, with 1.68 valid candidates on average across source seeds. The zero-value prior receives mean attention mass 0.800. This diagnostic describes limited source reliance in the receiving basin; it does not determine the cause of its concentration bias. Source validation selects zero static-memory fusion in every seed, so native and complete external predictions coincide.
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/doc_current_source_external_v2.pdf}
+\caption{\textbf{Fixed current-source release in an external river basin.} The earlier release, matched station-hidden trees and current-source model use the same 130 stations and query populations. Paired intervals, support curves and empirical coverage--width comparison retain the strength of the tree reference. This external case was previously inspected; no receiving DOC calibrates K0 or selects this release.}
+\label{fig:external}
+\end{figure}
+
+\subsection{Environmental support reveals different transfer regimes}
+Figure~\ref{fig:conditions} compares the same models across source-defined environmental strata. In the geographical experiment, the upgrade improves on the preceding model across hydrological availability groups; ecological and nearest-source distance groups have different regional populations. These summaries describe the usable regions within each stratum.
+
+In the independent basin, one available hydro channel gives upgraded MAE 0.805~mg/L versus 0.849 for strong trees. With both channels available, the upgraded error rises to 1.127~mg/L while the tree error remains 0.831~mg/L. The ecological high-novelty group contains 12 stations, and 128 of the 130 external stations lie in the high nearest-source-distance group. Such uneven source-to-target coverage provides a concrete setting for further residual-transfer research.
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/doc_transfer_conditions_v2.pdf}
+\caption{\textbf{Reconstruction across environmental and hydrological conditions.} The top row reports seed means averaged over usable geographical regions; the bottom row reports cell-weighted error for the external five-seed ensemble. Source-defined tertiles classify ecological novelty and nearest-source distance. Numbers identify contributing regions or unique stations. A station can occur in several hydro-availability groups across months. Empty external groups remain displayed.}
+\label{fig:conditions}
+\end{figure}
+
+\subsection{A few local observations improve the reconstructed record}
+On fixed external queries, upgraded MAE decreases from 0.925 at K0 to 0.829 at K3 and 0.746~mg/L at K5: a 19.35\% reduction. Its K1 output is unchanged because source validation selected zero correction strength. The earlier full model reaches 0.790~mg/L at K5 and the preceding release 0.746~mg/L, while equally adapted strong trees reach 0.681~mg/L. Sparse observations help both model families, and their value is evaluated on an unchanged query population.
+
+\subsection{Uncertainty and high DOC require separate evaluation}
+Nominal 90\% source-calibrated intervals achieve 83.3\% external coverage [78.2, 88.9\%], with median width 2.737~mg/L. Strong trees achieve 92.5\% [90.5, 94.3\%] with median width 3.537~mg/L. The wider tree interval covers more external observations. Neither overall MAE nor interval coverage alone describes all operational performance.
+
+The source-training Q90 threshold is 9.730~mg/L, identifying only 16 external cells at 11 stations. All procedures have zero recall and interval coverage for these cells. Upgraded Q90 MAE is 9.578~mg/L, versus 9.392 for strong trees. These sparse tail data describe missed high-DOC observations and are not a stable estimate of broad tail behavior.
+
+\subsection{The updated procedure retains temporal reconstruction performance}
+Matched temporal refits produce complete-fusion MAE 0.785~mg/L in unobserved periods and 0.797~mg/L in observation-assisted periods (Figure~\ref{fig:time}). Strong station-hidden trees score 0.897 and 0.936~mg/L: reductions of 12.51\% [8.70, 15.91\%] and 14.88\% [11.86, 17.61\%]. Against the preceding upgraded temporal procedure, the new increments are 0.107\% [0.011, 0.199\%] and 0.086\% [$-0.013$, 0.188\%]. The spatial upgrade therefore retains the earlier temporal reconstruction performance, with a very small increment in one task.
+
+The native attention residual alone reduces tree error by 0.075\% and 0.112\%, with both intervals crossing zero; it is slightly worse than the preceding native branch. All six complete refits select log-affine validation fusion, and seed 42 selects zero native residual scale in both tasks. Full-procedure gains therefore include concentration/bias calibration, rather than establishing a large attention contribution to temporal prediction. These tasks retain legitimate local history and use separately fitted temporal procedures. Their Q90 groups contain 12 and seven cells.
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/doc_current_source_temporal_v3.pdf}
+\caption{\textbf{Temporal compatibility of the current-source mechanism.} Three-seed refits reuse their temporal source reference and initialization, then fit source attention under the original visibility rules. Top panels show mean individual-seed errors; bottom panels give paired station-bootstrap gains against the earlier upgraded temporal procedure, strong matched trees and the older fusion model. Native-only error and validation fusion are reported separately.}
+\label{fig:time}
+\end{figure}
+
+\FloatBarrier
+\section{Discussion}
+\subsection{Matching residual learning to sparse monitoring}
+The proposed division of prediction gives each component a concrete role. Environmental trees provide nonlinear background prediction; recurrent learning targets the error observed when a station is withheld; source attention selects remaining information from contemporaneous monitoring at ecologically similar stations. Hiding its input history as well as its fitting labels aligns this correction with the absence of local chemistry at deployment. This is the central method contribution, rather than a claim that graph depth or topology explains every observed gain.
+
+Geographical results establish an increment over the retained complete model, while the updated external replication retains an advantage over the earlier full model without establishing the new attention increment. The comparison against matched trees also identifies the remaining prediction challenge. Engineered ecological and hydrological features can be highly effective, and a neural correction can add bias when transferred to another concentration regime. External upgraded mean bias is $-0.442$~mg/L, versus $-0.034$ for strong trees. The largest descriptive gap occurs where both hydro channels are available. These strata identify environments for further investigation; they do not prove a mechanism.
+
+\subsection{Transfer, monitoring effort and local information}
+The different cell-weighted and station-equal external summaries demonstrate why station records must be considered explicitly. A source-only matched experiment tested equal-station residual loss with unchanged architecture, 30-epoch budget and within-station Q90 weight. It produced $-0.12$\% relative gain [$-0.65$, 0.39\%] against the existing complete upgrade, improving only one of three development partitions. This simple change is not adopted. Monitoring-frequency differences remain useful descriptive evidence, while their remedy requires more than reweighting alone.
+
+The external correction curve shows how a small number of local measurements can complement zero-observation transfer. Current supports adjust concentration reference without changing recurrent dynamics. This separates the contribution of new local evidence from the transferable prediction learned at source stations.
+
+\subsection{Future research directions}
+First, residual transfer should represent differences in concentration regime and hydrological observation support more directly. Source-only experiments can test concentration-scaled corrections and hydrological state representations before further geographical testing. Additional independently selected basins would determine whether the present external behavior is shared across catchment environments.
+
+Second, event-sensitive reconstruction requires higher-frequency DOC paired with rainfall and flow, so that a model can learn peak magnitude and timing. The 16 external source-Q90 cells are insufficient for a detailed transport interpretation. Process states and reliable reach flow/source information could enrich river-message modeling beyond the currently selected no-message branch.
+
+Third, local adaptation can move from a station-level output adjustment to observation-conditioned state updates. Comparing retrospective support with observations available before each prediction would connect reconstruction to ongoing monitoring.
+
+Finally, uncertainty should track distribution shift while preserving useful interval width. The current external coverage--width comparison and earlier uncertainty-ranking diagnostics provide a starting point. Concentration and flow uncertainty would need joint propagation before using reconstructed monthly DOC for carbon-load assessment.
+
+\section{Conclusion}
+We developed an environmental--memory--source framework for DOC reconstruction without local water chemistry. Station-hidden prediction errors align temporal learning with new-site deployment, and double-held source references enable attention to permitted monitoring experience. The fixed complete model lowers equal-region geographical MAE 4.11\% against strong matched trees and 1.48\% against the retained environmental--temporal release. Actual current source values outperform equally available seasonal values. In the updated external replication, error is 0.911~mg/L; the mechanism's increment over the preceding release remains unresolved and strong trees retain lower cell-weighted error. Five local observations reduce fixed-query error 19.35\%. These results support source-aware reconstruction while identifying concentration-regime transfer, high-DOC events and broader basin replication as the next scientific priorities.
+
+\section*{Data, code and figure availability}
+The source-only development, five-region confirmation, portable source fits and independent basin evaluation retain configurations, predictions, source snapshots and reproducible analyses in separate version directories. The current model exposes fitting, prediction, component prediction and saved-state restoration; the five-seed deployment bundle also contains source-selected support and interval policies. The geographical, external and temporal analyses use 5,000 paired station draws. All figures in this draft are code-generated from the implemented model and saved numerical evidence. The older manuscript and its historical experiments remain available. A persistent public data/code release identifier has not yet been assigned.
+
+\begin{thebibliography}{99}
+\bibitem{yang2017}Yang, Q., Zhang, X., Xu, X., and Asrar, G.~R. (2017). An analysis of terrestrial and aquatic environmental controls of riverine dissolved organic carbon in the conterminous United States. \emph{Water}, 9, 383. \url{https://doi.org/10.3390/w9060383}.
+\bibitem{tian2025}Tian, S., Sha, A., Luo, Y., et al. (2025). A novel framework for river organic carbon retrieval through satellite data and machine learning. \emph{ISPRS Journal of Photogrammetry and Remote Sensing}, 221, 109--123. \url{https://doi.org/10.1016/j.isprsjprs.2025.01.028}.
+\bibitem{sterle2024}Sterle, G., Perdrial, J., Kincaid, D.~W., et al. (2024). CAMELS-Chem: augmenting CAMELS with atmospheric and stream water chemistry data. \emph{Hydrology and Earth System Sciences}, 28, 611--630. \url{https://doi.org/10.5194/hess-28-611-2024}.
+\bibitem{verhoef2006}Ver Hoef, J.~M., Peterson, E., and Theobald, D. (2006). Spatial statistical models that use flow and stream distance. \emph{Environmental and Ecological Statistics}, 13, 449--464. \url{https://doi.org/10.1007/s10651-006-0022-8}.
+\bibitem{breiman2001}Breiman, L. (2001). Random forests. \emph{Machine Learning}, 45, 5--32. \url{https://doi.org/10.1023/A:1010933404324}.
+\bibitem{geurts2006}Geurts, P., Ernst, D., and Wehenkel, L. (2006). Extremely randomized trees. \emph{Machine Learning}, 63, 3--42. \url{https://doi.org/10.1007/s10994-006-6226-1}.
+\bibitem{cini2022}Cini, A., Marisca, I., and Alippi, C. (2022). Filling the G\_ap\_s: multivariate time series imputation by graph neural networks. \emph{ICLR}. \url{https://openreview.net/forum?id=kOu3-S3wJ7}.
+\bibitem{che2018}Che, Z., Purushotham, S., Cho, K., Sontag, D., and Liu, Y. (2018). Recurrent neural networks for multivariate time series with missing values. \emph{Scientific Reports}, 8, 6085. \url{https://doi.org/10.1038/s41598-018-24271-9}.
+\bibitem{roberts2017}Roberts, D.~R., Bahn, V., Ciuti, S., et al. (2017). Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure. \emph{Ecography}, 40, 913--929. \url{https://doi.org/10.1111/ecog.02881}.
+\end{thebibliography}
+\end{document}

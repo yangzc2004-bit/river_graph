@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from analyze_doc_geographical_confirmation_v1 import summaries
+from analyze_doc_geographical_confirmation_v1 import improving_region_count, summaries
 from run_doc_geographical_confirmation_v1 import support_curves
 
 
@@ -52,3 +52,19 @@ def test_geographical_metrics_weight_five_regions_after_seed_average():
     np.testing.assert_allclose(summary.q90_mae, 3.1)
     np.testing.assert_allclose(summary.station_equal_mae, 3.1)
     assert not np.isclose(np.abs(panel.y_pred-panel.y_true).mean(), 3.1)
+
+
+def test_tail_direction_count_does_not_reuse_overall_directions():
+    # A candidate improves ordinary cells but harms every high-DOC cell.
+    # Unequal seeds/cell counts must still produce one direction per region.
+    rows = []
+    for region in range(5):
+        for seed in (42, 43):
+            rows.extend({"split_seed": region, "seed": seed, "tail": False,
+                         "candidate_error": 0., "reference_error": 5.}
+                        for _ in range(region+2))
+            rows.append({"split_seed": region, "seed": seed, "tail": True,
+                         "candidate_error": 4., "reference_error": 2.})
+    comparison = pd.DataFrame(rows)
+    assert improving_region_count(comparison) == 5
+    assert improving_region_count(comparison[comparison["tail"]]) == 0

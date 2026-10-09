@@ -1,0 +1,14 @@
+Create a publication-ready neural-network architecture schematic, in the clean computational-block style of Figure 1 of Attention Is All You Need: vertical stacked modules, Q/K/V connections, long routed residual bypasses, circular plus nodes. Original model, not a Transformer clone. Landscape 4:3 white canvas, large crisp sans-serif English labels, thin orthogonal arrows, pale teal, muted ochre and blue-gray. Flat vector-like rendering, no gradients or decorative illustrations.
+
+Draw this exact architecture bottom to top:
+LEFT: Receiver inputs (Ecology, hydro, season; no receiver water quality at K0) split into Environmental trees (Station-hidden ExtraTrees) and Ecological encoder -> Observation-aware GRU (12-month causal window, hidden 64).
+Tree baseline C takes a long exterior bypass to the final plus node.
+GRU state h branches to Local residual readout -> d, and Linear Q -> Q.
+RIGHT: Source experience bank (20 ecological candidates; source-only OOF experience) supplies source ecology/hydro -> Linear K -> K, and a DIRECT scalar-value path V: OOF log residuals. No Linear V.
+Q and K -> Scaled dot product (QKᵀ/√32 + ecological prior) -> Availability mask + Softmax. Add a zero-value prior candidate. Attention weights and V -> Weighted source values (2 heads) -> Scale by (1+C) -> Zero-initialized projection -> g.
+d and g join at a circular plus: Δ=d+g.
+Δ -> Validation-selected scale s -> sΔ, joined with C at a second circular plus: C+sΔ.
+Then Nonnegative DOC -> Five-seed mean -> DOC reconstruction (mg/L).
+A small dashed optional DOC support correction K=1,3,5 acts ONLY AFTER the five-seed mean.
+Use adjacent outlined panels titled Ecological temporal encoder and Residual source attention.
+All arrows must follow these dependencies. No Transformer Add & Norm, FFN, decoder, dense node attention or river-edge message module. Footer: Source attention selects ecological–hydrological experience. Make the figure elegant, readable and uncluttered.

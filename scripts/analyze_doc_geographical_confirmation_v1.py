@@ -124,6 +124,14 @@ def additional_metrics(panel, thresholds):
     return pd.DataFrame(rows)
 
 
+def improving_region_count(comparison):
+    """Count directions for the evaluated population, including tail subsets."""
+    per_seed = comparison.groupby(["split_seed", "seed"])[[
+        "candidate_error", "reference_error"]].mean()
+    per_region = per_seed.groupby("split_seed").mean()
+    return int((per_region.candidate_error < per_region.reference_error).sum())
+
+
 def strata_for_run(run, panel):
     config = json.loads((run / "config.json").read_text())
     dataset = torch.load(config["dataset_path"], weights_only=False)
@@ -201,8 +209,6 @@ def main():
         for k in sorted(panel.k.unique()):
             for reference in ("current_model", "station_hidden_trees", "matched_daily_trees", "unmonitored_residual"):
                 comparison = paired(panel[panel.k.eq(k)], "unmonitored_integrated", reference)
-                per_region = comparison.groupby(["split_seed", "seed"])[["candidate_error", "reference_error"]].mean()
-                directions = per_region.groupby("split_seed").mean()
                 for zone in ("overall", "q90"):
                     selected = comparison
                     if zone == "q90":
@@ -220,7 +226,7 @@ def main():
                     effects.append({"candidate": "unmonitored_integrated", "reference": reference,
                         "population": population, "k": k, "zone": zone,
                         **joint_station_bootstrap(selected, draws=args.bootstrap_draws),
-                        "improving_regions": int((directions.candidate_error < directions.reference_error).sum()),
+                        "improving_regions": improving_region_count(selected),
                         "n_regions_usable": len(regions), "status": "estimated"})
                 stations = comparison.groupby(["split_seed", "station"], as_index=False).agg(
                     candidate_mae=("candidate_error", "mean"), reference_mae=("reference_error", "mean"), n_cells=("cell", "nunique"))

@@ -1,0 +1,10 @@
+Edit this scientific architecture diagram. Preserve its layout, module labels, palette and typography, but repair the computational wiring. Produce a crisp flat graphic with uniform white/pale solid fills.
+
+MANDATORY wiring corrections:
+1. Create a clearly visible SECOND circle-plus addition node directly below "Validation-selected scale s", labeled "Δ = d + g". Connect the output arrow of "Local residual readout" (d) to its LEFT side via a clean orthogonal route. Connect "Zero-initialized projection" output (g) to its RIGHT side. The sum output alone connects upward to scale s.
+2. DELETE the erroneous upward connection from Linear Q to Δ. Linear Q has only ONE outgoing connection: Q to Scaled dot product. Label that block "Linear Q". The GRU hidden state still feeds Local residual readout and Linear Q.
+3. DELETE the erroneous C branch from the Q wire to "Scale by (1 + C)". Only "Environmental trees" supplies C. Draw a C branch from the exterior tree-baseline bypass to the scaling block using an exterior orthogonal route that does not join any Q/K/V wire. If necessary move the scaling block slightly to make this route clear. The tree-baseline bypass also continues to the final prediction plus node.
+4. Label the lower source projection block "Linear K". Keep source ecology/hydro -> Linear K -> Scaled dot product distinct from source OOF log residuals -> V -> Weighted source values; these two paths must NOT join each other.
+5. Preserve attention softmax -> Weighted source values -> Scale by (1+C) -> Zero-initialized projection -> g.
+6. Preserve final tree C plus sΔ -> Nonnegative DOC -> Five-seed mean -> DOC reconstruction, and optional support ONLY after Five-seed mean.
+There must be exactly two circle-plus nodes, one for d+g and one for C+sΔ. No free-floating d or g arrows. Avoid line intersections by routing around blocks. Keep the figure visually similar to the original Transformer paper's computational architecture diagram, but with these actual model modules. All English text must stay legible.

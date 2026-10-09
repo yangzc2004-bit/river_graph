@@ -32,21 +32,29 @@ class EncoderNativeResidual(NativeTemporalResidual):
     a zero-initialized, bias-free projection. ``current_only`` injects it at the
     queried month; ``full_history`` injects it at every valid causal window step.
     The default ``off`` path and its checkpoint schema remain unchanged.
+
+    Optional ``reference_history[N,T,1]`` similarly conditions the SAME GRU
+    on a source-standardized environmental log-DOC prediction. Its separate
+    zero projection preserves the original initialization; source histories
+    must be dense station-blocked OOF predictions supplied by the caller.
     """
 
     def __init__(self, spatial, temporal, decay, *, encoder_mode="frozen",
-                 encoder_learning_rate=1e-5, hydro_sequence_mode="off", **kwargs):
+                 encoder_learning_rate=1e-5, hydro_sequence_mode="off",
+                 reference_sequence_mode="off", **kwargs):
         if (type(spatial) is not TransportGCNImputer or spatial.residual
                 or spatial.jumping_knowledge or not len(spatial.convs)):
             raise ValueError("expected the baseline TransportGCNImputer without residual or JK")
-        if encoder_mode not in ("frozen", "last_self", "last_self_ecology"):
-            raise ValueError("encoder_mode must be frozen, last_self or last_self_ecology")
+        if encoder_mode not in ("frozen", "last_self", "last_self_ecology", "all_self_ecology"):
+            raise ValueError("encoder_mode must be frozen, last_self, last_self_ecology or all_self_ecology")
         if not np.isfinite(encoder_learning_rate) or encoder_learning_rate <= 0:
             raise ValueError("encoder_learning_rate must be finite and positive")
-        if encoder_mode == "last_self_ecology" and spatial.env_encoder is None:
-            raise ValueError("last_self_ecology requires the existing ecological encoder")
+        if encoder_mode in ("last_self_ecology", "all_self_ecology") and spatial.env_encoder is None:
+            raise ValueError("ecology tuning requires the existing ecological encoder")
         if hydro_sequence_mode not in ("off", "current_only", "full_history"):
             raise ValueError("hydro_sequence_mode must be off, current_only or full_history")
+        if reference_sequence_mode not in ("off", "current_only", "full_history"):
+            raise ValueError("reference_sequence_mode must be off, current_only or full_history")
         kwargs.setdefault("extra_dim", 30)
         kwargs.setdefault("interaction_indices", (0, 2, 4, 28))
         kwargs.setdefault("tail_weight", 2)
@@ -61,10 +69,15 @@ class EncoderNativeResidual(NativeTemporalResidual):
         self.spatial.requires_grad_(False)
         if encoder_mode != "frozen":
             self.spatial.convs[-1].self_lin.requires_grad_(True)
-        if encoder_mode == "last_self_ecology":
+        if encoder_mode == "all_self_ecology":
+            for conv in self.spatial.convs:
+                conv.self_lin.requires_grad_(True)
+        if encoder_mode in ("last_self_ecology", "all_self_ecology"):
             self.spatial.env_encoder.requires_grad_(True)
         self._initial_spatial_state = _state_copy(self.spatial)
         self._initial_last_self_state = _state_copy(self.spatial.convs[-1].self_lin)
+        if encoder_mode == "all_self_ecology":
+            self._initial_first_self_state = _state_copy(self.spatial.convs[0].self_lin)
         self._initial_ecology_state = (_state_copy(self.spatial.env_encoder)
                                        if self.spatial.env_encoder is not None else None)
         env_dim = spatial.env_encoder[0].in_features if spatial.env_encoder is not None else 0
@@ -87,6 +100,14 @@ class EncoderNativeResidual(NativeTemporalResidual):
             nn.init.zeros_(self.hydro_projection.weight)
             self._initial_hydro_projection_state = _state_copy(self.hydro_projection)
             self.trainable_parameter_count_ += self.hydro_projection.weight.numel()
+        self.reference_sequence_mode = reference_sequence_mode
+        self.reference_projection = None
+        if reference_sequence_mode != "off":
+            with torch.random.fork_rng():
+                self.reference_projection = nn.Linear(1, self.hidden_size, bias=False, dtype=self.dtype)
+            nn.init.zeros_(self.reference_projection.weight)
+            self._initial_reference_projection_state = _state_copy(self.reference_projection)
+            self.trainable_parameter_count_ += self.reference_projection.weight.numel()
 
     def _prepare_inputs(self, inputs):
         required = ("raw", "env", "age", "support")
@@ -113,6 +134,13 @@ class EncoderNativeResidual(NativeTemporalResidual):
             if history.shape != (*shape[:2], 8) or not torch.isfinite(history).all():
                 raise ValueError("daily_history must be finite aligned [station, month, 8]")
             arrays["daily_history"] = history
+        if self.reference_projection is not None:
+            if "reference_history" not in inputs:
+                raise ValueError("reference_history is required for an active reference_sequence_mode")
+            reference = torch.as_tensor(inputs["reference_history"], dtype=self.dtype).detach().cpu()
+            if reference.shape != (*shape[:2], 1) or not torch.isfinite(reference).all():
+                raise ValueError("reference_history must be finite aligned [station, month, 1]")
+            arrays["reference_history"] = reference
         return arrays
 
     def _hidden_cells(self, inputs, cells):
@@ -147,6 +175,16 @@ class EncoderNativeResidual(NativeTemporalResidual):
             hydro_sequence = sequence.new_zeros((len(cells) * self.lookback, self.hidden_size))
             hydro_sequence = hydro_sequence.index_copy(0, history_rows, projected).reshape_as(sequence)
             sequence = sequence + hydro_sequence
+        if self.reference_projection is not None:
+            use_reference = valid.clone()
+            if self.reference_sequence_mode == "current_only":
+                use_reference[:, :-1] = False
+            projected = self.reference_projection(
+                inputs["reference_history"][stations[use_reference], months[use_reference]])
+            reference_rows = torch.nonzero(use_reference.reshape(-1), as_tuple=False).reshape(-1)
+            reference_sequence = sequence.new_zeros((len(cells)*self.lookback, self.hidden_size))
+            reference_sequence = reference_sequence.index_copy(0, reference_rows, projected).reshape_as(sequence)
+            sequence = sequence + reference_sequence
         decay_input = torch.cat([inputs["age"][stations, months, None],
                                  inputs["support"][stations, months]], dim=-1)
         gamma = torch.exp(-torch.relu(self.decay(decay_input)))
@@ -175,13 +213,17 @@ class EncoderNativeResidual(NativeTemporalResidual):
         return delta
 
     def _encoder_distances(self):
-        return {
+        distances = {
             "spatial_parameter_distance": _parameter_distance(self.spatial, self._initial_spatial_state),
             "last_self_parameter_distance": _parameter_distance(
                 self.spatial.convs[-1].self_lin, self._initial_last_self_state),
             "ecology_parameter_distance": (_parameter_distance(self.spatial.env_encoder,
                                                                self._initial_ecology_state)
                                            if self.spatial.env_encoder is not None else 0.0)}
+        if self.encoder_mode == "all_self_ecology":
+            distances["first_self_parameter_distance"] = _parameter_distance(
+                self.spatial.convs[0].self_lin, self._initial_first_self_state)
+        return distances
 
     def _hydro_distances(self):
         if self.hydro_projection is None:
@@ -190,6 +232,14 @@ class EncoderNativeResidual(NativeTemporalResidual):
                     self.hydro_projection, self._initial_hydro_projection_state),
                 "hydro_projection_parameter_norm": float(
                     self.hydro_projection.weight.detach().double().norm())}
+
+    def _reference_distances(self):
+        if self.reference_projection is None:
+            return {}
+        return {"reference_projection_parameter_distance": _parameter_distance(
+                    self.reference_projection, self._initial_reference_projection_state),
+                "reference_projection_parameter_norm": float(
+                    self.reference_projection.weight.detach().double().norm())}
 
     def _source_weights(self, source_cells, source_y, source_tail, months):
         """Full-source weights; subclasses may change the training estimand."""
@@ -201,7 +251,7 @@ class EncoderNativeResidual(NativeTemporalResidual):
 
     def fit(self, source_inputs, source_base_native, source_truth, source_mask,
             val_inputs, val_base_native, val_truth, val_query_mask, *, tail_threshold,
-            selection_role, progress=None):
+            selection_role, progress=None, source_regularizer=None):
         if selection_role != "source_validation":
             raise ValueError("checkpoint selection requires source_validation")
         if not np.isfinite(tail_threshold) or tail_threshold < 0:
@@ -224,19 +274,30 @@ class EncoderNativeResidual(NativeTemporalResidual):
         self.spatial.load_state_dict(self._initial_spatial_state)
         if self.hydro_projection is not None:
             self.hydro_projection.load_state_dict(self._initial_hydro_projection_state)
+        if self.reference_projection is not None:
+            self.reference_projection.load_state_dict(self._initial_reference_projection_state)
         self.spatial.eval()
         nn.init.zeros_(self.head.weight)
         nn.init.zeros_(self.head.bias)
+        if source_regularizer is not None:
+            source_regularizer.reset()
+            source_regularizer.bind(self, source)
         backbone = [parameter for module in (self.temporal, self.decay)
                     for parameter in module.parameters() if parameter.requires_grad]
         if self.hydro_projection is not None:
             backbone += list(self.hydro_projection.parameters())
+        if self.reference_projection is not None:
+            backbone += list(self.reference_projection.parameters())
         encoder = [parameter for parameter in self.spatial.parameters() if parameter.requires_grad]
         parameters = backbone + list(self.head.parameters()) + encoder
         groups = [{"params": backbone, "lr": self.learning_rate}] if backbone else []
         groups.append({"params": self.head.parameters(), "lr": self.head_learning_rate})
         if encoder:
             groups.append({"params": encoder, "lr": self.encoder_learning_rate})
+        if source_regularizer is not None:
+            auxiliary_parameters = list(source_regularizer.head.parameters())
+            parameters += auxiliary_parameters
+            groups.append({"params": auxiliary_parameters, "lr": source_regularizer.learning_rate})
         optimizer = torch.optim.Adam(groups)
         self.trace_, self.best_epoch_, self.selected_scale_ = [], 0, 0.0
         self.optimizer_steps_ = 0
@@ -244,6 +305,10 @@ class EncoderNativeResidual(NativeTemporalResidual):
         modules = (self.temporal, self.decay, self.head, self.spatial)
         if self.hydro_projection is not None:
             modules += (self.hydro_projection,)
+        if self.reference_projection is not None:
+            modules += (self.reference_projection,)
+        if source_regularizer is not None:
+            modules += (source_regularizer.head,)
 
         def evaluate(epoch, train_loss):
             nonlocal best, stale, best_state
@@ -273,7 +338,7 @@ class EncoderNativeResidual(NativeTemporalResidual):
                    "decay_parameter_distance": _parameter_distance(self.decay, self._initial_decay_state),
                    "head_parameter_norm": float(torch.sqrt(sum(
                        parameter.detach().double().square().sum() for parameter in self.head.parameters()))),
-                   **self._encoder_distances(), **self._hydro_distances()}
+                   **self._encoder_distances(), **self._hydro_distances(), **self._reference_distances()}
             self.trace_.append(row)
             if improved:
                 self.validation_metrics_ = copy.deepcopy(row)
@@ -292,6 +357,8 @@ class EncoderNativeResidual(NativeTemporalResidual):
                 prediction = self._combine(source_base[rows], delta, 1.0)
                 errors = self._training_errors(prediction, source_y[rows], source_tail[rows], weights[rows])
                 loss = errors.mean() / mean_weight
+                if source_regularizer is not None:
+                    loss = loss + source_regularizer.loss(self, source, epoch)
                 if not torch.isfinite(loss):
                     raise FloatingPointError("nonfinite encoder native training loss")
                 loss.backward()
@@ -319,6 +386,8 @@ class EncoderNativeResidual(NativeTemporalResidual):
                   "extra_dim": self.extra_dim, "interaction_indices": list(self.interaction_indices)}
         if self.hydro_projection is not None:
             config["hydro_sequence_mode"] = self.hydro_sequence_mode
+        if self.reference_projection is not None:
+            config["reference_sequence_mode"] = self.reference_sequence_mode
         return config
 
     def to_dict(self):
@@ -339,6 +408,13 @@ class EncoderNativeResidual(NativeTemporalResidual):
                 "hydro_sequence_initialization": "zero projection; original encoded state at initialization",
                 "hydro_sequence_learning_rate": self.learning_rate,
                 "hydro_sequence_scope": "valid causal window steps only; no padding or future dates"})
+        if self.reference_projection is not None:
+            summary.update({"reference_projection_trainable_parameter_count": self.reference_projection.weight.numel(),
+                            **self._reference_distances()})
+            summary["protocol"].update({
+                "reference_sequence_mode": self.reference_sequence_mode,
+                "reference_sequence_injection": "zero bias-free Linear(1,H) before existing GRU",
+                "reference_sequence_scope": "source cross-fit environmental prediction; source-only scaling; causal valid months"})
         return summary
 
     def to_payload(self):
@@ -349,6 +425,9 @@ class EncoderNativeResidual(NativeTemporalResidual):
         if self.hydro_projection is not None:
             payload.update({"hydro_projection": _state_copy(self.hydro_projection),
                             "initial_hydro_projection": copy.deepcopy(self._initial_hydro_projection_state)})
+        if self.reference_projection is not None:
+            payload.update({"reference_projection": _state_copy(self.reference_projection),
+                            "initial_reference_projection": copy.deepcopy(self._initial_reference_projection_state)})
         return payload
 
     @classmethod
@@ -379,6 +458,16 @@ class EncoderNativeResidual(NativeTemporalResidual):
             names += ("hydro_projection",)
         elif "hydro_projection" in payload or "initial_hydro_projection" in payload:
             raise ValueError("off hydro sequence checkpoint cannot contain projection weights")
+        if obj.reference_projection is not None:
+            if not all(key in payload for key in ("reference_projection", "initial_reference_projection")):
+                raise ValueError("active reference sequence checkpoint lacks projection weights")
+            obj.reference_projection.load_state_dict(payload["initial_reference_projection"])
+            if not torch.isfinite(obj.reference_projection.weight).all() or torch.count_nonzero(obj.reference_projection.weight):
+                raise ValueError("reference projection initialization must contain finite zero weights")
+            obj._initial_reference_projection_state = _state_copy(obj.reference_projection)
+            names += ("reference_projection",)
+        elif "reference_projection" in payload or "initial_reference_projection" in payload:
+            raise ValueError("off reference sequence checkpoint cannot contain projection weights")
         for name in names:
             module = getattr(obj, name)
             module.load_state_dict(payload[name])
