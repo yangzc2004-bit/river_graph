@@ -1,0 +1,79 @@
+{
+  "classification": {
+    "status": "complete_for_available_geometry",
+    "attempted_stations": 357,
+    "requested_stations": 357,
+    "acquisition_failures": {
+      "07373420": "acquisition_error",
+      "06818000": "acquisition_error",
+      "06934500": "acquisition_error",
+      "07022000": "acquisition_error"
+    },
+    "measured_stations": 353,
+    "unique_networks": 346,
+    "classified_networks": 322,
+    "selected_k": 3,
+    "features": [
+      "log_basin_aspect",
+      "log_network_axis_ratio",
+      "basin_compactness",
+      "log_drainage_density",
+      "log_junction_frequency",
+      "mainstem_share",
+      "side_imbalance",
+      "tributary_alignment",
+      "confluence_position",
+      "tributary_balance"
+    ],
+    "removed": [
+      {
+        "feature": "hierarchy_order",
+        "reason": "within-block Spearman > 0.90"
+      }
+    ],
+    "counts": {
+      "3": 178,
+      "1": 111,
+      "2": 33
+    },
+    "source_sha256": "fd8577a99ee1799788f9fa35aca53cfd16b6f3d45ff85d2d7b4a79b7dfc96de7",
+    "source_snapshot": "measured_cohort.csv",
+    "study_plan_sha256": "0a442f6580a0dd4663f8bf3bea635b9db7026d2f8452e3b40eb6cc5925b0d058",
+    "geometry_unit": "full upstream network at receiving COMID outlet",
+    "method": "Ward; maximum silhouette with minimum class n=10; equal feature-block weight",
+    "stability_draws": 100,
+    "stability_seed": 42,
+    "doc_used_for_classification": false,
+    "stability_note": "80% unique-network subsets; nested basins are dependent, not independent replicates"
+  },
+  "evidence_rows": 11,
+  "new_effect_estimates": false,
+  "monthly_form_replication": [
+    {
+      "cluster": 1,
+      "receivers": 6,
+      "connected_systems": 1,
+      "huc4_regions": 3
+    },
+    {
+      "cluster": 2,
+      "receivers": 1,
+      "connected_systems": 1,
+      "huc4_regions": 1
+    },
+    {
+      "cluster": 3,
+      "receivers": 15,
+      "connected_systems": 11,
+      "huc4_regions": 12
+    }
+  ],
+  "outlet_event_catchments": 3,
+  "positive_doc_outlet_responses": 128,
+  "outlet_width_pairs": 112,
+  "local_confluence_campaigns": 10,
+  "local_confluences": 5,
+  "local_confluences_with_seasonal_sign_reversal": 2,
+  "primary_conclusion": "Continuous branch organization carries observed DOC information; a general whole-form DOC ordering is not established",
+  "dynamic_mechanism": "Geometry changes arrival/mixing under controlled routing; independent field attribution remains open"
+}

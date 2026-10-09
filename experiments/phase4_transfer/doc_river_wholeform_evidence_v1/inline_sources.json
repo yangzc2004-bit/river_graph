@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "whole-form-doc-evidence",
+      "title": "河网结构已有额外 DOC 信息，粗形态排序仍未确立",
+      "queries": [
+        {
+          "id": "existing-form-comparisons",
+          "source": {
+            "label": "项目既有河网形态研究",
+            "files": [
+              {
+                "label": "morphology_block_gains.csv"
+              },
+              {
+                "label": "paired_doc_contrasts.csv"
+              },
+              {
+                "label": "evidence_summary.csv"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "结构信息增益",
+                "definition": "在相同环境和面积背景下，加入真实河网结构后对站点 DOC 中位数的相对 MAE 降幅。"
+              },
+              {
+                "label": "形态对比",
+                "definition": "匹配的宽阔多支流型减去长条多支流型的站点 DOC 中位数差。"
+              }
+            ],
+            "caveats": [
+              "结构信息增益来自297个源角色站点、62个HUC4的探索性诊断，不是月尺度重建模型提升或因果效应。",
+              "直接形态比较包括22对非嵌套河网、12个HUC4；其区间包含零，尚不能确定形态排序。"
+            ],
+            "evidenceFlow": [
+              {
+                "kind": "validation",
+                "title": "既有结果核对",
+                "detail": "从冻结分析表抽取原估计与区间；没有重新拟合或重新选择形态指标。"
+              }
+            ]
+          },
+          "columns": [
+            "finding",
+            "estimate",
+            "ci_low",
+            "ci_high",
+            "unit",
+            "sample_count",
+            "group_count"
+          ],
+          "rows": [
+            {
+              "finding": "footprint_predictive_information",
+              "estimate": 1.8701976745889184,
+              "ci_low": -0.5218902702959104,
+              "ci_high": 4.629284512834429,
+              "unit": "relative MAE reduction percent",
+              "sample_count": 297,
+              "group_count": 62
+            },
+            {
+              "finding": "branching_predictive_information",
+              "estimate": 5.58742381174983,
+              "ci_low": 2.01558271901615,
+              "ci_high": 8.4208081422839,
+              "unit": "relative MAE reduction percent",
+              "sample_count": 297,
+              "group_count": 62
+            },
+            {
+              "finding": "all_morphology_predictive_information",
+              "estimate": 9.239305620756252,
+              "ci_low": 4.017385586180029,
+              "ci_high": 13.832990095634244,
+              "unit": "relative MAE reduction percent",
+              "sample_count": 297,
+              "group_count": 62
+            },
+            {
+              "finding": "broad_minus_elongated_doc_median",
+              "estimate": 0.4059848053888841,
+              "ci_low": -0.3706813093523184,
+              "ci_high": 1.15927325859203,
+              "unit": "mg/L",
+              "sample_count": 22,
+              "group_count": 12
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "independent-field-source",
+      "title": "已取得可用于独立形态验证的实验室 DOC 资料",
+      "queries": [
+        {
+          "id": "neon-lab-doc-coverage",
+          "source": {
+            "label": "NEON公开实验室DOC汇编",
+            "files": [
+              {
+                "label": "absNEON_output.csv"
+              },
+              {
+                "label": "absNEON_output_older_samples.csv"
+              },
+              {
+                "label": "neon_profile_summary.json"
+              }
+            ],
+            "links": [
+              {
+                "label": "公开数据集",
+                "url": "https://zenodo.org/records/20039155"
+              },
+              {
+                "label": "官方化学数据与传感器说明",
+                "url": "https://www.neonscience.org/resources/learning-hub/tutorials/aquatic-data-product-integration"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "河流站点候选",
+                "definition": "排除7个湖泊站点后的27个河流和溪流站点；尚未验证河网之间是否独立。"
+              },
+              {
+                "label": "常规位置采样次数",
+                "definition": "在相同基本样品编号内合并重复样品后的常规表层位置DOC采样次数。"
+              }
+            ],
+            "filters": [
+              "湖泊站点单列；迁移位置RE不进入常规位置统计。"
+            ],
+            "caveats": [
+              "DOC来自吸光度加工所覆盖的原实验室样本子集，不是完整NEON化学数据总体。",
+              "原质量标识、检出限、准确采样点、流量和完整河网几何尚未提供或核验。",
+              "约14天一次的观测不能验证小时级事件峰值或河网传播。"
+            ],
+            "evidenceFlow": [
+              {
+                "kind": "validation",
+                "title": "原始数据与采样单位检查",
+                "detail": "两个公开文件与发布的大小及校验值一致；CSV独立计数确认27站点、4800次常规位置采样；重复均值的最大复核误差为8.9×10^-16。"
+              }
+            ]
+          },
+          "columns": [
+            "river_sites",
+            "raw_river_rows",
+            "primary_surface_occasions",
+            "median_interval_days"
+          ],
+          "rows": [
+            {
+              "river_sites": 27,
+              "raw_river_rows": 5530,
+              "primary_surface_occasions": 4800,
+              "median_interval_days": 13.953472222222222
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
