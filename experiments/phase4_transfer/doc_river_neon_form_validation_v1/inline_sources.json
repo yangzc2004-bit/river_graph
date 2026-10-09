@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "neon-river-form-doc-replication",
+      "title": "支流组织对 DOC 水平的增益依赖河流与时间窗口",
+      "queries": [
+        {
+          "id": "declared-branching-comparisons",
+          "source": {
+            "label": "新河流实测 DOC 与真实河网比较",
+            "files": [
+              {
+                "label": "heldout_form_gains.csv"
+              },
+              {
+                "label": "site_panel_primary.csv"
+              },
+              {
+                "label": "research_decision.md"
+              }
+            ],
+            "links": [
+              {
+                "label": "NEON公开实验室DOC汇编",
+                "url": "https://zenodo.org/records/20039155"
+              },
+              {
+                "label": "USGS真实河网查询说明",
+                "url": "https://api.water.usgs.gov/docs/nldi/feature-sources/"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "结构信息增益",
+                "definition": "结构信息增益是在相同环境和流域面积背景下，加入支流密度与主干占比后，站点 DOC 水平预测 MAE 的相对降幅。"
+              }
+            ],
+            "filters": [
+              "主要窗口：2018–2025",
+              "敏感性窗口：2020–2024",
+              "保留完整河网且至少五条已映射河段的站点"
+            ],
+            "caveats": [
+              "增益来自站点水平的固定回归诊断，不是当前 DOC 月度重建模型的性能提升。",
+              "排除与 ST357 重叠的河网是事先设定的敏感性分析；全体河流和共同时间窗口没有稳定复现正向增益。",
+              "95% 区间来自 5,000 次完整河网组 bootstrap，条件于已有留出预测，未计入重新拟合的不确定性。",
+              "原实验室质量旗标和逐次采样坐标未获得；数据限于吸收光谱汇编所包含的 DOC 样本。"
+            ],
+            "evidenceFlow": [
+              {
+                "kind": "calculation",
+                "title": "相同背景下的结构增量",
+                "detail": "固定 Ridge alpha=10，按完整重叠河网组留出；相对降幅为100×(背景MAE−加入结构MAE)/背景MAE。"
+              },
+              {
+                "kind": "validation",
+                "title": "复算核对",
+                "detail": "独立从470条站点留出预测复算全部32项结果，逐项与分析表一致。"
+              }
+            ]
+          },
+          "columns": [
+            {
+              "field": "population",
+              "label": "评价范围"
+            },
+            {
+              "field": "gain_pct",
+              "label": "MAE降幅（%）"
+            },
+            {
+              "field": "ci_low_pct",
+              "label": "95%区间下限（%）"
+            },
+            {
+              "field": "ci_high_pct",
+              "label": "95%区间上限（%）"
+            },
+            {
+              "field": "n_sites",
+              "label": "站点数"
+            },
+            {
+              "field": "n_groups",
+              "label": "河网组数"
+            }
+          ],
+          "rows": [
+            {
+              "population": "primary",
+              "gain_pct": -2.076448863438461,
+              "ci_low_pct": -11.5649738407471,
+              "ci_high_pct": 6.59001500229399,
+              "n_sites": 13,
+              "n_groups": 11
+            },
+            {
+              "population": "common_window",
+              "gain_pct": 3.18309832145645,
+              "ci_low_pct": -4.780655385942086,
+              "ci_high_pct": 12.450146085464333,
+              "n_sites": 11,
+              "n_groups": 9
+            },
+            {
+              "population": "no_st357_upstream_overlap",
+              "gain_pct": 13.323241212128988,
+              "ci_low_pct": 1.4817519591792985,
+              "ci_high_pct": 32.40841929847463,
+              "n_sites": 10,
+              "n_groups": 8
+            }
+          ],
+          "reportingPeriod": "2018–2025；共同窗口为2020–2024"
+        }
+      ]
+    },
+    {
+      "id": "river-shape-data-identification",
+      "title": "形态可测样本与直接形态比较的边界",
+      "queries": [
+        {
+          "id": "neon-real-geometry-eligibility",
+          "source": {
+            "label": "真实采样位置、河网形态与配对筛选",
+            "files": [
+              {
+                "label": "eligibility_ledger.csv"
+              },
+              {
+                "label": "registered_locations.csv"
+              },
+              {
+                "label": "context_matched_shape_pairs.csv"
+              },
+              {
+                "label": "verification.json"
+              }
+            ],
+            "links": [
+              {
+                "label": "NEON公开站点位置记录",
+                "url": "https://data.neonscience.org/api/v0/locations/BLUE.AOS.S2"
+              },
+              {
+                "label": "EPA流域背景定义",
+                "url": "https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset-readme"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "label": "形态可测站点",
+                "definition": "形态可测站点的全部上游河段已取得，注册水质采样位置对应正确河段，且河网至少有五条映射河段。"
+              }
+            ],
+            "caveats": [
+              "三处嵌套站点合并为一个重叠河网组；月份和重复采样不增加独立形态数量。",
+              "直接细长与宽展河网比较没有符合既定相近环境条件的配对；空配对不是DOC差异为零。",
+              "月尺度 IQR 没有稳定结构增益，不能据此声称某种形态普遍缓冲事件峰值。"
+            ]
+          },
+          "columns": [
+            {
+              "field": "quantity",
+              "label": "数量定义"
+            },
+            {
+              "field": "count",
+              "label": "数量"
+            }
+          ],
+          "rows": [
+            {
+              "quantity": "候选河流站点",
+              "count": 27
+            },
+            {
+              "quantity": "形态可测分析站点",
+              "count": 13
+            },
+            {
+              "quantity": "完整重叠河网组",
+              "count": 11
+            },
+            {
+              "quantity": "有效站点月中位数",
+              "count": 1015
+            },
+            {
+              "quantity": "符合相近环境条件的细长—宽展配对",
+              "count": 0
+            }
+          ],
+          "reportingPeriod": "2018–2025"
+        }
+      ]
+    }
+  ]
+}
