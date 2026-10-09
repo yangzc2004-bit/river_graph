@@ -1,0 +1,783 @@
+{
+  "version": 1,
+  "config": {
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "batch_size": 512,
+    "seed": 44,
+    "learning_rate": 0.0001,
+    "head_learning_rate": 0.001,
+    "tail_weight": 2.0,
+    "scales": [
+      0.0,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "extra_dim": 41,
+    "interaction_indices": [
+      0,
+      2,
+      4,
+      28,
+      30,
+      31,
+      32,
+      38
+    ],
+    "encoder_mode": "last_self_ecology",
+    "encoder_learning_rate": 1e-05
+  },
+  "hidden_size": 64,
+  "dtype": "torch.float32",
+  "trainable_parameter_count": 31626,
+  "best_epoch": 13,
+  "epochs_run": 18,
+  "selected_scale": 1.0,
+  "optimizer_steps": 540,
+  "trace": [
+    {
+      "epoch": 0,
+      "training_loss": null,
+      "validation_mae": 1.7278400876608515,
+      "validation_scale": 0.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.7278400876608515
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 0,
+      "best_scale": 0.0,
+      "best_validation_mae": 1.7278400876608515,
+      "temporal_parameter_distance": 0.0,
+      "decay_parameter_distance": 0.0,
+      "head_parameter_norm": 0.0,
+      "spatial_parameter_distance": 0.0,
+      "last_self_parameter_distance": 0.0,
+      "ecology_parameter_distance": 0.0
+    },
+    {
+      "epoch": 1,
+      "training_loss": 2.3339179235906844,
+      "validation_mae": 1.6878699083792221,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.7113474739532804
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.698792954660545
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6878699083792221
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 1,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6878699083792221,
+      "temporal_parameter_distance": 0.2747776632735908,
+      "decay_parameter_distance": 0.018059948574710657,
+      "head_parameter_norm": 0.35089403390279195,
+      "spatial_parameter_distance": 0.010107760082783045,
+      "last_self_parameter_distance": 0.008598894465737989,
+      "ecology_parameter_distance": 0.0053127984959155826
+    },
+    {
+      "epoch": 2,
+      "training_loss": 2.2601186504892636,
+      "validation_mae": 1.6733027006087913,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6925803338877892
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6733027006087913
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6772256892174822
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 2,
+      "best_scale": 0.5,
+      "best_validation_mae": 1.6733027006087913,
+      "temporal_parameter_distance": 0.5591097158428209,
+      "decay_parameter_distance": 0.034454730528781535,
+      "head_parameter_norm": 0.6016721533942305,
+      "spatial_parameter_distance": 0.020912000509640025,
+      "last_self_parameter_distance": 0.017821825679121793,
+      "ecology_parameter_distance": 0.010940488781502392
+    },
+    {
+      "epoch": 3,
+      "training_loss": 2.225404941971354,
+      "validation_mae": 1.6545063909789133,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6844439051907587
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.658615492586733
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6545063909789133
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 3,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6545063909789133,
+      "temporal_parameter_distance": 0.6735291473369031,
+      "decay_parameter_distance": 0.0401389932792454,
+      "head_parameter_norm": 0.7401231135333785,
+      "spatial_parameter_distance": 0.027435661416948483,
+      "last_self_parameter_distance": 0.02289317695252995,
+      "ecology_parameter_distance": 0.01512011793623275
+    },
+    {
+      "epoch": 4,
+      "training_loss": 2.2110228010604733,
+      "validation_mae": 1.6609295170664713,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.68459053579781
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6609295170664713
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.663434183344255
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 1,
+      "best_epoch": 3,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6545063909789133,
+      "temporal_parameter_distance": 0.7653685610094829,
+      "decay_parameter_distance": 0.045251973703812044,
+      "head_parameter_norm": 0.8261428086391821,
+      "spatial_parameter_distance": 0.032879704171710294,
+      "last_self_parameter_distance": 0.02658920666554495,
+      "ecology_parameter_distance": 0.019341381422125034
+    },
+    {
+      "epoch": 5,
+      "training_loss": 2.2016960087517203,
+      "validation_mae": 1.6641520173841144,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.685703624873258
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6641520173841144
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6715913155588915
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 2,
+      "best_epoch": 3,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6545063909789133,
+      "temporal_parameter_distance": 0.8116592844847391,
+      "decay_parameter_distance": 0.04712563813006933,
+      "head_parameter_norm": 0.8731921025192241,
+      "spatial_parameter_distance": 0.037195645013210786,
+      "last_self_parameter_distance": 0.029585403074040617,
+      "ecology_parameter_distance": 0.022543733783367395
+    },
+    {
+      "epoch": 6,
+      "training_loss": 2.1970586140455346,
+      "validation_mae": 1.6403237501771901,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6782075639023772
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6478519693466116
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6403237501771901
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 6,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6403237501771901,
+      "temporal_parameter_distance": 0.8711763079148562,
+      "decay_parameter_distance": 0.050121893045076256,
+      "head_parameter_norm": 0.9210103752568067,
+      "spatial_parameter_distance": 0.04072905388396342,
+      "last_self_parameter_distance": 0.0316987050788809,
+      "ecology_parameter_distance": 0.02557436072719952
+    },
+    {
+      "epoch": 7,
+      "training_loss": 2.1917529436192305,
+      "validation_mae": 1.653432469671729,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6796251668532034
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.653432469671729
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6569590012608755
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 1,
+      "best_epoch": 6,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6403237501771901,
+      "temporal_parameter_distance": 0.9098951308887996,
+      "decay_parameter_distance": 0.05099503736690574,
+      "head_parameter_norm": 0.9595777753760267,
+      "spatial_parameter_distance": 0.045002203379287196,
+      "last_self_parameter_distance": 0.0347578803476386,
+      "ecology_parameter_distance": 0.02858475227686897
+    },
+    {
+      "epoch": 8,
+      "training_loss": 2.1888830404007065,
+      "validation_mae": 1.6536638005505029,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6797285950211105
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6536638005505029
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.657262751705254
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 2,
+      "best_epoch": 6,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6403237501771901,
+      "temporal_parameter_distance": 0.9460371838366094,
+      "decay_parameter_distance": 0.05282900230148518,
+      "head_parameter_norm": 0.9849665522971132,
+      "spatial_parameter_distance": 0.04889112652579556,
+      "last_self_parameter_distance": 0.03755826106965792,
+      "ecology_parameter_distance": 0.03130046770233263
+    },
+    {
+      "epoch": 9,
+      "training_loss": 2.1870222759412354,
+      "validation_mae": 1.6437652031836238,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6781232744849437
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6484698100708977
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6437652031836238
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 3,
+      "best_epoch": 6,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6403237501771901,
+      "temporal_parameter_distance": 0.9810592449691873,
+      "decay_parameter_distance": 0.054347530645303635,
+      "head_parameter_norm": 1.0108363430249543,
+      "spatial_parameter_distance": 0.051703043008532144,
+      "last_self_parameter_distance": 0.039594293843832805,
+      "ecology_parameter_distance": 0.03324900827619297
+    },
+    {
+      "epoch": 10,
+      "training_loss": 2.1805789521555297,
+      "validation_mae": 1.6372813315363228,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6775249157383634
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6465463972155119
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6372813315363228
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 10,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6372813315363228,
+      "temporal_parameter_distance": 1.0264681182662339,
+      "decay_parameter_distance": 0.05756192865044903,
+      "head_parameter_norm": 1.049548075230562,
+      "spatial_parameter_distance": 0.05571898086729927,
+      "last_self_parameter_distance": 0.04259407070380866,
+      "ecology_parameter_distance": 0.0359214416438067
+    },
+    {
+      "epoch": 11,
+      "training_loss": 2.1772790879749166,
+      "validation_mae": 1.6535549882752942,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6801778439730801
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6535549882752942
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6545941888883144
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 1,
+      "best_epoch": 10,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6372813315363228,
+      "temporal_parameter_distance": 1.069780665985144,
+      "decay_parameter_distance": 0.05968339211776784,
+      "head_parameter_norm": 1.0972099289299648,
+      "spatial_parameter_distance": 0.0594723571765702,
+      "last_self_parameter_distance": 0.04534801928334114,
+      "ecology_parameter_distance": 0.03847750531434256
+    },
+    {
+      "epoch": 12,
+      "training_loss": 2.177636438572081,
+      "validation_mae": 1.6419649222242156,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6754576052809707
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6438789481488199
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6419649222242156
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 2,
+      "best_epoch": 10,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6372813315363228,
+      "temporal_parameter_distance": 1.112868623303716,
+      "decay_parameter_distance": 0.06225160426763422,
+      "head_parameter_norm": 1.1308106641273412,
+      "spatial_parameter_distance": 0.06264189627722323,
+      "last_self_parameter_distance": 0.047806334358695204,
+      "ecology_parameter_distance": 0.04047914974886494
+    },
+    {
+      "epoch": 13,
+      "training_loss": 2.173598935949239,
+      "validation_mae": 1.6291295700347845,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6742163561720436
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6406428412799972
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6291295700347845
+        }
+      ],
+      "is_best": true,
+      "stale_epochs": 0,
+      "best_epoch": 13,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6291295700347845,
+      "temporal_parameter_distance": 1.1542948396684276,
+      "decay_parameter_distance": 0.06363379512303757,
+      "head_parameter_norm": 1.1579613660880732,
+      "spatial_parameter_distance": 0.06644519298645894,
+      "last_self_parameter_distance": 0.05048811791085056,
+      "ecology_parameter_distance": 0.043196222298111014
+    },
+    {
+      "epoch": 14,
+      "training_loss": 2.17366862659358,
+      "validation_mae": 1.6344035832850838,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6738011320149788
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6406456417512276
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6344035832850838
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 1,
+      "best_epoch": 13,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6291295700347845,
+      "temporal_parameter_distance": 1.1935926858886865,
+      "decay_parameter_distance": 0.06538163340886627,
+      "head_parameter_norm": 1.179455173246177,
+      "spatial_parameter_distance": 0.069447007245149,
+      "last_self_parameter_distance": 0.052728373275899354,
+      "ecology_parameter_distance": 0.04519519296324776
+    },
+    {
+      "epoch": 15,
+      "training_loss": 2.1691090677711253,
+      "validation_mae": 1.6348314378689874,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6762090534831708
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6443837313679655
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6348314378689874
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 2,
+      "best_epoch": 13,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6291295700347845,
+      "temporal_parameter_distance": 1.2390764607190003,
+      "decay_parameter_distance": 0.06753610732579372,
+      "head_parameter_norm": 1.2166838234186672,
+      "spatial_parameter_distance": 0.07247894032584697,
+      "last_self_parameter_distance": 0.05510842794008937,
+      "ecology_parameter_distance": 0.04707714902932911
+    },
+    {
+      "epoch": 16,
+      "training_loss": 2.165555152874918,
+      "validation_mae": 1.6462568118199614,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.675690088828251
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6462568118199614
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6473352075383103
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 3,
+      "best_epoch": 13,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6291295700347845,
+      "temporal_parameter_distance": 1.2866474161585355,
+      "decay_parameter_distance": 0.07007370878598154,
+      "head_parameter_norm": 1.2467257961938811,
+      "spatial_parameter_distance": 0.07639650570343726,
+      "last_self_parameter_distance": 0.05804109135996819,
+      "ecology_parameter_distance": 0.04967552513501136
+    },
+    {
+      "epoch": 17,
+      "training_loss": 2.1635614583328717,
+      "validation_mae": 1.6477214411873522,
+      "validation_scale": 0.5,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6758322230228033
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6477214411873522
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.654438280580665
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 4,
+      "best_epoch": 13,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6291295700347845,
+      "temporal_parameter_distance": 1.3514707760334856,
+      "decay_parameter_distance": 0.07309202640730193,
+      "head_parameter_norm": 1.2839180209586964,
+      "spatial_parameter_distance": 0.08067127232238276,
+      "last_self_parameter_distance": 0.06136350592785995,
+      "ecology_parameter_distance": 0.05236768391244295
+    },
+    {
+      "epoch": 18,
+      "training_loss": 2.162104321904215,
+      "validation_mae": 1.6426382486784552,
+      "validation_scale": 1.0,
+      "validation_candidates": [
+        {
+          "scale": 0.0,
+          "mae": 1.7278400876608515
+        },
+        {
+          "scale": 0.25,
+          "mae": 1.6740693155787518
+        },
+        {
+          "scale": 0.5,
+          "mae": 1.6429342867551135
+        },
+        {
+          "scale": 1.0,
+          "mae": 1.6426382486784552
+        }
+      ],
+      "is_best": false,
+      "stale_epochs": 5,
+      "best_epoch": 13,
+      "best_scale": 1.0,
+      "best_validation_mae": 1.6291295700347845,
+      "temporal_parameter_distance": 1.3863553085938283,
+      "decay_parameter_distance": 0.07528757449877825,
+      "head_parameter_norm": 1.305586427317544,
+      "spatial_parameter_distance": 0.08411158691133062,
+      "last_self_parameter_distance": 0.06409894973812247,
+      "ecology_parameter_distance": 0.05446176360724996
+    }
+  ],
+  "validation_metrics": {
+    "epoch": 13,
+    "training_loss": 2.173598935949239,
+    "validation_mae": 1.6291295700347845,
+    "validation_scale": 1.0,
+    "validation_candidates": [
+      {
+        "scale": 0.0,
+        "mae": 1.7278400876608515
+      },
+      {
+        "scale": 0.25,
+        "mae": 1.6742163561720436
+      },
+      {
+        "scale": 0.5,
+        "mae": 1.6406428412799972
+      },
+      {
+        "scale": 1.0,
+        "mae": 1.6291295700347845
+      }
+    ],
+    "is_best": true,
+    "stale_epochs": 0,
+    "best_epoch": 13,
+    "best_scale": 1.0,
+    "best_validation_mae": 1.6291295700347845,
+    "temporal_parameter_distance": 1.1542948396684276,
+    "decay_parameter_distance": 0.06363379512303757,
+    "head_parameter_norm": 1.1579613660880732,
+    "spatial_parameter_distance": 0.06644519298645894,
+    "last_self_parameter_distance": 0.05048811791085056,
+    "ecology_parameter_distance": 0.043196222298111014
+  },
+  "tail_threshold": 10.0,
+  "n_source_cells": 15241,
+  "n_source_tail_cells": 1541,
+  "source_tail_fraction": 0.10110885112525425,
+  "n_validation_query": 2798,
+  "n_source_stations": 232,
+  "n_validation_stations": 54,
+  "temporal_parameter_distance": 1.1542948396684276,
+  "decay_parameter_distance": 0.06363379512303757,
+  "head_parameter_norm": 1.1579613660880732,
+  "protocol": {
+    "base": "fixed context forest; source station OOF predictions",
+    "output": "max(0, base_native + selected_scale * signed_native_delta)",
+    "training_loss": "weighted_cell_raw_mae; fixed global source mean weight",
+    "tail_rule": "source_truth >= source_training_Q90",
+    "validation_loss": "unweighted pooled fixed-query raw MAE",
+    "selection_role": "source_validation",
+    "optimizer": "Adam",
+    "gradient_clip_norm": 1.0,
+    "nonfinite_policy": "fail; no skipped update or upper clipping",
+    "initialization": "provided original spatial/GRU/decay; zero scalar head",
+    "spatial_mode": "eval throughout; empty edges; frozen input normalization",
+    "encoder_selection": "last_self_ecology"
+  },
+  "model_class": "EncoderNativeResidual",
+  "spatial_architecture": {
+    "in_channels": 23,
+    "edge_dim": 6,
+    "hidden": 64,
+    "layers": 2,
+    "dropout": 0.1,
+    "env_dim": 9,
+    "env_emb": 32,
+    "edge_direction": "upstream",
+    "gate_mode": "static",
+    "residual": false,
+    "jumping_knowledge": false
+  },
+  "encoder_trainable_parameter_count": 5536,
+  "spatial_parameter_distance": 0.06644519298645894,
+  "last_self_parameter_distance": 0.05048811791085056,
+  "ecology_parameter_distance": 0.043196222298111014
+}

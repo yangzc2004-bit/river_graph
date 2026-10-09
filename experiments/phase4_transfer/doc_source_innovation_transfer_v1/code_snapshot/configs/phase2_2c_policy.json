@@ -1,0 +1,65 @@
+{
+  "version": "policy_config_v1",
+  "frozen_at": "2026-09-24",
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "masks_path": "experiments/masks_stcore_v1",
+  "mask_sha256s": {
+    "e1_r20_seed42": "36e5d5747a00a783b460b55134956822ed675a09ecf956e3ed159e4f57fd6a1b",
+    "e1_r20_seed43": "0fc5f1c798d0a40833f1749b2dafd7f8934cfb84b1817402cd0e6e6fff97b8a1",
+    "e1_r20_seed44": "548db3e556c6d95e84501cdd2e25c980e53db842a4aff71e0433e070d04b16a9",
+    "e2a_strict": "c2bfe292e2d292e791f4dfe673f7e61b010f933afea767d489eb778f0ab73b03",
+    "e2b_partial": "40e1400e531de83e8d3e322f9ce2b3f2b417047e015dbde86fefadd1a754eac6",
+    "e3_spatial_seed42": "512820171bd01a424149be177ffc87e70a91160e27a87798b71d99c04257ee91",
+    "e3_spatial_seed43": "db3c3c4cc16a72d597768b89ca40cffadeee06f4e2d67c710fabe0caa5a1dfe6",
+    "e3_spatial_seed44": "9acbb2b05a67a14908595681dadc51720f094d75fc5d482eac3ddbf1120a2a54"
+  },
+  "training_budget": {
+    "hidden": 64,
+    "layers": 2,
+    "dropout": 0.1,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "max_epochs": 200,
+    "patience": 20,
+    "loss": "log1p_mse",
+    "train_split_seed": 42
+  },
+  "seed_set": [42, 43, 44, 45, 46],
+  "mask_set": [
+    "e1_r20_seed42", "e1_r20_seed43", "e1_r20_seed44",
+    "e2a_strict", "e2b_partial",
+    "e3_spatial_seed42", "e3_spatial_seed43", "e3_spatial_seed44"
+  ],
+  "arm_set": ["H2", "H2E", "H2X", "H2X_nomsg"],
+  "input_sets": {
+    "H2": "10 base channels + hydro regime cols 0:4 (14 total); no StreamCat",
+    "H2E": "10 base channels + full 13-col regime raw (23 total); no encoder",
+    "H2X": "10 base + hydro 0:4 (14) with cols 4:13 through the env encoder (emb 32)",
+    "H2X_nomsg": "identical to H2X inputs; edge messages zeroed (no-message control)"
+  },
+  "h2x_policy_sha256": "190c26a6ed1cbc66df4ff797aa089cc38efecc4a048995994c8af361e50bcdbf",
+  "endpoints_sha256": "448db5c7e4461e6261e128cec5936af9f571f7942d59290868225692b8321b55",
+  "run_identity_required": ["config_hash", "run_identity_sha256", "runtime_code_snapshot_sha256"],
+  "nomination_rule": "On gate tie, the primary treatment H2X is nominated.",
+  "estimands": {
+    "e2a": "strict future forecasting without post-cutoff DOC context",
+    "e2b": "future reconstruction with a running network (20% post-cutoff context cells visible)",
+    "e3": "spatial extrapolation to held-out stations in the largest component",
+    "no_equivalence_boundary": "e2a and e2b are separate estimands and must never be pooled or treated as interchangeable evidence"
+  },
+  "gates": {
+    "primary": "H2X beats the best no-graph model by >=10% MAE reduction in at least 2 of {E2a, E2b, E3} (union of scenario-family passages)",
+    "no_harm_margins": {
+      "e1_global": "H2X must not be worse than the best baseline by more than 5% on E1",
+      "e2a_per_scenario": "5%",
+      "e2b_per_scenario": "5%",
+      "e3_per_scenario": "5%"
+    },
+    "direction_consistency": "gain direction consistent in >=3 of 5 training seeds",
+    "dominance_preference": "prefer H2X >= H2E >= H2X_nomsg on the primary endpoint; a violation downgrades the reading to 'encoder/topology not necessary' and is never reported as a positive topology claim",
+    "high_doc_reporting": "top 5%/10% precision, recall and tail error reported separately per scenario family",
+    "pilot_reconciliation": "the discarded Phase-2B pilot criterion (15% and two-of-three) is recorded as non-operative; operative gates are the endpoints-v1 >=10% union rule plus the per-scenario no-harm margins above"
+  },
+  "seed_set_note": "2C uses 5 seeds (42-46); 2B pilot used 3 seeds (42-44). Non-inferential margins above are preference/margin rules, not claim-adjacent significance statements."
+}

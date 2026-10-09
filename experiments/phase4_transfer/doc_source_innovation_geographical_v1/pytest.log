@@ -1,0 +1,33 @@
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 22%]
+........................................................................ [ 29%]
+........................................................................ [ 36%]
+.............................s....................s..................... [ 44%]
+........................................................................ [ 51%]
+........................................................................ [ 58%]
+........................................................................ [ 66%]
+........................................................................ [ 73%]
+........................................................................ [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+.............................................                            [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491
+  /Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_phase3_uncertainty.py::test_interval_math_median_spread_and_finite_sample_quantile
+  /Users/yzccc/river_graph/src/river_graph/experiments/phase3_uncertainty.py:189: RuntimeWarning: overflow encountered in expm1
+    "pi_upper": np.expm1(median + half),
+
+tests/test_phase3_uncertainty.py::test_interval_math_median_spread_and_finite_sample_quantile
+  /Users/yzccc/river_graph/tests/test_phase3_uncertainty.py:153: RuntimeWarning: overflow encountered in expm1
+    assert np.allclose(out["pi_upper"], np.expm1(
+
+tests/test_portable_doc_source_fit.py::test_frozen_source_fit_exports_replayable_label_free_predictions
+  /Users/yzccc/river_graph/src/river_graph/experiments/graph_upgrade_v2.py:264: UserWarning: std(): degrees of freedom is <= 0. Correction should be strictly less than the reduction factor (input numel divided by output numel). (Triggered internally at /Users/runner/work/pytorch/pytorch/aten/src/ATen/native/ReduceOps.cpp:1913.)
+    edge_attr = (edge_attr - edge_attr.mean(0)) / edge_attr.std(0, unbiased=False).clamp_min(1e-8)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+979 passed, 2 skipped, 4 warnings in 46.30s
