@@ -1,0 +1,189 @@
+{
+  "version": "phase2_ablation_stcore_v1",
+  "frozen_at": "2026-09-23",
+  "role": "Phase-2A preflight + Phase-2B/C matrix definitions. No scientific claims may come from 2A/2B. Endpoints are unchanged (docs/paper/primary_endpoints.json); definitions are frozen in docs/paper/phase2_ablation_spec.md.",
+  "dataset": {
+    "path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "nodes": "data/processed/graph_nodes_graphfix_st357.csv",
+    "cohort": "site_tp_cd == 'ST'"
+  },
+  "masks": {
+    "dir": "experiments/masks_stcore_v1/",
+    "key_masks": [
+      "e1_r20_seed42",
+      "e1_r20_seed43",
+      "e1_r20_seed44",
+      "e2a_strict",
+      "e2b_partial",
+      "e3_spatial_seed42",
+      "e3_spatial_seed43",
+      "e3_spatial_seed44"
+    ],
+    "appendix_only": ["e1_r40_*", "e1_r60_*"]
+  },
+  "regime_layout": {
+    "hydro": [0, 1, 2, 3],
+    "landcover": [4, 5, 6, 7],
+    "climate": [8, 9],
+    "soil": [10],
+    "topo": [11, 12],
+    "columns": [
+      "streamorde", "log1p_totdasqkm", "slope", "is_headwater",
+      "pct_forest", "pct_crop_hay", "pct_urban", "pct_wetland",
+      "precip9120ws", "log1p_tmean9120ws_plus20",
+      "soil_om", "elevws", "bfiws"
+    ]
+  },
+  "training_shared": {
+    "hidden": 64,
+    "layers": 2,
+    "dropout": 0.1,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "edge_dropout": 0.0,
+    "share_weights": false,
+    "max_epochs": 200,
+    "patience": 20,
+    "edge_direction": "both",
+    "loss": "log1p_mse",
+    "train_split_seed": 42,
+    "clamp": "train log-space [min, q99.5] then expm1 (GCNDocModel.predict convention)",
+    "early_stopping": "frozen val cells, min_delta=1e-6"
+  },
+  "information_set": {
+    "dynamic_hydro": ["temp", "temp_availability_flag", "discharge", "discharge_availability_flag"],
+    "season": ["month_sin", "month_cos"],
+    "geography": ["lat", "lon"],
+    "regime": "13 standardized static columns (H2 uses cols 0:4 only)",
+    "visible_doc": {
+      "visibility_rule": "obs_mask = train U val U context (GCNDocModel.predict / baselines._ctx inference convention); test DOC never visible",
+      "gnn_arms": "per-node DOC-observation channel + visibility flag; cross-station access through messages",
+      "tabular_arms": "self-excluded aggregates of the month-t visible-DOC field: mean and count across stations (0 when empty); never edges, neighbour identity or distances",
+      "self_label_rule": "a cell's own DOC is never a feature of its own row"
+    },
+    "graph": "GNN arms only (edge_index + edge_attr)"
+  },
+  "arms": {
+    "H2": {
+      "paper_name": "transport, no StreamCat ecology",
+      "family": "gnn",
+      "architecture": "transport",
+      "env_groups": ["hydro"],
+      "env_encoder": false,
+      "edge_set": "river",
+      "node_input_channels": 14
+    },
+    "H2E": {
+      "paper_name": "transport + raw ecological context",
+      "family": "gnn",
+      "architecture": "transport",
+      "env_groups": null,
+      "env_encoder": false,
+      "edge_set": "river",
+      "node_input_channels": 23
+    },
+    "H2X": {
+      "paper_name": "transport + ecological encoder (ours)",
+      "family": "gnn",
+      "architecture": "transport_enc",
+      "env_groups": null,
+      "env_encoder": true,
+      "env_emb": 32,
+      "edge_set": "river",
+      "node_input_channels": 14,
+      "env_encoder_input_cols": [4, 5, 6, 7, 8, 9, 10, 11, 12]
+    },
+    "H2X_nomsg": {
+      "paper_name": "no-message control",
+      "family": "gnn",
+      "architecture": "transport_enc",
+      "env_groups": null,
+      "env_encoder": true,
+      "env_emb": 32,
+      "edge_set": "empty",
+      "node_input_channels": 14,
+      "env_encoder_input_cols": [4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "semantics": "edge messages zeroed (empty edge tensor at the model boundary); self path retained; identical inputs/mask/objective to H2X. Not a model with node information removed."
+    },
+    "eco_RF": {
+      "paper_name": "ecological random forest",
+      "family": "tabular",
+      "implementation": "EcoRandomForest (sklearn RandomForestRegressor)",
+      "feature_set": "ecological",
+      "n_estimators": 200,
+      "seed": 42
+    },
+    "eco_MLP": {
+      "paper_name": "ecological MLP",
+      "family": "tabular",
+      "implementation": "EcoMLP (sklearn MLPRegressor)",
+      "feature_set": "ecological",
+      "hidden": [128, 64],
+      "max_epochs": 300,
+      "patience": 20,
+      "seed": 42,
+      "early_stopping": "frozen val cells, same patience rule as the GNN; never a random carve of train"
+    }
+  },
+  "stages": {
+    "preflight_2a": {
+      "arms": ["H2", "H2E", "H2X", "H2X_nomsg", "eco_RF", "eco_MLP"],
+      "seeds": [42],
+      "masks": ["e2b_partial", "e3_spatial_seed42"],
+      "short_training": {"max_epochs": 5, "patience": 2},
+      "max_short_runs": 12,
+      "claims_allowed": false
+    },
+    "pilot_2b": {
+      "arms": ["H2", "H2E", "H2X", "H2X_nomsg", "eco_RF", "eco_MLP"],
+      "seeds": [42, 43, 44],
+      "masks": "key_masks",
+      "claims_allowed": false
+    },
+    "final_2c": {
+      "arms": ["H2", "H2E", "H2X", "H2X_nomsg", "eco_RF", "eco_MLP"],
+      "seeds": [42, 43, 44, 45, 46],
+      "masks": "key_masks",
+      "configs": 240,
+      "claims_allowed": true,
+      "gates_ref": "docs/paper/primary_endpoints.json (unchanged)",
+      "policy_ref": "configs/phase2_2c_policy.json"
+    }
+  },
+  "scenario_policy": {
+    "families": {
+      "e2a_strict": {
+        "estimand": "strict future forecasting without post-cutoff DOC context",
+        "info_set": "no DOC context in test months"
+      },
+      "e2b_partial": {
+        "estimand": "future reconstruction with a running network",
+        "info_set": "20% post-cutoff observed cells visible as context"
+      },
+      "e3_spatial": {
+        "estimand": "spatial extrapolation to held-out stations in the largest component",
+        "info_set": "all DOC of held-out stations hidden"
+      }
+    },
+    "no_equivalence_boundary": "e2a and e2b are separate estimands and must never be pooled or treated as interchangeable evidence; passage on one never licenses a claim on the other",
+    "gate_union": "primary gate passes on the union of scenario-family passages (>=10% in at least 2 of {E2a, E2b, E3}) with per-scenario no-harm margins (E1 global 5%, each of E2a/E2b/E3 5%)",
+    "pilot_reconciliation": "the discarded Phase-2B pilot criterion (15% and two-of-three) is non-operative; operative gates are endpoints v1 plus configs/phase2_2c_policy.json"
+  },
+  "policy_binding": {
+    "policy_2c": "configs/phase2_2c_policy.json",
+    "h2x_policy": "experiments/phase2_ablation_stcore_v1/h2x_policy.json",
+    "h2x_policy_sha256": "190c26a6ed1cbc66df4ff797aa089cc38efecc4a048995994c8af361e50bcdbf",
+    "run_policy": "experiments/phase2_ablation_stcore_v1/phase2_run_policy.json"
+  },
+  "output": {
+    "dir": "experiments/phase2_ablation_stcore_v1/",
+    "pred_name_pattern": "P2X_<arm>[_s<seed>]__<mask>",
+    "sidecar": "parquet + .meta.json via river_graph.experiments.predictions/provenance",
+    "never_write": [
+      "experiments/results/",
+      "experiments/predictions/",
+      "experiments/frozen_results/"
+    ]
+  }
+}
