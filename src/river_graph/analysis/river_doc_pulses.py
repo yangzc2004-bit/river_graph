@@ -9,15 +9,23 @@ from scipy.signal import find_peaks
 from river_graph.analysis.river_kervidy_observations import occupied_record_coverage
 
 
-def flow_pulses(flow, relative_prominence=.20, absolute_prominence=.020):
-    """Detect on uninterrupted observed quarter-hour runs; no filled records."""
+def flow_pulses(flow, relative_prominence=.20, absolute_prominence=.020, sample_minutes=15):
+    """Detect on uninterrupted recorded runs; no additional gap filling.
+
+    Source preprocessing (if any) must be reported separately. Quarter-hour
+    defaults preserve the preceding Kervidy analysis exactly.
+    """
+    if sample_minutes <= 0:
+        raise ValueError("Sampling interval must be positive")
     valid = flow.loc[flow.flow_valid].sort_values("flow_timestamp_utc").reset_index(drop=True)
-    runs = valid.flow_timestamp_utc.diff().dt.total_seconds().ne(900).cumsum()
+    runs = valid.flow_timestamp_utc.diff().dt.total_seconds().ne(sample_minutes*60).cumsum()
     rows = []
     for block, frame in valid.groupby(runs):
         frame = frame.reset_index(drop=True)
         q = frame.q_m3_s.to_numpy()
-        peaks, properties = find_peaks(q, distance=24, prominence=absolute_prominence, wlen=673,
+        distance = max(1, int(np.ceil(360/sample_minutes)))
+        window = int(7*24*60/sample_minutes)//2*2+1
+        peaks, properties = find_peaks(q, distance=distance, prominence=absolute_prominence, wlen=window,
                                        plateau_size=(None, None))
         accepted = properties["prominences"] >= relative_prominence*q[peaks]
         peaks = peaks[accepted]
@@ -74,7 +82,7 @@ def half_excess_width(clock, values, peak_index, baseline):
     return result
 
 
-def measure_doc_responses(events, flow, doc):
+def measure_doc_responses(events, flow, doc, sample_minutes=15):
     rows = []
     doc = doc.sort_values("timestamp_utc")
     qsource = flow.loc[flow.flow_valid].sort_values("flow_timestamp_utc")
@@ -103,10 +111,12 @@ def measure_doc_responses(events, flow, doc):
                 ("antecedent_flow", qbase.flow_timestamp_utc, antecedent_start, antecedent_end),
                 ("response_doc", d.timestamp_utc, w.start_utc, response_end),
                 ("response_flow", qresponse.flow_timestamp_utc, w.start_utc, response_end)):
-            r.update({f"{name}_{key}": value for key, value in occupied_record_coverage(clock, start, end).items()})
+            r.update({f"{name}_{key}": value for key, value in
+                      occupied_record_coverage(clock, start, end, sample_minutes).items()})
         r["doc_baseline_mg_l"] = dbase.doc_mg_l.median()
         r["q_baseline_m3_s"] = qbase.q_m3_s.median()
-        r["baseline_available"] = len(dbase) >= 16 and len(qbase) >= 16
+        minimum_baseline = int(np.ceil(.75*(5*60/sample_minutes+1)))
+        r["baseline_available"] = len(dbase) >= minimum_baseline and len(qbase) >= minimum_baseline
         r["flow_rise_above_antecedent"] = w.q_peak_m3_s > r["q_baseline_m3_s"]
         r["followup_interrupted_before_flow_return"] = response_end < w.flow_return_utc
         r["dense_response"] = r["baseline_available"] and all(

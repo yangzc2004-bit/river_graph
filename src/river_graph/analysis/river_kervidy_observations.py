@@ -39,12 +39,15 @@ def join_doc_flow(doc, flow, tolerance_minutes=2):
     return out.reset_index(drop=True)
 
 
-def occupied_record_coverage(timestamps, start, end):
-    """Count occupied quarter-hour bins, with gaps including both boundaries."""
+def occupied_record_coverage(timestamps, start, end, sample_minutes=15):
+    """Count occupied sampling bins, with gaps including both boundaries."""
+    if sample_minutes <= 0:
+        raise ValueError("Sampling interval must be positive")
+    seconds = sample_minutes*60
     t = pd.DatetimeIndex(timestamps).sort_values().unique()
     t = t[(t >= start) & (t <= end)]
-    expected = int(np.floor((end-start).total_seconds()/900)) + 1
-    occupied = len(np.unique(np.floor((t-start).total_seconds()/900).astype(int)))
+    expected = int(np.floor((end-start).total_seconds()/seconds)) + 1
+    occupied = len(np.unique(np.floor((t-start).total_seconds()/seconds).astype(int)))
     augmented = pd.DatetimeIndex([start]).append(t).append(pd.DatetimeIndex([end]))
     # Storage may be microseconds rather than nanoseconds; never infer the unit.
     max_gap = float(pd.Series(augmented).diff().dt.total_seconds().max()/3600)
