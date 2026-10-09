@@ -1,0 +1,49 @@
+/Users/yzccc/river_graph/scripts/analyze_doc_river_monitored_arrivals_v1.py:74: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  panel["n_allowed_doc_months"] = [int(np.isfinite(visible[lookup[s]]).sum()) for s in panel.station]
+/Users/yzccc/river_graph/scripts/analyze_doc_river_monitored_arrivals_v1.py:76: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  panel["physical_receiver_representative"] = panel.station.isin(chosen)
+Mapped observation frontiers 50/297 (shortest)
+Mapped observation frontiers 100/297 (shortest)
+Mapped observation frontiers 150/297 (shortest)
+Mapped observation frontiers 200/297 (shortest)
+Mapped observation frontiers 250/297 (shortest)
+Mapped observation frontiers 297/297 (shortest)
+{
+  "n_inventory_instances": 297,
+  "n_physical_receiving_networks": 295,
+  "n_observed_receivers": 32,
+  "n_systems": 7,
+  "n_receiver_months": 1330,
+  "n_observed_stations": 101,
+  "class_receivers": {
+    "1": 9,
+    "2": 2,
+    "3": 21
+  },
+  "class_systems": {
+    "1": 6,
+    "2": 2,
+    "3": 4
+  },
+  "n_multi_input_receivers_ge3": 14,
+  "n_receivers_coverage_ge80pct": 12,
+  "median_covered_area_fraction": 0.7190587635815887,
+  "min_covered_area_fraction": 0.10591867368791305,
+  "max_covered_area_fraction": 0.9882556086470057,
+  "median_sample_span_days": 4.0,
+  "n_dense_common_months": 81,
+  "n_source_after_receiver_utc": 881,
+  "n_station_months_reconciled": 9371,
+  "max_raw_monthly_difference": 3.051757815342171e-06,
+  "shuffles_per_receiver": 200,
+  "bootstrap_draws": 5000,
+  "new_training": false,
+  "scope": "source-role monthly multi-gauge observation; not measured event transit or external validation"
+}
+ sample_cut_days      version group                         metric  estimate    ci_low  ci_high      unit  n_receivers  n_blocks  n_huc4  n_components interval_status  valid_bootstrap_draws
+              -1 full_monthly   all               source_coherence  0.252279  0.211881 0.296125 component           32         7      19             7       estimable                   5000
+              -1 full_monthly   all        mixture_buffer_fraction  0.314266  0.259356 0.365975 component           32         7      19             7       estimable                   5000
+              -1 full_monthly   all   asynchronous_buffer_fraction  0.236859  0.200110 0.267141 component           32         7      19             7       estimable                   5000
+              -1 full_monthly   all         outlet_mix_correlation  0.377766  0.284590 0.467069 component           32         7      19             7       estimable                   5000
+              -1 full_monthly   all real_minus_shuffle_correlation  0.241381  0.167044 0.301021 component           32         7      19             7       estimable                   5000
+              -1 full_monthly   all        outlet_mix_log_sd_ratio -0.076441 -0.245244 0.124884 component           32         7      19             7       estimable                   5000

@@ -1,0 +1,92 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "split_seed": 144,
+  "seed": 43,
+  "experiment": "doc_river_structure_residual_v1",
+  "started_at": "2026-10-06T10:40:25.453024+00:00",
+  "runtime_snapshot_hash": "7c5f5192a790f07fe39d4c660aa86b3c9e2037a0689d537127c8fba11a773e37",
+  "current_run": "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43",
+  "current_completion_hash": "52d92c226b2f9724fde683c8b59a556e78bbd3f0bc75503f8121ca34c2ab0bf1",
+  "training_settings": {
+    "lookback": 12,
+    "epochs": 30,
+    "patience": 5,
+    "batch_size": 512,
+    "seed": 43,
+    "learning_rate": 0.0001,
+    "head_learning_rate": 0.001,
+    "tail_weight": 2.0,
+    "scales": [
+      0.0,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "extra_dim": 41,
+    "interaction_indices": [
+      0,
+      2,
+      4,
+      28,
+      30,
+      31,
+      32,
+      38
+    ],
+    "encoder_mode": "last_self_ecology",
+    "encoder_learning_rate": 1e-05
+  },
+  "arms": {
+    "river_none": [
+      "none",
+      false
+    ],
+    "river_simple": [
+      "simple",
+      false
+    ],
+    "river_structure": [
+      "structure",
+      false
+    ],
+    "river_rewired": [
+      "structure",
+      true
+    ]
+  },
+  "models": [
+    "available_real_integrated",
+    "available_real_native",
+    "station_hidden_trees",
+    "river_none",
+    "river_none_zero_river",
+    "river_simple",
+    "river_simple_zero_river",
+    "river_structure",
+    "river_structure_zero_river",
+    "river_rewired",
+    "river_rewired_zero_river"
+  ],
+  "lags": [
+    0,
+    1,
+    3
+  ],
+  "max_observation_age": 12,
+  "max_candidates": 20,
+  "max_path_km": 3000,
+  "physical_inputs": {
+    "experiments/phase4_transfer/doc_river_structure_atlas_v1/analysis/station_structure.csv": "f5108ddbdfb1d3076eb418ea0dc4e496b5bea448bdc8e3e3b43628259bb2b325",
+    "experiments/phase4_transfer/doc_river_structure_atlas_v1/analysis/station_edge_paths.csv": "62bbf3155ba46070adbdf9f0fc9da36d8a0d0c7e8c4cf69dc2f30d981c427136"
+  },
+  "selection_role": "source_validation",
+  "evaluation_role": "source_validation_only",
+  "receiving_water_quality": "none",
+  "training": "joint neural model on environmental station-OOF predictions",
+  "donor_reference": "query and donor folds excluded from tree fitting",
+  "torch_threads": 2
+}
