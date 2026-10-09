@@ -1,0 +1,33 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split143.npz",
+  "mask_hash": "f19da57c29d808d56781422b31a6f8fd9d8b546cfc7f6487682983a204a02a6f",
+  "q90_threshold_train": 10.0,
+  "split_seed": 143,
+  "seed": 43,
+  "experiment": "doc_nonlinear_native_residual_v1",
+  "parent_run": "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split143_seed43",
+  "parent_completion_hash": "657c32886ac496434dfad801976843fffca565d17c4f53a269b3cfb37f927c00",
+  "started_at": "2026-10-05T17:06:01.658044+00:00",
+  "runtime_snapshot_hash": "d403b275df267784faab253a64ababb44ffd865aa4de7bae356d2e0d58c8983c",
+  "models": [
+    "current_model",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "unmonitored_residual",
+    "unmonitored_integrated",
+    "nonlinear_native_residual",
+    "nonlinear_native_integrated"
+  ],
+  "epochs": 30,
+  "patience": 5,
+  "tail_weight": 2,
+  "loss": "native mg/L MAE",
+  "residual_units": "native mg/L",
+  "readout_width": 32,
+  "initialization": "parent initial encoder/GRU/decay; zero scalar head",
+  "main_change": "linear plus small nonlinear native residual readout",
+  "selection_role": "source_validation",
+  "evaluation_role": "source_validation_only"
+}

@@ -1,0 +1,24 @@
+/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+                 model_name      mae  signed_bias  q90_mae
+              current_model 1.829579    -0.667535 9.225863
+        matched_daily_trees 1.963925    -0.519447 9.618575
+nonlinear_native_integrated 1.760777    -0.659018 9.039926
+  nonlinear_native_residual 1.763886    -0.647295 9.011321
+       station_hidden_trees 1.866362    -0.611014 9.394458
+     unmonitored_integrated 1.769053    -0.638608 9.075420
+       unmonitored_residual 1.772035    -0.625464 9.053055
+Traceback (most recent call last):
+  File "/Users/yzccc/river_graph/scripts/analyze_doc_nonlinear_native_residual_v1.py", line 115, in <module>
+    main()
+  File "/Users/yzccc/river_graph/scripts/analyze_doc_nonlinear_native_residual_v1.py", line 110, in main
+    print(effects[effects.region.eq("overall")][["candidate", "reference", "nonlinear_gain_pct",
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/core/frame.py", line 4384, in __getitem__
+    indexer = self.columns._get_indexer_strict(key, "columns")[1]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 6302, in _get_indexer_strict
+    self._raise_if_missing(keyarr, indexer, axis_name)
+  File "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 6355, in _raise_if_missing
+    raise KeyError(f"{not_found} not in index")
+KeyError: "['nonlinear_gain_pct'] not in index"

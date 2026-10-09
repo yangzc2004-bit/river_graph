@@ -1,0 +1,46 @@
+{
+  "version": "doc_portable_source_fit_v1",
+  "frozen_before_external_outcomes": true,
+  "source_dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "validation_roles": "split142 validation station identities; all other ST357 stations source",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "primary_procedure": "unmonitored_integrated",
+  "procedures": [
+    "current_model",
+    "matched_daily_trees",
+    "station_hidden_trees",
+    "unmonitored_residual",
+    "unmonitored_integrated"
+  ],
+  "ensemble": "arithmetic mean of native mg/L predictions; equal seeds",
+  "external_huc8": "02040104",
+  "external_selection_manifest": "experiments/phase4_transfer/doc_unmonitored_tasks_v1/external_protocol_v1.json",
+  "primary_population": "all valid external DOC cells",
+  "curve_population": "five support candidates reserved for every K; fixed query",
+  "k_values": [
+    0,
+    1,
+    3,
+    5
+  ],
+  "support_alpha_grid": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "support_alpha_selection": "source validation on ensemble predictions; tie chooses smaller alpha",
+  "q90_threshold": "source train DOC 90th percentile",
+  "interval": "source-val-only empirical log1p residual calibration; coverage and width together",
+  "bootstrap_draws": 5000,
+  "bootstrap_unit": "station",
+  "bootstrap_seed": 42,
+  "external_prediction_evaluated": false
+}
