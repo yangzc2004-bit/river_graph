@@ -1,7 +1,9 @@
 """Verify eviction gates and exact restoration of sanitized checkpoint trees."""
 
 import json
+import random
 import subprocess
+import sys
 
 import pytest
 
@@ -160,8 +162,23 @@ def test_large_existing_commit_push_uses_temporary_branch_without_rewriting(arch
     subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
     git("remote", "add", "origin", str(remote))
     git("push", "-q", "origin", "main")
+    # Enforce an actual incoming-pack limit, including incompressible blobs.
+    # This catches preloading at unrelated paths that still resends the blobs.
+    subprocess.run(["git", "--git-dir", str(remote), "config", "receive.unpackLimit", "1"], check=True)
+    hook = remote / "hooks/pre-receive"
+    hook.write_text(
+        f"#!{sys.executable}\n"
+        "import os, pathlib, sys\n"
+        "quarantine = os.environ.get('GIT_QUARANTINE_PATH')\n"
+        "packs = pathlib.Path(quarantine).glob('pack/*.pack') if quarantine else []\n"
+        "sys.exit(1 if sum(p.stat().st_size for p in packs) > 4096 else 0)\n"
+    )
+    hook.chmod(0o755)
+    generator = random.Random(42)
+    contents = {}
     for number in range(8):
-        (root / f"artifact-{number}.bin").write_bytes(bytes([number]) * 600)
+        contents[number] = generator.randbytes(1000)
+        (root / f"artifact-{number}.bin").write_bytes(contents[number])
     git("add", ".")
     git("commit", "-qm", "Existing large artifact commit")
     original = git("rev-parse", "HEAD")
@@ -173,4 +190,4 @@ def test_large_existing_commit_push_uses_temporary_branch_without_rewriting(arch
     assert b"archive-upload-buffer" not in git("ls-remote", "--heads", "origin")
     assert git("for-each-ref", "refs/heads/archive-upload-buffer-") == b""
     stored = subprocess.check_output(["git", "--git-dir", str(remote), "show", "main:artifact-7.bin"])
-    assert stored == bytes([7]) * 600
+    assert stored == contents[7]

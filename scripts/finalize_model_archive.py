@@ -28,10 +28,19 @@ def git(root: Path, arguments: list[str], data: bytes | None = None, index: Path
     env = dict(os.environ)
     if index is not None:
         env["GIT_INDEX_FILE"] = str(index.resolve())
-    return subprocess.check_output(
-        ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", *arguments],
-        cwd=root, env=env, input=data,
-    )
+    attempts = 5 if any(action in arguments for action in ("push", "fetch", "ls-remote")) else 1
+    for attempt in range(1, attempts + 1):
+        try:
+            return subprocess.check_output(
+                ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", *arguments],
+                cwd=root, env=env, input=data,
+            )
+        except subprocess.CalledProcessError:
+            if attempt == attempts:
+                raise
+            print(f"Retrying Git network operation ({attempt}/{attempts})", flush=True)
+            time.sleep(30)
+    raise RuntimeError("Git command did not produce a result")
 
 
 def entries(root: Path, index: Path | None = None) -> dict[str, tuple[str, str]]:
@@ -405,13 +414,28 @@ def preload_commit_blobs(root: Path, auth: list[str], base: str, target: str, ma
         amount += size
     if group:
         groups.append(group)
+    # Use the original paths. Git's tree traversal may resend shared blobs when
+    # they are reachable only under unrelated paths in an excluded commit.
+    pending = {oid for oid, _ in blobs}
+    paths_by_oid = {}
+    for item in git(root, ["ls-tree", "-r", "-z", target]).split(b"\0"):
+        if not item:
+            continue
+        metadata, name = item.decode().split("\t", 1)
+        _mode, kind, oid = metadata.split()
+        if kind == "blob" and oid in pending:
+            paths_by_oid.setdefault(oid, []).append(name)
+    if pending != set(paths_by_oid):
+        raise ValueError("The large commit contains historical blobs absent from its final tree")
     scratch = root / ".git" / "archive-upload-buffer-index"
     try:
         for number, group in enumerate(groups, 1):
             scratch.unlink(missing_ok=True)
-            git(root, ["read-tree", parent], index=scratch)
-            changes = b"".join(f"100644 {oid}\tarchive-upload-objects/{oid}".encode() + b"\0" for oid in group)
-            git(root, ["update-index", "-z", "--index-info"], changes, index=scratch)
+            git(root, ["read-tree", target], index=scratch)
+            pending.difference_update(group)
+            names = b"".join(name.encode() + b"\0" for oid in pending for name in paths_by_oid[oid])
+            if names:
+                git(root, ["update-index", "--force-remove", "-z", "--stdin"], names, index=scratch)
             tree = git(root, ["write-tree"], index=scratch).decode().strip()
             message = f"Temporary upload buffer for original commit {target} ({number}/{len(groups)})\n"
             commit = git(root, ["commit-tree", tree, "-p", parent], message.encode()).decode().strip()
@@ -421,6 +445,19 @@ def preload_commit_blobs(root: Path, auth: list[str], base: str, target: str, ma
     finally:
         scratch.unlink(missing_ok=True)
     return ref
+
+
+def push_original_with_buffer(root: Path, auth: list[str], target: str, ref: str) -> None:
+    """Include the buffer update so its old tree bounds the outgoing pack."""
+    remote_line = git(root, [*auth, "ls-remote", "--heads", "origin", ref]).decode().strip()
+    if not remote_line:
+        raise ValueError("The temporary upload branch disappeared")
+    parent = remote_line.split()[0]
+    tree = git(root, ["rev-parse", f"{parent}^{{tree}}"]).decode().strip()
+    message = f"Temporary upload buffer for original commit {target} (ready)\n"
+    ready = git(root, ["commit-tree", tree, "-p", parent], message.encode()).decode().strip()
+    git(root, ["update-ref", ref, ready])
+    git(root, [*auth, "push", "origin", f"{target}:refs/heads/main", f"{ready}:{ref}"])
 
 
 def cleanup_completed_upload_buffers(root: Path, auth: list[str], main: str) -> None:
@@ -472,7 +509,7 @@ def push_records_in_batches(root: Path, max_raw_bytes: int = 1024 * 1024 * 1024)
         if best is None:
             target = commits[position]
             buffer_ref = preload_commit_blobs(root, auth, remote, target, max_raw_bytes // 2)
-            git(root, [*auth, "push", "origin", f"{target}:refs/heads/main"])
+            push_original_with_buffer(root, auth, target, buffer_ref)
             git(root, [*auth, "push", "origin", f":{buffer_ref}"])
             git(root, ["update-ref", "-d", buffer_ref])
             remote, position = target, position + 1
@@ -499,6 +536,9 @@ def run_worker(root: Path, manifest_path: Path, work_dir: Path, tag: str, upload
         }
 
         def update(phase: str, **fields) -> None:
+            if phase != "needs_attention":
+                state.pop("error", None)
+                state.pop("error_type", None)
             state.update(phase=phase, updated_at=datetime.now(timezone.utc).isoformat(), **fields)
             archive.atomic_json(state_path, state)
             print(f"{state['updated_at']} {phase}", flush=True)
