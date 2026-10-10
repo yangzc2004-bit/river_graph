@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import sys
 from pathlib import Path
 
@@ -107,9 +108,26 @@ def test_save_load_and_explicit_support_are_replayable(current_sample, tmp_path)
 GEO = Path("experiments/phase4_transfer/doc_current_availability_attention_geographical_v1/runs/huc4_1013_seed42")
 
 
-@pytest.mark.skipif(not (GEO/"complete.json").exists() or
+def _geographical_fit_assets_present():
+    """Completions survive archival; replay also needs their local fit files."""
+    if not (GEO/"complete.json").exists() or not (GEO/"config.json").exists():
+        return False
+    config = json.loads((GEO/"config.json").read_text())
+    parent = Path(config["parent_run"])
+    for run, stages in ((GEO, ("complete.json",)), (parent,
+            ("complete.json", "backbone_complete.json", "trees_complete.json", "current_complete.json"))):
+        for stage in stages:
+            if not (run/stage).exists():
+                return False
+            files = json.loads((run/stage).read_text())["files"]
+            if not all((run/name).is_file() for name in files):
+                return False
+    return True
+
+
+@pytest.mark.skipif(not _geographical_fit_assets_present() or
     not Path("data/processed/mississippi_graph_graphfix_st357.pt").exists(),
-    reason="local geographical DOC fit and ST357 dataset required for portable replay")
+    reason="restored local geographical fit assets (including archived forests) and ST357 required for portable replay")
 def test_evaluated_geographical_prediction_replays_on_named_receivers():
     from run_doc_daily_hydro_residual_v1 import load_daily_pack
     from run_doc_geographical_confirmation_v1 import DAILY_ROOT, DATASET
