@@ -1,5 +1,18 @@
 # Execution progress: DOC reconstruction at unmonitored stations
 
+## Latest river learning update (2026-10-10)
+
+Conditional readout-crossfit development is complete:54 scalar-head fits and45
+river fits in `doc_river_readout_crossfit_v2`. MAE1.714736mg/L essentially ties
+the preceding upstream-state1.714729; Q90 is slightly worse. Do not adopt it.
+The loss of the new readout is station-held; retained whole-model features and
+components are not fully OOF. Next priority is explicit confluence/storage
+message mixing. Full result, implementation repair and evidence are in
+`docs/doc_river_readout_crossfit_progress_20261010.md` and the new experiment's
+English `research_decision.md`. All nine packages, independent analysis and
+figures verified; pytest1463 passed,3 skipped; Ruff/history audit pass. No
+automation restarted.
+
 ## River structure residual pilot complete (2026-10-06)
 
 `experiments/phase4_transfer/doc_river_structure_residual_v1` now contains all
