@@ -1,5 +1,19 @@
 # Execution progress: DOC reconstruction at unmonitored stations
 
+## Latest confluence/storage update (2026-10-10)
+
+Completed45 river fits on source roles142/143/144 x42/43/44 in
+`doc_confluence_storage_v1`. Primary MAE1.716517mg/L improves ordinary attention
+by0.041% (station interval crosses zero) but remains worse than the preceding
+state branch1.714729. Explicit storage adds no gain over mixing-only. Preserve
+the previous candidate and released model. Next mechanism priority is actual
+upstream observation-time alignment with daily hydro events, not more
+attenuation/depth variants. Full results and propagation controls are in
+`docs/doc_confluence_storage_progress_20261010.md` and the experiment's English
+`research_decision.md`. All9 packages,45 checkpoints, exact rebuilt priors,
+independent metrics/15 intervals and two scientific figures verified;
+pytest1474 passed,3 skipped; Ruff/history audit pass. No automation resumed.
+
 ## Latest river learning update (2026-10-10)
 
 Conditional readout-crossfit development is complete:54 scalar-head fits and45
