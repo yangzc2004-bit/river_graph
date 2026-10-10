@@ -1,5 +1,20 @@
 # Execution progress: DOC reconstruction at unmonitored stations
 
+## Latest sampling-aware river update (2026-10-10)
+
+Completed54 river fits on source roles142/143/144 x42/43/44 in
+`doc_sampling_river_v1`, using actual source sample dates and measured daily-flow
+phase with receiving sampling metadata absent. Primary MAE1.717288mg/L ties
+ordinary monthly attention1.717226; incremental gain−0.003607% (station interval
+crosses zero). Actual flow correspondence does not outperform shuffled metadata.
+Previous environmental-state candidate1.714729 remains better; do not adopt this
+module. All frozen22,571 monthly targets reconcile with raw dates. Full evidence
+and proposed next joint station-held river/local training are in
+`docs/doc_sampling_river_progress_20261010.md` and the experiment's English
+`research_decision.md`. All9 reconstructed inputs,54 checkpoints, independent
+metrics/18 intervals and both scientific figures verified. Pytest1,483passed,
+3skipped; Ruff/history audit pass. No automation resumed.
+
 ## Latest confluence/storage update (2026-10-10)
 
 Completed45 river fits on source roles142/143/144 x42/43/44 in
