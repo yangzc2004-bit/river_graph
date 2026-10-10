@@ -32,7 +32,7 @@ def git(root: Path, arguments: list[str], data: bytes | None = None, index: Path
     for attempt in range(1, attempts + 1):
         try:
             return subprocess.check_output(
-                ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", *arguments],
+                ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", "-c", "http.version=HTTP/1.1", *arguments],
                 cwd=root, env=env, input=data,
             )
         except subprocess.CalledProcessError:
