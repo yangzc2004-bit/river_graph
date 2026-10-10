@@ -5,6 +5,17 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## Dynamic river modelling: latest development result
 
+The [upstream-to-local contrast experiment](experiments/phase4_transfer/doc_river_state_contrast_v1/research_decision.md)
+completed 36 new controlled fits. With candidate coverage and capacity unchanged,
+contrast-value MAE is 1.7159 versus 1.7147 mg/L for the preceding absolute-state
+primary: a 0.068% increase, with the overall interval crossing zero. Q90 error
+increases 0.137%; its paired interval supports deterioration in this development
+sample. Uniform and matched non-upstream controls do not establish additional
+allocation/connectivity value. Do not adopt this branch. The next research
+question is source-fold-isolated local anchors for training river corrections,
+before more variants of the same environmental-state attention. These are
+source-role development results, not independent external validation.
+
 The [hydro-only node expansion](experiments/phase4_transfer/doc_hydro_river_expansion_v1/research_decision.md)
 completed 36 additional controlled fits. Adding 71 covariate-only nodes per
 partition raises upstream state coverage from 41.57% to 44.13%. DOC MAE reaches

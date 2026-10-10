@@ -1,0 +1,192 @@
+{
+  "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+  "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "q90_threshold_train": 10.0,
+  "split_seed": 144,
+  "seed": 42,
+  "experiment": "doc_river_state_contrast_v1",
+  "started_at": "2026-10-10T01:38:18.090076+00:00",
+  "runtime_snapshot_hash": "39035a8c9d0623f34516dfe361b672cf6bf3a6f63bb5c323f4dbe169eef11196",
+  "models": [
+    "available_real_integrated",
+    "station_hidden_trees",
+    "dynamic_lagged",
+    "observed_state",
+    "expanded_upstream",
+    "expanded_uniform",
+    "expanded_matched_upstream",
+    "expanded_matched_nonupstream",
+    "contrast_upstream",
+    "contrast_uniform",
+    "contrast_matched_upstream",
+    "contrast_matched_nonupstream"
+  ],
+  "arms": {
+    "contrast_upstream": [
+      "raw",
+      "observed",
+      "dynamic"
+    ],
+    "contrast_uniform": [
+      "raw",
+      "observed",
+      "uniform"
+    ],
+    "contrast_matched_upstream": [
+      "matched",
+      "observed",
+      "dynamic"
+    ],
+    "contrast_matched_nonupstream": [
+      "control",
+      "observed",
+      "dynamic"
+    ]
+  },
+  "lags": [
+    0,
+    1,
+    3
+  ],
+  "epochs": 30,
+  "patience": 5,
+  "heads": 2,
+  "dimensions": 32,
+  "learning_rate": 0.001,
+  "tail_weight": 2,
+  "state": "frozen environmental-only GRU64 + ecology9 + daily8 + daily_change8 + monthly_hydro4",
+  "state_available": "measured temperature/flow or daily descriptor within preceding 12 months",
+  "upstream_state_DOC_inputs": "all values, visibility and support removed; never inferred DOC truth",
+  "base_frozen": true,
+  "complete_base_training_predictions_are_oof": false,
+  "observed_branch_frozen": true,
+  "combined_architecture": "observed correction then independent environmental contrast correction",
+  "evaluation_role": "source_validation_development",
+  "selection_role": "source_validation",
+  "receiving_water_quality": "none",
+  "sources": {
+    "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed42/config.json": "b593f835aa64797a76b30f18fcee424f82cee8ccc8550d00fd35e90e65c5165a",
+    "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed42/complete.json": "9f3d9f4fe8cb234406b27d33022e7caf50276a41678484362a5819ff57ec08d7",
+    "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed42/fitting_inputs.npz": "7dc841e0abd569c260e4abdc9bf45de63af35c0918eec8fc646b2fb9f3b1c692",
+    "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed42/dynamic_lagged.pt": "33f2ea1a112feb05c6175c72d396fc21a960cd7513b72a35f859897229f7d026",
+    "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed42/predictions.parquet": "70fa0be67433d28064003a7eae4d99fbf2fe4f9cbb7918ba5223593e19fbf1f5",
+    "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed42/config.json": "06e28480ba3f4ac3b272632e75a696d2f8c2feb7160d401d9d7bfa4498c6eca1",
+    "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed42/complete.json": "94faa70d8bffcb89b0c2a52cb350eb6186f69f9a0c4c9d4db33854af9c5eece5",
+    "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed42/available_real.pt": "59c56ca6ad2dbfeacd32b1a2a8acd87d6f5c651d8169c82e8e2dca338e74111f",
+    "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed42/available_real_memory.json": "afc63874ebff918d52bc38cec052dca63db24025f3a7ae6f6d7a2345ec7aa26c",
+    "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed42/attention_candidates.npz": "cd6b8d04b6d5b4d867436e4698294d8af57404fe86a745f9aa0595def55a6978",
+    "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed42/predictions.parquet": "23510d98a88de188de599a0b72df6594cc18e8c20efb31e4d98dcb0070238085",
+    "data/processed/mississippi_graph_graphfix_st357.pt": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+    "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed42/config.json": "378f07f28003cfee29539c9d8fc7636d0f2bf4229432900c25e4859e3253a44f",
+    "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed42/complete.json": "e2b6879dcb9dd31a34b0b5b8cdcf36b81d24e69216ea3384d81fe616dcf62ed6",
+    "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed42/source_oof.npz": "e4fe3a37b104e6e599c80e7f7f5341c79199520cd459fb0da4a1c14dff3cfb3a",
+    "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed42/validation_inputs.npz": "d451a7411b6e41981f62b7dd1682e4af43f1c8906081f222c09a4ffad85310cb",
+    "experiments/phase4_transfer/doc_joint_source_states_v1/runs/split144_seed42/config.json": "dc194d379ac2badd2d4cef2049573f8eac818819bc2f444b9c7b5e10721fa314",
+    "experiments/phase4_transfer/doc_joint_source_states_v1/runs/split144_seed42/complete.json": "6aaa308e6975767bd7d89e93712705726b142b13150d55090d6c878f8a4d1829",
+    "experiments/phase4_transfer/doc_joint_source_states_v1/runs/split144_seed42/joint_source_inputs.npz": "bf26dd390e57d445ec055708ba43ba6b54c5f129321295f79268b0faa105efc9",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/config.json": "8c7bca7b7740978182b95f93be82142f04b5b1010f3e43af7c34e590946d2f45",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/complete.json": "969115244c17d0bd2c622f41519f8727b1bb92c0b8daf16c8391904ffee1f244",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/innovation_inputs.npz": "dca21a66dfa56682ffa9afb09c2412866475559721636a251c9be210f6fe74cb",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_1.npz": "42a6f83fa1b96474616b61c42e0c77acebe148fd650b77ea7179f9268139727c",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_1.json": "03efc2c065897e86b462f0d359a90b2b1b5c68e332f1fb5379f20c29df7fce33",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_2.npz": "7816cfb57e0453d83f816ed2597afc98103c5857d8397f8180dc6c7d892082e0",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_2.json": "203442b883ffe57b94b9f2a2e8c4230269ba66e156d5f669338fb6a6dd0bbf1f",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_3.npz": "61ef3a85f8e33fc4a1fa4da11d3430fb0ed40783e0e59af5d76143fdac91817c",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_3.json": "42bfab479f4b2be773186195a6c8acc754e3ea709f6c2615dcfdbd86acbd9d6c",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_4.npz": "90daa2927f64387fadc5797664ddd57d5b472af71b307181ad8597eeb6970caf",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_0_4.json": "a0a44b4f53b9301316b8dfca8375b311d8f596476feee45b445aa8d260f010b2",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_1_2.npz": "fb2f4a01bc1c86dbf97fa6d608fa5ea622d40e220114be90da585d93d33cc972",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_1_2.json": "04665cb99697ef8bee2620037cf0b04539fe1d23e9695b1002927f577fc5d861",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_1_3.npz": "fa1b930986fc4e5449afac5354c47572327272c565d6e20fcb59c1243c3d29a6",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_1_3.json": "a5c643d5fbe03f8d100f0130920f26116f903c82f5b60d487622a15e324b9eec",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_1_4.npz": "114cfb6019626e72e1660f62b6d433f80129dfa6b027e00ae1dd33b23d63a180",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_1_4.json": "40ecba9a057c2bb102864e7eeca05353bcb53aa90c6d46e452107d9cd86a5d8b",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_2_3.npz": "d167c8a45923268a09dd5f5abb6ffdc82c99cc6fdb4b542c52422329915f0b20",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_2_3.json": "5d19ba4fc999b304748aaf3a2a3637ea99df46322f7014a342a0a7e1ecda8d55",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_2_4.npz": "d3624a4c0db887022497f9d0246713040ecce14cac79886c49f3bc7f58d7ddf0",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_2_4.json": "c5e5b46646071cfeff5a17b628025acbc4006d97e08b4d0b37f612bf3875dc90",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_3_4.npz": "047ccb5db972f55691a9c1ee0ab0c38aa9397904f1cefe74c7f2778137c361ac",
+    "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed42/pair_reference_3_4.json": "cb33b0f65bf13188d69d4f0de84dc440d2b4c035b653f33743d91fde16c00097",
+    "experiments/phase4_transfer/doc_river_structure_atlas_v1/analysis/station_edge_paths.csv": "62bbf3155ba46070adbdf9f0fc9da36d8a0d0c7e8c4cf69dc2f30d981c427136",
+    "experiments/phase4_transfer/doc_river_structure_atlas_v1/analysis/station_structure.csv": "f5108ddbdfb1d3076eb418ea0dc4e496b5bea448bdc8e3e3b43628259bb2b325",
+    "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+    "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+    "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed42/config.json": "5274c0dd3e9b77bd42685f5cfcc47639a0e12392ae3ac026f9938bd11127aedc",
+    "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed42/complete.json": "e5e0a11f1c1f787be5d9858b9d7d93146bd8da7e803e0740bd3147491224ab32",
+    "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed42/fitting_inputs.npz": "d17d30cb699687503c4706aa2777c6412cc0aacb853f078a3afa8b2282fc7f3c",
+    "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed42/predictions.parquet": "9f5e33b9fccb752bec7427d6a9847a75b2082e96fd921b1ecc0b259913f7152f",
+    "experiments/phase4_transfer/doc_hydro_river_expansion_v1/runs/split144_seed42/config.json": "32e4999049ff428d859d04362b7ddb2dc8708f95d310bbf9eaa8a282e7cf4b6b",
+    "experiments/phase4_transfer/doc_hydro_river_expansion_v1/runs/split144_seed42/complete.json": "74416f8343ac67bcdd57a799e4899659a14074225ffd729ca3226bb8c1ada9e0",
+    "experiments/phase4_transfer/doc_hydro_river_expansion_v1/runs/split144_seed42/fitting_inputs.npz": "e7e4461b4b3c5536fa3be75a606e318de4eb4bd823e6dfe071be25992c5851a9",
+    "experiments/phase4_transfer/doc_hydro_river_expansion_v1/runs/split144_seed42/predictions.parquet": "1ce334ab05968651034aa6f9952efd01a294bc65b150a90e65e61432721e4304",
+    "experiments/phase4_transfer/doc_hydro_river_expansion_v1/runs/split144_seed42/source_roles.json": "38ca9e044601d5dcd2e19af7c2db463d6aa5b867cae72735128e4df9bb776f7e",
+    "experiments/phase4_transfer/doc_hydro_river_expansion_v1/runs/split144_seed42/matching.json": "932843b9b61987c8d0eb3d77c7d5879df56b8e3945733841adfd119a9b522682"
+  },
+  "matching": "drainage area and label-free hydro availability; common edge-lag support",
+  "historical_hidden_preprocessing": "retained source-cell hydro and all-cohort static/ecology stats; source states replay exactly",
+  "hydro_pool": "all covariate-known ST357 nodes minus complete receiving fold/role",
+  "water_quality_library_expanded": false,
+  "known_atlas_covariates": true,
+  "external_inductive_evaluation": false,
+  "previous_state_anchor": "expanded_upstream retained as fixed comparator, not stacked",
+  "message_value": "upstream environmental state at allowed lag minus receiver environmental state at current query month",
+  "receiver_state_DOC_inputs": "none; same frozen chemistry-free environmental encoding",
+  "capacity_and_candidate_support_unchanged": true,
+  "preprocessing": {
+    "hydro": {
+      "mean": [
+        12.191174507141113,
+        11124.9677734375
+      ],
+      "sd": [
+        8.912278175354004,
+        47184.5390625
+      ]
+    },
+    "static": {
+      "mean": [
+        41.40471649169922,
+        -94.7663803100586
+      ],
+      "sd": [
+        3.6529605388641357,
+        8.472195625305176
+      ]
+    },
+    "regime": {
+      "mean": [
+        4.806722640991211,
+        7.348252773284912,
+        0.005041738506406546,
+        0.5742297172546387,
+        27.397226333618164,
+        30.626441955566406,
+        11.977142333984375,
+        2.748823642730713,
+        845.6182861328125,
+        3.3774304389953613,
+        1.5377235412597656,
+        821.1604614257812,
+        40.622859954833984
+      ],
+      "sd": [
+        2.0753750801086426,
+        2.9656407833099365,
+        0.016970600932836533,
+        0.49445924162864685,
+        29.77496910095215,
+        30.085548400878906,
+        22.122777938842773,
+        5.250485897064209,
+        329.8763427734375,
+        0.26148152351379395,
+        2.190591335296631,
+        746.2637329101562,
+        15.959428787231445
+      ]
+    }
+  }
+}
