@@ -1,0 +1,213 @@
+{
+  "config": {
+    "dataset_path": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_path": "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz",
+    "mask_hash": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+    "q90_threshold_train": 10.0,
+    "split_seed": 144,
+    "seed": 43,
+    "experiment": "doc_hydro_river_expansion_v1",
+    "started_at": "2026-10-10T01:15:14.452522+00:00",
+    "runtime_snapshot_hash": "10b79d5a5a3d36a7f31beb0d4737cb89431ac003ce69099aa3e470155dcad17b",
+    "models": [
+      "available_real_integrated",
+      "station_hidden_trees",
+      "dynamic_lagged",
+      "observed_state",
+      "matched_state_upstream",
+      "matched_state_nonupstream",
+      "expanded_upstream",
+      "expanded_uniform",
+      "expanded_matched_upstream",
+      "expanded_matched_nonupstream"
+    ],
+    "arms": {
+      "expanded_upstream": [
+        "raw",
+        "observed",
+        "dynamic"
+      ],
+      "expanded_uniform": [
+        "raw",
+        "observed",
+        "uniform"
+      ],
+      "expanded_matched_upstream": [
+        "matched",
+        "observed",
+        "dynamic"
+      ],
+      "expanded_matched_nonupstream": [
+        "control",
+        "observed",
+        "dynamic"
+      ]
+    },
+    "lags": [
+      0,
+      1,
+      3
+    ],
+    "epochs": 30,
+    "patience": 5,
+    "heads": 2,
+    "dimensions": 32,
+    "learning_rate": 0.001,
+    "tail_weight": 2,
+    "state": "frozen environmental-only GRU64 + ecology9 + daily8 + daily_change8 + monthly_hydro4",
+    "state_available": "measured temperature/flow or daily descriptor within preceding 12 months",
+    "upstream_state_DOC_inputs": "all values, visibility and support removed; never inferred DOC truth",
+    "base_frozen": true,
+    "complete_base_training_predictions_are_oof": false,
+    "observed_branch_frozen": true,
+    "combined_architecture": "observed correction then independent state correction",
+    "evaluation_role": "source_validation_development",
+    "selection_role": "source_validation",
+    "receiving_water_quality": "none",
+    "sources": {
+      "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed43/config.json": "ce9cb092a48deeb8d61e139d356fd7cc602c8a804b7a907ed16ae4c8296a449f",
+      "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed43/complete.json": "b995612b09bb9f2c47f8961d4ece7efc29c9d7293ef5c7333ce5097cced91251",
+      "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed43/fitting_inputs.npz": "4db8812e226225021022d97433fd5cd685ffa60f12fca7696529801b6b3ecabb",
+      "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed43/dynamic_lagged.pt": "762f88b0d8bfdeceb533ba8943e8a7727e227ceccd1623c5eb0d8dad4eebad83",
+      "experiments/phase4_transfer/doc_dynamic_river_v1/runs/split144_seed43/predictions.parquet": "aebaf3be588f3f19a15bee670315be485e93f5f53d8d7386c90e2b99cc726cd3",
+      "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43/config.json": "608d5949db88aea61fae96fc198e4de6dd522b37f18587f1a5e3918b5338e395",
+      "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43/complete.json": "52d92c226b2f9724fde683c8b59a556e78bbd3f0bc75503f8121ca34c2ab0bf1",
+      "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43/available_real.pt": "054892fb86c5546ad557d533fd4fba7e95358efa4065de317efac6e17e8f8aef",
+      "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43/available_real_memory.json": "27a8b2b235004e248417f32641f4f4c5a06978b7db4b0ad797254d4efc5696ef",
+      "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43/attention_candidates.npz": "efd1ae8f18f58e617301e23900d9c527c7dde234ce7000bd38e63f325048a9d8",
+      "experiments/phase4_transfer/doc_current_availability_attention_v1/runs/split144_seed43/predictions.parquet": "0489514d7381d4bb3f88f23e74e142f315f5aa1f37c59df186f536ebd3e9d7b2",
+      "data/processed/mississippi_graph_graphfix_st357.pt": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+      "experiments/phase4_transfer/unified_doc_spatial_v1/confirmation/masks/split144.npz": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+      "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed43/config.json": "e12fcb2671a7abd7914648854d14e761de1b63f5405203c7db4e72a14f1a6cee",
+      "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed43/complete.json": "946c1d092caf22b12c51308d588d5cf92614383c7df9995fc6e1034abdf45224",
+      "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed43/source_oof.npz": "b26dd725a62c38a3e6f6db088d75a61365ef293d0ea947373f65ab17278858a0",
+      "experiments/phase4_transfer/doc_unmonitored_residual_v1/runs/split144_seed43/validation_inputs.npz": "5efe89c72bb415b3bfda45f6e8ef5842c49d0408732143f982b8ad303555b49a",
+      "experiments/phase4_transfer/doc_joint_source_states_v1/runs/split144_seed43/config.json": "ff4f8cd19d8459b9c46bc8d6d3f39de85298c111cf49295c7affbcd40576dba7",
+      "experiments/phase4_transfer/doc_joint_source_states_v1/runs/split144_seed43/complete.json": "d869829d5c5e5909b558f4c68cec18d0fc90c813efd4c9618837d0e14c9696bc",
+      "experiments/phase4_transfer/doc_joint_source_states_v1/runs/split144_seed43/joint_source_inputs.npz": "b76364db7d9344f6ec8520062b073b84cc9def5b1af2a3738cb05b001cc41587",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/config.json": "b56f738e484f801ae1359129dc9222a073191c6d67dfa679bcb7c8605b7a95f1",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/complete.json": "08d239169b42e694b982674f55bddf1fda3314adaf019f53ac27c38fa2239451",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/innovation_inputs.npz": "99b29918410582454c85addd92b9b8f13fb9967be61557c249d651c1706bc06b",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_1.npz": "db67ade88d8a85dc35e31c53a012e06bf5210bb9e5d1b75a05f58822a9f7e9dd",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_1.json": "bc5daac19455b65c05bfca2bd5104b7ade6aa5e637248f9381047a73bb8ad1c5",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_2.npz": "d40f14303832e7038acf7953e96fba3bf8e4872e313d1e6723a1d7d909a8d0a6",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_2.json": "fbc93b4396c19666a7350e7a171ae6751588eb914dcc3551dfd83ac92d009cb0",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_3.npz": "9e1894e8897cf0d216c9b682c1ca518d1ba53e10bcb0a7d793147c484b3685c8",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_3.json": "f6b7e4de90c96b4d1a6c3f391304339bc31e36d11df208ea0fdc5cc6f5754749",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_4.npz": "a9a7713d816cbeaa07003e63c2ce6c085442fa6a9afdee051677dcc695880e6d",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_0_4.json": "bab824d4ac3302c31c68d661c5ec3a276be01a4d8b5b1f28416ff47694ece31a",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_1_2.npz": "cf9fe68560d9237b60894cff3d7946d0b771b74264e5ac3c169bef257e3e1f78",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_1_2.json": "d05fe717e5c0ddb182a2d9ee6301b99286f04ca1c6833e21b3e64b88b213355b",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_1_3.npz": "7aa93b0b7bf0711ee57fe813ed614ed5697e515613e86e71726c410ee9eee2b3",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_1_3.json": "c825c5b74f3d3ebeb8d9a48da84d3cdfbb2a4ce33153db71acbee9116646d3a2",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_1_4.npz": "50b0dc02976af96052c2cd2f379f0c3d8d0c55f6e3de76f40ff4768d49ddd341",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_1_4.json": "b76e41ce65f56d066d00d6cd2313dbb402307c2bfd44b6e7ac3925f1950ecf4b",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_2_3.npz": "ffefee28f4c59d534e632c2ba21a16058373067338c379d8ec06bbd4cb31e948",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_2_3.json": "bdc62e5eacb2116804d50a8183d26b9b98062e506647bcd6126de2a94127a136",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_2_4.npz": "158285ef92d3ee9b891b164b29f510dbf56f92450f44135ccc4c43d8bb420b7d",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_2_4.json": "19e26d24231db57442c85cae1accfc7939b06ad466fe702f2c8d949dfb9b9d2d",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_3_4.npz": "8cfcc0cc8f6437b4869b92c57ca865d37dc13ba457b70fe087e631617c0c9019",
+      "experiments/phase4_transfer/doc_source_innovation_learning_v1/runs/split144_seed43/pair_reference_3_4.json": "31dd353ed08cc78e215eaea199e6e8cba681a789bf56c29ed07b2d2f13715f4c",
+      "experiments/phase4_transfer/doc_river_structure_atlas_v1/analysis/station_edge_paths.csv": "62bbf3155ba46070adbdf9f0fc9da36d8a0d0c7e8c4cf69dc2f30d981c427136",
+      "experiments/phase4_transfer/doc_river_structure_atlas_v1/analysis/station_structure.csv": "f5108ddbdfb1d3076eb418ea0dc4e496b5bea448bdc8e3e3b43628259bb2b325",
+      "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.npz": "21c76086363820efc2b373aaac02e069a1f53bc8c08aa7ff6edeb2e4b1f1f89e",
+      "experiments/phase4_transfer/doc_daily_hydro_residual_v1/daily_features.meta.json": "1a97e3ed98ca7ae01302f9a2c2380ec6bd93b8661cd1ef89d0f715a9e577da24",
+      "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed43/config.json": "0efc331d40fc3626797d1f5944a5d4b5edd38a7ee2bdc75758000623a4b1fe93",
+      "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed43/complete.json": "f7841be69f879cde0c5c78b936b4806d28cf1beae9742bfd94faf601392da9d3",
+      "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed43/fitting_inputs.npz": "591e2f14dd757589865731838d32f135f07ebceeb3bc037b260339902283729f",
+      "experiments/phase4_transfer/doc_dynamic_river_state_v1/runs/split144_seed43/predictions.parquet": "aa8c2bffde41a2495a51040ff3cbd764327cc24bda67c99605363ddc478ec9a2"
+    },
+    "matching": "drainage area and label-free hydro availability; common edge-lag support",
+    "historical_hidden_preprocessing": "retained source-cell hydro and all-cohort static/ecology stats; source states replay exactly",
+    "hydro_pool": "all covariate-known ST357 nodes minus complete receiving fold/role",
+    "water_quality_library_expanded": false,
+    "known_atlas_covariates": true,
+    "external_inductive_evaluation": false,
+    "previous_state_anchor": "observed_state retained as fixed comparator, not stacked",
+    "preprocessing": {
+      "hydro": {
+        "mean": [
+          12.191174507141113,
+          11124.9677734375
+        ],
+        "sd": [
+          8.912278175354004,
+          47184.5390625
+        ]
+      },
+      "static": {
+        "mean": [
+          41.40471649169922,
+          -94.7663803100586
+        ],
+        "sd": [
+          3.6529605388641357,
+          8.472195625305176
+        ]
+      },
+      "regime": {
+        "mean": [
+          4.806722640991211,
+          7.348252773284912,
+          0.005041738506406546,
+          0.5742297172546387,
+          27.397226333618164,
+          30.626441955566406,
+          11.977142333984375,
+          2.748823642730713,
+          845.6182861328125,
+          3.3774304389953613,
+          1.5377235412597656,
+          821.1604614257812,
+          40.622859954833984
+        ],
+        "sd": [
+          2.0753750801086426,
+          2.9656407833099365,
+          0.016970600932836533,
+          0.49445924162864685,
+          29.77496910095215,
+          30.085548400878906,
+          22.122777938842773,
+          5.250485897064209,
+          329.8763427734375,
+          0.26148152351379395,
+          2.190591335296631,
+          746.2637329101562,
+          15.959428787231445
+        ]
+      }
+    }
+  },
+  "config_hash": "1eaad848213147cf1ba698d3245b754c257a4a0f3616a503ef6f9a574de98533",
+  "runtime_snapshot_hash": "10b79d5a5a3d36a7f31beb0d4737cb89431ac003ce69099aa3e470155dcad17b",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "aed3b9ad181fa2bd7bccaf2762c1e143b57073571a8ac3377ccb69c8b596f1c2",
+  "run_identity_sha256": "5ad2f03b3d3c5e1f869ddbdc8433da4f0e6e968ebebecf114263881e7d9359ab",
+  "prediction_sha256": "a6b91c2875f6680aa4e44140fceb3fcafc0162869721a88e6d39be7f78eca622",
+  "model_files": {
+    "config.json": "c1defd1a7d3907bd35b9f60e7117059c5c933d8686a45759b0726d6ac2ec87ec",
+    "source_roles.json": "46bddeac190596a2303cfa46dfdda67869ca486638ede2dd6f2131fe698d90f8",
+    "matching.json": "72982c24edf0bdd05978e919e7b25b0bd9c23872d37e37e88df9b4ea416e09a0",
+    "fitting_inputs.npz": "9a97393cd0776350992ba90e78cc34186a3a9754435ae165804933780fe45a0a",
+    "expanded_upstream.pt": "cd5432fa91cc1d2cef2a4116c68443dfa1f8c6e036e78aa04391e56351c5c515",
+    "expanded_upstream.json": "290cbaef8511a43a1f583ab9a7032ff626c89bd26062afd9f96551fec3c1772c",
+    "expanded_upstream_complete.json": "33e2cbd557c64d67d0881d2629729317f49c4f70b7bf579de914c43fe827a773",
+    "expanded_upstream_diagnostics.npz": "1b44784c669c769aa04a622ff0e28a2d9fd0031b7a1543657fd3e31144b08c86",
+    "expanded_uniform.pt": "6d362d585fe656380065a4592a779b8f0ceb6b484742d3f9fd4f715f100e8099",
+    "expanded_uniform.json": "a3efb8daa539827850e2ab6558fa9fb4e833cd6179af77ccd1c2219789ce7f23",
+    "expanded_uniform_complete.json": "58a5c48934024c2a452385e7d8d6e723930e27c6bbfc2fd2d0e76605a19a8a2c",
+    "expanded_uniform_diagnostics.npz": "b784d41879a559b2f694c310a8fd4d6f1ed7a07adc1426294e55ea842d4cb480",
+    "expanded_matched_upstream.pt": "da9822d8a94f545ab6264f2f63aeac6cc821ac7947dbaaf9531b984c1f4da180",
+    "expanded_matched_upstream.json": "e78b68dbc90a8469480f3ad7763e3f817b0387bda40dd8c99a79aed46d6baecb",
+    "expanded_matched_upstream_complete.json": "c38cbaf058ed239d2b7d10f1e437d4b00930251633225b00c6811b5e2a8074a6",
+    "expanded_matched_upstream_diagnostics.npz": "2ba3c4ffffc8be6282f48290623bb7e93234e0c6a89995479ca1b39043dab1e7",
+    "expanded_matched_nonupstream.pt": "ffffc8d62bd17d62652d6c64e6a124abe5b5a8c3e97a516d23e7f86eebdd4132",
+    "expanded_matched_nonupstream.json": "0624835258583edefe49508a49e26204f2c6b5e922fa504f0abd057b53a863fe",
+    "expanded_matched_nonupstream_complete.json": "a49185a32b8d2b21ae82067abeec191770ce8dfa9ccb005b295ce5b78e926dae",
+    "expanded_matched_nonupstream_diagnostics.npz": "3d1e98064493f3b63a821e5f2fa9699473c813a90784861091f6e63157bb4983"
+  },
+  "rows": 35060,
+  "selection_role": "source_validation"
+}

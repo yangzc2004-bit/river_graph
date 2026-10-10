@@ -5,6 +5,15 @@ Organic Carbon Observations in the Mississippi River Basin**
 
 ## Dynamic river modelling: latest development result
 
+The [hydro-only node expansion](experiments/phase4_transfer/doc_hydro_river_expansion_v1/research_decision.md)
+completed 36 additional controlled fits. Adding 71 covariate-only nodes per
+partition raises upstream state coverage from 41.57% to 44.13%. DOC MAE reaches
+1.7147 mg/L, 0.480% below the complete model but only 0.063% below the preceding
+state version, with the latter interval crossing zero. Uniform allocation is
+slightly better than learned allocation; matched real and non-upstream messages
+remain unresolved. The next test concerns upstream-to-local contrast values,
+with model capacity held fixed. These are source-role development results.
+
 The [upstream environmental-state experiment](experiments/phase4_transfer/doc_dynamic_river_state_v1/research_decision.md)
 completed 45 new branch fits on the existing DOC ecological/GRU model. Combined
 observed-DOC and environmental messages reduce MAE by 0.417% versus the complete
