@@ -1,0 +1,49 @@
+DOC river architecture comparison v1
+
+Numerical primary winner: graph_transformer.
+Primary endpoint: equal-cell native DOC MAE, averaging seed errors, not ensemble predictions.
+Population: 104 stations and 7262 unique observed station-month cells, five whole-HUC4 regions, three seeds, 60 fresh fits.
+All arms use the same causal 12-month GRU, ecological encoder, 12,565 nominal parameters, initialization, source-only scaling, optimization budget and validation rule.
+Local self-only attention does not use its Q/K comparisons; nominal parameter matching does not establish identical effective capacity.
+
+       model_name      mae  basin_macro_mae     rmse       r2  q90_mae  gain_vs_local_percent  median_training_seconds  median_selected_epoch
+     directed_gnn 2.326068         2.451481 4.812423 0.472735 7.573865              -4.222190                44.876077                   13.0
+graph_transformer 2.183878         2.302186 4.699302 0.497232 7.450520               2.148778                74.065948                   19.0
+ hierarchical_gnn 2.296068         2.427505 4.808491 0.473596 7.658822              -2.878006                70.980024                   15.0
+            local 2.231835         2.354226 4.726443 0.491407 7.497604               0.000000                28.838871                   12.0
+
+Paired comparisons (positive gain means the candidate improves MAE):
+directed_gnn vs local: -4.222% gain; 95% basin-cluster bootstrap [-9.148, -0.086]%; improved in 1/5 regions.
+hierarchical_gnn vs local: -2.878% gain; 95% basin-cluster bootstrap [-6.989, -0.777]%; improved in 1/5 regions.
+graph_transformer vs local: 2.149% gain; 95% basin-cluster bootstrap [-0.923, 9.827]%; improved in 4/5 regions.
+hierarchical_gnn vs directed_gnn: 1.290% gain; 95% basin-cluster bootstrap [-3.699, 5.288]%; improved in 2/5 regions.
+graph_transformer vs directed_gnn: 6.113% gain; 95% basin-cluster bootstrap [2.652, 13.124]%; improved in 5/5 regions.
+graph_transformer vs hierarchical_gnn: 4.886% gain; 95% basin-cluster bootstrap [1.493, 12.504]%; improved in 5/5 regions.
+
+Interpretation limits:
+These are standalone small models on a sampled-station graph, not the released DOC ensemble or a reconstruction of all physical river reaches.
+The spatial Transformer is a compact graph-biased implementation; the temporal module is a GRU in every arm. This does not rank all GNNs against all Transformers.
+Target DOC is entirely withheld and never an input. Target temperature/discharge covariates remain available where observed; this is not a no-hydrology setting.
+The five internal HUC4 tasks were inspected in prior project development. They are not independent external rivers or fresh blind confirmation.
+Only five regions support the basin bootstrap; uncertainty is exploratory. Station-bootstrap intervals describe within-region sampling and do not replace basin-level transfer uncertainty.
+Training and initial inference times can include concurrent CPU load. Error estimates are paired; timing differences also reflect validation-selected stopping epochs.
+Protocol, masks, code copies, checkpoints and predictions have content hashes; audit.json states whether complete checkpoint replay was performed.
+
+Final verification and equal-shape serial inference
+
+Validation disposition: Share with caveats within the internal study scope.
+All 60 fitted models replay stored query predictions exactly; independent float64 source-grid MAE calculations agree within 1.3e-7 mg/L.
+Serial CPU inference: four threads, 357 station nodes x 654 months (233,478 outputs), five timed passes after one warmup. Feature assembly, graph construction and file I/O excluded.
+
+local: 0.201270 seconds (median).
+directed_gnn: 0.276862 seconds (median).
+hierarchical_gnn: 0.446167 seconds (median).
+graph_transformer: 0.584640 seconds (median).
+
+Reproduction commands:
+uv run --no-sync python scripts/run_ladder.py --experiment doc-river-architecture-comparison-v1
+uv run --no-sync python scripts/analyze_doc_river_architecture_comparison_v1.py --replay
+uv run --no-sync python scripts/verify_doc_river_architecture_comparison_v1.py
+uv run --no-sync python scripts/benchmark_doc_river_architecture_comparison_v1.py
+uv run --no-sync python scripts/plot_doc_river_architecture_comparison_v1.py
+uv run --no-sync python scripts/finalize_doc_river_architecture_comparison_v1.py

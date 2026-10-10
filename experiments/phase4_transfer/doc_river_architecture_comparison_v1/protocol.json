@@ -1,0 +1,87 @@
+{
+  "experiment": "doc_river_architecture_comparison_v1",
+  "settings": {
+    "hidden": 24,
+    "temporal_hidden": 12,
+    "heads": 3,
+    "layers": 2,
+    "dropout": 0.1,
+    "lookback": 12,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 60,
+    "patience": 10,
+    "min_epochs": 15,
+    "batch_months": 32,
+    "torch_threads": 4
+  },
+  "arms": [
+    "local",
+    "directed_gnn",
+    "hierarchical_gnn",
+    "graph_transformer"
+  ],
+  "regions": [
+    "1013",
+    "1019",
+    "0708",
+    "1030",
+    "1101"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "nodes_hash": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+  "mask_hashes": {
+    "1013": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+    "1019": "cc5654c789532dc5277e962f99d24d5e96223d8681373af7130205b502ed983b",
+    "0708": "7f976b6d0ffaa1f58170a3ead6a78806ea5e6115db105df02c2e6ba47315f1bc",
+    "1030": "c8e6a534448d10638b54e53a97b8df7bf35f141f5fc27e5e78c7ed79b599213d",
+    "1101": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "runtime_snapshot": {
+    "scripts/run_ladder.py": "2670acdb8c05e1fbb483da6271ab54b483aac2fcf6d336ac966f896ae2c29100",
+    "scripts/run_doc_river_architecture_comparison_v1.py": "f469bf33db702512f97422297065dcf10fae33f12ae8cf9d777bce9df5631021",
+    "src/river_graph/models/river_architecture_comparison.py": "12cfbf014242e650f6bfd9ecd8152b27d9aee28b8f8d874fd1183649c9e8b8ce",
+    "src/river_graph/experiments/provenance.py": "cccd14393eea9dfe8ee8298f3582aa378bd12c9a77f494eea86012e6267118a3",
+    "src/river_graph/experiments/unmonitored_doc.py": "71c99a33e8317659102f5ee159fa4bdd1c014670c7ac43a1712d1105718b82c4",
+    "tests/test_river_architecture_comparison.py": "f27d0a541accd92187ca23d18d61bfe036023cc4bf7bc782356dbf75e4d3c5f4"
+  },
+  "primary_endpoint": "cell-pooled native DOC MAE over identical whole-HUC4 K0 query cells",
+  "secondary_endpoints": [
+    "basin-macro MAE",
+    "station-macro MAE",
+    "RMSE",
+    "R2",
+    "training-Q90 tail MAE",
+    "stream-order strata",
+    "training/inference seconds"
+  ],
+  "loss": "source-standardized log1p DOC MSE, equal observed-cell weight per epoch",
+  "selection": "whole-validation-HUC4 native MAE, best epoch, no target selection",
+  "training_graph": "source-station-induced graph only; no validation/test covariates in gradients",
+  "inference_graph": "source+validation or source+target induced graph; covariates only",
+  "inputs": [
+    "13 river/ecological features",
+    "latitude/longitude",
+    "temperature/discharge",
+    "hydrological masks and ages",
+    "causal 12-month history",
+    "season sin/cos",
+    "known directed station-river graph"
+  ],
+  "excluded_inputs": [
+    "DOC values/history",
+    "pH",
+    "conductance",
+    "station identity embeddings"
+  ],
+  "hierarchy": "two shared sparse-attention blocks, each scanned low-to-high stream order; same-order edges retained and all cross-order direct edges retained",
+  "transformer": "two dense spatial self-attention blocks with six directed connectivity relation biases",
+  "matching": "identical parameter tensors, initialization, hidden widths, loss, optimiser, month order, epoch budget and validation rule; effective attention degree differs",
+  "scope": "standalone small-model architecture comparison, not the released DOC ensemble; previously inspected internal geographical tasks, not fresh external confirmation; station graph, not all physical reaches; no temporal forecasting claim"
+}
