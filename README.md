@@ -3,6 +3,17 @@
 **Topology-aware Graph Neural Networks for Reconstructing Sparse Dissolved
 Organic Carbon Observations in the Mississippi River Basin**
 
+## Dynamic river modelling: latest development result
+
+The [upstream environmental-state experiment](experiments/phase4_transfer/doc_dynamic_river_state_v1/research_decision.md)
+completed 45 new branch fits on the existing DOC ecological/GRU model. Combined
+observed-DOC and environmental messages reduce MAE by 0.417% versus the complete
+model, but only 0.082% beyond the preceding observed-river branch. Usable message
+coverage rises from 32.32% to 41.57%. Matched non-upstream states perform similarly
+to genuine upstream states, so this version does not yet establish a distinct
+connectivity benefit. The complete predictor remains the released model; the
+next modelling question is how to supply additional upstream hydro information.
+
 ## River-form and DOC mechanism study
 
 The [actual-junction geometry study](experiments/phase4_transfer/doc_river_confluence_mixing_v1/research_decision.md)

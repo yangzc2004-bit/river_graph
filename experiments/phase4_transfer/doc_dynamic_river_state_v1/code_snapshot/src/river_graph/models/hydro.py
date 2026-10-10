@@ -1,0 +1,273 @@
+"""Directed relational GCN encoder (HydroGRN H1, design_m4.md).
+
+A plain GCN symmetrizes the river graph and loses flow direction. H1 keeps
+two separate message channels per layer:
+
+- upstream relation  (j -> i, j upstream of i): the *transport signal* —
+  what the river carries into the station.
+- downstream relation (j -> i, j downstream of i): the *contextual
+  constraint* — a high DOC reading downstream bounds what the station
+  could plausibly have had.
+
+Everything else (inputs, loss, masks, evaluation) is identical to the GCN
+baseline so H1 vs G0 isolates direction alone.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import nn
+from torch_geometric.nn import GCNConv
+
+
+def make_directed_edges(variant: str, edge_index: torch.Tensor, n_nodes: int,
+                        seed: int = 42) -> torch.Tensor:
+    """Directed edge sets for H1. Unlike make_edge_index, the river graph is
+    NOT symmetrized — direction is the whole point."""
+    if variant == "river":
+        return edge_index
+    if variant == "random":
+        rng = np.random.default_rng(seed)
+        n_edges = edge_index.shape[1]
+        pairs = rng.choice(n_nodes * (n_nodes - 1), size=n_edges, replace=False)
+        src, dst = pairs // (n_nodes - 1), pairs % (n_nodes - 1)
+        dst = np.where(dst >= src, dst + 1, dst)
+        return torch.tensor(np.stack([src, dst]), dtype=torch.long)
+    if variant == "none":
+        return torch.empty((2, 0), dtype=torch.long)
+    raise ValueError(f"unknown variant: {variant}")
+
+
+class DirectedConv(nn.Module):
+    """One layer: self transform + upstream relation + downstream relation.
+
+    share_weights=True (H1.5): a single relation conv is shared across
+    directions and a learnable direction embedding is added to each
+    relation's aggregated message. Keeps the direction distinction while
+    roughly halving relation parameters — less room to memorize regional
+    neighborhood patterns, which is what hurt spatial transfer (E3).
+
+    edge_dropout: during training, each edge is dropped independently with
+    this probability per relation per forward pass, forcing the model not
+    to rely on memorized reaches.
+    """
+
+    def __init__(self, in_channels: int, out_channels: int,
+                 share_weights: bool = False):
+        super().__init__()
+        self.self_lin = nn.Linear(in_channels, out_channels)
+        self.share_weights = share_weights
+        if share_weights:
+            self.rel_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
+            # per-relation multiplicative gates: shared conv keeps the
+            # parameter count near a single relation, while the gates keep
+            # upstream/downstream distinguishable (an additive bias would
+            # cancel out — summing both relations is swap-invariant)
+            self.dir_gate = nn.Parameter(
+                torch.stack([torch.ones(out_channels),
+                             torch.full((out_channels,), 0.5)])
+            )
+        else:
+            self.up_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
+            self.down_conv = GCNConv(in_channels, out_channels, add_self_loops=False)
+
+    @staticmethod
+    def _edge_dropout(ei: torch.Tensor, p: float, training: bool) -> torch.Tensor:
+        if not training or p <= 0 or ei.numel() == 0:
+            return ei
+        keep = torch.rand(ei.shape[1], device=ei.device) >= p
+        return ei[:, keep]
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_drop_p: float = 0.0) -> torch.Tensor:
+        # river edges point upstream -> downstream
+        ei_up = self._edge_dropout(edge_index, edge_drop_p, self.training)
+        ei_down = self._edge_dropout(edge_index.flip(0), edge_drop_p, self.training)
+        if self.share_weights:
+            up = self.rel_conv(x, ei_up) * self.dir_gate[0]
+            down = self.rel_conv(x, ei_down) * self.dir_gate[1]
+        else:
+            up = self.up_conv(x, ei_up)
+            down = self.down_conv(x, ei_down)
+        return self.self_lin(x) + up + down
+
+
+class GatedDirectedConv(nn.Module):
+    """H2: directed conv with physics-informed transport gates.
+
+    Message from j to i is  gate(e_ji) * W h_j , where the gate is a
+    sigmoid over the edge's physical attributes (hop distance, reach
+    length, drainage area, slope, stream order). Propagation strength is
+    set by the river, not uniform averaging. Upstream and downstream
+    relations keep separate weights and separate gates.
+    """
+
+    def __init__(self, in_channels: int, out_channels: int, edge_dim: int):
+        super().__init__()
+        self.self_lin = nn.Linear(in_channels, out_channels)
+        self.up_lin = nn.Linear(in_channels, out_channels)
+        self.down_lin = nn.Linear(in_channels, out_channels)
+        self.gate_up = nn.Sequential(nn.Linear(edge_dim, 16), nn.ReLU(),
+                                     nn.Linear(16, 1))
+        self.gate_down = nn.Sequential(nn.Linear(edge_dim, 16), nn.ReLU(),
+                                       nn.Linear(16, 1))
+
+    @staticmethod
+    def _agg(msg: torch.Tensor, ei: torch.Tensor, gate: torch.Tensor,
+             n: int) -> torch.Tensor:
+        """Gated mean aggregation: sum(gate * msg_src) / degree at dst."""
+        if ei.numel() == 0:
+            return torch.zeros(n, msg.shape[1], device=msg.device)
+        src, dst = ei
+        weighted = msg[src] * gate  # (E, out)
+        out = torch.zeros(n, msg.shape[1], device=msg.device).index_add_(0, dst, weighted)
+        deg = torch.zeros(n, 1, device=msg.device).index_add_(
+            0, dst, gate.new_ones(len(src), 1))
+        return out / deg.clamp(min=1.0)
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_attr: torch.Tensor,
+                edge_direction: str = "both") -> torch.Tensor:
+        if edge_direction not in ("both", "upstream", "downstream"):
+            raise ValueError(
+                "edge_direction must be 'both', 'upstream', or 'downstream'"
+            )
+        n = x.shape[0]
+        ei_up = edge_index              # src upstream -> dst i
+        ei_down = edge_index.flip(0)    # src downstream -> dst i
+        g_up = torch.sigmoid(self.gate_up(edge_attr))
+        g_down = torch.sigmoid(self.gate_down(edge_attr))
+        zero = torch.zeros(n, self.up_lin.out_features, device=x.device)
+        up = self._agg(self.up_lin(x), ei_up, g_up, n) if edge_direction in (
+            "both", "upstream"
+        ) else zero
+        down = self._agg(self.down_lin(x), ei_down, g_down, n) if edge_direction in (
+            "both", "downstream"
+        ) else zero
+        return (
+            self.self_lin(x)
+            + up
+            + down
+        )
+
+
+class TransportGCNImputer(nn.Module):
+    """Directed GCN with transport gates; forward(x, edge_index, edge_attr).
+
+    env_dim > 0 (M6): the ecological context block is first encoded by an
+    MLP into an ecological embedding, concatenated to node features before
+    the first conv — instead of concatenating raw context channels.
+    """
+
+    def __init__(self, in_channels: int, edge_dim: int, hidden: int = 64,
+                 layers: int = 2, dropout: float = 0.1,
+                 env_dim: int = 0, env_emb: int = 32,
+                 edge_direction: str = "both", gate_mode: str = "static",
+                 residual: bool = False, jumping_knowledge: bool = False):
+        super().__init__()
+        if edge_direction not in ("both", "upstream", "downstream"):
+            raise ValueError(
+                "edge_direction must be 'both', 'upstream', or 'downstream'"
+            )
+        self.edge_direction = edge_direction
+        # The H3A protocol freezes the static transport trunk; a non-static
+        # gate mode is refused rather than silently ignored (same contract as
+        # make_h2x_trunk).
+        if gate_mode != "static":
+            raise ValueError(
+                "the static transport trunk is the only released gate mode; "
+                "refusing gate_mode=" + repr(gate_mode)
+            )
+        self.gate_mode = gate_mode
+        self.residual = bool(residual)
+        self.jumping_knowledge = bool(jumping_knowledge)
+        import itertools
+
+        self.env_encoder = (
+            nn.Sequential(nn.Linear(env_dim, env_emb), nn.ReLU(),
+                          nn.Linear(env_emb, env_emb), nn.ReLU())
+            if env_dim else None
+        )
+        in_eff = in_channels + (env_emb if env_dim else 0)
+        self.convs = nn.ModuleList()
+        dims = [in_eff, *([hidden] * layers)]
+        for a, b in itertools.pairwise(dims):
+            self.convs.append(GatedDirectedConv(a, b, edge_dim))
+        if self.residual:
+            self.residual_projections = nn.ModuleList(
+                nn.Linear(a, b) if a != b else nn.Identity()
+                for a, b in itertools.pairwise(dims)
+            )
+        if self.jumping_knowledge:
+            self.jk_gate = nn.Linear(hidden * layers, layers)
+        self.head = nn.Linear(hidden, 1)
+        self.dropout = dropout
+
+    def encode_nodes(self, x: torch.Tensor, edge_index: torch.Tensor,
+                     edge_attr: torch.Tensor,
+                     env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        """Encode one monthly graph snapshot into node representations.
+
+        The released H2/H2X forward path is deliberately preserved: this
+        method contains the old trunk and ``forward`` delegates to it.  The
+        temporal H2X-T model reuses this encoder for every month and applies
+        its temporal memory to the returned hidden representations.
+        """
+        if self.env_encoder is not None:
+            emb = self.env_encoder(env_raw)          # (N, env_emb), static
+            x = torch.cat([x, emb], dim=-1)
+        h = x
+        states = []
+        for layer, conv in enumerate(self.convs):
+            update = conv(h, edge_index, edge_attr, self.edge_direction)
+            if self.residual:
+                update = update + self.residual_projections[layer](h)
+            h = F.relu(update)
+            h = F.dropout(h, p=self.dropout, training=self.training)
+            if self.jumping_knowledge:
+                states.append(h)
+        if self.jumping_knowledge:
+            stacked = torch.stack(states, dim=1)
+            gate = torch.softmax(
+                self.jk_gate(torch.cat(states, dim=-1)), dim=-1
+            ).unsqueeze(-1)
+            h = (stacked * gate).sum(dim=1)
+        return h
+
+    def predict_from_hidden(self, hidden: torch.Tensor) -> torch.Tensor:
+        """Apply the original scalar prediction head to node representations."""
+        return self.head(hidden).squeeze(-1)
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
+                edge_attr: torch.Tensor,
+                env_raw: torch.Tensor | None = None) -> torch.Tensor:
+        return self.predict_from_hidden(
+            self.encode_nodes(x, edge_index, edge_attr, env_raw)
+        )
+
+
+class DirectedGCNImputer(nn.Module):
+    """Same interface as GCNImputer; forward takes the raw directed edges."""
+
+    def __init__(self, in_channels: int, hidden: int = 64, layers: int = 2,
+                 dropout: float = 0.1, share_weights: bool = False,
+                 edge_dropout: float = 0.0):
+        super().__init__()
+        self.convs = nn.ModuleList()
+        dims = [in_channels, *([hidden] * layers)]
+        import itertools
+
+        for a, b in itertools.pairwise(dims):
+            self.convs.append(DirectedConv(a, b, share_weights=share_weights))
+        self.head = nn.Linear(hidden, 1)
+        self.dropout = dropout
+        self.edge_dropout = edge_dropout
+
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+        h = x
+        for conv in self.convs:
+            h = F.relu(conv(h, edge_index, edge_drop_p=self.edge_dropout))
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        return self.head(h).squeeze(-1)
