@@ -1,0 +1,124 @@
+{
+  "experiment": "doc_fusion_component_comparison_v1",
+  "settings": {
+    "hidden": 24,
+    "temporal_hidden": 12,
+    "heads": 3,
+    "layers": 2,
+    "dropout": 0.1,
+    "lookback": 12,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 60,
+    "min_epochs": 15,
+    "patience": 10,
+    "batch_months": 32,
+    "torch_threads": 1
+  },
+  "regions": [
+    "1013",
+    "1019",
+    "0708",
+    "1030",
+    "1101"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "stages": {
+    "environment": {
+      "choices": [
+        "constant",
+        "linear",
+        "mlp",
+        "residual_mlp"
+      ],
+      "eligible": [
+        "mlp",
+        "linear",
+        "residual_mlp"
+      ]
+    },
+    "time": {
+      "choices": [
+        "current",
+        "lag_mlp",
+        "gru",
+        "lstm",
+        "transformer"
+      ],
+      "eligible": [
+        "gru",
+        "lag_mlp",
+        "lstm",
+        "transformer"
+      ]
+    },
+    "fusion": {
+      "choices": [
+        "concat",
+        "residual_concat",
+        "conditioned",
+        "gated"
+      ],
+      "eligible": [
+        "concat",
+        "residual_concat",
+        "conditioned",
+        "gated"
+      ]
+    }
+  },
+  "unique_fits": 165,
+  "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "nodes_hash": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+  "mask_hashes": {
+    "1013": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+    "1019": "cc5654c789532dc5277e962f99d24d5e96223d8681373af7130205b502ed983b",
+    "0708": "7f976b6d0ffaa1f58170a3ead6a78806ea5e6115db105df02c2e6ba47315f1bc",
+    "1030": "c8e6a534448d10638b54e53a97b8df7bf35f141f5fc27e5e78c7ed79b599213d",
+    "1101": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "runtime_snapshot": {
+    "scripts/run_ladder.py": "359d44ff26ea2289f8380c89516ad3e9cc39b65373053b47fbeab5653b6f7438",
+    "scripts/run_doc_fusion_component_comparison_v1.py": "71f64d77a41374b5550c4fe34b5c2b31abe834809b8e582d8a206c4eea263350",
+    "scripts/run_doc_river_architecture_comparison_v1.py": "f469bf33db702512f97422297065dcf10fae33f12ae8cf9d777bce9df5631021",
+    "src/river_graph/models/doc_fusion_comparison.py": "3440aa856961052618cc6bb00fcac29d42a48f09dec74e3654d3a856ec56e43a",
+    "src/river_graph/models/river_architecture_comparison.py": "12cfbf014242e650f6bfd9ecd8152b27d9aee28b8f8d874fd1183649c9e8b8ce",
+    "src/river_graph/experiments/provenance.py": "cccd14393eea9dfe8ee8298f3582aa378bd12c9a77f494eea86012e6267118a3",
+    "src/river_graph/experiments/unmonitored_doc.py": "71c99a33e8317659102f5ee159fa4bdd1c014670c7ac43a1712d1105718b82c4",
+    "tests/test_doc_fusion_comparison.py": "0fb55a91907ad2aa344b3516ba483ce7a9c51fb0e3fe55b18bebe7dd4d99440c",
+    "tests/test_doc_fusion_protocol_v1.py": "df58872d78d7b8566519d49fd4339aa0693822f871fd14e7d98757f8fb11aba8"
+  },
+  "primary_endpoint": "native DOC MAE, equal observed query-cell weight, seed errors averaged",
+  "secondary_endpoints": [
+    "basin-macro MAE",
+    "station-macro MAE",
+    "RMSE",
+    "R2",
+    "source-training Q90 DOC tail MAE",
+    "parameter count"
+  ],
+  "selection": "per outer region, mean whole-validation-HUC4 MAE across seeds 42/43/44; environment then time then fusion; no test values or scores in selection",
+  "diagnostic_exclusions": "constant environment and current-only time are information ablations; excluded from selecting a full environmental/history model",
+  "ties": "strict minimum, declared eligible order breaks exact ties",
+  "test_access": "all three stage selections and fit hashes frozen before test labels scored",
+  "training_graph": "source-station-induced graph; no held-out covariates in gradients",
+  "inference_graph": "source+validation or source+target station graph, covariates only",
+  "inputs": "source-normalized 15 static/ecological features; 12 months of temperature/log discharge, masks, observation ages and season; directed river-network relation biases",
+  "excluded_inputs": [
+    "DOC history",
+    "test DOC",
+    "pH",
+    "conductance",
+    "station embeddings"
+  ],
+  "loss": "source-standardized log1p DOC MSE, equal observed-cell weighting per epoch",
+  "shared_trunk": "two graph Transformer blocks, hidden 24, three spatial heads",
+  "capacity": "actual parameter counts reported; common trunk initialization identical; residual fusion and environmental conditioning both add 600 parameters",
+  "scope": "internal development comparison on previously inspected five HUC4 tasks; not a global optimum, independent external validation, all-reach field or future forecast",
+  "old_protocols_modified": false
+}

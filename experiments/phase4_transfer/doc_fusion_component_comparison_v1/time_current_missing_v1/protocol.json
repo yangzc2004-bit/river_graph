@@ -1,0 +1,46 @@
+{
+  "parent_protocol_hash": "652d8eee157a7b680efcdb8b2b4b2ad5928278779591de95952f9527621343d8",
+  "models": [
+    "time__current",
+    "time__lag_mlp",
+    "time__gru",
+    "time__lstm",
+    "time__transformer"
+  ],
+  "scenarios": [
+    "available_covariates",
+    "query_current_temperature_hidden",
+    "query_current_hydrology_hidden"
+  ],
+  "regions": [
+    "1013",
+    "1019",
+    "0708",
+    "1030",
+    "1101"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_hashes": {
+    "1013": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+    "1019": "cc5654c789532dc5277e962f99d24d5e96223d8681373af7130205b502ed983b",
+    "0708": "7f976b6d0ffaa1f58170a3ead6a78806ea5e6115db105df02c2e6ba47315f1bc",
+    "1030": "c8e6a534448d10638b54e53a97b8df7bf35f141f5fc27e5e78c7ed79b599213d",
+    "1101": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "runtime_snapshot": {
+    "scripts/evaluate_doc_time_current_missing_v1.py": "511558d0a9ff3caeadbf0cfdd5f05c9b7174896f24107b3481bc2d00f61c300d",
+    "tests/test_doc_time_current_missing.py": "e039c25b391f86e92642f58956239d3347403c04fa99f311dcf3c5b6a16145a2",
+    "scripts/analyze_doc_fusion_component_comparison_v1.py": "9bd9c67322241d7c3e90b95ea3de7f7769e8aa35184c46b3f32f06458c4f33ab"
+  },
+  "parent_modules": "same validation-selected environment per outer fold; concatenation fusion; spatial trunk fixed",
+  "intervention": "erase temperature, or both dynamic channels, at all target DOC query months; non-query measurements remain; erased query months also disappear from later history; rebuild ages/windows; source context and normalization unchanged",
+  "comparisons": "all four historical recipes vs current-only MLP, within each availability scenario; native cell-pooled seed-average MAE and exploratory paired five-basin bootstrap",
+  "selection_changes": false,
+  "additional_training_fits": 0,
+  "scope": "additional controlled input-missing diagnostic, declared before pooled test scores; not an exact simulator of naturally missing DOC months or a same-operator causal ablation"
+}

@@ -1,0 +1,42 @@
+{
+  "parent_protocol_hash": "652d8eee157a7b680efcdb8b2b4b2ad5928278779591de95952f9527621343d8",
+  "scenarios": [
+    "available_covariates",
+    "target_temperature_hidden",
+    "target_dynamic_hydrology_hidden"
+  ],
+  "models": [
+    "selected__reference",
+    "selected__fusion"
+  ],
+  "regions": [
+    "1013",
+    "1019",
+    "0708",
+    "1030",
+    "1101"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_hashes": {
+    "1013": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+    "1019": "cc5654c789532dc5277e962f99d24d5e96223d8681373af7130205b502ed983b",
+    "0708": "7f976b6d0ffaa1f58170a3ead6a78806ea5e6115db105df02c2e6ba47315f1bc",
+    "1030": "c8e6a534448d10638b54e53a97b8df7bf35f141f5fc27e5e78c7ed79b599213d",
+    "1101": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "runtime_snapshot": {
+    "scripts/evaluate_doc_fusion_input_robustness_v1.py": "ab7ca1b174a513bd8eb0b86c61eff49ece9915ef4bf0eb7480070479bd941bd4",
+    "tests/test_doc_fusion_input_robustness.py": "dd67e44fb9716dd353a8e6051bed77693c158d7cc09f2fb3e666989c13e28786",
+    "src/river_graph/models/doc_fusion_comparison.py": "3440aa856961052618cc6bb00fcac29d42a48f09dec74e3654d3a856ec56e43a",
+    "src/river_graph/models/river_architecture_comparison.py": "12cfbf014242e650f6bfd9ecd8152b27d9aee28b8f8d874fd1183649c9e8b8ce"
+  },
+  "model_selection": "reuse frozen validation-selected final pipeline and fixed MLP/GRU/concat reference",
+  "intervention": "hide selected target dynamic measurement masks for all months; rebuild windows/ages; source context, static features, season and source normalization remain available",
+  "endpoint": "observed query native DOC MAE averaged over seed errors, descriptive additional diagnostic",
+  "scope": "controlled missing-input stress test; not an exact simulator of naturally missing DOC months; no retraining, new architecture selection or changes to parent primary endpoints"
+}

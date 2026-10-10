@@ -1,0 +1,53 @@
+{
+  "config": {
+    "experiment": "doc_fusion_component_comparison_v1",
+    "target_huc4": "1101",
+    "settings": {
+      "hidden": 24,
+      "temporal_hidden": 12,
+      "heads": 3,
+      "layers": 2,
+      "dropout": 0.1,
+      "lookback": 12,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "max_epochs": 60,
+      "min_epochs": 15,
+      "patience": 10,
+      "batch_months": 32,
+      "torch_threads": 1
+    },
+    "protocol_hash": "652d8eee157a7b680efcdb8b2b4b2ad5928278779591de95952f9527621343d8",
+    "runtime_snapshot_hash": "b9afce01dd5bcef10bf61e343c2125a3cbb0e72b3b4769862b016221f77ef2aa",
+    "dataset_hash": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "mask_hash": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "config_hash": "fe156dfcf08f0dab60daebcc567f52484214ca9a19831caae4cc5b133e63beda",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "mask_sha256": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6",
+  "selections_sha256": "09351d239ce0ce4363e11bbe53db3c30de927e4669ada94b09e556950c37c672",
+  "runtime_snapshot_hash": "b9afce01dd5bcef10bf61e343c2125a3cbb0e72b3b4769862b016221f77ef2aa",
+  "prediction_sha256": "b8f6d7257f46e7aff3d85d8738e800c6c7b55657dfa01ef75fa8f88f21671813",
+  "rows": 62628,
+  "aliases": {
+    "environment__constant": "env_constant__time_gru__fusion_concat",
+    "environment__linear": "env_linear__time_gru__fusion_concat",
+    "environment__mlp": "env_mlp__time_gru__fusion_concat",
+    "environment__residual_mlp": "env_residual_mlp__time_gru__fusion_concat",
+    "selected__environment": "env_residual_mlp__time_gru__fusion_concat",
+    "time__current": "env_residual_mlp__time_current__fusion_concat",
+    "time__lag_mlp": "env_residual_mlp__time_lag_mlp__fusion_concat",
+    "time__gru": "env_residual_mlp__time_gru__fusion_concat",
+    "time__lstm": "env_residual_mlp__time_lstm__fusion_concat",
+    "time__transformer": "env_residual_mlp__time_transformer__fusion_concat",
+    "selected__time": "env_residual_mlp__time_gru__fusion_concat",
+    "fusion__concat": "env_residual_mlp__time_gru__fusion_concat",
+    "fusion__residual_concat": "env_residual_mlp__time_gru__fusion_residual_concat",
+    "fusion__conditioned": "env_residual_mlp__time_gru__fusion_conditioned",
+    "fusion__gated": "env_residual_mlp__time_gru__fusion_gated",
+    "selected__fusion": "env_residual_mlp__time_gru__fusion_conditioned",
+    "selected__reference": "env_mlp__time_gru__fusion_concat"
+  },
+  "unique_fits": 33,
+  "coverage": 1.0
+}

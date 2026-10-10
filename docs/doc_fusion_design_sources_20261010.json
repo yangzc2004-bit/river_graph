@@ -1,0 +1,164 @@
+{
+  "date": "2026-10-10",
+  "purpose": "Research rationale for the standalone environmental-GRU-graph-Transformer candidate; working synthesis, not a manuscript chapter",
+  "scope": "Targeted primary literature and existing local evidence; not a systematic review or new model-selection experiment",
+  "new_fits": 0,
+  "choice_status": {
+    "environment": "compact MLP provisional; fixed in the existing comparison",
+    "time": "GRU provisional; fixed in the existing comparison",
+    "space": "graph Transformer prioritized among tested spatial implementations"
+  },
+  "local_inputs_sha256": {
+    "README.md": "f71724b47af6dda99d9a7287c2fb2fd113b6cb5e40cb945f2799f6ea06426d31",
+    "src/river_graph/models/river_architecture_comparison.py": "12cfbf014242e650f6bfd9ecd8152b27d9aee28b8f8d874fd1183649c9e8b8ce",
+    "scripts/run_doc_river_architecture_comparison_v1.py": "f469bf33db702512f97422297065dcf10fae33f12ae8cf9d777bce9df5631021",
+    "scripts/build_dataset.py": "0ae25a00bb78ccacf0edf7c8ca58d1b80a5548792b218b39369c74c80ea679ca",
+    "tests/test_river_architecture_comparison.py": "f27d0a541accd92187ca23d18d61bfe036023cc4bf7bc782356dbf75e4d3c5f4",
+    "data/processed/mississippi_graph_graphfix_st357.pt": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+    "data/processed/graph_nodes_graphfix_st357.csv": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/protocol.json": "32f72f68060eb196b55079cc9a705ebe08fcdc7808589ef29a185b54e73ee8f9",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/manifest.json": "4a507c917078377fc3189da22bce3f1adf6e772dadc15627143936479079e385",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/analysis/research_decision.txt": "bfd0872a20a491f21155d6c79e20fb6e32b8b74357327c370678af3f1dd69378",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/analysis/summary.csv": "1c7a41f79296f36383eea4d3842725cf95d5a73aee5fbe4834a2a83dbf64ca29",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/analysis/paired_comparisons.json": "77c8340b9d6d6c8a8d54db296b22d07421eb8f447c69f28a45830f8c5d78c186",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/analysis/audit.json": "0e0f19fb9b0252ba8e396f09971d303a188876e0725abd14c7fac479e66f56c8",
+    "experiments/phase4_transfer/doc_river_architecture_comparison_v1/analysis/independent_metrics_audit.json": "755974c3c31722170e1c092d45f35ccacc0ebbdf141485a04b6a589d666f4619",
+    "experiments/phase4_transfer/doc_composition_encoder_v1/research_decision.md": "df35c44055c26f021a90baf4b812b9c67e6c68490bfb3070b671b7acc8827db3",
+    "experiments/phase4_transfer/doc_longer_history_v1/research_decision.md": "ead07a850e991173548967699be4c36cf6283a41cc9e77847b12db5a196f0055",
+    "experiments/phase4_transfer/doc_daily_hydro_memory_v1/completion.md": "9087b804d1553665bcbc50c7f808a28ed7aa8c1596df356b499cc4f30acbb4ba",
+    "docs/paper/doc_spatiotemporal_consolidation_v1/research_decision.txt": "01b589fd2a081a33c14aa478454a18759967855ebdcdd853a20d917baae50378",
+    "docs/paper/latex/doc_spatiotemporal_reconstruction_v4.tex": "2e4c8ebcf0d87c6acaeb9ca29f766a51be8d1999088ecae82f29c073d43339a6",
+    "docs/paper/paper_charter.md": "c6376e73b79d1fa0ae3483f81a977432f2aff3d8a3fcc4de27aaa19e3061e9a7",
+    "docs/paper/primary_endpoints.json": "448db5c7e4461e6261e128cec5936af9f571f7942d59290868225692b8321b55"
+  },
+  "literature": [
+    {
+      "key": "sterle2024",
+      "year": 2024,
+      "url": "https://hess.copernicus.org/articles/28/611/2024/",
+      "evidence_used": "Sampling-frequency and record-length discussion, dataset scope",
+      "access": "primary article HTML"
+    },
+    {
+      "key": "yang2017",
+      "year": 2017,
+      "url": "https://doi.org/10.3390/w9060383",
+      "checked_url": "https://www.mdpi.com/2073-4441/9/6/383",
+      "evidence_used": "Environmental associations and spatial-scale differences",
+      "access": "primary indexed abstract and conclusion; full publisher fetch unavailable"
+    },
+    {
+      "key": "lauerwald2017",
+      "year": 2017,
+      "url": "https://gmd.copernicus.org/articles/10/3821/2017/gmd-10-3821-2017.html",
+      "evidence_used": "Explicit carbon-process model scope",
+      "access": "primary indexed abstract"
+    },
+    {
+      "key": "verhoef2006",
+      "year": 2006,
+      "url": "https://link.springer.com/article/10.1007/s10651-006-0022-8",
+      "evidence_used": "Flow-aware covariance and unsampled-location prediction",
+      "access": "primary publisher abstract"
+    },
+    {
+      "key": "kratzert2019pub",
+      "year": 2019,
+      "url": "https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026065",
+      "evidence_used": "Catchment attributes, meteorological inputs and withheld-basin streamflow evaluation",
+      "access": "primary indexed abstract and methods"
+    },
+    {
+      "key": "kratzert2019ea",
+      "year": 2019,
+      "url": "https://arxiv.org/abs/1907.08456",
+      "evidence_used": "EA-LSTM and learned catchment similarities",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "che2018",
+      "year": 2018,
+      "url": "https://arxiv.org/abs/1606.01865",
+      "preprint_year": 2016,
+      "evidence_used": "GRU-D uses masks and elapsed time; tested on other tasks",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "cini2022",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2108.00298",
+      "evidence_used": "Relational multivariate time-series imputation",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "jia2021",
+      "year": 2021,
+      "url": "https://www.usgs.gov/publications/physics-guided-recurrent-graph-model-predicting-flow-and-temperature-river-networks",
+      "evidence_used": "Recurrent graph modelling of flow and temperature, not DOC",
+      "access": "author institution publication abstract"
+    },
+    {
+      "key": "tian2025",
+      "year": 2025,
+      "url": "https://authors.library.caltech.edu/records/b74cg-58e81",
+      "doi": "10.1016/j.isprsjprs.2025.01.028",
+      "evidence_used": "Landsat and multimodal reach-scale long-term DOC retrieval; prior work for novelty positioning",
+      "access": "author institution full abstract and metadata"
+    },
+    {
+      "key": "vaughan2017",
+      "year": 2017,
+      "url": "https://doi.org/10.1002/2017WR020491",
+      "evidence_used": "High-frequency DOC hysteresis, season and land-cover dependence",
+      "access": "primary indexed abstract; direct publisher fetch unavailable"
+    },
+    {
+      "key": "chung2014",
+      "year": 2014,
+      "url": "https://arxiv.org/abs/1412.3555",
+      "evidence_used": "GRU/LSTM sequence-task comparison outside hydrology",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "gorishniy2021",
+      "year": 2021,
+      "url": "https://arxiv.org/abs/2106.11959",
+      "evidence_used": "Strong residual and feature-Transformer tabular baselines; no universal winner",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "ying2021",
+      "year": 2021,
+      "url": "https://arxiv.org/abs/2106.05234",
+      "evidence_used": "Structural encoding in graph Transformer",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "rampasek2022",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2205.12454",
+      "evidence_used": "Combining local message passing and global attention with structural encodings",
+      "access": "author preprint abstract"
+    },
+    {
+      "key": "shirzad2023",
+      "year": 2023,
+      "url": "https://proceedings.mlr.press/v202/shirzad23a.html",
+      "evidence_used": "Sparse attention for graph-Transformer scaling",
+      "access": "primary proceedings abstract"
+    }
+  ],
+  "outputs_sha256": {
+    "docs/doc_fusion_design_rationale_20261010.md": "d563ffcb83da0a34cc9ae4ecdd41ae4bb1042cfb53018f1443c70073581523b3",
+    "docs/doc_fusion_design_evidence_20261010.csv": "fb3ff2dec52323e0487218fa3a01bf3dd1472f85b96300567a791c885abb3444"
+  },
+  "verification": {
+    "evidence_rows": 23,
+    "local_note_links_checked": 8,
+    "ledger_sources_exist": true,
+    "four_reported_MAE_values_match_summary_csv": true,
+    "existing_audit_reviewed": true,
+    "local_source_hashes_verified_after_writing": true
+  },
+  "repository_changes": "New research notes only; no fitted model, protocol, paper endpoint or prediction changed"
+}
