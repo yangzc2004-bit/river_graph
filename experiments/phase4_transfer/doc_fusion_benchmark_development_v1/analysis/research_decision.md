@@ -1,0 +1,14 @@
+# Matched-input DOC fusion development benchmark
+
+All tabular selections used source validation only. The five geographical tasks were previously inspected during development; this is not independent confirmation or a SOTA claim. Neural checkpoints are reused with audited inference replay. Native MAE and log1p MAE are joint primary; native MAE selected the tabular recipes.
+
+| model_name             |     mae |   log1p_mae |    rmse |         r2 |      bias |   station_macro_mae |   source_q90_mae |   query_count |   tail_query_count |   coverage |   basin_macro_mae |   basin_macro_log1p_mae |   training_seed_mae_std |   unique_query_cells |
+|:-----------------------|--------:|------------:|--------:|-----------:|----------:|--------------------:|-----------------:|--------------:|-------------------:|-----------:|------------------:|------------------------:|------------------------:|---------------------:|
+| source_seasonal_median | 3.55742 |    0.547469 | 6.86089 | -0.0716718 | -1.67652  |             4.62884 |         14.244   |          7262 |               1039 |          1 |           3.82782 |                0.555232 |             4.44089e-16 |                 7262 |
+| ridge                  | 2.74287 |    0.400809 | 5.32601 |  0.354188  | -0.520674 |             3.56254 |          8.85717 |          7262 |               1039 |          1 |           2.99926 |                0.418202 |             0           |                 7262 |
+| random_forest          | 2.46369 |    0.356    | 4.80908 |  0.473466  | -0.170874 |             3.20482 |          7.90335 |          7262 |               1039 |          1 |           2.60971 |                0.355569 |             0.00975357  |                 7262 |
+| boosted_trees          | 2.26314 |    0.328233 | 4.65246 |  0.507206  | -0.526689 |             2.98341 |          7.53621 |          7262 |               1039 |          1 |           2.42147 |                0.332352 |             0           |                 7262 |
+| local_no_messages      | 2.23184 |    0.324446 | 4.72554 |  0.491407  | -0.773194 |             2.89528 |          7.4976  |          7262 |               1039 |          1 |           2.35423 |                0.322128 |             0.0601708   |                 7262 |
+| fixed_fusion           | 2.18388 |    0.30851  | 4.69912 |  0.497232  | -0.737229 |             2.84043 |          7.45052 |          7262 |               1039 |          1 |           2.30219 |                0.304504 |             0.0235063   |                 7262 |
+
+Report all regions and both primary endpoints. The basin bootstrap has only five clusters; intervals are exploratory and unadjusted for multiple comparisons. Structure diagnostics use paired real observations, not complete time-series or continuous reach truth. No output verifies naturally missing DOC values.

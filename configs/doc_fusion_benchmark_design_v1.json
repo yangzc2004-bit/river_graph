@@ -1,0 +1,130 @@
+{
+  "version": "doc_fusion_benchmark_design_v1",
+  "created_on": "2026-10-11",
+  "status": "design_only_not_executed",
+  "scope": "standalone environmental-GRU-graph-Transformer architecture branch",
+  "preserves_existing_paper_endpoints": "docs/paper/primary_endpoints.json",
+  "retroactive_preregistration_of_component_study": false,
+  "candidate": {
+    "class": "river_graph.models.doc_fusion_comparison.DOCFusionModel",
+    "environment": "mlp",
+    "temporal": "gru",
+    "fusion": "concat",
+    "spatial": "graph_transformer",
+    "lookback_months": 12,
+    "environment_features": 15,
+    "environment_width": 24,
+    "temporal_width": 12,
+    "spatial_heads": 3,
+    "spatial_layers": 2,
+    "dropout": 0.1
+  },
+  "development": {
+    "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+    "previously_inspected_huc4": ["1013", "1019", "0708", "1030", "1101"],
+    "query_cells_in_component_study": 7262,
+    "role": "development_not_fresh_confirmation"
+  },
+  "confirmation": {
+    "dataset": null,
+    "reserved_geographical_tasks": null,
+    "independent_river_systems": null,
+    "query_mask_hashes": null,
+    "graph_scope_and_source_covariate_context": null,
+    "runtime_snapshot_hash": null,
+    "tuning_budgets": null,
+    "must_resolve_and_freeze_before_fitting": true
+  },
+  "training_seeds": [42, 43, 44, 45, 46],
+  "model_selection": {
+    "population": "source validation only",
+    "criterion": "minimum native validation MAE averaged over fitted seeds",
+    "exact_tie_break": ["minimum log1p validation MAE", "fixed configuration identifier"],
+    "report_both_joint_primary_test_endpoints": true
+  },
+  "information_tracks": {
+    "covariates_only": {
+      "primary_deployment_track": true,
+      "doc_is_supervision_only": true,
+      "doc_values_as_model_inputs": false,
+      "target_doc_for_fit_normalization_or_selection": false,
+      "new_station_parameters_fitted_at_inference": false,
+      "current_month_covariates_permitted": true,
+      "months_after_query_permitted": false
+    },
+    "observation_assisted": {
+      "separate_leaderboard": true,
+      "support_and_query_must_be_frozen": true,
+      "query_doc_visible": false,
+      "candidate_consumes_doc_support": false,
+      "claim_is_zero_doc_deployment": false
+    }
+  },
+  "baseline_roster": {
+    "first_matched_comparison": [
+      "source_seasonal_median",
+      "ridge_with_environment_and_driver_history",
+      "random_forest_with_environment_and_driver_history",
+      "boosted_trees_with_environment_and_driver_history",
+      "environment_mlp_gru_without_cross_node_messages",
+      "fixed_doc_fusion_candidate"
+    ],
+    "published_method_eligibility_review": [
+      "SAITS", "GRIN", "CSDI", "PriSTI", "ImputeFormer", "GSLI", "CoFILL", "CoSTI", "STFF"
+    ],
+    "direct_doc_related_work": ["Aqua-OC", "Gong_et_al_2026_Arctic_DOC", "ELM-MOSART-DOC"],
+    "require_applicable_recent_method_before_sota_assessment": true,
+    "adapter_and_exclusion_reasons_recorded_before_test": true,
+    "published_scores_are_not_common_benchmark_results": true
+  },
+  "metrics": {
+    "concentration_postprocessing": "common clamp at zero before validation and test; record raw negative predictions; declare any additional upper caps before fitting",
+    "joint_primary": {
+      "native_mae": {"unit": "mg/L", "formula": "mean(abs(prediction - truth))"},
+      "log1p_mae": {"unit": "dimensionless with input expressed numerically in mg/L", "formula": "mean(abs(log1p(prediction) - log1p(truth)))"}
+    },
+    "secondary": ["native_rmse", "native_r2", "basin_macro_native_mae", "source_q90_tail_native_mae"],
+    "required_context": ["query_count", "finite_prediction_coverage", "tail_query_count", "parameter_count", "training_cost", "serial_inference_latency"],
+    "headline_mape": false,
+    "metrics_on_naturally_missing_doc_truth": false,
+    "tail_threshold": "90th percentile of source training DOC for each outer fold",
+    "zero_variance_r2": "undefined; report explicitly",
+    "partial_coverage": "report separately on a matched intersection plus the coverage rate; never rank available-only error as full-coverage error"
+  },
+  "aggregation": {
+    "primary_within_task": "equal weight per hidden observed DOC cell",
+    "pooled_result": "explicit union of nonoverlapping query cells; labelled separately from basin macro mean",
+    "seed_rule": "calculate each fit's metrics then average errors; no implicit prediction ensemble",
+    "r2_rule": "pooled R2 and mean per-task R2 are different and require different labels",
+    "paired_uncertainty": {
+      "transfer_cluster": "basin",
+      "within_river_cluster": "station",
+      "confidence_level": 0.95,
+      "training_seed_spread_is_not_an_independent_river_sample": true,
+      "multiplicity_rule_for_multiple_superiority_claims": "must be frozen in the executable experiment before fitting"
+    }
+  },
+  "scenarios": [
+    "scattered_hidden_observed_doc_cells",
+    "contiguous_temporal_doc_gaps",
+    "completely_hidden_stations",
+    "completely_held_out_basins",
+    "independent_unseen_river_systems",
+    "prespecified_dynamic_covariate_availability_stress"
+  ],
+  "task_semantics": {
+    "current_window_is_retrospective_reconstruction": true,
+    "advance_forecasting_claim": false,
+    "artificial_missing_rate_denominator": "existing observed DOC cells, not the full naturally sparse node-time grid",
+    "continuous_arbitrary_reach_accuracy_established": false
+  },
+  "claim_rules": {
+    "full_coverage_and_equal_information_required_for_primary_ranking": true,
+    "joint_primary_disagreement_is_a_tradeoff": true,
+    "point_estimate_leader_is_not_statistical_superiority": true,
+    "no_test_selection_of_adapter_or_model_hyperparameters": true,
+    "sota_status": "not_established",
+    "allowed_future_scope": "tested methods under the declared DOC benchmark and permitted information",
+    "universal_or_global_sota_from_internal_component_fits": false
+  }
+}
