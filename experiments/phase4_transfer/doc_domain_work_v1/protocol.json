@@ -1,0 +1,518 @@
+{
+  "experiment": "doc_domain_work_v1",
+  "stage": "development_DOC_literature_family_comparison",
+  "scope": "previously inspected five internal Mississippi HUC4 tasks; not new independent rivers or SOTA",
+  "adaptation_status": "All new numerical arms are literature motivated algorithm or model-family comparisons, not complete paper reproductions.",
+  "literature": {
+    "purpose": "DOC-specific literature motivated baseline comparison on existing development tasks",
+    "date": "2026-10-11",
+    "papers": [
+      {
+        "name": "Aqua-OC",
+        "year": 2025,
+        "doi": "10.1016/j.isprsjprs.2025.01.028",
+        "url": "https://authors.library.caltech.edu/records/b74cg-58e81",
+        "methods_verified": "RF, XGBoost, SVR and DNN; optical-water-type-specific model selection",
+        "comparison": "XGBoost and RBF-SVR algorithm-level baselines with our permitted covariates",
+        "not_reproduced": "Landsat reflectance, water-quality spectral indices, seven ERA5-Land variables, optical water type clustering and type-specific model selection, original random 70/20/10 split and 10-fold tuning",
+        "required_missing_inputs": [
+          "matched Landsat surface reflectance",
+          "spectral water indices",
+          "ERA5-Land LAI, air temperature, wind, solar radiation, water evaporation and precipitation"
+        ],
+        "code_status": "Main text and author-hosted supplement inspected; no runnable implementation link established"
+      },
+      {
+        "name": "Yangtze monthly DOC reconstruction",
+        "year": 2026,
+        "doi": "10.3969/j.issn.1000-5641.2026.03.002",
+        "url": "https://xblk.ecnu.edu.cn/EN/10.3969/j.issn.1000-5641.2026.03.002",
+        "methods_verified": "Random Forest selected from five machine learning models; monthly Xuliujing reconstruction for 2001-2020",
+        "comparison": "Ecological RF with our available environmental and current hydroclimatic covariates; algorithm-level comparison",
+        "not_reproduced": "Original Yangtze covariate set, KPCA analyses, original site calibration and original tuning",
+        "required_missing_inputs": [
+          "monthly NDVI, soil moisture, PET, GPP and precipitation",
+          "annual population density, shrubland and grassland"
+        ]
+      },
+      {
+        "name": "Temperate river network DOC GAM",
+        "year": 2020,
+        "doi": "10.1029/2019GB006495",
+        "url": "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019GB006495",
+        "methods_verified": "DOC concentration GAM with catchment area, discharge condition and interaction; global environmental GAM and RF",
+        "comparison": "Pooled pyGAM ecological smooths and area-by-local-discharge tensor interaction",
+        "not_reproduced": "R mgcv cubic regression splines with k=3, river-mouth flow conditions, station-median global response and terrestrial primary productivity",
+        "required_missing_inputs": [
+          "network river-mouth flow matched to each campaign",
+          "terrestrial primary productivity"
+        ]
+      },
+      {
+        "name": "INCA-C",
+        "year": 2007,
+        "doi": "10.1029/2006WR004960",
+        "url": "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2006WR004960",
+        "comparison": "Related-work context only; not run",
+        "required_missing_inputs": [
+          "daily hydrological and soil-state forcing",
+          "process parameterization and catchment calibration inputs"
+        ]
+      }
+    ],
+    "adaptation_status": "All new numerical arms are literature motivated algorithm or model-family comparisons, not complete paper reproductions.",
+    "target": "Native DOC concentration in mg C/L; flux, TOC, fDOM and BDOC papers are not treated as interchangeable DOC concentration models."
+  },
+  "regions": [
+    "1013",
+    "1019",
+    "0708",
+    "1030",
+    "1101"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "models": [
+    "doc_ecological_rf",
+    "doc_hydro_gam",
+    "doc_xgboost",
+    "doc_svr",
+    "rf_history_control",
+    "fixed_fusion"
+  ],
+  "dataset": "data/processed/mississippi_graph_graphfix_st357.pt",
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "nodes": "data/processed/graph_nodes_graphfix_st357.csv",
+  "nodes_sha256": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+  "mask_sha256": {
+    "1013": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+    "1019": "cc5654c789532dc5277e962f99d24d5e96223d8681373af7130205b502ed983b",
+    "0708": "7f976b6d0ffaa1f58170a3ead6a78806ea5e6115db105df02c2e6ba47315f1bc",
+    "1030": "c8e6a534448d10638b54e53a97b8df7bf35f141f5fc27e5e78c7ed79b599213d",
+    "1101": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "runtime_snapshot": {
+    "scripts/run_ladder.py": "786a790a519c75e6449c73a71b3b859e828ca3b545bbb5eddabad8d8631a2194",
+    "scripts/run_doc_domain_work_v1.py": "0907b7cc5c1fe0d3b2a72cd96ec6eb4adfbe8569f4ab05445c3b525c1e256871",
+    "scripts/start_doc_domain_work_v1.py": "398cb8325799a063da856f8e19347be65aeb8eb00f44a590292ee0b4e66df8fa",
+    "scripts/verify_doc_domain_work_v1.py": "d2d945c7b9746be0f1b8e3c03237aba70d0407e5e79d8f927547cca05f2f1376",
+    "scripts/prepare_doc_domain_dependencies_v1.py": "d59d5668b29cd3943ec5af71a00a62226368853a8cef62c6ead5515767b9f451",
+    "scripts/run_doc_fusion_benchmark_development_v1.py": "00815d6b14beb447492a1ebd08c95ea6ea7a98448e793b9885d16702f6c05146",
+    "scripts/run_doc_river_architecture_comparison_v1.py": "f469bf33db702512f97422297065dcf10fae33f12ae8cf9d777bce9df5631021",
+    "src/river_graph/experiments/doc_domain_work.py": "86f9938e6e516b4833514c60d6929ddf3e668d3e1836790bc25f5e065f03514b",
+    "src/river_graph/experiments/doc_fusion_benchmark.py": "db7a4e448e8eddbfcfcf10d8941bc48a0c23d3129058c6c3f5da02551861c255",
+    "src/river_graph/experiments/provenance.py": "cccd14393eea9dfe8ee8298f3582aa378bd12c9a77f494eea86012e6267118a3",
+    "src/river_graph/models/river_architecture_comparison.py": "12cfbf014242e650f6bfd9ecd8152b27d9aee28b8f8d874fd1183649c9e8b8ce",
+    "tests/test_doc_domain_work_v1.py": "08359d715a9356c23777c7244575b100649f51fa8f379cdd01672645a8d0628e",
+    "configs/doc_domain_work_v1.json": "7c767a3a0b252c3354820064c6c71a9b995fe4a47e21cfe11ed436931b60bde5",
+    "cache/doc_domain_work_v1/dependency_setup.json": "3f472f6ff56925825a84ee82a506fc0adbd9e9d1f529855aadbdf9d41c9a9d1b"
+  },
+  "optional_package_files": {
+    ".lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bin/progressbar": "dd89c681364dd73490a8a657a53e91c3f2fa931addc59f8ddf0c38b2b26aed95",
+    "progressbar/__about__.py": "b45de4babe8cb888be272d09a59c7ceeda5652f40024b84d6c89db1bfed93aa1",
+    "progressbar/__init__.py": "151b71839080743e91e1dd5cac6ea0d89329972c0403552d2ae42d0807fed489",
+    "progressbar/__main__.py": "ab2fb2a9cdf22ce8dc3a10807f49da4a93b395c4c75407c41b7f80e966c32f28",
+    "progressbar/algorithms.py": "0a6ce90bccd30e9170a007db41c2ec0d7df16090e552768d8d387117873f5f2e",
+    "progressbar/bar.py": "79ab95178f74643ac6ee61c49efd79b0c579ba513d5955f65e01dd73c3f95344",
+    "progressbar/base.py": "4a1db98173cf7e495d3875b4f71f78e7b31bcdce21321fd8dbdb33e329052a9c",
+    "progressbar/env.py": "2fcf23fcb4913503110f787c0e585aa1bed2547badc366b762595a994ecf8459",
+    "progressbar/multi.py": "0af706231243d69aae6d12fbc4cc29b8b31f8a538097163adec688281f6bb8fe",
+    "progressbar/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "progressbar/shortcuts.py": "200dfae1b568c172b7f656b5e146c6051ae8f7aa6f4f26115d30d236442f9db4",
+    "progressbar/terminal/__init__.py": "054e970900cb7e4cd4a61a6c0ad1df12c93c9cd1a55a01802bfdc1ae80b7dfac",
+    "progressbar/terminal/base.py": "3516f6763316dfe9b225751664ff2e8814157ae3a14b8dabf6490eeb133409f2",
+    "progressbar/terminal/colors.py": "65efcbdb983798cd8bbfdc4321b968a6038d327109c670f2340bae0d47bb2ed8",
+    "progressbar/terminal/os_specific/__init__.py": "1dbdb963801e4d8778fa1fffe7c321618676ce8de757376b16bd927fedb090e1",
+    "progressbar/terminal/os_specific/posix.py": "937756c45f09dd8d70eceaa756bc562659ee67c5ebc5e765e368be4d58d92ff7",
+    "progressbar/terminal/os_specific/windows.py": "15367b096f9d64fc5befeebc1628d28e085d0ac0919c1732baa1246abe9c6972",
+    "progressbar/terminal/stream.py": "f42a0f5fa4170ef0b8d90701f69f94f0b5fd0bdbcdd2bd1a4bde946efd21ae7c",
+    "progressbar/utils.py": "820d2119e8798f782d091cc0c3fee362b8fc19d411118f02ae543bc0f6b157e0",
+    "progressbar/widgets.py": "db03eb7601859ee076c4054638c3351e65e392ae6c97d5f3f921cbf7d8b6e82f",
+    "progressbar2-4.5.0.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+    "progressbar2-4.5.0.dist-info/LICENSE": "7c78749661fc43d837ca30be71068354d678e04b5b18486204fa6c139f9085d0",
+    "progressbar2-4.5.0.dist-info/METADATA": "a4147bd939efd6956aa299762efa0d078109addde9f841bcfa183801c0fa9739",
+    "progressbar2-4.5.0.dist-info/RECORD": "789c8c7c6f49ca1f23c9bbb868db68f7f46785cbf54f4435d741cd6313f476a8",
+    "progressbar2-4.5.0.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "progressbar2-4.5.0.dist-info/WHEEL": "52f71060a047a05a9a41de8b2b2a87c3d7f11289562d09e5ccfd21fcb80901f2",
+    "progressbar2-4.5.0.dist-info/entry_points.txt": "663b93d53963e9b7f41d3e2e8b6f518926f452574ae1bb90e6a26dc96aea19c7",
+    "progressbar2-4.5.0.dist-info/top_level.txt": "566f96e4677f248c4cba5f587db683915bb16c3ffea9dfc69a2d6c23c089b1a1",
+    "pygam/__init__.py": "e4b9c957eb4ffc1c5df2dfb8ecdde43ea3243c6c7d8bf97ad80382a731439310",
+    "pygam/callbacks.py": "345e10bd04ab97825b383ce741c1714e1fde140c054dd3762a57db2cf0b749ec",
+    "pygam/core.py": "2591b35a59ee72955d46bb987c7625b1d5a4df3bf18a34cb4e37508a0961b2e1",
+    "pygam/datasets/__init__.py": "8cd902a2fe373b459d69c1c3d11d3a07dea50f0ad32429bc920f3b807c75e1ee",
+    "pygam/datasets/load_datasets.py": "53acd42d782340bcd005c3a086c598aca6853054b27c25e697d11ae014d32e0a",
+    "pygam/distributions.py": "19e0a5fbf57c50240ede20c5c6cf4e37217b1dd98602c1973e24919ff538d2ba",
+    "pygam/links.py": "a013939510e6d5c8876c29bacec2c63d305c809aa43cf44aacf01c09479c4033",
+    "pygam/penalties.py": "6b04f4be5af9f5e3f0a9addb00cb56f7273be5194d3097028de5d0d7bc2d1d73",
+    "pygam/pygam.py": "4186f5b9c712b2cc91b3fc0ca8dc0d0428bc246300a878bab92ec755031bacd1",
+    "pygam/terms.py": "5bdff25f6089c0d5fb794dbe38e7d9bb494796fd59181f69a9f829f0ef3a622e",
+    "pygam/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pygam/tests/conftest.py": "36d3a9b2271a324085e87da0b65de5ff4de9facd421d22086d4378afd770515d",
+    "pygam/tests/test_GAM_methods.py": "d183740eff71d1e33479a80e3cc4e5d3d074ae29f4abb1220f36db328cba9da8",
+    "pygam/tests/test_GAM_params.py": "2c0be74184023f14b943e7adb2a198c6529313398e4e3548b34b144126c9c951",
+    "pygam/tests/test_GAMs.py": "c7925c47fc57ee78b2ffee728d495041c8f6f4d668aef81137738b4898eefefd",
+    "pygam/tests/test_core.py": "5d522db66c11d6a1292030f316bc17cefbf34ee56f943fda6218bea7dca3c538",
+    "pygam/tests/test_datasets.py": "eb964af70aa1e4c49f2cd027a929d6be7255d87e1fbca490567b6eeb8a8474a8",
+    "pygam/tests/test_gridsearch.py": "4e7f843c0b3f7a921adc973c588377b19c42788af26ca0a29879c4f13168a9a7",
+    "pygam/tests/test_partial_dependence.py": "e0eb928207243450e55acee0b9d072d48a6d9ff7a60ca614bd0d95a5ae6c311e",
+    "pygam/tests/test_penalties.py": "b2174a89648fb2cda3ce9c7d16afe7e9a4676c3a6b45039c5cca50d843593d50",
+    "pygam/tests/test_terms.py": "56c8cf2c5777e35ff3ed46bcbe00f531e8b5e80e7b5cd6e5dc2a2fc34279d753",
+    "pygam/tests/test_utils.py": "aead11fd69afda9c085fdd814efc27a85e43e6d7449a7af084e4adb8e2fd7a12",
+    "pygam/utils.py": "a2c72c14d793da29e63fead4e71de08b8f3c2ed1df9bce5bd1ca9c2630b78d8b",
+    "pygam-0.10.1.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+    "pygam-0.10.1.dist-info/METADATA": "670cf4ccff3dac216404cffd1177911131274dd58d516a1305b36a99ef5e9148",
+    "pygam-0.10.1.dist-info/RECORD": "0c05b0613256aa5220b416d997f2011220c9ceba1238a8637ad86c148457ae98",
+    "pygam-0.10.1.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pygam-0.10.1.dist-info/WHEEL": "ff309ddcdd65ebd02bc724dbf2bcc4a0ff53a5b61792a44548d383e4ebb19d3b",
+    "pygam-0.10.1.dist-info/licenses/LICENSE": "f51f7afd1f263d31d64e216403b33f062d2fe83771824aead39e4a3778f88da9",
+    "pygam-0.10.1.dist-info/top_level.txt": "ca8b021e1645741c96f31dc6dcb461010d10c6a90a4189963aab071ba040c6ad",
+    "pypdf/__init__.py": "612ff566b4378c13c7b1180cb2da89ac0b6cde5500a63fe530e30ae6a88b1b9c",
+    "pypdf/_cmap.py": "180379d3ba8c0dd99d9e5fb5de5a901e4515ff3eb524b33794e8666bb646a6e8",
+    "pypdf/_codecs/__init__.py": "3c5d4a96c2d608e17472076a9ecec6e17fa5df3ab9fce9d978fc3b445227d5b1",
+    "pypdf/_codecs/_codecs.py": "e96c1c68e8f3e46a08a48009dff4516d077cf5b213c4cf629342ab2ae0ebeb78",
+    "pypdf/_codecs/adobe_glyphs.py": "b7770314f0eac08cf5c3d07481d5738dd73c7842bd02e4639397fb95a130fdf6",
+    "pypdf/_codecs/core_fontmetrics.py": "a90bcd4508bc57c14e0664b019cb1a938ab297d710f347038dba43e53be1b818",
+    "pypdf/_codecs/pdfdoc.py": "c5f4af30562cbf1b9a490d14bbdbd90ca681d16bbce61d6e0a20758bdac07145",
+    "pypdf/_codecs/std.py": "0f240cb84a40184a52f6ecb58d67f87278fe92a4a13ce0228f9b08ed0d580fc1",
+    "pypdf/_codecs/symbol.py": "9c86864089615822623cc1ebc149661871fefdf397c842af82e466b8a5dc1809",
+    "pypdf/_codecs/zapfding.py": "3d0c63c510bad7a778d711777b15713f55bc9cce10ad97e33b7966b4bc6913fb",
+    "pypdf/_crypt_providers/__init__.py": "2b767a02e5e15d579780b7adf93ba4ab682df47eba3a076ea6cbf1212d429a42",
+    "pypdf/_crypt_providers/_base.py": "fdfe77323eaf8af84464c438bcdc4de46d083a0158fa7e7f95e91ed1cfea88d5",
+    "pypdf/_crypt_providers/_cryptography.py": "cd3dd699b3f37acbe01d190670a02576a276e0c6370706558956d2739e59c61c",
+    "pypdf/_crypt_providers/_fallback.py": "bec628a30475602015feaf87add21986451cac26fa1ef44134c626d3742d094f",
+    "pypdf/_crypt_providers/_pycryptodome.py": "53569067d89806b668fa12828c952118e3e1c04153a228ada30437d7a4cdaeb0",
+    "pypdf/_doc_common.py": "934f96a1fe5dcf656d12767994958108cee40fbd4b781f337ba4705f79a63edd",
+    "pypdf/_encryption.py": "f8bc0510a7e12f7075d1a7e4728e9f5f1f84aad8e85dfebba405201f65417c3c",
+    "pypdf/_font.py": "c9f881fa31663767875976af3c9e9de086fc91012dd1ddfd7ae3c0894005d596",
+    "pypdf/_page.py": "9c919064b0d2ac5b40c8bb50002a32a689230cd2fd16897f9b9541a242ce7439",
+    "pypdf/_page_labels.py": "fc75ea8048522d31ff98c872f26e1000ecc83874502d5ebf958be0f35fa5f612",
+    "pypdf/_protocols.py": "eeacfdd8b55d3eb6244a97543e9029f54e065b98f13414df55ca545b052110ea",
+    "pypdf/_reader.py": "fd9fd81299184b2d0d93dea80bed4c8fbe8a826adbd2f1d82edcfa30bf4cc135",
+    "pypdf/_text_extraction/__init__.py": "3cd339a997d5128370ec6cc176b6d0fdca0aa32cc11f2229f0a4e142e63da6a1",
+    "pypdf/_text_extraction/_layout_mode/__init__.py": "935b4de3a8035f5ce101ab43f284c632e089529fa981b1e3c90f07e9ac574605",
+    "pypdf/_text_extraction/_layout_mode/_fixed_width_page.py": "43c0f4eec7e81390661c23e6e825f6fffcf6f421f1d22d12345505a1a51dd9fe",
+    "pypdf/_text_extraction/_layout_mode/_font.py": "be0c76bdcf0240baacd5174b947bbd96259706724ce0318941d12e0f9056dee3",
+    "pypdf/_text_extraction/_layout_mode/_font_widths.py": "1df82c7767ed1b0f008e5ec873034895f2d89ee9be7a469a75fc04adc51d5ad2",
+    "pypdf/_text_extraction/_layout_mode/_text_state_manager.py": "d3e48f0989c0874439076e66c3cf2531fadba8472c29c9c3bbeda1f6aeb2e540",
+    "pypdf/_text_extraction/_layout_mode/_text_state_params.py": "e7e124577577ef0df31b45d0769cd7afd60c42738c5daea72750771e14fd81bf",
+    "pypdf/_text_extraction/_text_extractor.py": "a66b54f3eb80d34e836b0ee3d91bdd97adeeebcb8b5675100d1670dbaec81b2e",
+    "pypdf/_utils.py": "bf9efd8c91079fe268a614c2e048f63011531284068ad3d6b3f779d3ba724ba8",
+    "pypdf/_version.py": "4e8830b6f7d2726998e62d3ac35a66b182f6f29716c8f11333f60c151ba34106",
+    "pypdf/_writer.py": "76a90dafa51babf4102b630dfd7394f3f12285ab36c15707a85d13c7ef6a1f26",
+    "pypdf/_xobj_image_helpers.py": "464a407adfc6367640d95d21aadfe2fcaf95c9636c2e248c1c26f0cfd80f5659",
+    "pypdf/annotations/__init__.py": "7f693ffa3027dfd082076ecac50fdef771a29e7ce40076d49e749e1899758f21",
+    "pypdf/annotations/_base.py": "79ea1cf6fdb0d798c05212978f8f25d5b07ae98801815fb6bf92085091febf0b",
+    "pypdf/annotations/_markup_annotations.py": "73459ebc193b1c65256dbfcb4e3b4a93a0b74d2e798cbe775f419f7f4730b14f",
+    "pypdf/annotations/_non_markup_annotations.py": "676214bdc08e713729261497adec7ff6b8983360fae17c4543fbda735d013515",
+    "pypdf/constants.py": "9d2e3836d511cf823314051dcc6bc85bf1febf6bdc163b3303b6050c2de7871c",
+    "pypdf/errors.py": "070d56f61c4eb03830ab053a628436974f89894c93aba979423542afe5b81850",
+    "pypdf/filters.py": "3f69780dbe2c40cc91c8bfd3d89093fcc9dd337b1eed9df96a352a6815e36d26",
+    "pypdf/generic/__init__.py": "56ba9d61fb5010278f0d4dab5d532012a45a60547ccce57f7ef260a35f71feec",
+    "pypdf/generic/_base.py": "76aee2fd553454cffa273944bf5931abf33a46166df40b33fb645e8cc8d95ea1",
+    "pypdf/generic/_data_structures.py": "75fd9d2fd3babaa88841d3aacf330356183fc84614308f9c28618299bce93b87",
+    "pypdf/generic/_files.py": "36d4a4468e890608ac8b840ecab56778ef3dd5ba15b2e636e614708a3e97f510",
+    "pypdf/generic/_fit.py": "5ff8800c98f5618e0f512b52eeb1560b6c51d8b5154af2ad500932d001402033",
+    "pypdf/generic/_image_inline.py": "07d8ea3adfe76af8268de929ec1a8da6eef648c71c7478cd0a8e3f26d7b3d79c",
+    "pypdf/generic/_link.py": "89b74b85d53498ffe986779a26cf82cd40c4ae426eaa7313e93b10a0734e6221",
+    "pypdf/generic/_outline.py": "a8a6cc5f8d8e59faa7a2922213a054cba12f7532c67b766d8da89637ce49a5a6",
+    "pypdf/generic/_rectangle.py": "94ea927c58af43180137d2d4f5aa87a313c7f1a08f4c350d81166c34451de9f7",
+    "pypdf/generic/_utils.py": "bd30c07ac7c6f9c24d0ca8a5cff91b805a1d0084f37797a3a695871a3bc2a279",
+    "pypdf/generic/_viewerpref.py": "e9afecd00be6f7e5ef574c2ac625b6ddc13ddaa2bdf2bcb7cba10f8dfb0549da",
+    "pypdf/pagerange.py": "d9bb76d634199bef5aab66d57f74d7b87f3fc06571edbf53e94acc1570842614",
+    "pypdf/papersizes.py": "e93cf9b1f34dff724e51aa58f3753e95a928867a57600d2148440d98e54b14bf",
+    "pypdf/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pypdf/types.py": "b09ef01f393b111fc227b90ffacf2ef5ac459e40979c5a6bf27cdc8f50314dab",
+    "pypdf/xmp.py": "82a87722581334fed9bb286f139f69dadb0cbeee1a74692ad06f110e0d0eb50c",
+    "pypdf-6.1.1.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+    "pypdf-6.1.1.dist-info/METADATA": "049e2eb4f14aa5f07ac2354c3a9282db43b7c845fcbeace8aa3d693b5ebe980a",
+    "pypdf-6.1.1.dist-info/RECORD": "b67c48010ee8233609f558598b4d3ca284027f21175c4b27726c833b6ee00bc8",
+    "pypdf-6.1.1.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pypdf-6.1.1.dist-info/WHEEL": "1b68144734c4b66791f27add5d425f3620775585718a03d0f9b110ba3a4d88db",
+    "pypdf-6.1.1.dist-info/licenses/LICENSE": "a97ac230e5f33ef10a5367a850eb01f91f1a0b064e34742c7794d2294557f524",
+    "python_utils/__about__.py": "94c3a760054aa286418099d3422d24831e59c68f13c9191046b9c494bb95f7a4",
+    "python_utils/__init__.py": "c8e56e135e9c43b0ea852d54599a22a44dbb04ce16e0b861f62011ebe94f29bc",
+    "python_utils/aio.py": "f71a0c7bf304b4312b6c40418bcffb8d5c39e3ecd8eb0bf5860197cc42f8ff0c",
+    "python_utils/containers.py": "48d1d77c3bdbb7930d2f859973d363ec9c7201f115e5c1db6ba551e691fe2b66",
+    "python_utils/converters.py": "1f2bd06732055ee55dc06976d30a225bf5ffae2e4f6a050b24ea95e237232946",
+    "python_utils/decorators.py": "eb4baad8bfb6bcc13a4d9e40aae083adb3271600e564dfa042f27c6a4f24c5b6",
+    "python_utils/exceptions.py": "29218baf533722894368cfdfa79893b02f297a4d8ef253a98c8a5cff9816267c",
+    "python_utils/formatters.py": "90a041fc49df78353adefd2e7bc76eb6768e176ebb62713c55351c41c4336bf0",
+    "python_utils/generators.py": "691f62b9465c1c6125492713b4bac130111dd7ea18806eb850cca2b290f03586",
+    "python_utils/import_.py": "44eff372c9580aad7d3a8a7366da92ba07451794b4b0fface4549ca5f8cd10de",
+    "python_utils/logger.py": "043ed6d51f631013b8fc8936f263c6e4081a8ce1419090cfa897d041036d4a7f",
+    "python_utils/loguru.py": "a11b86e821d1e54bebbd274ba2aaefc092c1a816c35976786efbc8ed7a2e7e1d",
+    "python_utils/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python_utils/terminal.py": "8afef6c2c2078ea5fb835f2aa5d6e7e7a6861d56385870918afeceea761d093b",
+    "python_utils/time.py": "01de3835d75041830d267a6fcdea881dfbbe4881a0528c94b133492b7924c246",
+    "python_utils/types.py": "4cbc3760001a0607a0f8252c3695c741d88815e9719f35c2f59338aad4e65fb8",
+    "python_utils-3.9.1.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+    "python_utils-3.9.1.dist-info/LICENSE": "fd9aecf4d66ef86ebf6994f683726fe7f25110941f8513410bad441fa5831fea",
+    "python_utils-3.9.1.dist-info/METADATA": "c89d0b1b5a839689c141bbda8d3dba154b373a21445a8cbd4f230d1e7ab8e96b",
+    "python_utils-3.9.1.dist-info/RECORD": "5dde05ee1cd87d7265d48e91071b1266be68db3206456099c29209e6921fa491",
+    "python_utils-3.9.1.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python_utils-3.9.1.dist-info/WHEEL": "a7178d5f925db427b9f0f51260ff6ea6673b8dd44f82f4f41a6f646f5487955c",
+    "python_utils-3.9.1.dist-info/top_level.txt": "cc0c7a39f12c8c9b3c0445b7a244a21bf8fd829908ebdc564a1cee9baa0180a2",
+    "xgboost/VERSION": "b2f44d3b6e29f8b1b73ea4735f006affc4d198e1fd9c7d50e736159b1ef636c6",
+    "xgboost/__init__.py": "56764c9980ac59493185ee45d56822d4490f12475b741801f0405f3f19cd193f",
+    "xgboost/_data_utils.py": "cad6551eca7a0519b3656c75f9bb3855a40d154e5c1067890af14d0c72b0b4d6",
+    "xgboost/_typing.py": "aa42af75fdf137ccdcda4ec54bc1233c15dea8327996232899e9ff12bfe94f97",
+    "xgboost/callback.py": "c836ecc443ecd83b66606deb7f486e8737e4300e8dc8e9780c8ab7e61e0b47f0",
+    "xgboost/collective.py": "325e7b6ee844cb8ce448ff4066797bc98da29126157bb66e0723f2608dee2131",
+    "xgboost/compat.py": "a836aaa927b3599e7ffe37a44ee0f9ea31bd592aa8f71be2aeab91cb5c5c42a2",
+    "xgboost/config.py": "f895df1ad67df2b55850649f51ca0d0ca4a32b3f36ada58a0219ec9bc26ae656",
+    "xgboost/core.py": "68ef8717ea81e448933d6bb57631bcd60acfb888527e78f03f88b8b7dc69f152",
+    "xgboost/dask/__init__.py": "ee744270c1e7d15197c5d761d9aa72fd7d8e31e832d1ed90d92d0de81839bbf6",
+    "xgboost/dask/data.py": "b4ad43e171b6d2abcb2ab6c8448f3912bd54463b8721e26803b9d2c85176e773",
+    "xgboost/dask/utils.py": "e66ba2d83782a05ad4fbdc45b446a2503cee84eee6d4863625c631225dbd5fc4",
+    "xgboost/data.py": "da28185043fbdec3a998f81ed8a3f5361fa7b1a3f806c6ddaf58ce5f0c2abea2",
+    "xgboost/federated.py": "6aa42a336430612f7ea2db05caeef774e245bc30fd9bcb14a5e0b591dd4c6ff3",
+    "xgboost/lib/libxgboost.dylib": "18167bf080e4a973e0bf01235ae72707f72a464cc1ac3d0658156e36134dfafe",
+    "xgboost/libpath.py": "8aa593af825003cfaa5a6c7a2d7b999c20f56d4477d50fcdcbfd3f1909a0ae1d",
+    "xgboost/plotting.py": "a7430c6b634436bd7861a238ee9dd16426dd12c84e1c18f2f754f0518e6c3a35",
+    "xgboost/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "xgboost/sklearn.py": "df3b8dac45c0e85ed893d1c5dcd39ba6a15245528e0b3ab82c13909c48e0b9de",
+    "xgboost/spark/__init__.py": "d6651ca8ef8825f6eaf2ef6464fa4250b65df9ab056689a740c105e5e5aa3713",
+    "xgboost/spark/core.py": "b81eacc7974e3026a725111c51af4f46ad576b8c6a1e07043e8523bcb005dd57",
+    "xgboost/spark/data.py": "479618b5ef4905aa29bd2d0dc7d2881e54720e6651c50152f52a030c77b7fe8a",
+    "xgboost/spark/estimator.py": "607a899c27fc6d6fc4d217a58860d01e84318cab3952b06abfcb706b0459d8b5",
+    "xgboost/spark/params.py": "7bd97304eee60ee8a818a1e735c6126a2a75ed6ba576dc03e06e9ccd3a621568",
+    "xgboost/spark/summary.py": "5e4b5b7dddf63a53081edc1fca29a068a2557aedcc2c3cad2f4ee9769ebbb24f",
+    "xgboost/spark/utils.py": "1940993ec9f2f77469e37dcf06dbbef53f855f77b66ed0fa14bddc7173318b68",
+    "xgboost/testing/__init__.py": "6e3ea347ca29137fb75f0b9a2050f981738227b58e26e8f3c734a5aa0a178b8c",
+    "xgboost/testing/basic_models.py": "1fc490301311af5d9f87a03fc2ea01dc472040c4e311b5f0fd71dcce62eef9a9",
+    "xgboost/testing/callbacks.py": "ea6fa26bfb1eb0a70ea6b9d822c5057b4407c8d27e1bad6f063c480b36581c28",
+    "xgboost/testing/collective.py": "6a6828b4b1b26ae65a5060b07bee63e667a30b2b0b8ee7ae0fcb3aaf7bd9de9b",
+    "xgboost/testing/continuation.py": "bb3e418f99ebff1959fccc62680fc2eeacd2432547d855746ccb3a184c718adc",
+    "xgboost/testing/dask.py": "2a21d4fc27a3c356335e17dae64ac21cc214d256966ce5f3df1fa5043e443442",
+    "xgboost/testing/data.py": "1b36063f1125ecc3497ff7d82b2213982cd636b9b470f7962ade63276be44185",
+    "xgboost/testing/data_iter.py": "39f10835cbdea374d2a1ebf097b210acc2e6ccb80907f62a59fe4f9bbd6e4681",
+    "xgboost/testing/federated.py": "385d558b54687759449075681ffd233309dd1ef49efc4dcb3ab1c29ea2402d07",
+    "xgboost/testing/interaction_constraints.py": "9d1c13ecaa2427631225b0a176d181689b8fd54b6dc020fbf75bf79620957ac9",
+    "xgboost/testing/metrics.py": "96c54093ffa724d542c178d48713436d7a75b4eff62da399d8ba44baf40e1ae6",
+    "xgboost/testing/monotone_constraints.py": "58ea54b02c787d9bf8451e16871ad681ad3efa8844079dab384c63d9fd91d507",
+    "xgboost/testing/ordinal.py": "790f9f6fb4c372da7a98309b6bfc9636e930cd378c09da390a9a4552e239fd34",
+    "xgboost/testing/params.py": "afe8a7c4446a41f89379e2b376211536cddb168d13ea9c6e5335c31748954553",
+    "xgboost/testing/parse_tree.py": "2afb23dd79fe467bcccea7a064ea1a51c661e84738069efe26c3d4d8b7ec0d64",
+    "xgboost/testing/plotting.py": "865c36fc067f9a8b62f69e50130458b04e06a4d83000dcfaeda2f7d873af92d7",
+    "xgboost/testing/predict.py": "1d4d70e39119951f961758e4d285cf948f05ab69034fbc75b7d2e0f942bacc77",
+    "xgboost/testing/quantile_dmatrix.py": "e07489ed917da7ff8c94d78c0c21c468f167089c91bdb88778af19f5fcf74b1d",
+    "xgboost/testing/ranking.py": "fa8c94906240152bb0827b8a0053c5f4fa59f9d768f02d48bf61431b234f44a3",
+    "xgboost/testing/shared.py": "00d02cd96d1b9c8400ebe87ff7bf79ba83ecd62a6bbfcc67c8e928062cc275e2",
+    "xgboost/testing/updater.py": "4b5367c2bd689131383fcf4e068ce512ffc8ceb780b842ee7aecd1eea5d66593",
+    "xgboost/testing/utils.py": "bd48e3707d4015396e57c4efed6bfaa87419bd6c64f78acef4ae6dacb81eb806",
+    "xgboost/testing/with_skl.py": "eac8a1e2616e8f60a783795e4adc94e19873ffab4d9bc5d094822fab81caf9e2",
+    "xgboost/tracker.py": "5320439a198dedef5529e97fdde731b1f0c67c162ef8ada0058dd34f5343335b",
+    "xgboost/training.py": "25f24ef79dd6a16a7b237d40e3f70b46d7db69abc90691e058b5fc5b9839ab4e",
+    "xgboost-3.1.0.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+    "xgboost-3.1.0.dist-info/METADATA": "9549fce698e939965ecf880094e2f64eea98c046927e40a1ea1a4d10f4a4d678",
+    "xgboost-3.1.0.dist-info/RECORD": "bfae6959edca87f402e8ce7e38fd5ded5b1959851ac472e4dd1a7c9aa7fa0596",
+    "xgboost-3.1.0.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "xgboost-3.1.0.dist-info/WHEEL": "5329606f27d473b931ddd1142ca209676f87fde6b97e72aaaecb7425eea5f045"
+  },
+  "optional_dependency_setup": {
+    "packages": [
+      "pypdf==6.1.1",
+      "pygam==0.10.1",
+      "xgboost==3.1.0",
+      "progressbar2==4.5.0",
+      "python-utils==3.9.1"
+    ],
+    "sources": {
+      "aqua_oc_2025.pdf": "https://gsprs-pku.github.io/articles/Tian_2025_ISPRS.pdf",
+      "aqua_oc_supplement.docx": "https://authors.library.caltech.edu/records/b74cg-58e81/files/1-s2.0-S0924271625000334-mmc1.docx?download=1"
+    },
+    "platform_patch": {
+      "kind": "macOS OpenMP loader path only; XGBoost algorithm code unchanged",
+      "library_before_setup_sha256": "18167bf080e4a973e0bf01235ae72707f72a464cc1ac3d0658156e36134dfafe",
+      "library_after_setup_sha256": "18167bf080e4a973e0bf01235ae72707f72a464cc1ac3d0658156e36134dfafe",
+      "openmp_path": "/Users/yzccc/river_graph/.venv/lib/python3.12/site-packages/torch/lib/libomp.dylib",
+      "openmp_sha256": "6256bee09e93c28d71c65711cc69224d69994c6965648b628b70a22772fe98d4",
+      "already_patched_on_initial_setup": true
+    },
+    "critical_hashes": {
+      "cache/doc_domain_work_v1/sources/aqua_oc_2025.pdf": "d818b15d8a7a72d4f37a7f5baa9e2768b501e4dd04e1fde85ac0af95804e12ed",
+      "cache/doc_domain_work_v1/sources/aqua_oc_supplement.docx": "f5393d0fcc2348cf7d46751f6d00b8ae90b79c09f1648ac7396a37dbd0cb5ec6",
+      "cache/doc_domain_work_v1/python_deps/xgboost/lib/libxgboost.dylib": "18167bf080e4a973e0bf01235ae72707f72a464cc1ac3d0658156e36134dfafe",
+      ".venv/lib/python3.12/site-packages/torch/lib/libomp.dylib": "6256bee09e93c28d71c65711cc69224d69994c6965648b628b70a22772fe98d4"
+    }
+  },
+  "primary_source_files": {
+    "aqua_oc_2025.pdf": "d818b15d8a7a72d4f37a7f5baa9e2768b501e4dd04e1fde85ac0af95804e12ed",
+    "aqua_oc_supplement.docx": "f5393d0fcc2348cf7d46751f6d00b8ae90b79c09f1648ac7396a37dbd0cb5ec6"
+  },
+  "reference_dependencies": {
+    "experiments/phase4_transfer/doc_fusion_benchmark_development_v1/regions/huc4_1013": {
+      "test_complete.json": "93d9a6ae83e962d87c204e125988e5da9389ecf043d3c806a58337fb8109c9f3",
+      "predictions.parquet": "790ce1673af216d912fdd430effb14ca059eac95d0db65822349536b6997428d",
+      "predictions.meta.json": "cc9b70c8c3a6e31957891d8c8fc53651cbd0671ef74add157f5a8ec371c02b2d",
+      "costs.json": "2ea290fa47a82d50f6d6b44da269e7a293067af715c7fccbec8181e6e6d004c5"
+    },
+    "experiments/phase4_transfer/doc_fusion_benchmark_development_v1/regions/huc4_1019": {
+      "test_complete.json": "71c691a770d0b3bc95162ef0c95a0f4e534f8c797cc80c022a541607e6099937",
+      "predictions.parquet": "cd5450126a043d3b12d5de4158f6275e8b99916961c6fba68817b50fae1d92f4",
+      "predictions.meta.json": "d5ad949c9aaebcd560010f6c87d66d49e36401983e727a2a3b69a5c06a8d2ce9",
+      "costs.json": "8c5d8f9ae48d8bbb7726fcb5eee4d8a7e0e194e38d760b36665578e00e806fa0"
+    },
+    "experiments/phase4_transfer/doc_fusion_benchmark_development_v1/regions/huc4_0708": {
+      "test_complete.json": "9bdcfd99c9696f531d3cd1d685fff848a80e259e782186dc6f48f7f8e5c32e05",
+      "predictions.parquet": "21931f03c1dd802b09560a356dd118c2076cdf65bcda10f3f3df71e7e9cc5449",
+      "predictions.meta.json": "96388c191eb19e2c3f20240522b5695da008f60e23dd8d3332f5e1413bd871af",
+      "costs.json": "5426da91dc3524fb70d58d13be4de8ff53b5a26f8e9a197695fc0bdf7ae3b051"
+    },
+    "experiments/phase4_transfer/doc_fusion_benchmark_development_v1/regions/huc4_1030": {
+      "test_complete.json": "b436e0918fc0222b225a9a2610fc5771c08e81fa8d106881febf33e83efa0294",
+      "predictions.parquet": "d1f1c2996604df960ce84f4d5b65f1fc45d4be8116f2f8fd392ccce32941a56a",
+      "predictions.meta.json": "acb4938322f2f9ca14b5475ee2aee74064f6970841c4bce0cf14d841d1269cf1",
+      "costs.json": "a263472dba2c747fdbddd9538d5ab8bedf457b7e2102ac18c0e34a3abfa5b006"
+    },
+    "experiments/phase4_transfer/doc_fusion_benchmark_development_v1/regions/huc4_1101": {
+      "test_complete.json": "456326d181e2740768d0750be09f0722d501e27c37166b5f9339fe0bcf840aa0",
+      "predictions.parquet": "8131b8efdcdc2f8c76bf87341a8c18dbcbdfea49de10b97ae98fa0b98ea374ea",
+      "predictions.meta.json": "20031a765be4f7053eaadd32b10f58c1c133dedb9b756f5da8fb6d04d32d2fcb",
+      "costs.json": "6368f1c89873a88aef1aafb69c1448ea8b0d6cecfa4db28724f5ecc5afc9c508"
+    }
+  },
+  "reference_protocol_sha256": "61a214ba4bee57cce2c69e73e4c636c7f785ae4ab1e4242671b384b7c36d02a9",
+  "reference_selection_sha256": "bd16dcdc2553fdfb4ff25138e98ee3b02882bf7df901e66505558d0ab830dcc7",
+  "original_repository_dispatcher_sha256": "359d44ff26ea2289f8380c89516ad3e9cc39b65373053b47fbeab5653b6f7438",
+  "isolation": "versioned runtime; original dispatcher and existing protocols unchanged",
+  "threads": 2,
+  "candidates": {
+    "doc_ecological_rf": {
+      "native_leaf3": {
+        "target": "native",
+        "min_samples_leaf": 3
+      },
+      "log_leaf3": {
+        "target": "log1p",
+        "min_samples_leaf": 3
+      },
+      "log_leaf10": {
+        "target": "log1p",
+        "min_samples_leaf": 10
+      }
+    },
+    "doc_hydro_gam": {
+      "native_lam10": {
+        "target": "native",
+        "lam": 10.0
+      },
+      "log_lam1": {
+        "target": "log1p",
+        "lam": 1.0
+      },
+      "log_lam10": {
+        "target": "log1p",
+        "lam": 10.0
+      }
+    },
+    "doc_xgboost": {
+      "native_l1_depth3": {
+        "target": "native",
+        "objective": "reg:absoluteerror",
+        "max_depth": 3
+      },
+      "log_l2_depth3": {
+        "target": "log1p",
+        "objective": "reg:squarederror",
+        "max_depth": 3
+      },
+      "log_l2_depth6": {
+        "target": "log1p",
+        "objective": "reg:squarederror",
+        "max_depth": 6
+      }
+    },
+    "doc_svr": {
+      "native_c10": {
+        "target": "native",
+        "C": 10.0,
+        "epsilon": 0.2
+      },
+      "log_c1": {
+        "target": "log1p",
+        "C": 1.0,
+        "epsilon": 0.1
+      },
+      "log_c10": {
+        "target": "log1p",
+        "C": 10.0,
+        "epsilon": 0.1
+      }
+    }
+  },
+  "versions": {
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "torch": "2.14.0",
+    "sklearn": "1.9.0",
+    "pygam": "0.10.1",
+    "xgboost": "3.1.0",
+    "scipy": "1.18.1"
+  },
+  "budgets": {
+    "recipes_per_family": 3,
+    "rf_trees": 300,
+    "xgb_trees": 200,
+    "gam_max_iterations": 100,
+    "unique_candidate_fits": 120,
+    "deterministic_families": [
+      "doc_hydro_gam",
+      "doc_svr"
+    ],
+    "svr": "RBF kernel; exact libsvm; no iteration cap; training-cell-only StandardScaler",
+    "reference": "audited frozen predictions reused, no additional tuning",
+    "matching": "family-specific limited budgets, not an equal-compute optimality claim"
+  },
+  "permitted_information": {
+    "doc": "source training supervision and whole-source-validation basin labels for selection only",
+    "local_features": "15 environment + 12*8 driver window + 2 current season = 113 columns",
+    "excluded": [
+      "DOC input/context",
+      "pH",
+      "conductance",
+      "station embeddings",
+      "query labels"
+    ],
+    "graph": "source-induced during neural training; source+heldout covariates at inference",
+    "comparison": "tabular methods receive local covariates; graph Transformer can aggregate permitted other-node covariates",
+    "window": "12 months ending at query, current-month drivers allowed; retrospective reconstruction"
+  },
+  "new_feature_sets": {
+    "doc_ecological_rf": "23 = environment15 + current driver/mask/age/season8; no history",
+    "doc_hydro_gam": "same23; smooth environment/T/Q + linear headwater/masks/ages/season + area-by-Q tensor",
+    "doc_xgboost": "same full113 local covariates as reference: environment + 12-month windows + season",
+    "doc_svr": "same full113; extra StandardScaler fitted on source training cells only",
+    "rf_history_control": "original 113-column RF; reused frozen predictions"
+  },
+  "selection": "per region/family: minimum seed-mean native validation MAE, then log1p MAE, then lexical recipe ID",
+  "target_access": "all five regions' selections bound before scoring new target predictions",
+  "joint_primary": [
+    "native_mae",
+    "log1p_mae"
+  ],
+  "secondary": [
+    "native_rmse",
+    "native_r2",
+    "bias",
+    "station_macro_mae",
+    "basin_macro_mae",
+    "source_q90_mae"
+  ],
+  "postprocessing": "common clamp to [0, expm1(15)] mg/L; matches legacy neural cap; count raw clips",
+  "high_doc": "source-training DOC Q90 per fold; threshold never fit on target",
+  "aggregation": "metrics per seed first, then arithmetic seed mean; report pooled cells and basin macro separately",
+  "uncertainty": "5000 paired basin bootstrap draws after seed-error averaging; 5 clusters; descriptive unadjusted intervals, no simultaneous superiority claim",
+  "structure_diagnostics": {
+    "seasonal": "centered mean calendar-month profile, >=24 paired observations and >=6 occupied calendar months per station",
+    "temporal": "within-station Pearson and std ratio at >=12 observations; correlation undefined if either series is constant",
+    "increments": "difference error for consecutive observed calendar months only",
+    "spatial": "concentration contrast error on direct river edges with both query endpoints observed in same month",
+    "truth": "same real hidden observed dates only; not complete-field ground truth"
+  },
+  "prior_paper_endpoints_modified": false
+}

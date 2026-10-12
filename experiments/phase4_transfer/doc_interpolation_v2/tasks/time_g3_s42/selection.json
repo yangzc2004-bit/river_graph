@@ -1,0 +1,624 @@
+{
+  "selections": {
+    "seasonal_median": {
+      "id": "station_season"
+    },
+    "nearest_spatial": {
+      "id": "nearest",
+      "k": 1,
+      "power": 2.0
+    },
+    "euclidean_idw": {
+      "id": "k15_p2",
+      "k": 15,
+      "power": 2.0
+    },
+    "river_idw": {
+      "id": "k5_p1",
+      "k": 5,
+      "power": 1.0
+    },
+    "spatiotemporal_idw": {
+      "id": "lag12_t3.0",
+      "k": 30,
+      "power": 2.0,
+      "max_lag": 12,
+      "time_scale": 3.0,
+      "space_scale": 100.0
+    },
+    "ordinary_kriging": {
+      "id": "range300.0_n0.1",
+      "range": 300.0,
+      "nugget": 0.1,
+      "k": 30
+    },
+    "spatiotemporal_kriging": {
+      "id": "r100.0_t3.0",
+      "k": 20,
+      "space_scale": 100.0,
+      "time_scale": 3.0,
+      "max_lag": 12,
+      "nugget": 0.2
+    },
+    "linear_time": {
+      "id": "linear"
+    },
+    "pchip_time": {
+      "id": "pchip"
+    }
+  },
+  "validation_records": [
+    {
+      "model": "seasonal_median",
+      "recipe": {
+        "id": "station_season"
+      },
+      "metrics": {
+        "mae": 2.3309766409667305,
+        "log1p_mae": 0.268322026611049,
+        "rmse": 5.0385201363620205,
+        "r2": 0.34019738881435757,
+        "bias": -0.39976269303205514,
+        "station_macro_mae": 2.6349560293301306,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "nearest_spatial",
+      "recipe": {
+        "id": "nearest",
+        "k": 1,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 2.8370968706158206,
+        "log1p_mae": 0.35284197712182147,
+        "rmse": 5.328859964852413,
+        "r2": 0.2619655262372369,
+        "bias": -0.033420039037932135,
+        "station_macro_mae": 3.185862988121527,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k5_p1",
+        "k": 5,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 2.6247237865509754,
+        "log1p_mae": 0.32963726205920835,
+        "rmse": 4.810066619349767,
+        "r2": 0.39867367678291776,
+        "bias": 0.15590506396041698,
+        "station_macro_mae": 2.9384604245940538,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k5_p2",
+        "k": 5,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 2.655877640719397,
+        "log1p_mae": 0.3311330002977696,
+        "rmse": 4.807947840151482,
+        "r2": 0.39920331480979176,
+        "bias": 0.09976031377592663,
+        "station_macro_mae": 2.999289274325832,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k15_p1",
+        "k": 15,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 2.657361024496769,
+        "log1p_mae": 0.33803793729762166,
+        "rmse": 4.763739191407495,
+        "r2": 0.4102010627929813,
+        "bias": 0.21814015235375656,
+        "station_macro_mae": 3.0186901207826877,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k15_p2",
+        "k": 15,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 2.601216821491502,
+        "log1p_mae": 0.32758502180942867,
+        "rmse": 4.696184145687214,
+        "r2": 0.4268104435851944,
+        "bias": 0.13627281313369277,
+        "station_macro_mae": 2.963679696458766,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k5_p1",
+        "k": 5,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 2.5675031238259125,
+        "log1p_mae": 0.33271531826225154,
+        "rmse": 4.706128021401986,
+        "r2": 0.42438048771504955,
+        "bias": -0.11436234279562549,
+        "station_macro_mae": 2.904407439212983,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k5_p2",
+        "k": 5,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 2.6215812199714037,
+        "log1p_mae": 0.33209692792708956,
+        "rmse": 4.777988754073337,
+        "r2": 0.40666730647319116,
+        "bias": -0.156282165494841,
+        "station_macro_mae": 2.9852223553116017,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k15_p1",
+        "k": 15,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 2.6077025783925376,
+        "log1p_mae": 0.3371238892708026,
+        "rmse": 4.741744701728211,
+        "r2": 0.41563476899929197,
+        "bias": -0.026068739536551772,
+        "station_macro_mae": 2.9633697635980822,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k15_p2",
+        "k": 15,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 2.5816954800218164,
+        "log1p_mae": 0.3282446398654636,
+        "rmse": 4.729140308047498,
+        "r2": 0.4187373316197148,
+        "bias": -0.09500948274572682,
+        "station_macro_mae": 2.9452746435670836,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag6_t1.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 6,
+        "time_scale": 1.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 2.4468022986722575,
+        "log1p_mae": 0.3045170497657696,
+        "rmse": 4.570804574774165,
+        "r2": 0.457008114393859,
+        "bias": -0.023246074684958404,
+        "station_macro_mae": 2.843480188774005,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag6_t3.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 6,
+        "time_scale": 3.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 2.30280420989228,
+        "log1p_mae": 0.2796486622851066,
+        "rmse": 4.440418213810512,
+        "r2": 0.4875449425000221,
+        "bias": -0.05898905732858549,
+        "station_macro_mae": 2.7160921074604216,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag12_t1.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 12,
+        "time_scale": 1.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 2.4417578610395734,
+        "log1p_mae": 0.30336519497910125,
+        "rmse": 4.569155340412466,
+        "r2": 0.45739988757104255,
+        "bias": -0.029196729676777673,
+        "station_macro_mae": 2.8362377319340486,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag12_t3.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 12,
+        "time_scale": 3.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 2.299191994786214,
+        "log1p_mae": 0.2793902014238234,
+        "rmse": 4.425235564089326,
+        "r2": 0.49104331759486564,
+        "bias": -0.05286460177749869,
+        "station_macro_mae": 2.7090409920211553,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range100.0_n0.1",
+        "range": 100.0,
+        "nugget": 0.1,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 2.5896626421839737,
+        "log1p_mae": 0.32761061672914454,
+        "rmse": 4.825780029545226,
+        "r2": 0.39473846273041413,
+        "bias": 0.12602307802943094,
+        "station_macro_mae": 2.9842383617058066,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 0.9982698961937716
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range100.0_n0.5",
+        "range": 100.0,
+        "nugget": 0.5,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 2.64041836111748,
+        "log1p_mae": 0.337657945053908,
+        "rmse": 4.850241786036425,
+        "r2": 0.38858680009391056,
+        "bias": 0.19209504228731275,
+        "station_macro_mae": 3.0247597822148284,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 0.9982698961937716
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range300.0_n0.1",
+        "range": 300.0,
+        "nugget": 0.1,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 2.530734359902574,
+        "log1p_mae": 0.32057520003548584,
+        "rmse": 4.657770508840348,
+        "r2": 0.4361491929401934,
+        "bias": -0.006185698965005186,
+        "station_macro_mae": 2.913269682163364,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 0.9982698961937716
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range300.0_n0.5",
+        "range": 300.0,
+        "nugget": 0.5,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 2.596780453718857,
+        "log1p_mae": 0.3330099464350786,
+        "rmse": 4.7368164931152865,
+        "r2": 0.41684882727730976,
+        "bias": 0.1049056401222343,
+        "station_macro_mae": 2.9505493599206303,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 0.9982698961937716
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range1000.0_n0.1",
+        "range": 1000.0,
+        "nugget": 0.1,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 2.5584022383932243,
+        "log1p_mae": 0.3266062551649691,
+        "rmse": 4.670119036205597,
+        "r2": 0.4331555045290645,
+        "bias": 0.02498946804208519,
+        "station_macro_mae": 2.903943125249598,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 0.9982698961937716
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range1000.0_n0.5",
+        "range": 1000.0,
+        "nugget": 0.5,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 2.67092378783362,
+        "log1p_mae": 0.3458883262708178,
+        "rmse": 4.786248543278933,
+        "r2": 0.4046141249862135,
+        "bias": 0.1557635801182555,
+        "station_macro_mae": 3.0118732488579245,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 0.9982698961937716
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r100.0_t1.0",
+        "k": 20,
+        "space_scale": 100.0,
+        "time_scale": 1.0,
+        "max_lag": 6,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 2.3693830039090993,
+        "log1p_mae": 0.2960647846198782,
+        "rmse": 4.472521055830044,
+        "r2": 0.48010837607000123,
+        "bias": -0.11471843899446911,
+        "station_macro_mae": 2.781890470121158,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r100.0_t3.0",
+        "k": 20,
+        "space_scale": 100.0,
+        "time_scale": 3.0,
+        "max_lag": 12,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 2.203174262519754,
+        "log1p_mae": 0.26383370370674886,
+        "rmse": 4.379562172292351,
+        "r2": 0.5014951077355162,
+        "bias": -0.1533652879047364,
+        "station_macro_mae": 2.6167650890998475,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r300.0_t1.0",
+        "k": 20,
+        "space_scale": 300.0,
+        "time_scale": 1.0,
+        "max_lag": 6,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 2.4758583757490276,
+        "log1p_mae": 0.31538007969376763,
+        "rmse": 4.587661546807634,
+        "r2": 0.4529956578455093,
+        "bias": -0.03429527645322039,
+        "station_macro_mae": 2.8471067946931443,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r300.0_t3.0",
+        "k": 20,
+        "space_scale": 300.0,
+        "time_scale": 3.0,
+        "max_lag": 12,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 2.3167777339755644,
+        "log1p_mae": 0.2882731616339921,
+        "rmse": 4.423581283647558,
+        "r2": 0.4914237717873353,
+        "bias": -0.16368390486984336,
+        "station_macro_mae": 2.7161658411281353,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "linear_time",
+      "recipe": {
+        "id": "linear"
+      },
+      "metrics": {
+        "mae": 2.2237852011052484,
+        "log1p_mae": 0.24526855498426814,
+        "rmse": 4.746130711997938,
+        "r2": 0.4145532188779756,
+        "bias": -0.06031390438081582,
+        "station_macro_mae": 2.5562631756192813,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "pchip_time",
+      "recipe": {
+        "id": "pchip"
+      },
+      "metrics": {
+        "mae": 2.30804208676849,
+        "log1p_mae": 0.2532474135990871,
+        "rmse": 4.926096821960335,
+        "r2": 0.3693129407023551,
+        "bias": -0.07143167456373166,
+        "station_macro_mae": 2.64391353469618,
+        "source_q90_mae": null,
+        "query_count": 578,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    }
+  ],
+  "test_used": false,
+  "source_cells_sha256": "d1f79dd6234959af1f0274810a099b7d00e5dedcfaf31a3bca3cbc2c610cd5aa"
+}

@@ -1,0 +1,580 @@
+{
+  "selections": {
+    "seasonal_median": {
+      "id": "station_season"
+    },
+    "nearest_spatial": {
+      "id": "nearest",
+      "k": 1,
+      "power": 2.0
+    },
+    "euclidean_idw": {
+      "id": "k15_p1",
+      "k": 15,
+      "power": 1.0
+    },
+    "river_idw": {
+      "id": "k15_p1",
+      "k": 15,
+      "power": 1.0
+    },
+    "spatiotemporal_idw": {
+      "id": "lag12_t1.0",
+      "k": 30,
+      "power": 2.0,
+      "max_lag": 12,
+      "time_scale": 1.0,
+      "space_scale": 100.0
+    },
+    "ordinary_kriging": {
+      "id": "range100.0_n0.5",
+      "range": 100.0,
+      "nugget": 0.5,
+      "k": 30
+    },
+    "spatiotemporal_kriging": {
+      "id": "r300.0_t1.0",
+      "k": 20,
+      "space_scale": 300.0,
+      "time_scale": 1.0,
+      "max_lag": 6,
+      "nugget": 0.2
+    }
+  },
+  "validation_records": [
+    {
+      "model": "seasonal_median",
+      "recipe": {
+        "id": "station_season"
+      },
+      "metrics": {
+        "mae": 1.364569361155088,
+        "log1p_mae": 0.22751392818152913,
+        "rmse": 2.2641690342239,
+        "r2": -0.19892907014768757,
+        "bias": -0.9383803553633637,
+        "station_macro_mae": 1.739092864649471,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "nearest_spatial",
+      "recipe": {
+        "id": "nearest",
+        "k": 1,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 2.147568547344589,
+        "log1p_mae": 0.3888008052754251,
+        "rmse": 2.90238101406619,
+        "r2": -0.9700835579916003,
+        "bias": -0.3684690755444926,
+        "station_macro_mae": 2.5478947348074152,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k5_p1",
+        "k": 5,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 1.7169809132245586,
+        "log1p_mae": 0.2931631741826448,
+        "rmse": 2.486363017971653,
+        "r2": -0.44578885478786257,
+        "bias": -0.3262721762539959,
+        "station_macro_mae": 2.0811780529391926,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k5_p2",
+        "k": 5,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 1.7827734759136529,
+        "log1p_mae": 0.30529176709229683,
+        "rmse": 2.524015450416675,
+        "r2": -0.48990924734922503,
+        "bias": -0.24395721903429657,
+        "station_macro_mae": 2.1211195060286094,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k15_p1",
+        "k": 15,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 1.634046811732758,
+        "log1p_mae": 0.27934411214000493,
+        "rmse": 2.4454129977171717,
+        "r2": -0.39855718900657156,
+        "bias": -0.6074690741190633,
+        "station_macro_mae": 2.018362887784553,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "euclidean_idw",
+      "recipe": {
+        "id": "k15_p2",
+        "k": 15,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 1.6958548174910375,
+        "log1p_mae": 0.2899780965612091,
+        "rmse": 2.4717795549538377,
+        "r2": -0.4288783927778259,
+        "bias": -0.4047379643565912,
+        "station_macro_mae": 2.075488940774951,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k5_p1",
+        "k": 5,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 1.6450136561853725,
+        "log1p_mae": 0.27858592420884376,
+        "rmse": 2.3800438905861023,
+        "r2": -0.3247859987708359,
+        "bias": -0.33666813633728354,
+        "station_macro_mae": 2.006329074394484,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k5_p2",
+        "k": 5,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 1.7292386503856692,
+        "log1p_mae": 0.2949977787991984,
+        "rmse": 2.4321812929742497,
+        "r2": -0.38346343483211753,
+        "bias": -0.26155851569378274,
+        "station_macro_mae": 2.058909949077976,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k15_p1",
+        "k": 15,
+        "power": 1.0
+      },
+      "metrics": {
+        "mae": 1.463134325136684,
+        "log1p_mae": 0.24601592747251405,
+        "rmse": 2.249650453531244,
+        "r2": -0.1836025292841197,
+        "bias": -0.5020894779708378,
+        "station_macro_mae": 1.8062095987459776,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "river_idw",
+      "recipe": {
+        "id": "k15_p2",
+        "k": 15,
+        "power": 2.0
+      },
+      "metrics": {
+        "mae": 1.608242639870684,
+        "log1p_mae": 0.2722978665682048,
+        "rmse": 2.3381877118576835,
+        "r2": -0.27859954378576357,
+        "bias": -0.30935293733190683,
+        "station_macro_mae": 1.9338841499746966,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag6_t1.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 6,
+        "time_scale": 1.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 1.706408558838083,
+        "log1p_mae": 0.29240925609061835,
+        "rmse": 2.4346812932246418,
+        "r2": -0.3863089763989278,
+        "bias": -0.3631491983828745,
+        "station_macro_mae": 2.0843085242083146,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag6_t3.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 6,
+        "time_scale": 3.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 1.7541343557355875,
+        "log1p_mae": 0.2988162809483255,
+        "rmse": 2.4167764596118055,
+        "r2": -0.36599390556579614,
+        "bias": -0.18855587068593094,
+        "station_macro_mae": 2.0691710825196825,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag12_t1.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 12,
+        "time_scale": 1.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 1.7037629284422144,
+        "log1p_mae": 0.29188096754195003,
+        "rmse": 2.433009275164063,
+        "r2": -0.38440553406194566,
+        "bias": -0.36388984257775503,
+        "station_macro_mae": 2.0808809355101765,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_idw",
+      "recipe": {
+        "id": "lag12_t3.0",
+        "k": 30,
+        "power": 2.0,
+        "max_lag": 12,
+        "time_scale": 3.0,
+        "space_scale": 100.0
+      },
+      "metrics": {
+        "mae": 1.7718372700301097,
+        "log1p_mae": 0.30198946214601496,
+        "rmse": 2.4315693317881704,
+        "r2": -0.38276733588822753,
+        "bias": -0.18337432672110537,
+        "station_macro_mae": 2.0831214852177715,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range100.0_n0.1",
+        "range": 100.0,
+        "nugget": 0.1,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 1.5661245246664681,
+        "log1p_mae": 0.2665783620029169,
+        "rmse": 2.344902582935733,
+        "r2": -0.28595392280148046,
+        "bias": -0.4939308255914564,
+        "station_macro_mae": 1.94658531877936,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range100.0_n0.5",
+        "range": 100.0,
+        "nugget": 0.5,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 1.5340020021733944,
+        "log1p_mae": 0.26083043379877363,
+        "rmse": 2.3250672385936917,
+        "r2": -0.2642903732989974,
+        "bias": -0.5483289233082169,
+        "station_macro_mae": 1.9204427301777596,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range300.0_n0.1",
+        "range": 300.0,
+        "nugget": 0.1,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 1.6658470817908317,
+        "log1p_mae": 0.2849975004963039,
+        "rmse": 2.4477875314543027,
+        "r2": -0.40127454886731573,
+        "bias": -0.4180537836142773,
+        "station_macro_mae": 2.0390363966888865,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range300.0_n0.5",
+        "range": 300.0,
+        "nugget": 0.5,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 1.604897748366441,
+        "log1p_mae": 0.273741909455294,
+        "rmse": 2.3958193314261473,
+        "r2": -0.34240613177147217,
+        "bias": -0.4764483528534735,
+        "station_macro_mae": 1.9937366941291952,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range1000.0_n0.1",
+        "range": 1000.0,
+        "nugget": 0.1,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 1.6583113585584501,
+        "log1p_mae": 0.28255151497039,
+        "rmse": 2.4437135874849325,
+        "r2": -0.39661404356461705,
+        "bias": -0.4028765586582986,
+        "station_macro_mae": 2.0293902715013084,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "ordinary_kriging",
+      "recipe": {
+        "id": "range1000.0_n0.5",
+        "range": 1000.0,
+        "nugget": 0.5,
+        "k": 30
+      },
+      "metrics": {
+        "mae": 1.6046539941954463,
+        "log1p_mae": 0.2732021832243632,
+        "rmse": 2.412483776927907,
+        "r2": -0.3611456534781121,
+        "bias": -0.5081825604315772,
+        "station_macro_mae": 2.002475284569424,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r100.0_t1.0",
+        "k": 20,
+        "space_scale": 100.0,
+        "time_scale": 1.0,
+        "max_lag": 6,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 1.7837593733321098,
+        "log1p_mae": 0.3081240678281343,
+        "rmse": 2.5063861539801926,
+        "r2": -0.46916902363499435,
+        "bias": -0.33695681884893025,
+        "station_macro_mae": 2.161206183792249,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r100.0_t3.0",
+        "k": 20,
+        "space_scale": 100.0,
+        "time_scale": 3.0,
+        "max_lag": 12,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 1.8585006910381674,
+        "log1p_mae": 0.32038434820591016,
+        "rmse": 2.5506015907114516,
+        "r2": -0.5214617900606906,
+        "bias": -0.2399249189679183,
+        "station_macro_mae": 2.1712400115336723,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r300.0_t1.0",
+        "k": 20,
+        "space_scale": 300.0,
+        "time_scale": 1.0,
+        "max_lag": 6,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 1.6970506063867388,
+        "log1p_mae": 0.29235906238529574,
+        "rmse": 2.48378918656939,
+        "r2": -0.44279710284703366,
+        "bias": -0.45031946296154496,
+        "station_macro_mae": 2.086809265536151,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    },
+    {
+      "model": "spatiotemporal_kriging",
+      "recipe": {
+        "id": "r300.0_t3.0",
+        "k": 20,
+        "space_scale": 300.0,
+        "time_scale": 3.0,
+        "max_lag": 12,
+        "nugget": 0.2
+      },
+      "metrics": {
+        "mae": 1.873127830193086,
+        "log1p_mae": 0.32902267926260187,
+        "rmse": 2.6287518618542367,
+        "r2": -0.6161251327948234,
+        "bias": -0.4031808612385306,
+        "station_macro_mae": 2.276869492993684,
+        "source_q90_mae": null,
+        "query_count": 1001,
+        "tail_query_count": 0,
+        "coverage": 1.0
+      },
+      "intrinsic_coverage": 1.0
+    }
+  ],
+  "test_used": false,
+  "source_cells_sha256": "915f6352bf4d6172cfc9b8752c0ab4e29e8bdee2c184e57486eb749e0991c36d"
+}

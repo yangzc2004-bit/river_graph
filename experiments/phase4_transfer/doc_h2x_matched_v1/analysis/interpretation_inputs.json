@@ -1,0 +1,241 @@
+{
+  "model_config": {
+    "env_dim": 15,
+    "lookback": 12,
+    "hidden": 64,
+    "env_emb": 32,
+    "layers": 2,
+    "dropout": 0.1
+  },
+  "parameters": {
+    "monthly_log": 12853,
+    "hybrid_direct": 17617,
+    "h2x_matched": 41317
+  },
+  "changes": [
+    {
+      "track": "time",
+      "reference": "monthly_log",
+      "mae_percent_error_reduction": 2.0782110203924953,
+      "log1p_mae_percent_error_reduction": 1.9127941845508034,
+      "rmse_percent_error_reduction": 2.044304051691892,
+      "monthly_delta_mae_percent_error_reduction": -0.7970933559247939
+    },
+    {
+      "track": "time",
+      "reference": "hybrid_direct",
+      "mae_percent_error_reduction": -0.34974317345479733,
+      "log1p_mae_percent_error_reduction": -0.8932785934422593,
+      "rmse_percent_error_reduction": 0.6828137410647583,
+      "monthly_delta_mae_percent_error_reduction": 0.29922369327279874
+    },
+    {
+      "track": "time",
+      "reference": "rf_monthly",
+      "mae_percent_error_reduction": -3.33751975291936,
+      "log1p_mae_percent_error_reduction": -5.542338598427521,
+      "rmse_percent_error_reduction": -1.6836721412309075,
+      "monthly_delta_mae_percent_error_reduction": -2.3944076968431593
+    },
+    {
+      "track": "time",
+      "reference": "xgb_monthly",
+      "mae_percent_error_reduction": -1.7085830973225358,
+      "log1p_mae_percent_error_reduction": -2.1855311213839324,
+      "rmse_percent_error_reduction": -0.6765499396764962,
+      "monthly_delta_mae_percent_error_reduction": -1.770653449524806
+    },
+    {
+      "track": "space",
+      "reference": "monthly_log",
+      "mae_percent_error_reduction": -1.1978455765319307,
+      "log1p_mae_percent_error_reduction": -5.0061207586096,
+      "rmse_percent_error_reduction": 4.022743100298354,
+      "monthly_delta_mae_percent_error_reduction": -0.397368262382658
+    },
+    {
+      "track": "space",
+      "reference": "hybrid_direct",
+      "mae_percent_error_reduction": -0.830630936900012,
+      "log1p_mae_percent_error_reduction": -1.0769200448318639,
+      "rmse_percent_error_reduction": 1.2642184151626434,
+      "monthly_delta_mae_percent_error_reduction": -0.223524643849915
+    },
+    {
+      "track": "space",
+      "reference": "rf_monthly",
+      "mae_percent_error_reduction": 9.763046615927973,
+      "log1p_mae_percent_error_reduction": 8.117681100515783,
+      "rmse_percent_error_reduction": 5.389909698460082,
+      "monthly_delta_mae_percent_error_reduction": -0.7887113922323996
+    },
+    {
+      "track": "space",
+      "reference": "xgb_monthly",
+      "mae_percent_error_reduction": 4.044046427089376,
+      "log1p_mae_percent_error_reduction": 4.39435909923197,
+      "rmse_percent_error_reduction": 3.4764960642762355,
+      "monthly_delta_mae_percent_error_reduction": 0.29222103486037376
+    }
+  ],
+  "time_metrics": [
+    {
+      "model_name": "h2x_matched",
+      "mae": 2.1752640073468994,
+      "log1p_mae": 0.23973318252816467,
+      "rmse": 5.773127090360354,
+      "r2": 0.49044709854148066,
+      "station_centered_r2": 0.03677098364637148,
+      "log1p_station_centered_r2": 0.09063996447486995,
+      "within_station_sd_ratio": 0.21422745510997482,
+      "monthly_delta_mae": 2.1838735981550537,
+      "monthly_delta_correlation": 0.15873632069973123,
+      "aggregation": "equal mean of three gap lengths and three fixed repetitions"
+    },
+    {
+      "model_name": "hybrid_direct",
+      "mae": 2.1676826851334834,
+      "log1p_mae": 0.2376106573899627,
+      "rmse": 5.812817809103976,
+      "r2": 0.48647672368526595,
+      "station_centered_r2": 0.004342156957762067,
+      "log1p_station_centered_r2": 0.07303435577352652,
+      "within_station_sd_ratio": 0.21742490003105794,
+      "monthly_delta_mae": 2.1904278773481316,
+      "monthly_delta_correlation": 0.09886658921596787,
+      "aggregation": "equal mean of three gap lengths and three fixed repetitions"
+    },
+    {
+      "model_name": "monthly_log",
+      "mae": 2.2214300106382905,
+      "log1p_mae": 0.24440820852744238,
+      "rmse": 5.8936104066953625,
+      "r2": 0.47208819582268924,
+      "station_centered_r2": 0.0102625133603901,
+      "log1p_station_centered_r2": 0.06551495907817666,
+      "within_station_sd_ratio": 0.16936420666416266,
+      "monthly_delta_mae": 2.1666037436650813,
+      "monthly_delta_correlation": 0.09398009239755956,
+      "aggregation": "equal mean of three gap lengths and three fixed repetitions"
+    },
+    {
+      "model_name": "rf_monthly",
+      "mae": 2.1050089188786116,
+      "log1p_mae": 0.22714408806148667,
+      "rmse": 5.67753599844616,
+      "r2": 0.5080842169217258,
+      "station_centered_r2": 0.04489557302140984,
+      "log1p_station_centered_r2": 0.0711155431257871,
+      "within_station_sd_ratio": 0.22341348289422186,
+      "monthly_delta_mae": 2.1328055381899365,
+      "monthly_delta_correlation": 0.17780010284580977,
+      "aggregation": "equal mean of three gap lengths and three fixed repetitions"
+    },
+    {
+      "model_name": "xgb_monthly",
+      "mae": 2.1387221619884733,
+      "log1p_mae": 0.23460579976179888,
+      "rmse": 5.734331474230597,
+      "r2": 0.4987727020663275,
+      "station_centered_r2": 0.0666433643077938,
+      "log1p_station_centered_r2": 0.0971562542913907,
+      "within_station_sd_ratio": 0.23357254058357554,
+      "monthly_delta_mae": 2.145877543410085,
+      "monthly_delta_correlation": 0.22690831340954729,
+      "aggregation": "equal mean of three gap lengths and three fixed repetitions"
+    }
+  ],
+  "space_metrics": [
+    {
+      "model_name": "h2x_matched",
+      "mae": 2.222087591514436,
+      "log1p_mae": 0.3269271594419542,
+      "rmse": 4.549593699302877,
+      "r2": 0.5285435884936517,
+      "station_centered_r2": 0.023645339986824,
+      "log1p_station_centered_r2": 0.0248943235683199,
+      "within_station_sd_ratio": 0.2174234070519718,
+      "monthly_delta_mae": 1.8309662969778036,
+      "monthly_delta_correlation": 0.1096575447870207
+    },
+    {
+      "model_name": "hybrid_direct",
+      "mae": 2.203782293998559,
+      "log1p_mae": 0.3234439269587442,
+      "rmse": 4.60784694897432,
+      "r2": 0.5159096695240544,
+      "station_centered_r2": 0.0318841138513862,
+      "log1p_station_centered_r2": 0.040225643811027,
+      "within_station_sd_ratio": 0.209165525420398,
+      "monthly_delta_mae": 1.8268827637864944,
+      "monthly_delta_correlation": 0.0777531212962536
+    },
+    {
+      "model_name": "monthly_log",
+      "mae": 2.1957854723635974,
+      "log1p_mae": 0.3113410504836205,
+      "rmse": 4.74028311108881,
+      "r2": 0.4883561610261646,
+      "station_centered_r2": 0.0113781762796512,
+      "log1p_station_centered_r2": 0.0345751365419901,
+      "within_station_sd_ratio": 0.1345112459323447,
+      "monthly_delta_mae": 1.8237194148283649,
+      "monthly_delta_correlation": 0.0338463633627379
+    },
+    {
+      "model_name": "rf_monthly",
+      "mae": 2.4625028972960235,
+      "log1p_mae": 0.355810740692777,
+      "rmse": 4.808782746959101,
+      "r2": 0.4735315018666528,
+      "station_centered_r2": -0.0092241478744578,
+      "log1p_station_centered_r2": 0.0437444577470942,
+      "within_station_sd_ratio": 0.2023983858825328,
+      "monthly_delta_mae": 1.8166382640337169,
+      "monthly_delta_correlation": 0.0981305802793959
+    },
+    {
+      "model_name": "xgb_monthly",
+      "mae": 2.31573707391279,
+      "log1p_mae": 0.3419538390849571,
+      "rmse": 4.713456840866976,
+      "r2": 0.4941585594574535,
+      "station_centered_r2": 0.0162641906138209,
+      "log1p_station_centered_r2": 0.0456603309889089,
+      "within_station_sd_ratio": 0.1938136484506043,
+      "monthly_delta_mae": 1.836332446656901,
+      "monthly_delta_correlation": 0.1197547129471827
+    }
+  ],
+  "spatial_huc4_clusters": 5,
+  "temporal_huc4_clusters": 61,
+  "training_epochs": [
+    19,
+    43,
+    23,
+    18,
+    30,
+    19,
+    27,
+    23,
+    25,
+    22,
+    20,
+    19,
+    18,
+    24,
+    20,
+    60,
+    48,
+    60,
+    50,
+    48,
+    49,
+    37,
+    42,
+    60
+  ],
+  "space_queries_per_seed": 7262,
+  "space_stations": 104,
+  "time_stations": 266
+}

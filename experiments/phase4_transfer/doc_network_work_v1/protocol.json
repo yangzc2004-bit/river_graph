@@ -1,0 +1,218 @@
+{
+  "experiment": "doc_network_work_v1",
+  "scope": "development; five previously inspected Mississippi HUC4 tasks",
+  "regions": [
+    "1013",
+    "1019",
+    "0708",
+    "1030",
+    "1101"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "models": [
+    "doc_ecological_rf",
+    "doc_hydro_gam",
+    "doc_xgboost",
+    "rf_history_control",
+    "fixed_fusion",
+    "ssn_covariance_adapt",
+    "physt_architecture_adapt"
+  ],
+  "new_recipes": {
+    "ssn_covariance_adapt": {
+      "log_network": {
+        "target": "log1p",
+        "kernels": [
+          "tailup",
+          "taildown"
+        ]
+      },
+      "log_network_euclidean": {
+        "target": "log1p",
+        "kernels": [
+          "tailup",
+          "taildown",
+          "euclidean"
+        ]
+      },
+      "native_network_euclidean": {
+        "target": "native",
+        "kernels": [
+          "tailup",
+          "taildown",
+          "euclidean"
+        ]
+      }
+    },
+    "physt_architecture_adapt": {
+      "compact": {
+        "hidden_trans": 96,
+        "hidden_gcn": 24,
+        "dropout": 0.1
+      },
+      "wider": {
+        "hidden_trans": 128,
+        "hidden_gcn": 48,
+        "dropout": 0.1
+      }
+    }
+  },
+  "dataset_sha256": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+  "nodes_sha256": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+  "mask_sha256": {
+    "1013": "c944218d5691eb347745304853a29ffab417b8b96f01b74c030dceb3191bd1ee",
+    "1019": "cc5654c789532dc5277e962f99d24d5e96223d8681373af7130205b502ed983b",
+    "0708": "7f976b6d0ffaa1f58170a3ead6a78806ea5e6115db105df02c2e6ba47315f1bc",
+    "1030": "c8e6a534448d10638b54e53a97b8df7bf35f141f5fc27e5e78c7ed79b599213d",
+    "1101": "e47dfd76026b3abcc9f04d7a9b4dc4566f332dcfae07a32b6cc8c2801c00d1f6"
+  },
+  "runtime_snapshot": {
+    "scripts/run_ladder.py": "80ca140abfaa43ac0f3d93227d0207af0418b32f4ebb5b1c7c67036ee209ba91",
+    "scripts/run_doc_network_work_v1.py": "4cd53761f5376d8bb1bb2dd84ee40162947ae589addfdc7f4eb12d40c6df8054",
+    "scripts/start_doc_network_work_v1.py": "90a30582b2a9a17022c1c88f000c36add05ee3cb9c22512c035cee52c2f1b717",
+    "scripts/prepare_doc_network_work_v1.py": "a8f78e2cf663ef7bbb0e346e30b3e3548185eba2c6508eebf25082240529e206",
+    "scripts/verify_doc_network_work_v1.py": "6bbbf9724c0da4d8df7a4294b29fd70ba4d71c2b132574e08cc2e6f98f2a34d3",
+    "src/river_graph/experiments/doc_network_work.py": "661cc16602d45492786e32d9f54b221540aa38bb1fbd0e22e628e1064f45188f",
+    "tests/test_doc_network_work_v1.py": "7502c1715767d192942c47744fc092b83a2d99d7e57da16eae3dd987b2659bc7",
+    "scripts/run_doc_fusion_benchmark_development_v1.py": "00815d6b14beb447492a1ebd08c95ea6ea7a98448e793b9885d16702f6c05146",
+    "scripts/run_doc_river_architecture_comparison_v1.py": "f469bf33db702512f97422297065dcf10fae33f12ae8cf9d777bce9df5631021",
+    "src/river_graph/models/river_architecture_comparison.py": "12cfbf014242e650f6bfd9ecd8152b27d9aee28b8f8d874fd1183649c9e8b8ce",
+    "src/river_graph/topology/river_structure.py": "05ba664c2712d0857943ed3d53074c78fc679b62bf3a79cc7ecbd285c24217e0",
+    "src/river_graph/experiments/doc_domain_work.py": "86f9938e6e516b4833514c60d6929ddf3e668d3e1836790bc25f5e065f03514b",
+    "src/river_graph/experiments/doc_fusion_benchmark.py": "db7a4e448e8eddbfcfcf10d8941bc48a0c23d3129058c6c3f5da02551861c255",
+    "src/river_graph/experiments/provenance.py": "cccd14393eea9dfe8ee8298f3582aa378bd12c9a77f494eea86012e6267118a3"
+  },
+  "preparation": {
+    "geometry": {
+      "stations": 357,
+      "position_imputations": 2,
+      "junctions_with_equal_weight_fallback": 139,
+      "flow_connected_pairs": 2627,
+      "shared_downstream_pairs": 63546,
+      "distance_definition": "NHDPlus mainstem lengths and station measures; true first downstream meeting reach",
+      "tailup_weights": "product of sqrt(mainstem-parent drainage area / sum mainstem-parent areas); equal branch shares where an area's missing/nonpositive, with counts reported",
+      "euclidean_definition": "Earth-centered chord distance in km (positive-definite exponential kernel)",
+      "mainstem_only": true
+    },
+    "files": {
+      "data/processed/mississippi_graph_graphfix_st357.pt": "33474f5584fd99cd6a95289d0e7046ce07f5e2d011857618c67a1c467c4e77c0",
+      "data/processed/graph_nodes_graphfix_st357.csv": "1cbd8fedaa42822aaf5dbd9249f4928843609c1c0b684f8ffce8b2de2b79824b",
+      "cache/nldplus_vaa.parquet": "91a0b54bbaa7cf0230e6a1c749a0b7c6b524b2c21718bf315dc80d19d2f303d2",
+      "cache/doc_network_work_v1/geometry.npz": "4e1c9dbcfbc05ad76542ad1aed7434882f065cf10192ce76aba2eecb30c1071d",
+      "cache/doc_network_work_v1/sources/PhyST-HC/scripts/Functions_DOC.py": "6b134dc3519fbdfd451fb1f768b50e091590d34d5c0eda8e738cfcf9b77308e2",
+      "cache/doc_network_work_v1/sources/PhyST-HC/scripts/Inputs.py": "7f6849884886378d3c05f7cc85b206afcaf5a66097d8092edbaffc9c901e7c05",
+      "cache/doc_network_work_v1/sources/PhyST-HC/README.md": "a6c00e073dc27065668a5c2d81ff656f527fb2b768fd7099db56c46d5c9a455f",
+      "cache/doc_network_work_v1/sources/SSN2/R/cov_matrix.R": "26326fa8794b0202535756a60d80a56bf397013a315efe8de79596bccdef6627",
+      "cache/doc_network_work_v1/sources/SSN2/R/cov_vector.R": "bd93f2576b3a0be1e34b9b97f6bbd987fb10942e9316a6ccb5847723fcdab9d0"
+    },
+    "source_commits": {
+      "PhyST-HC": "d9805e7d536dddaa3aad6c6740a6045322d4aa60",
+      "SSN2": "d454f61dc877cafc570434ee819ebe4285406766"
+    },
+    "dataset_keys": [
+      "months",
+      "y",
+      "y_mask",
+      "x",
+      "x_mask",
+      "feature_channels",
+      "static",
+      "regime",
+      "site_no",
+      "edge_index",
+      "edge_attr"
+    ],
+    "native_reproductions": false
+  },
+  "preparation_sha256": "15ff767abe7708b449c69567a5648778bfbb8c341bdef5035238083169c6cc05",
+  "reference_dependencies": {
+    "experiments/phase4_transfer/doc_domain_work_v1/regions/huc4_1013": {
+      "predictions.parquet": "feff7bf99400da5af2b3a46e467eccffeefea32b86fb57cab7cf7e9972a3e9eb",
+      "predictions.meta.json": "3dc69417d3f1f84dd0707231ed2617a84c4540193aa11c4ea62b6dcf156358b5",
+      "test_complete.json": "3f8c7a941f5d75c8aad553bd778a6cc031c67909d16a63cd125205f47e683e65",
+      "selection_complete.json": "26f2dec083ba5810495d1ab1175105c45d396e394970213f4e9a141130f80949"
+    },
+    "experiments/phase4_transfer/doc_domain_work_v1/regions/huc4_1019": {
+      "predictions.parquet": "1f9d786f768270e53e910109d1a9204131067a0b5da176e9ba007a38e4287858",
+      "predictions.meta.json": "e68447f708fac48e08f47b1af31016dac98f6c4061c91769843abd1f889477db",
+      "test_complete.json": "28618bfdfe70cf7f18688daeff02c02b5ae0079670e9dda23b99e95060bbbc6f",
+      "selection_complete.json": "38bbb8a85ffbc3d8219bc7015b6dfbe6ef0a9fdb58dfdbc6d2bdf9815f593023"
+    },
+    "experiments/phase4_transfer/doc_domain_work_v1/regions/huc4_0708": {
+      "predictions.parquet": "4b668b44c3d3c2a93331a6f80b404c0fbad01bbb1c88087eba211ad05abc8a05",
+      "predictions.meta.json": "331bef7992f9f88695838d57f38253347f1f2043d725bad382dfbad92a871de8",
+      "test_complete.json": "646262ec87d3bc8cc5d6b79d6a0230609996de182bcbe53020af6283415379fa",
+      "selection_complete.json": "3dcc20f71aeec7ec8e72d1ffdc902c70692a2ab94748374ee66d3c377b5e238c"
+    },
+    "experiments/phase4_transfer/doc_domain_work_v1/regions/huc4_1030": {
+      "predictions.parquet": "ed87f20336ea976fbf33855bc88323c4f17142fc124659b6dec646626e80b55a",
+      "predictions.meta.json": "4e85313dfe178db87152127241db84c364859982b514d6f1f860a4d4b12d6c3b",
+      "test_complete.json": "bf2dd700ab65a21db4eb257d3d3aa3291e930979c8971450f002c887b6904de8",
+      "selection_complete.json": "b506fcb9e52bdd5f5e3d31f26470cc0c1f1386fac9602c17e2a8df880afa94e1"
+    },
+    "experiments/phase4_transfer/doc_domain_work_v1/regions/huc4_1101": {
+      "predictions.parquet": "d94432547a0a9996952326123fd8cf6b18eed2e7c848c430609fd08c0c8ecc06",
+      "predictions.meta.json": "dd48ec789a63d3d1fc9e2a4f02d63a88f0ecd297bbbc41d90ba617fa28e16ab2",
+      "test_complete.json": "f374a70f2b0f0566beccd156e385d30d3300a6df5fe620235fe9dfc4c92bfb74",
+      "selection_complete.json": "074494eca503edc4a13a6e88bb7e2341c62e0806ce37ca95c636b217fdab6ecb"
+    }
+  },
+  "reference_protocol_sha256": "d13ef383c594385e07a1efd575475aefadda937433227c4479a4205e2d18329a",
+  "reference_gate_sha256": "2bedccd52b93d2d17ca32355f2bdee9f0b995d3932a0d19c6fc70f7c3b003396",
+  "threads": 2,
+  "neural_settings": {
+    "hidden": 24,
+    "temporal_hidden": 12,
+    "heads": 3,
+    "layers": 2,
+    "dropout": 0.1,
+    "lookback": 12,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 60,
+    "patience": 10,
+    "min_epochs": 15,
+    "batch_months": 32,
+    "torch_threads": 4
+  },
+  "selection": "per region/family: minimum seed-mean native validation MAE, then log1p MAE, then lexical recipe ID",
+  "joint_primary": [
+    "native_mae",
+    "log1p_mae"
+  ],
+  "postprocessing": "common clamp to [0, expm1(15)] mg/L; matches legacy neural cap; count raw clips",
+  "permitted_information": {
+    "doc": "source training supervision and whole-source-validation basin labels for selection only",
+    "local_features": "15 environment + 12*8 driver window + 2 current season = 113 columns",
+    "excluded": [
+      "DOC input/context",
+      "pH",
+      "conductance",
+      "station embeddings",
+      "query labels"
+    ],
+    "graph": "source-induced during neural training; source+heldout covariates at inference",
+    "comparison": "tabular methods receive local covariates; graph Transformer can aggregate permitted other-node covariates",
+    "window": "12 months ending at query, current-month drivers allowed; retrospective reconstruction"
+  },
+  "new_inputs": {
+    "ssn_covariance_adapt": "E15 + current T8; NHD mainstem distance/connectivity/area weighting and ECEF chord distance",
+    "physt_architecture_adapt": "E15 repeated + T8 for 12 months, one zero pad; same source-only normalization and station graph as fusion"
+  },
+  "ssn_model": "linear environmental/current-driver mean plus static station network GP; independent observation noise; exact grouped REML; two source-likelihood starts, maxiter=100",
+  "physt_adaptation": "official two architecture classes unchanged; replace SWAT-C/predicted-Q process states with permitted covariates; monthly concentration response; common log-MSE optimizer and source MAE early stopping; compact width search",
+  "native_reproductions": false,
+  "unique_new_fits": 45,
+  "target_access": "freeze all five source-validation selections before any new target scoring",
+  "versions": {
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "torch": "2.14.0"
+  },
+  "original_dispatcher_sha256": "359d44ff26ea2289f8380c89516ad3e9cc39b65373053b47fbeab5653b6f7438",
+  "prior_paper_endpoints_modified": false
+}

@@ -1,0 +1,47 @@
+{
+  "purpose": "DOC-specific literature motivated baseline comparison on existing development tasks",
+  "date": "2026-10-11",
+  "papers": [
+    {
+      "name": "Aqua-OC",
+      "year": 2025,
+      "doi": "10.1016/j.isprsjprs.2025.01.028",
+      "url": "https://authors.library.caltech.edu/records/b74cg-58e81",
+      "methods_verified": "RF, XGBoost, SVR and DNN; optical-water-type-specific model selection",
+      "comparison": "XGBoost and RBF-SVR algorithm-level baselines with our permitted covariates",
+      "not_reproduced": "Landsat reflectance, water-quality spectral indices, seven ERA5-Land variables, optical water type clustering and type-specific model selection, original random 70/20/10 split and 10-fold tuning",
+      "required_missing_inputs": ["matched Landsat surface reflectance", "spectral water indices", "ERA5-Land LAI, air temperature, wind, solar radiation, water evaporation and precipitation"],
+      "code_status": "Main text and author-hosted supplement inspected; no runnable implementation link established"
+    },
+    {
+      "name": "Yangtze monthly DOC reconstruction",
+      "year": 2026,
+      "doi": "10.3969/j.issn.1000-5641.2026.03.002",
+      "url": "https://xblk.ecnu.edu.cn/EN/10.3969/j.issn.1000-5641.2026.03.002",
+      "methods_verified": "Random Forest selected from five machine learning models; monthly Xuliujing reconstruction for 2001-2020",
+      "comparison": "Ecological RF with our available environmental and current hydroclimatic covariates; algorithm-level comparison",
+      "not_reproduced": "Original Yangtze covariate set, KPCA analyses, original site calibration and original tuning",
+      "required_missing_inputs": ["monthly NDVI, soil moisture, PET, GPP and precipitation", "annual population density, shrubland and grassland"]
+    },
+    {
+      "name": "Temperate river network DOC GAM",
+      "year": 2020,
+      "doi": "10.1029/2019GB006495",
+      "url": "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019GB006495",
+      "methods_verified": "DOC concentration GAM with catchment area, discharge condition and interaction; global environmental GAM and RF",
+      "comparison": "Pooled pyGAM ecological smooths and area-by-local-discharge tensor interaction",
+      "not_reproduced": "R mgcv cubic regression splines with k=3, river-mouth flow conditions, station-median global response and terrestrial primary productivity",
+      "required_missing_inputs": ["network river-mouth flow matched to each campaign", "terrestrial primary productivity"]
+    },
+    {
+      "name": "INCA-C",
+      "year": 2007,
+      "doi": "10.1029/2006WR004960",
+      "url": "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2006WR004960",
+      "comparison": "Related-work context only; not run",
+      "required_missing_inputs": ["daily hydrological and soil-state forcing", "process parameterization and catchment calibration inputs"]
+    }
+  ],
+  "adaptation_status": "All new numerical arms are literature motivated algorithm or model-family comparisons, not complete paper reproductions.",
+  "target": "Native DOC concentration in mg C/L; flux, TOC, fDOM and BDOC papers are not treated as interchangeable DOC concentration models."
+}

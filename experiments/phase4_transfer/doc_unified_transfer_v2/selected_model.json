@@ -1,0 +1,30 @@
+{
+  "selected_arm": "direction_heads",
+  "source_validation_only": true,
+  "test_used": false,
+  "external_doc_used": false,
+  "validation_ratios": {
+    "direction_heads": {
+      "native_ratio": 0.9305329383424294,
+      "log_ratio": 0.9110547004528028,
+      "joint": 0.9207938193976162
+    },
+    "generic_dense": {
+      "native_ratio": 0.9345816640721599,
+      "log_ratio": 0.9255302944555913,
+      "joint": 0.9300559792638756
+    },
+    "permuted_river": {
+      "native_ratio": 0.9471094670167245,
+      "log_ratio": 0.9299490471001045,
+      "joint": 0.9385292570584145
+    },
+    "self_only": {
+      "native_ratio": 1.0,
+      "log_ratio": 1.0,
+      "joint": 1.0
+    }
+  },
+  "rule": "validation only: average paired ratios to self_only across9 panels; direction_heads and generic_dense eligible only if BOTH endpoint ratios<1 and joint mean<=0.99; select lowest eligible joint score, otherwise self_only; permuted_river diagnostic only",
+  "primary_checkpoint_id": "split142_direction_heads_s42"
+}
